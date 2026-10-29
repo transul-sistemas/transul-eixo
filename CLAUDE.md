@@ -17,6 +17,7 @@ Projeto técnico completo: `docs/projeto-tecnico.md`. Em caso de dúvida, pergun
    - Proibido `supabase link`, `supabase login`, `supabase db push` e qualquer comando que fale com projeto na nuvem.
    - Proibido usar as ferramentas MCP do Supabase (`list_projects`, `execute_sql`, `apply_migration` etc.) sem pedido explícito de Alexandre.
    - O projeto da v1 (`oubrtcgtugeijbrxvblc`) nunca é usado, nem para leitura.
+   - Ler a cópia local da v1 em `importacao/` continua permitido. Conectar ao Supabase da v1 continua proibido.
    - O link com o `eixo-prod` é feito por Alexandre, em outro momento.
 
 ## Como trabalhar
