@@ -19,7 +19,7 @@ export function metadataDaTela(rota: string): Metadata {
 
 /**
  * Tela que ainda não foi construída: nome, ícone, cor do módulo e uma linha do que ela fará.
- * A cor do módulo aparece só na faixa e no ícone; o texto fica na cor do texto.
+ * A cor do módulo aparece na faixa e no fundo do ícone; o ícone e o texto ficam na cor do texto.
  */
 export function TelaEmBreve({ rota }: { rota: string }) {
   const achada = acharTela(rota);
@@ -32,12 +32,12 @@ export function TelaEmBreve({ rota }: { rota: string }) {
   } as CSSProperties;
 
   return (
-    <div style={estilo} className="flex flex-1 px-8 py-10">
+    <div style={estilo} className="flex flex-1 items-start px-8 py-10">
       <div className="flex max-w-[62ch] gap-5">
         <span aria-hidden className="w-1 shrink-0 rounded-full bg-[var(--tom-forte)]" />
         <div className="flex flex-col gap-4">
           <div className="flex items-center gap-3">
-            <span className="grid size-12 place-items-center rounded-xl bg-[var(--tom-suave)] text-[var(--tom-forte)]">
+            <span className="text-texto grid size-12 place-items-center rounded-xl bg-[var(--tom-suave)]">
               <IconeDoCatalogo nome={tela.icone} className="size-6" />
             </span>
             <p className="text-muted-foreground text-sm">{modulo.nome}</p>

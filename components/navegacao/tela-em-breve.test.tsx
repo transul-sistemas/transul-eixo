@@ -13,11 +13,20 @@ describe("<TelaEmBreve>", () => {
     expect(html).toContain("Esta tela entra em breve.");
     expect(html).toContain('role="status"');
   });
-  it("usa a cor do módulo por variável, como faixa e ícone, e nunca texto colorido", () => {
+  it("usa a cor do módulo por variável, na faixa e no fundo do ícone, e nunca em texto", () => {
     const html = renderToStaticMarkup(<TelaEmBreve rota="/frota/placas" />);
     expect(html).toContain("var(--modulo-frota)");
     expect(html).toContain("var(--modulo-frota-suave)");
     expect(html).not.toContain("#");
+  });
+  it("o ícone usa a cor do texto sobre o fundo suave (contraste), não a cor forte", () => {
+    const html = renderToStaticMarkup(<TelaEmBreve rota="/frota/placas" />);
+    expect(html).toContain("text-texto");
+    expect(html).not.toContain("text-[var(--tom-forte)]");
+  });
+  it("a faixa acompanha só a altura do bloco de texto, sem esticar pela tela", () => {
+    const html = renderToStaticMarkup(<TelaEmBreve rota="/frota/placas" />);
+    expect(html).toContain("items-start");
   });
   it("o Início usa o azul de ação, e a Administração a cor de Cadastros", () => {
     expect(renderToStaticMarkup(<TelaEmBreve rota="/inicio/tarefas" />)).toContain("var(--acao)");
