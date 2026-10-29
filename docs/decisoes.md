@@ -8,6 +8,28 @@ Modelo de entrada:
 
 ---
 
+## 29/10/2026 — Projeto eixo-prod criado no Supabase, vazio e sem link até a Fase 3
+
+- **Decisão:**
+  - o projeto **`eixo-prod`** foi criado no Supabase, na organização `transul-sistemas` (plano **Free**), região São Paulo (`sa-east-1`);
+  - Data API ligada, "Automatically expose new tables" **desligado** e "Enable automatic RLS" **ligado**;
+  - a organização da v1 fica **separada**, por causa do aviso de cota de 01/11;
+  - o desenvolvimento da Fase 2 roda **todo local**; o `eixo-prod` fica **vazio** por enquanto;
+  - o `supabase link` com o `eixo-prod` só é feito por **Alexandre**, na Fase 3.
+- **Motivo:** tabelas novas só ficam acessíveis pela API quando recebem permissão explícita, e nascem com RLS ligado (regra inviolável 5). A organização separada evita que a cota e o aviso da v1 afetem o Eixo.
+- **Alternativas descartadas:** usar a organização da v1.
+- **Quem decidiu:** Alexandre.
+- **Observação:** nenhuma URL, chave ou senha do projeto entra em arquivo do repositório (ver regra 8 do `CLAUDE.md`).
+
+## 29/10/2026 — Pendências de plano antes da importação e da produção
+
+- **Decisão:**
+  - o upgrade do Supabase para **Pro** depende da aprovação da diretoria e é pendência **antes de importar dados da v1 (Fase 3)**, porque o plano Free não tem backup diário;
+  - **Vercel Pro** e **GitHub Team** são pendências **antes da produção** (o GitHub Team também libera a proteção da `main`, ver decisão abaixo).
+- **Motivo:** dados reais da empresa não devem entrar num projeto sem backup diário, e a produção precisa dos recursos desses planos.
+- **Alternativas descartadas:** importar a v1 no plano Free.
+- **Quem decidiu:** Alexandre.
+
 ## 29/10/2026 — Proteção da main limitada pelo plano Free do GitHub
 
 - **Decisão:** o ruleset `proteger-main` existe, mas **não é aplicado** enquanto o repositório privado estiver no plano Free do GitHub. Por isso a `main` não bloqueia merge sem pull request nem sem os checks `app` e `banco`. Até o upgrade, o combinado é só fazer merge por pull request com os dois checks verdes. O upgrade para o plano **Team** é pendência **antes da produção**.
