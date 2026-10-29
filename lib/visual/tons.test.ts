@@ -5,8 +5,8 @@ import { MODULOS, STATUS, variavelDoModulo, variavelDoStatus } from "./tons";
 const css = readFileSync("app/tokens.css", "utf-8");
 
 describe("tons", () => {
-  it("lista os 7 módulos e os 5 status", () => {
-    expect(MODULOS).toHaveLength(7);
+  it("lista os 8 módulos (Administração usa a cor de Cadastros) e os 5 status", () => {
+    expect(MODULOS).toHaveLength(8);
     expect(STATUS).toHaveLength(5);
   });
   it.each([...MODULOS])("o módulo %s tem token forte e suave", (modulo) => {
@@ -21,6 +21,7 @@ describe("tons", () => {
   });
   it("nomes das variáveis", () => {
     expect(variavelDoModulo("frota")).toBe("--modulo-frota");
+    expect(variavelDoModulo("admin")).toBe("--modulo-cadastros");
     expect(variavelDoStatus("em-atividade")).toBe("--status-em-atividade");
   });
 });

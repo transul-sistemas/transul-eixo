@@ -18,6 +18,19 @@ describe("<Etiqueta>", () => {
     expect(html).toContain("var(--status-impedida)");
     expect(html).toContain("text-texto");
   });
+  it("o nome completo vai no tooltip (title)", () => {
+    const html = renderToStaticMarkup(
+      <Etiqueta modulo="admin" titulo="Administração">
+        Admin
+      </Etiqueta>,
+    );
+    expect(html).toContain('title="Administração"');
+    expect(html).toContain('data-tom="modulo:admin"');
+    expect(html).toContain("var(--modulo-cadastros-suave)");
+  });
+  it("sem título não tem tooltip", () => {
+    expect(renderToStaticMarkup(<Etiqueta modulo="frota">Frota</Etiqueta>)).not.toContain("title=");
+  });
   it("não tem cor escrita à mão", () => {
     const html = renderToStaticMarkup(<Etiqueta modulo="pessoas">Pessoas</Etiqueta>);
     expect(html).not.toContain("#");

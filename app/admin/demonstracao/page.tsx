@@ -27,8 +27,12 @@ const NOME_DO_MODULO: Record<Modulo, string> = {
   pessoas: "Pessoas",
   parceiros: "Parceiros",
   resultados: "Resultados",
-  cadastros: "Cadastros e Administração",
+  cadastros: "Cadastros",
+  admin: "Administração",
 };
+
+// Texto curto da etiqueta; o nome completo vai no tooltip.
+const ETIQUETA_DO_MODULO: Partial<Record<Modulo, string>> = { admin: "Admin" };
 
 const NOME_DO_STATUS: Record<Status, string> = {
   "em-atividade": "Em atividade",
@@ -47,6 +51,7 @@ const CLASSE_DO_MODULO: Record<Modulo, { forte: string; suave: string }> = {
   parceiros: { forte: "bg-modulo-parceiros", suave: "bg-modulo-parceiros-suave" },
   resultados: { forte: "bg-modulo-resultados", suave: "bg-modulo-resultados-suave" },
   cadastros: { forte: "bg-modulo-cadastros", suave: "bg-modulo-cadastros-suave" },
+  admin: { forte: "bg-modulo-cadastros", suave: "bg-modulo-cadastros-suave" },
 };
 
 const CLASSE_DO_STATUS: Record<Status, { forte: string; suave: string }> = {
@@ -166,8 +171,8 @@ export default function Demonstracao() {
         >
           <div className="flex flex-wrap gap-2">
             {MODULOS.map((modulo) => (
-              <Etiqueta key={modulo} modulo={modulo}>
-                {NOME_DO_MODULO[modulo]}
+              <Etiqueta key={modulo} modulo={modulo} titulo={NOME_DO_MODULO[modulo]}>
+                {ETIQUETA_DO_MODULO[modulo] ?? NOME_DO_MODULO[modulo]}
               </Etiqueta>
             ))}
           </div>

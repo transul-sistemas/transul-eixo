@@ -1,5 +1,5 @@
 // Cor de módulo diz onde a pessoa está; cor de status diz como está a placa. Nunca misturar.
-// Administração usa a cor de Cadastros; Início usa o azul de ação (sem token próprio).
+// Administração é um módulo próprio que usa a cor de Cadastros; Início usa o azul de ação.
 export const MODULOS = [
   "frota",
   "operacional",
@@ -8,6 +8,7 @@ export const MODULOS = [
   "parceiros",
   "resultados",
   "cadastros",
+  "admin",
 ] as const;
 
 export const STATUS = ["em-atividade", "atencao", "impedida", "patio", "fora"] as const;
@@ -17,7 +18,7 @@ export type Status = (typeof STATUS)[number];
 
 /** Nome da variável CSS forte do módulo; a suave é o mesmo nome com `-suave`. */
 export function variavelDoModulo(modulo: Modulo): string {
-  return `--modulo-${modulo}`;
+  return `--modulo-${modulo === "admin" ? "cadastros" : modulo}`;
 }
 
 /** Nome da variável CSS forte do status; a suave é o mesmo nome com `-suave`. */

@@ -27,11 +27,16 @@ for (const tema of ["light", "dark"] as const) {
       expect(erros).toEqual([]);
     });
 
-    test("mostra os 7 módulos e os 5 status", async ({ page }) => {
+    test("mostra os 8 módulos e os 5 status", async ({ page }) => {
       await page.goto(ROTA);
-      await expect(page.locator('[data-tom^="modulo:"]')).toHaveCount(7);
+      await expect(page.locator('[data-tom^="modulo:"]')).toHaveCount(8);
       await expect(page.locator('[data-tom^="status:"]')).toHaveCount(5);
       await expect(page.locator('[data-tom="modulo:frota"]')).toBeVisible();
+      await expect(page.locator('[data-tom="modulo:admin"]')).toHaveAttribute(
+        "title",
+        "Administração",
+      );
+      await expect(page.locator('[data-tom="modulo:cadastros"]')).toHaveText("Cadastros");
     });
 
     test("a moeda aparece inteira, com centavos, e o negativo fica em vermelho", async ({
