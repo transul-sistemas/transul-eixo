@@ -149,7 +149,7 @@ export function Topo({
           role="group"
           aria-label="Contexto global"
           className={cn(
-            "w-full flex-wrap items-center gap-2 max-lg:order-last lg:w-auto",
+            "w-full flex-wrap items-center gap-2 lg:w-auto",
             contextoAberto ? "flex" : "hidden lg:flex",
           )}
         >

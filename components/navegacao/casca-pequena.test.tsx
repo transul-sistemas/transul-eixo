@@ -63,6 +63,16 @@ describe("<Topo>: botões de tela pequena", () => {
       /id="contexto-global"[^>]*class="[^"]*hidden lg:flex|class="[^"]*hidden lg:flex[^"]*"[^>]*id="contexto-global"/,
     );
   });
+  it("a ordem do HTML é a ordem visual: Contexto, seus itens, busca e tema, sem reordenar por CSS", () => {
+    const html = topo();
+    expect(html).not.toContain("order-last");
+    const posicao = (trecho: string) => html.indexOf(trecho);
+    expect(posicao('aria-controls="contexto-global"')).toBeLessThan(
+      posicao('id="contexto-global"'),
+    );
+    expect(posicao('id="contexto-global"')).toBeLessThan(posicao("Buscar"));
+    expect(posicao("Buscar")).toBeLessThan(posicao("Alternar tema"));
+  });
   it("o botão Contexto também some a partir de 1024 px", () => {
     expect(topo()).toMatch(
       /aria-controls="contexto-global"[^>]*class="[^"]*lg:hidden|class="[^"]*lg:hidden[^"]*"[^>]*aria-controls="contexto-global"/,

@@ -184,6 +184,19 @@ test.describe("casca pequena: contexto recolhido", () => {
     await expect(contexto(page)).toBeHidden();
   });
 
+  test("o contexto aberto aparece logo abaixo do botão e acima da busca e do tema", async ({
+    page,
+  }) => {
+    await abrirHidratada(page, "/frota/placas");
+    await botaoContexto(page).click();
+    const y = async (l: ReturnType<Page["locator"]>) => (await l.boundingBox())?.y ?? -1;
+    const busca = page.locator("header").getByRole("button", { name: /^Buscar/ });
+    const tema = page.locator("header").getByRole("button", { name: "Alternar tema" });
+    expect(await y(botaoContexto(page))).toBeLessThan(await y(contexto(page)));
+    expect(await y(contexto(page))).toBeLessThan(await y(busca));
+    expect(await y(contexto(page))).toBeLessThan(await y(tema));
+  });
+
   test("mudar o período pelo contexto recolhido muda a URL", async ({ page }) => {
     await abrirHidratada(page, "/frota/placas");
     await botaoContexto(page).click();
