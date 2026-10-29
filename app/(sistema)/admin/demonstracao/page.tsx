@@ -5,6 +5,7 @@ import { Etiqueta } from "@/components/etiqueta";
 import { formatarData } from "@/components/formato/data";
 import { Moeda } from "@/components/formato/moeda";
 import {
+  formatarInteiro,
   formatarKm,
   formatarKmPorLitro,
   formatarLitros,
@@ -13,8 +14,10 @@ import {
 import { AssinaturaTranSul } from "@/components/marca/assinatura-transul";
 import { Logotipo } from "@/components/marca/logotipo";
 import { Placa } from "@/components/placa";
+import { BarraDeConsultaDaPagina } from "@/components/layout/barra-de-consulta";
+import { FaixaDeKpis } from "@/components/layout/faixa-de-kpis";
+import { PaginaDeLeitura } from "@/components/layout/pagina-de-leitura";
 import { BarraLateral } from "@/components/navegacao/barra-lateral";
-import { AlternadorDeTema } from "@/components/tema/alternador-de-tema";
 import { Button } from "@/components/ui/button";
 import { MODULOS, STATUS, type Modulo, type Status } from "@/lib/visual/tons";
 import { CampoDeExemplo } from "./campo-de-exemplo";
@@ -63,6 +66,27 @@ const CLASSE_DO_STATUS: Record<Status, { forte: string; suave: string }> = {
   fora: { forte: "bg-status-fora", suave: "bg-status-fora-suave" },
 };
 
+// Chips de exemplo: as contagens somam as 983 placas dos indicadores.
+const CHIPS_DE_EXEMPLO = [
+  { id: "em-atividade", nome: "Em atividade", contagem: 812 },
+  { id: "atencao", nome: "Atenção", contagem: 41 },
+  { id: "impedida", nome: "Impedida", contagem: 17 },
+  { id: "patio", nome: "Pátio", contagem: 96 },
+  { id: "fora", nome: "Fora", contagem: 17 },
+];
+
+const KPIS_DE_EXEMPLO = [
+  { id: "placas", rotulo: "Placas ativas", valor: formatarInteiro(983) },
+  {
+    id: "custo",
+    rotulo: "Custo do mês",
+    valor: <Moeda valor={98765432} className="text-left" />,
+    apoio: `${formatarPercentual(3.1)} acima do mês anterior`,
+  },
+  { id: "consumo", rotulo: "Consumo médio", valor: formatarKmPorLitro(3.25) },
+  { id: "disponibilidade", rotulo: "Disponibilidade", valor: formatarPercentual(82.6) },
+];
+
 // Contadores só da demonstração: o sistema ainda não tem de onde tirar tarefas ou casos.
 const CONTADORES_DE_EXEMPLO = {
   "frota.placas": 3,
@@ -110,20 +134,21 @@ function Amostra({ nome, forte, suave }: { nome: string; forte: string; suave: s
 
 export default function Demonstracao() {
   return (
-    <div className="flex w-full flex-col gap-8 px-8 py-8">
-      <header className="flex flex-wrap items-center justify-between gap-6">
-        <Logotipo />
-        <AlternadorDeTema />
-      </header>
-
-      <div className="flex flex-col gap-2">
-        <h1 className="text-3xl font-semibold tracking-tight">Base visual do Eixo</h1>
-        <p className="text-muted-foreground max-w-[62ch]">
-          Cada peça desta página é o componente real do sistema. Alterne o tema para conferir as
-          cores nos dois modos.
-        </p>
-      </div>
-
+    <PaginaDeLeitura
+      titulo="Base visual do Eixo"
+      descricao="Cada peça desta página é o componente real do sistema. O topo, a barra de consulta e os indicadores abaixo são o layout de leitura que toda tela de dados vai usar."
+      acoes={
+        <>
+          <Button variant="outline">Exportar planilha</Button>
+          <Button>
+            <IconPlus data-icon="inline-start" />
+            Receber placa
+          </Button>
+        </>
+      }
+      consulta={<BarraDeConsultaDaPagina rotulo="Buscar placa" chips={CHIPS_DE_EXEMPLO} />}
+      kpis={<FaixaDeKpis kpis={KPIS_DE_EXEMPLO} />}
+    >
       <div className="grid grid-cols-1 gap-x-12 gap-y-10 lg:grid-cols-2 2xl:grid-cols-3">
         <Secao
           titulo="Azul de ação e azul da Frota"
@@ -333,6 +358,6 @@ export default function Demonstracao() {
           </div>
         </Secao>
       </div>
-    </div>
+    </PaginaDeLeitura>
   );
 }

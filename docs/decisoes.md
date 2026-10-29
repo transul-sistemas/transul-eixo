@@ -8,6 +8,20 @@ Modelo de entrada:
 
 ---
 
+## 29/10/2026 — Topo, contexto global e layout de leitura (Fase 2B, Tarefa 6)
+
+- **Decisão:**
+  - **Contexto global na URL:** período (`?periodo=aaaa-mm`), filial, operação e regime ficam na URL; só vai para ela o que difere do padrão (mês de hoje em São Paulo, "todas", "todas", "gerencial"). Valor inválido volta ao padrão. Mudar o contexto usa `push`, então Voltar devolve o contexto anterior.
+  - **O contexto acompanha a pessoa:** os links da barra lateral, da trilha e das páginas de módulo (`/frota`, `/pessoas`...) levam o contexto da URL atual. Filtros da tela (busca, chips, modo) não vão junto.
+  - **Opções provisórias:** filial e operação só têm "Todas" e o regime só "Gerencial" até os cadastros chegarem (Fase 4). O período usa o campo de mês nativo do navegador.
+  - **Trilha clicável** (Módulo › Tela › Modo) lida do catálogo; o módulo leva à primeira tela que o perfil abre.
+  - **Botão de tema** passou a viver no topo (saiu da página de demonstração).
+  - **Layout de leitura** (`PaginaDeLeitura`): título e ações → barra de consulta → KPIs → conteúdo, em largura total. A barra de consulta (busca, chips com contagem) guarda `?q=` e `?chip=` na URL; **Mais filtros e Visões salvas aparecem desabilitados** até a tabela (entrega 2C). Os KPIs recebem o valor já formatado pelos componentes de `components/formato/`.
+  - **Pular para o conteúdo** é o primeiro item do teclado, e o `main#conteudo` recebe o foco.
+  - **Contagem dos chips** usa `formatarInteiro` (separador de milhar), em `components/formato/`.
+- **Como:** o topo é calculado a cada acesso (o mês de hoje só existe na hora do pedido) dentro de um `Suspense`, e o resto da página continua pré-renderizado. Os links usam um `Suspense` próprio com o link comum como reserva, então o HTML do servidor não muda.
+- **Quem decidiu:** Alexandre aprovou o escopo; os detalhes acima foram escolhas da implementação.
+
 ## 29/10/2026 — Catálogo da 2B aprovado, com o campo "modos" e rotas "lista"
 
 - **Decisão:**
