@@ -70,17 +70,32 @@ for (const tema of ["light", "dark"] as const) {
 
     test("algarismos têm largura fixa", async ({ page }) => {
       await page.goto(ROTA);
-      const larguras = await page.evaluate(() =>
-        ["largura-a", "largura-b"].map((id) => {
-          const texto = document.querySelector(`[data-testid="${id}"]`)?.firstChild;
+      // A medida só vale com a fonte web já carregada; antes dela vale a fonte reserva do sistema.
+      await page.evaluate(() => document.fonts.ready);
+      const medidas = await page.evaluate(() => {
+        const alvos = ["largura-a", "largura-b"].map((id) =>
+          document.querySelector(`[data-testid="${id}"]`),
+        );
+        const larguras = alvos.map((alvo) => {
+          const texto = alvo?.firstChild;
           if (!texto) return -1;
           const faixa = document.createRange();
           faixa.selectNodeContents(texto);
           return faixa.getBoundingClientRect().width;
-        }),
-      );
-      expect(larguras[0]).toBeGreaterThan(0);
-      expect(Math.abs((larguras[0] ?? 0) - (larguras[1] ?? 1))).toBeLessThan(0.5);
+        });
+        const estilo = alvos[0]?.firstElementChild
+          ? getComputedStyle(alvos[0].firstElementChild)
+          : null;
+        return {
+          larguras,
+          familia: estilo?.fontFamily,
+          numerico: estilo?.fontVariantNumeric,
+          fontes: [...document.fonts].map((f) => `${f.family}:${f.status}`),
+        };
+      });
+      expect(medidas.larguras[0]).toBeGreaterThan(0);
+      const diferenca = Math.abs((medidas.larguras[0] ?? 0) - (medidas.larguras[1] ?? 1));
+      expect(diferenca, `diagnóstico: ${JSON.stringify(medidas)}`).toBeLessThan(0.5);
     });
 
     test("o alternador troca o tema", async ({ page }) => {
