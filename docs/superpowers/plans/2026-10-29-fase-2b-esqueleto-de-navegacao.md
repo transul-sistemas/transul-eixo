@@ -48,7 +48,7 @@ Como ler: o módulo leva para a sua primeira tela visível (não há página de 
 | **Início** (`IconHome2`, cor ação) | Tarefas | `IconChecklist` | `/inicio/tarefas` | em-breve | desktop, tablet, celular | `inicio.ver` | Reúne o que espera a sua ação, como a aprovação de casos. |
 |  | Resumo do dia | `IconSunHigh` | `/inicio/resumo-do-dia` | em-breve | desktop, tablet | `inicio.ver` | Mostra, em uma página, como a operação está hoje. |
 |  | Mapa do sistema | `IconSitemap` | `/inicio/mapa-do-sistema` | em-breve | desktop | `inicio.ver` | Mostra todos os módulos e telas e o que já está pronto. |
-| **Frota** (`IconTruck`, cor frota) | Acompanhamento | `IconListDetails` | `/frota/acompanhamento` | em-breve | desktop, tablet | `frota.ver` | Acompanha cada placa pela régua de status: grade, agora, censo e mapa. |
+| **Frota** (`IconTruck`, cor frota) | Acompanhamento | `IconListDetails` | `/frota/acompanhamento` | em-breve | desktop, tablet | `frota.ver` | Acompanha cada placa pela régua de status: nos modos Grade, Agora, Censo e Mapa (`?modo=` na URL). |
 |  | Placas | `IconLicense` | `/frota/placas` | em-breve | desktop, tablet | `frota.ver` | Lista todas as placas e abre a ficha de cada uma. |
 |  | Abastecimento | `IconGasStation` | `/frota/abastecimento` | em-breve | desktop | `frota.ver` | Mostra o abastecimento por placa, com litros e consumo. |
 |  | Carteira | `IconWallet` | `/frota/carteira` | em-breve | desktop, tablet, celular | `frota.ver` | Confirma a carteira mensal e disponibiliza placas ao Operacional. |
@@ -57,17 +57,17 @@ Como ler: o módulo leva para a sua primeira tela visível (não há página de 
 |  | Totem | `IconTicket` | `/operacional/totem` | em-breve | tablet, celular | `operacional.ver` | Registra a chegada do motorista no totem e o coloca na fila. |
 |  | Ordens de carregamento | `IconClipboardList` | `/operacional/ordens-de-carregamento` | em-breve | desktop, tablet | `operacional.ver` | Acompanha cada ordem de carregamento de ponta a ponta. |
 |  | Análise | `IconChartLine` | `/operacional/analise` | em-breve | desktop | `operacional.ver` | Mede o tempo de cada etapa do Operacional. |
-| **Operações** (`IconRoute`, cor operacoes) | Operações | `IconRoute2` | `/operacoes/operacoes` | em-breve | desktop | `operacoes.ver` | Lista as operações e abre a ficha de cada uma. |
+| **Operações** (`IconRoute`, cor operacoes) | Operações | `IconRoute2` | `/operacoes/lista` | em-breve | desktop | `operacoes.ver` | Lista as operações e abre a ficha de cada uma. |
 |  | Comparativo | `IconScale` | `/operacoes/comparativo` | em-breve | desktop | `operacoes.ver` | Compara o resultado entre operações. |
 |  | Análise | `IconChartLine` | `/operacoes/analise` | em-breve | desktop | `operacoes.ver` | Explica as variações de cada operação. |
-| **Pessoas** (`IconUsers`, cor pessoas) | Pessoas | `IconUser` | `/pessoas/pessoas` | em-breve | desktop, tablet | `pessoas.ver` | Lista as pessoas e abre a ficha de cada uma. |
+| **Pessoas** (`IconUsers`, cor pessoas) | Pessoas | `IconUser` | `/pessoas/lista` | em-breve | desktop, tablet | `pessoas.ver` | Lista as pessoas e abre a ficha de cada uma. |
 |  | Escala | `IconCalendarWeek` | `/pessoas/escala` | em-breve | desktop, tablet | `pessoas.ver` | Monta e acompanha a escala do mês. |
 |  | Status diário | `IconCalendarCheck` | `/pessoas/status-diario` | em-breve | desktop, tablet, celular | `pessoas.ver` | Registra o status do dia de cada pessoa. |
 |  | Documentos | `IconFiles` | `/pessoas/documentos` | em-breve | desktop | `pessoas.ver` | Controla os documentos e os vencimentos. |
 |  | Diárias e premiação | `IconCash` | `/pessoas/diarias-e-premiacao` | em-breve | desktop | `pessoas.ver` | Calcula as diárias e as premiações do período. |
 |  | Campanhas | `IconSpeakerphone` | `/pessoas/campanhas` | em-breve | desktop | `pessoas.ver` | Gerencia as campanhas e acompanha os resultados. |
 |  | Análise | `IconChartLine` | `/pessoas/analise` | em-breve | desktop | `pessoas.ver` | Explica as variações de pessoal. |
-| **Parceiros** (`IconHeartHandshake`, cor parceiros) | Parceiros | `IconBuildingStore` | `/parceiros/parceiros` | em-breve | desktop | `parceiros.ver` | Lista os parceiros e abre a ficha de cada um. |
+| **Parceiros** (`IconHeartHandshake`, cor parceiros) | Parceiros | `IconBuildingStore` | `/parceiros/lista` | em-breve | desktop | `parceiros.ver` | Lista os parceiros e abre a ficha de cada um. |
 |  | Conciliação | `IconArrowsExchange` | `/parceiros/conciliacao` | em-breve | desktop | `parceiros.ver` | Confere os valores dos parceiros com o Sankhya. |
 |  | Livro do acionista | `IconBook` | `/parceiros/livro-do-acionista` | em-breve | desktop | `parceiros.ver` | Mostra o livro do acionista e os seus lançamentos. |
 |  | Locação | `IconKey` | `/parceiros/locacao` | em-breve | desktop | `parceiros.ver` | Acompanha os contratos de locação. |
@@ -100,12 +100,12 @@ Como ler: o módulo leva para a sua primeira tela visível (não há página de 
 
 **Interfaces:**
 - `type EstadoDaTela = "pronto" | "em-breve" | "restrito"`; `type Dispositivo = "desktop" | "tablet" | "celular"`.
-- `interface Tela { id: string; nome: string; icone: string; rota: string; permissao: { modulo: string; acao: "ver" }; estado: EstadoDaTela; descricao: string; dispositivos: readonly Dispositivo[] }` (`id` no formato `modulo.tela`, `icone` é nome de componente Tabler, `descricao` é a linha do que a tela fará).
+- `interface Tela { id: string; nome: string; icone: string; rota: string; permissao: { modulo: string; acao: "ver" }; estado: EstadoDaTela; descricao: string; dispositivos: readonly Dispositivo[]; modos?: readonly ModoDaTela[] }` com `ModoDaTela = { id: string; nome: string }` (o `id` vai em `?modo=` na URL; os modos não são rotas) (`id` no formato `modulo.tela`, `icone` é nome de componente Tabler, `descricao` é a linha do que a tela fará).
 - `interface ModuloDoCatalogo { id: "inicio" | Modulo; nome: string; icone: string; cor: "acao" | Modulo; rota: string; telas: readonly Tela[] }` com `Modulo` de `lib/visual/tons.ts`.
 - `CATALOGO: readonly ModuloDoCatalogo[]` (9 módulos, na ordem do menu); `todasAsTelas(): readonly Tela[]`; `acharTela(rota: string): { modulo: ModuloDoCatalogo; tela: Tela } | undefined`.
 - `perfis.ts`: `PERFIS = ["Administrador", "Diretoria", "Gestor de frota", "Operacional"] as const`; `type Perfil`; `PERFIS_QUE_VEEM_EM_BREVE = ["Administrador", "Diretoria"]`; `perfilAtual(): Perfil` devolve `"Administrador"` (provisório até a Fase 3).
 
-- [ ] **Passo 1: testes que falham** em `catalogo.test.ts`: 9 módulos na ordem do `CLAUDE.md`; `id` e `rota` únicos em todo o catálogo; toda rota começa com `/` e sem barra no fim; toda rota de tela começa com a rota do seu módulo; cada módulo tem `cor` válida; `Pátio`, `Carteira` e `Status diário` têm `celular` e `tablet` em `dispositivos`; toda `descricao` não vazia e sem ponto de exclamação; `acharTela("/frota/placas")` devolve a tela e `acharTela("/nada")` devolve `undefined`; `perfilAtual()` está em `PERFIS`.
+- [ ] **Passo 1: testes que falham** em `catalogo.test.ts`: 9 módulos na ordem do `CLAUDE.md`; `id` e `rota` únicos em todo o catálogo; toda rota começa com `/` e sem barra no fim; toda rota de tela começa com a rota do seu módulo; cada módulo tem `cor` válida; `Pátio`, `Carteira` e `Status diário` têm `celular` e `tablet` em `dispositivos`; toda `descricao` não vazia e sem ponto de exclamação; `acharTela("/frota/placas")` devolve a tela e `acharTela("/nada")` devolve `undefined`; `perfilAtual()` está em `PERFIS`; **Frota › Acompanhamento tem exatamente os modos Grade, Agora, Censo e Mapa (ids `grade`, `agora`, `censo`, `mapa`) e nenhuma outra tela tem `modos`**; rota de tela com o mesmo nome do módulo usa `lista` (`/operacoes/lista`, `/pessoas/lista`, `/parceiros/lista`).
 - [ ] **Passo 2:** `pnpm test`; esperado: FALHA.
 - [ ] **Passo 3:** implementar o catálogo com todas as telas, todas `em-breve` exceto `Administração › Demonstração` (`pronto`, rota `/admin/demonstracao`) e as telas de `Início` que dependem só do catálogo, se Alexandre pedir.
 - [ ] **Passo 4 (verificação):** `pnpm test`, `pnpm typecheck`, `pnpm lint`.
@@ -122,7 +122,7 @@ Como ler: o módulo leva para a sua primeira tela visível (não há página de 
 **Interfaces:**
 - `modulosVisiveis(perfil: Perfil, catalogo = CATALOGO): readonly ModuloDoCatalogo[]` — telas `em-breve` só para `PERFIS_QUE_VEEM_EM_BREVE`; módulo sem tela visível some; ordem preservada.
 - `podeAbrir(perfil: Perfil, tela: Tela): boolean` — `pronto` para quem tem a permissão; `em-breve` só para quem vê em breve; `restrito` nunca abre.
-- `buscarTelas(termo: string, perfil: Perfil): readonly ResultadoDeBusca[]` com `ResultadoDeBusca = { modulo: ModuloDoCatalogo; tela: Tela }`; sem acento nem maiúscula; termo vazio devolve `[]`; ordena começo de nome antes de meio de nome.
+- `buscarTelas(termo: string, perfil: Perfil): readonly ResultadoDeBusca[]` com `ResultadoDeBusca = { modulo: ModuloDoCatalogo; tela: Tela; modo?: ModoDaTela; rota: string }` (para um modo, `rota` é a da tela com `?modo=<id>`; a busca acha a tela e cada um dos seus modos, como "Frota › Acompanhamento › Mapa"); sem acento nem maiúscula; termo vazio devolve `[]`; ordena começo de nome antes de meio de nome.
 
 - [ ] **Passo 1: testes que falham:** `Gestor de frota` não vê nenhuma tela `em-breve` e, enquanto tudo for `em-breve`, só vê o que for `pronto`; `Administrador` e `Diretoria` veem as 9; `restrito` aparece na lista mas `podeAbrir` é falso; módulo sem tela visível some; `buscarTelas("operacoes", "Administrador")` acha "Operações"; `buscarTelas("  ", ...)` devolve `[]`; `buscarTelas("placa", ...)` coloca "Placas" antes de "Carteira de placas", se existir.
 - [ ] **Passo 2:** `pnpm test`; esperado: FALHA.
@@ -227,7 +227,7 @@ Como ler: o módulo leva para a sua primeira tela visível (não há página de 
 **Interfaces:**
 - `<BuscaRapida perfil />` (cliente): diálogo do base-ui aberto por `Ctrl+K` (`⌘K` no Mac) e por um botão "Buscar" no topo; campo com `role="combobox"`, lista com `role="listbox"`, setas movem a opção ativa (`aria-activedescendant`), `Enter` abre a tela com `router.push`, `Esc` fecha e devolve o foco a quem abriu. Resultado vem de `buscarTelas`; sem termo mostra os fixados e as últimas telas abertas; sem resultado diz "Nenhuma tela encontrada. Tente outro nome." e oferece limpar a busca.
 
-- [ ] **Passo 1: testes que falham.** Playwright: `Ctrl+K` abre; digitar "carteira" mostra Frota › Carteira; `Enter` navega para `/frota/carteira`; `Esc` fecha e o foco volta ao botão; `Ctrl+K` com o foco num campo de texto da página **abre** (é atalho global de busca), mas digitar nele não aciona `Ctrl+B`; sem resultado mostra a mensagem. Vitest: renderização do estado vazio e sem resultado.
+- [ ] **Passo 1: testes que falham.** Playwright: `Ctrl+K` abre; digitar "carteira" mostra Frota › Carteira; digitar "mapa" mostra Frota › Acompanhamento › Mapa e `Enter` navega para `/frota/acompanhamento?modo=mapa`; `Enter` navega para `/frota/carteira`; `Esc` fecha e o foco volta ao botão; `Ctrl+K` com o foco num campo de texto da página **abre** (é atalho global de busca), mas digitar nele não aciona `Ctrl+B`; sem resultado mostra a mensagem. Vitest: renderização do estado vazio e sem resultado.
 - [ ] **Passo 2:** rodar; esperado: FALHA.
 - [ ] **Passo 3:** implementar com o diálogo do base-ui, sem dependência nova.
 - [ ] **Passo 4 (verificação):** `pnpm test`, `pnpm lint`, `pnpm build`, `CI=1 pnpm test:e2e`.
