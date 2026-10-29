@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatarData } from "./data";
+import { formatarData, hojeEmSaoPaulo } from "./data";
 
 describe("formatarData", () => {
   it("texto aaaa-mm-dd vira dd/mm/aaaa sem passar por fuso", () => {
@@ -32,5 +32,18 @@ describe("formatarData", () => {
   it("valor ausente vira travessão", () => {
     expect(formatarData(null)).toBe("—");
     expect(formatarData(undefined)).toBe("—");
+  });
+});
+
+describe("hojeEmSaoPaulo", () => {
+  it("devolve o dia de São Paulo em aaaa-mm-dd", () => {
+    expect(hojeEmSaoPaulo(new Date("2026-10-29T15:00:00Z"))).toBe("2026-10-29");
+  });
+  it("de madrugada em UTC ainda é o dia anterior em São Paulo", () => {
+    expect(hojeEmSaoPaulo(new Date("2026-03-01T01:00:00Z"))).toBe("2026-02-28");
+    expect(hojeEmSaoPaulo(new Date("2027-01-01T02:30:00Z"))).toBe("2026-12-31");
+  });
+  it("completa mês e dia com zero", () => {
+    expect(hojeEmSaoPaulo(new Date("2026-01-05T12:00:00Z"))).toBe("2026-01-05");
   });
 });

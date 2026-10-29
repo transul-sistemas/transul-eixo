@@ -33,3 +33,18 @@ export function formatarData(valor: string | Date | null | undefined): string {
   const instante = typeof valor === "string" ? new Date(valor) : valor;
   return Number.isNaN(instante.getTime()) ? "—" : diaDeSaoPaulo.format(instante);
 }
+
+const partesDeSaoPaulo = new Intl.DateTimeFormat("en-CA", {
+  timeZone: "America/Sao_Paulo",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+});
+
+/** O dia de hoje em São Paulo, como `aaaa-mm-dd` (para guardar e comparar, não para mostrar). */
+export function hojeEmSaoPaulo(agora: Date): string {
+  const partes = Object.fromEntries(
+    partesDeSaoPaulo.formatToParts(agora).map((parte) => [parte.type, parte.value]),
+  );
+  return `${partes.year}-${partes.month}-${partes.day}`;
+}
