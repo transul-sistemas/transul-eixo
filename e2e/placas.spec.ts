@@ -742,3 +742,223 @@ test.describe("lista de placas: menu Colunas com rodapé fixo", () => {
     await expect(tabela(page).getByRole("columnheader", { name: /^KM/ })).toHaveCount(0);
   });
 });
+
+test.describe("lista de placas: rolagem só dentro da tabela", () => {
+  const caixa = (page: Page) => tabela(page).locator("xpath=..");
+  const TODAS_AS_COLUNAS = [
+    "placa",
+    "tipo",
+    "modelo",
+    "conjunto",
+    "gestor",
+    "operacao",
+    "situacao",
+    "alertas",
+    "motorista",
+    "filial",
+    "dias",
+    "km",
+    "cr",
+    "fipe",
+  ];
+  const medidasDaPagina = (page: Page) =>
+    page.evaluate(() => ({
+      altura: document.documentElement.scrollHeight,
+      largura: document.documentElement.scrollWidth,
+      janelaAltura: window.innerHeight,
+      janelaLargura: window.innerWidth,
+    }));
+
+  test("com 100 linhas a página não rola, nem na vertical nem na horizontal; só a tabela rola", async ({
+    page,
+  }) => {
+    await abrirHidratada(page, `${ROTA}?tam=100`);
+    await expect(linhas(page)).toHaveCount(100);
+    const m = await medidasDaPagina(page);
+    expect(m.altura).toBeLessThanOrEqual(m.janelaAltura + 1);
+    expect(m.largura).toBeLessThanOrEqual(m.janelaLargura);
+    const rolagem = await caixa(page).evaluate((c) => ({
+      total: c.scrollHeight,
+      visivel: c.clientHeight,
+    }));
+    expect(rolagem.total).toBeGreaterThan(rolagem.visivel);
+    await caixa(page).evaluate((c) => (c.scrollTop = 900));
+    expect(await caixa(page).evaluate((c) => c.scrollTop)).toBeGreaterThan(0);
+    expect(await page.evaluate(() => window.scrollY)).toBe(0);
+  });
+
+  test("o resumo e a troca de página ficam à vista sem rolar a página", async ({ page }) => {
+    await abrirHidratada(page, `${ROTA}?tam=100`);
+    await expect(resumo(page)).toBeInViewport({ ratio: 1 });
+    await expect(page.getByRole("link", { name: "Próxima página" })).toBeInViewport({ ratio: 1 });
+    await expect(page.getByLabel("Linhas por página")).toBeInViewport({ ratio: 1 });
+  });
+
+  test("a tabela com poucas linhas não estica: a caixa acompanha o conteúdo", async ({ page }) => {
+    await abrirHidratada(page, `${ROTA}?q=AAA0A00`);
+    await expect(linhas(page)).toHaveCount(1);
+    const alturas = await caixa(page).evaluate((c) => ({
+      caixa: c.clientHeight,
+      janela: window.innerHeight,
+    }));
+    expect(alturas.caixa).toBeLessThan(alturas.janela / 3);
+  });
+
+  test("o cabeçalho continua no topo da tabela ao rolar", async ({ page }) => {
+    await abrirHidratada(page, `${ROTA}?tam=100`);
+    await caixa(page).evaluate((c) => (c.scrollTop = 1200));
+    const topoDaCaixa = (await caixa(page).boundingBox())?.y ?? 0;
+    const cabecalho = await tabela(page)
+      .getByRole("columnheader", { name: /^Placa/ })
+      .boundingBox();
+    expect(Math.abs((cabecalho?.y ?? -99) - topoDaCaixa)).toBeLessThanOrEqual(3);
+    // e a linha que estava no começo já saiu da vista
+    await expect(linhas(page).first()).not.toBeInViewport();
+  });
+
+  test("a coluna Placa continua à esquerda ao rolar para o lado, por cima das outras", async ({
+    page,
+    baseURL,
+  }) => {
+    await page.context().addCookies([
+      {
+        name: "eixo-tabela-placas",
+        value: encodeURIComponent(JSON.stringify({ colunas: TODAS_AS_COLUNAS })),
+        url: baseURL ?? "http://localhost:3000",
+      },
+    ]);
+    await abrirHidratada(page, ROTA);
+    const largura = await caixa(page).evaluate((c) => ({
+      total: c.scrollWidth,
+      visivel: c.clientWidth,
+    }));
+    expect(largura.total).toBeGreaterThan(largura.visivel);
+    await caixa(page).evaluate((c) => (c.scrollLeft = 600));
+    const esquerdaDaCaixa = (await caixa(page).boundingBox())?.x ?? 0;
+    const primeiraCelula = linhas(page).first().locator("td").first();
+    const celula = await primeiraCelula.boundingBox();
+    expect(Math.abs((celula?.x ?? -99) - esquerdaDaCaixa)).toBeLessThanOrEqual(3);
+    const quemEstaPorCima = await primeiraCelula.evaluate((td) => {
+      const r = td.getBoundingClientRect();
+      const alvo = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
+      return alvo === td || td.contains(alvo);
+    });
+    expect(quemEstaPorCima).toBe(true);
+    const cabecalho = await tabela(page)
+      .getByRole("columnheader", { name: /^Placa/ })
+      .boundingBox();
+    expect(Math.abs((cabecalho?.x ?? -99) - esquerdaDaCaixa)).toBeLessThanOrEqual(3);
+  });
+
+  test("a caixa da tabela é uma região que se rola com o teclado", async ({ page }) => {
+    await abrirHidratada(page, `${ROTA}?tam=100`);
+    const regiao = page.getByRole("region", { name: /Placas/ });
+    await expect(regiao).toBeVisible();
+    await regiao.focus();
+    await page.keyboard.press("PageDown");
+    await expect.poll(() => caixa(page).evaluate((c) => c.scrollTop)).toBeGreaterThan(0);
+  });
+});
+
+test.describe("lista de placas: modo foco", () => {
+  const lateral = (page: Page) => page.locator('aside[data-barra="principal"]');
+  const topo = (page: Page) => page.locator("header");
+  const entrar = (page: Page) => page.getByRole("button", { name: "Modo foco", exact: true });
+  const sair = (page: Page) => page.getByRole("button", { name: "Sair do modo foco" });
+  const alturaDaTabela = (page: Page) =>
+    tabela(page)
+      .locator("xpath=..")
+      .evaluate((c) => c.clientHeight);
+
+  test("o botão Modo foco esconde a barra lateral e o topo e dá mais altura à tabela", async ({
+    page,
+  }) => {
+    await abrirHidratada(page, `${ROTA}?tam=100`);
+    await expect(lateral(page)).toBeVisible();
+    await expect(topo(page)).toBeVisible();
+    const antes = await alturaDaTabela(page);
+    await entrar(page).click();
+    await expect(page).toHaveURL(/foco=1/);
+    await expect(lateral(page)).toBeHidden();
+    await expect(topo(page)).toBeHidden();
+    await expect(sair(page)).toBeVisible();
+    expect(await alturaDaTabela(page)).toBeGreaterThan(antes);
+    const m = await page.evaluate(() => ({
+      altura: document.documentElement.scrollHeight,
+      janela: window.innerHeight,
+    }));
+    expect(m.altura).toBeLessThanOrEqual(m.janela + 1);
+  });
+
+  test("a tabela ocupa a largura da janela inteira, sem a barra lateral", async ({ page }) => {
+    await abrirHidratada(page, `${ROTA}?foco=1`);
+    const janela = page.viewportSize()?.width ?? 0;
+    const caixa = await tabela(page).locator("xpath=..").boundingBox();
+    expect((caixa?.width ?? 0) + 2 * 32).toBeGreaterThanOrEqual(janela - 2);
+  });
+
+  test("o link com foco=1 abre direto no modo foco e sobrevive a recarregar", async ({ page }) => {
+    await abrirHidratada(page, `${ROTA}?foco=1`);
+    await expect(lateral(page)).toBeHidden();
+    await page.reload();
+    await expect(lateral(page)).toBeHidden();
+    await expect(sair(page)).toBeVisible();
+  });
+
+  test("Sair do modo foco volta a barra lateral e o topo", async ({ page }) => {
+    await abrirHidratada(page, `${ROTA}?foco=1`);
+    await sair(page).click();
+    await expect(page).not.toHaveURL(/foco=/);
+    await expect(lateral(page)).toBeVisible();
+    await expect(topo(page)).toBeVisible();
+  });
+
+  test("Esc sai do modo foco", async ({ page }) => {
+    await abrirHidratada(page, `${ROTA}?foco=1`);
+    await page.keyboard.press("Escape");
+    await expect(page).not.toHaveURL(/foco=/);
+    await expect(lateral(page)).toBeVisible();
+  });
+
+  test("Esc com o menu Colunas aberto fecha só o menu e continua no modo foco", async ({
+    page,
+  }) => {
+    await abrirHidratada(page, `${ROTA}?foco=1`);
+    await page.getByRole("button", { name: "Colunas" }).click();
+    await expect(page.getByRole("dialog", { name: "Colunas" })).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(page.getByRole("dialog", { name: "Colunas" })).toBeHidden();
+    await expect(page).toHaveURL(/foco=1/);
+    await expect(lateral(page)).toBeHidden();
+  });
+
+  test("os filtros e a ordem continuam no modo foco, e o foco continua com eles", async ({
+    page,
+  }) => {
+    await abrirHidratada(page, `${ROTA}?foco=1`);
+    await chip(page, "Pátio").click();
+    await expect(page).toHaveURL(/foco=1/);
+    await expect(page).toHaveURL(/chip=patio/);
+    await tabela(page).getByRole("columnheader", { name: /^Tipo/ }).getByRole("button").click();
+    await expect(page).toHaveURL(/foco=1/);
+    await expect(page).toHaveURL(/ordem=tipo/);
+  });
+
+  test("Voltar do navegador sai do modo foco, um passo de cada vez", async ({ page }) => {
+    await abrirHidratada(page, ROTA);
+    await entrar(page).click();
+    await expect(page).toHaveURL(/foco=1/);
+    await page.goBack();
+    await expect(page).not.toHaveURL(/foco=/);
+    await expect(lateral(page)).toBeVisible();
+    await expect(page).toHaveURL(/\/frota\/placas$/);
+  });
+
+  test("Sair do modo foco devolve o foco do teclado ao botão que abriu", async ({ page }) => {
+    await abrirHidratada(page, ROTA);
+    await entrar(page).click();
+    await expect(sair(page)).toBeVisible();
+    await sair(page).click();
+    await expect(entrar(page)).toBeVisible();
+  });
+});

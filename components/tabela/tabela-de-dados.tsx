@@ -72,19 +72,26 @@ export function TabelaDeDados<T extends object>({
   return (
     // `relative`: o texto só para leitor de tela (sr-only) é posicionado em absoluto e, sem isso,
     // escaparia do contêiner e alargaria a página.
-    <div className="border-border bg-card relative overflow-x-auto rounded-xl border">
+    <div
+      role="region"
+      aria-label={`${rotulo}, área rolável`}
+      // Focável para rolar com o teclado. `min-h-0` deixa a caixa encolher dentro de uma tela de
+      // lista de altura fixa; com poucas linhas ela acompanha o conteúdo.
+      tabIndex={0}
+      className="border-border bg-card focus-visible:ring-ring/50 relative min-h-0 overflow-auto rounded-xl border outline-none focus-visible:ring-3"
+    >
       <table
         aria-label={rotulo}
         aria-busy={pendente}
         className={cn(
-          "w-full border-collapse text-sm transition-opacity",
+          "w-full border-separate border-spacing-0 text-sm transition-opacity",
           pendente && "opacity-60",
         )}
       >
         <thead>
           {tabela.getHeaderGroups().map((grupo) => (
-            <tr key={grupo.id} className="border-border border-b">
-              {grupo.headers.map((cabecalho) => {
+            <tr key={grupo.id}>
+              {grupo.headers.map((cabecalho, posicao) => {
                 const coluna = porId.get(cabecalho.column.id);
                 const campo = coluna?.campoDeOrdem;
                 const ativa = campo !== undefined && ordem.campo === campo;
@@ -102,7 +109,9 @@ export function TabelaDeDados<T extends object>({
                           : "none"
                     }
                     className={cn(
-                      "text-muted-foreground bg-card px-3 py-2 text-left text-xs font-medium whitespace-nowrap",
+                      // Cabeçalho fixo no topo da caixa; a primeira coluna, fixa à esquerda e por cima.
+                      "text-muted-foreground bg-card border-border sticky top-0 border-b px-3 py-2 text-left text-xs font-medium whitespace-nowrap",
+                      posicao === 0 ? "left-0 z-20 border-r" : "z-10",
                       coluna?.classe,
                     )}
                   >
@@ -135,12 +144,14 @@ export function TabelaDeDados<T extends object>({
         </thead>
         <tbody>
           {tabela.getRowModel().rows.map((linha) => (
-            <tr key={linha.id} className="border-border hover:bg-muted/50 border-b last:border-b-0">
-              {linha.getAllCells().map((celula) => (
+            <tr key={linha.id} className="group/linha hover:bg-muted/50">
+              {linha.getAllCells().map((celula, posicao) => (
                 <td
                   key={celula.id}
                   className={cn(
-                    "px-3 align-middle whitespace-nowrap",
+                    "border-border border-b px-3 align-middle whitespace-nowrap group-last/linha:border-b-0",
+                    posicao === 0 &&
+                      "bg-card group-hover/linha:bg-muted sticky left-0 z-10 border-r",
                     densidade === "compacta" ? "py-1" : "py-2.5",
                     porId.get(celula.column.id)?.classe,
                   )}

@@ -5,6 +5,7 @@ import { BarraDeConsultaDaPagina } from "@/components/layout/barra-de-consulta";
 import { PaginaDeLeitura } from "@/components/layout/pagina-de-leitura";
 import { EsqueletoDaTabela, ListaVazia } from "@/components/tabela/estados";
 import { DensidadeDaTabela } from "@/components/tabela/densidade";
+import { ModoFoco } from "@/components/tabela/modo-foco";
 import { Paginador } from "@/components/tabela/paginador";
 import { SeletorDeColunas } from "@/components/tabela/seletor-de-colunas";
 import { ProvedorDaLista } from "@/components/tabela/pendencia-da-lista";
@@ -99,6 +100,7 @@ export function PaginaDePlacasCarregando() {
   const { titulo, descricao } = cabecalho();
   return (
     <PaginaDeLeitura
+      lista
       titulo={titulo}
       descricao={descricao}
       consulta={<BarraDeConsultaDaPagina rotulo="Buscar placa" chips={chipsDaLista()} />}
@@ -123,10 +125,13 @@ export async function PaginaDePlacas({ searchParams }: { searchParams: Parametro
   });
   const { titulo, descricao } = cabecalho();
   const filtrosAtivos = comFiltros(consulta);
+  const emFoco = parametros.get("foco") === "1";
 
   return (
     <ProvedorDaLista preferenciasIniciais={preferencias}>
       <PaginaDeLeitura
+        lista
+        emFoco={emFoco}
         titulo={titulo}
         descricao={descricao}
         consulta={
@@ -134,6 +139,7 @@ export async function PaginaDePlacas({ searchParams }: { searchParams: Parametro
         }
       >
         <div className="flex flex-wrap items-center justify-end gap-3">
+          <ModoFoco />
           <SeletorDeColunas
             definicoes={DEFINICOES_DAS_COLUNAS_DE_PLACAS}
             titulos={TITULOS_DAS_COLUNAS_DE_PLACAS}

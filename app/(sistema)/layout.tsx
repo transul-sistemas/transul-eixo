@@ -7,7 +7,7 @@ import { perfilAtual, USUARIO_PROVISORIO } from "@/lib/navegacao/perfis";
 
 export default function LayoutDoSistema({ children }: { children: ReactNode }) {
   return (
-    <div className="flex min-h-screen flex-1">
+    <div className="group/casca flex min-h-screen flex-1 lg:has-[[data-tela-de-lista]]:h-dvh lg:has-[[data-tela-de-lista]]:min-h-0 lg:has-[[data-tela-de-lista]]:flex-none lg:has-[[data-tela-de-lista]]:overflow-hidden">
       <a
         href="#conteudo"
         className="focus:bg-primary focus:text-primary-foreground focus:ring-ring/50 sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:rounded-lg focus:px-3 focus:py-2 focus:text-sm focus:ring-3 focus:outline-none"
@@ -20,7 +20,7 @@ export default function LayoutDoSistema({ children }: { children: ReactNode }) {
           <TopoDoSistema />
         </Suspense>
         <AvisoDeDispositivo />
-        <main id="conteudo" tabIndex={-1} className="flex flex-1 flex-col outline-none">
+        <main id="conteudo" tabIndex={-1} className="flex min-h-0 flex-1 flex-col outline-none">
           {children}
         </main>
       </AreaPrincipal>
