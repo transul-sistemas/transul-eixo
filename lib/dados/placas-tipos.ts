@@ -31,6 +31,24 @@ export const CAMPOS_ORDENAVEIS_DE_PLACAS = [
   "crlv",
 ] as const;
 
+/** Todas as colunas que a lista pode mostrar (o cookie de preferências só aceita estas). */
+export const IDS_DAS_COLUNAS_DE_PLACAS = [
+  "placa",
+  "tipo",
+  "modelo",
+  "conjunto",
+  "gestor",
+  "operacao",
+  "situacao",
+  "alertas",
+  "km",
+  "cr",
+  "fipe",
+  "motorista",
+  "filial",
+  "dias",
+] as const;
+
 export interface LinhaDePlaca {
   id: string;
   placa: string;
