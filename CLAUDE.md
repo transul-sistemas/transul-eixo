@@ -28,6 +28,7 @@ Projeto técnico completo: `docs/projeto-tecnico.md`. Em caso de dúvida, pergun
 - Pare e peça aprovação nos checkpoints de cada plano.
 - **Nunca** coloque senha, chave ou token em arquivo, commit, log ou conversa. Use `.env.local` (fora do Git) e as variáveis da Vercel e do Supabase. Mantenha `.env.example` atualizado, sem valores.
 - Na dúvida entre duas leituras de uma regra de negócio, pergunte.
+- **Validação visual em toda entrega:** ao fim de cada checkpoint, capturas em 1366 e 1920, claro e escuro, e a rota para abrir com `pnpm dev`. Sem aprovação do visual, a entrega não avança. Telas de dados usam `lib/exemplo/` (nunca importado fora de desenvolvimento e testes) até o Acompanhamento da Frota estar pronto.
 
 ## Stack
 
@@ -120,6 +121,13 @@ Vale para toda tela a partir da Fase 2C. Cada regra tem teste automático nos co
 - Botão = verbo + objeto, e o mesmo nome do começo ao fim ("Receber placa" → "Placa recebida").
 - Erro diz o que aconteceu e como resolver, sem pedir desculpas. Tela vazia convida a agir.
 - Perfis com o nome da função (Gestor de frota, Operacional, Diretoria), nunca códigos técnicos.
+
+## Backlog da 2.0 e pendências de plano
+
+Fora do primeiro módulo (Acompanhamento da Frota); detalhes em `docs/projeto-tecnico.md`.
+
+- **Backlog da 2.0:** AGEU (manter o cadastro) · CPF do FRANCINALDO (confirmar na fonte) · sorteio e premiação · Resend · Ticket Log (o Sankhya é a fonte principal do abastecimento; o Ticket Log só confere, casado pelo identificador da transação).
+- **Antes da produção:** Vercel Pro e GitHub Team. **Antes de importar dados da v1:** Supabase Pro e backup.
 
 ## Módulos e navegação
 
