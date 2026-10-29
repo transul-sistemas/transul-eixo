@@ -43,12 +43,12 @@ describe("listarPlacas: o que entra", () => {
     expect((await listar({ baixadas: true })).total).toBe(TODAS.length);
   });
   it("a linha traz a sigla, o nome, o grupo, os dias na situação e os alertas", async () => {
-    const [linha] = (await listar({ busca: "AAA0A03" })).linhas;
-    expect(linha?.placa).toBe("AAA0A03");
+    const [linha] = (await listar({ busca: "AAA0A04" })).linhas;
+    expect(linha?.placa).toBe("AAA0A04");
     expect(linha?.nomeDaSituacao.length).toBeGreaterThan(0);
     expect(linha?.grupo).toBe(grupoDaSigla(linha!.sigla));
     expect(linha?.alertas.map((a) => a.codigo)).toContain("modelo-a-definir");
-    const solto = (await listar({ busca: "AAA0B50", baixadas: true })).linhas[0];
+    const solto = (await listar({ busca: "AAA0C17", baixadas: true })).linhas[0];
     expect(solto?.diasNoStatus).toBe(35);
   });
   it("o conjunto mostra as placas, não os ids", async () => {
@@ -70,7 +70,7 @@ describe("listarPlacas: busca", () => {
   });
   it("acha por trecho da placa, do modelo e do gestor", async () => {
     expect((await listar({ busca: "AAA0A0", baixadas: true })).total).toBeGreaterThanOrEqual(10);
-    expect((await listar({ busca: "a definir" })).linhas.map((l) => l.placa)).toContain("AAA0A03");
+    expect((await listar({ busca: "a definir" })).linhas.map((l) => l.placa)).toContain("AAA0A04");
     expect((await listar({ busca: "gestor exemplo 3" })).total).toBeGreaterThan(0);
   });
   it("não acha a diferença de acento nem de caixa", async () => {
@@ -165,7 +165,7 @@ describe("listarPlacas: contagens dos chips", () => {
     expect(comBaixadas["fora"]).toBeGreaterThan(semBaixadas["fora"] as number);
   });
   it("chip sem resultado tem contagem 0 e continua no objeto", async () => {
-    const { contagens } = await listar({ chips: ["cavalo"], busca: "AAA0A0" });
+    const { contagens } = await listar({ chips: ["cavalo"], busca: "AAA0A00" });
     for (const id of ["em-atividade", "atencao", "impedida", "patio", "fora", "equipamento"]) {
       expect(contagens, id).toHaveProperty(id);
     }

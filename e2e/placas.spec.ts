@@ -55,7 +55,7 @@ test.describe("lista de placas", () => {
   });
 
   test("a situação mostra a sigla exata e o nome por extenso", async ({ page }) => {
-    await abrirHidratada(page, `${ROTA}?q=AAA0A08`);
+    await abrirHidratada(page, `${ROTA}?q=AAA0A22`);
     await expect(linhas(page).first()).toContainText("ETc");
     await expect(linhas(page).first()).toContainText("Em trânsito carregado");
   });

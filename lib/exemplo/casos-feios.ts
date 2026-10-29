@@ -16,12 +16,12 @@ const CR_A = { codigo: "CR-1001", nome: "Operação Exemplo 1" };
 const CR_B = { codigo: "CR-1002", nome: "Operação Exemplo 2" };
 
 export const CASOS_FEIOS: Record<string, CasoFeio> = {
-  AAA0A03: {
+  AAA0A04: {
     descricao: 'Modelo "A DEFINIR"',
     alerta: "modelo-a-definir",
     ajustar: (p) => ({ ...p, modelo: "A DEFINIR", sigla: "DOp" }),
   },
-  AAA0A05: {
+  AAA0A10: {
     descricao: "Cavalo com dois CRs vigentes ao mesmo tempo",
     alerta: "cr-sobreposto",
     ajustar: (p, hoje) => ({
@@ -33,7 +33,7 @@ export const CASOS_FEIOS: Record<string, CasoFeio> = {
       ],
     }),
   },
-  AAA0A06: {
+  AAA0A14: {
     descricao: "Cavalo com dois CRs em sequência (histórico, sem sobreposição)",
     ajustar: (p, hoje) => ({
       ...p,
@@ -44,7 +44,7 @@ export const CASOS_FEIOS: Record<string, CasoFeio> = {
       ],
     }),
   },
-  AAA0A07: {
+  AAA0A19: {
     descricao: "Cavalo que troca de CR hoje: um termina e o outro começa no mesmo dia",
     ajustar: (p, hoje) => ({
       ...p,
@@ -55,21 +55,21 @@ export const CASOS_FEIOS: Record<string, CasoFeio> = {
       ],
     }),
   },
-  AAA0A08: {
+  AAA0A22: {
     descricao: "Cavalo em trânsito carregado sem motorista",
     alerta: "sem-motorista",
     ajustar: (p) => ({ ...p, sigla: "ETc", motorista: null }),
   },
-  AAA0A10: {
+  AAA0A24: {
     descricao: "Documento (CRLV) vencido há 75 dias",
     alerta: "crlv-vencido",
     ajustar: (p, hoje) => ({ ...p, crlvVenceEm: somarDias(hoje, -75) }),
   },
-  AAA0A12: {
+  AAA0A28: {
     descricao: "Cavalo sem operação, sem CR e sem CRLV",
     ajustar: (p) => ({ ...p, operacao: null, crs: [], crlvVenceEm: null }),
   },
-  AAA0B50: {
+  AAA0C17: {
     descricao: "Implemento solto no pátio há 35 dias, sem cavalo",
     alerta: "implemento-solto",
     ajustar: (p, hoje) => ({

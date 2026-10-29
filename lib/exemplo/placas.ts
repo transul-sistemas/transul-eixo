@@ -12,18 +12,25 @@ export type { PlacaDeExemplo, TipoDeAtivo } from "./tipos";
 
 const TOTAL = 240;
 
-/** [primeiro índice, quantidade, tipo]. */
-const FAIXAS: readonly (readonly [number, number, TipoDeAtivo])[] = [
-  [0, 60, "cavalo"],
-  [60, 100, "implemento"],
-  [160, 20, "equipamento"],
-  [180, 30, "caminhao"],
-  [210, 20, "veiculo-pequeno"],
-  [230, 10, "apoio"],
-];
+/**
+ * Os tipos de ativo se repetem, intercalados, a cada 24 placas (6 cavalos, 10 implementos,
+ * 2 equipamentos, 3 caminhões, 2 veículos pequenos e 1 apoio), para qualquer página da lista
+ * mostrar variedade. Sem sorteio: a mesma placa tem sempre o mesmo tipo.
+ */
+const CICLO_DE_TIPOS: readonly TipoDeAtivo[] = [..."CIIKCIEIVICIIKCIPIECIVCK"].map((letra) => {
+  const porLetra: Record<string, TipoDeAtivo> = {
+    C: "cavalo",
+    I: "implemento",
+    E: "equipamento",
+    K: "caminhao",
+    V: "veiculo-pequeno",
+    P: "apoio",
+  };
+  return porLetra[letra] as TipoDeAtivo;
+});
 
-/** Implementos 60..149 têm cavalo (k % 60); os 150..159 estão soltos. */
-const PRIMEIRO_SOLTO = 150;
+/** Dos 100 implementos, os 90 primeiros têm cavalo (k % 60); os 10 últimos estão soltos no pátio. */
+const IMPLEMENTOS_COM_CAVALO = 90;
 
 const MODELOS: Record<TipoDeAtivo, readonly string[]> = {
   cavalo: ["FH 540", "R 450", "Actros 2651", "T 440"],
@@ -49,8 +56,7 @@ function placaDe(i: number): string {
 }
 
 function tipoDe(i: number): TipoDeAtivo {
-  const faixa = FAIXAS.find(([inicio, quantidade]) => i >= inicio && i < inicio + quantidade);
-  return (faixa as readonly [number, number, TipoDeAtivo])[2];
+  return CICLO_DE_TIPOS[i % CICLO_DE_TIPOS.length] as TipoDeAtivo;
 }
 
 const dois = (n: number) => String(n).padStart(2, "0");
@@ -140,9 +146,8 @@ export function placasDeExemplo(hoje: string): PlacaDeExemplo[] {
 
   const implementos = indices
     .filter((i) => tipoDe(i) === "implemento")
-    .map((i) => {
-      const k = i - 60;
-      const cavalo = k < PRIMEIRO_SOLTO - 60 ? cavalos[k % cavalos.length] : undefined;
+    .map((i, k) => {
+      const cavalo = k < IMPLEMENTOS_COM_CAVALO ? cavalos[k % cavalos.length] : undefined;
       const placa = base(i, hoje);
       if (cavalo) {
         cavalo.conjunto.implementoIds.push(placa.id);
@@ -166,8 +171,9 @@ export function placasDeExemplo(hoje: string): PlacaDeExemplo[] {
           hoje,
         );
       }
-      const recente = i >= PRIMEIRO_SOLTO + 8;
-      const diasSolto = recente ? 5 + (i - PRIMEIRO_SOLTO - 8) * 7 : 35 + (i - PRIMEIRO_SOLTO) * 4;
+      const solto = k - IMPLEMENTOS_COM_CAVALO;
+      const recente = solto >= 8;
+      const diasSolto = recente ? 5 + (solto - 8) * 7 : 35 + solto * 4;
       return comCasoFeio(
         {
           ...placa,

@@ -29,6 +29,33 @@ describe("placas de exemplo: forma", () => {
     for (const p of placas) expect(p.placa, p.placa).toMatch(/^AAA\d[A-Z]\d{2}$/);
     expect(placas[0]?.placa).toBe("AAA0A00");
   });
+  it("os tipos de ativo vêm intercalados: a primeira página (25 por placa) mostra variedade", () => {
+    const primeiras = [...placas].sort((a, b) => (a.placa < b.placa ? -1 : 1)).slice(0, 25);
+    const tipos = new Set(primeiras.map((p) => p.tipo));
+    expect(tipos.size).toBeGreaterThanOrEqual(5);
+    expect(tipos).toContain("cavalo");
+    expect(tipos).toContain("implemento");
+    expect(tipos).toContain("caminhao");
+    // e não há uma sequência longa do mesmo tipo
+    let maior = 1;
+    let atual = 1;
+    for (let i = 1; i < primeiras.length; i++) {
+      atual = primeiras[i]!.tipo === primeiras[i - 1]!.tipo ? atual + 1 : 1;
+      maior = Math.max(maior, atual);
+    }
+    expect(maior).toBeLessThanOrEqual(3);
+  });
+  it("as quantidades por tipo continuam as mesmas (60, 100, 20, 30, 20 e 10)", () => {
+    const quantos = (t: string) => placas.filter((p) => p.tipo === t).length;
+    expect([
+      quantos("cavalo"),
+      quantos("implemento"),
+      quantos("equipamento"),
+      quantos("caminhao"),
+      quantos("veiculo-pequeno"),
+      quantos("apoio"),
+    ]).toEqual([60, 100, 20, 30, 20, 10]);
+  });
   it("são as mesmas a cada chamada com o mesmo dia (sem sorteio)", () => {
     expect(placasDeExemplo(HOJE)).toEqual(placas);
   });
