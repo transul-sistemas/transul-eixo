@@ -8,6 +8,13 @@ Modelo de entrada:
 
 ---
 
+## 29/10/2026 — Proteção da main limitada pelo plano Free do GitHub
+
+- **Decisão:** o ruleset `proteger-main` existe, mas **não é aplicado** enquanto o repositório privado estiver no plano Free do GitHub. Por isso a `main` não bloqueia merge sem pull request nem sem os checks `app` e `banco`. Até o upgrade, o combinado é só fazer merge por pull request com os dois checks verdes. O upgrade para o plano **Team** é pendência **antes da produção**.
+- **Motivo:** o plano Free não aplica rulesets em repositório privado.
+- **Alternativas descartadas:** tornar o repositório público (os arquivos citam o identificador da v1 e terão dados da empresa).
+- **Quem decidiu:** Alexandre.
+
 ## 29/10/2026 — Lint de hexadecimal também em texto maior (limite conhecido)
 
 - **Decisão:** o ESLint barra hex como texto inteiro e também embutido: depois de `[`, `(`, `:` ou `,` (`bg-[#FF7A3D]`, `color:#fff`, `gradient(#fff)`), ou depois de espaço quando tem letra de a a f (`1px solid #fff`).
