@@ -90,3 +90,38 @@ describe("chips com contagem zero", () => {
     expect(chip("Sem contagem")).not.toContain("data-zerado");
   });
 });
+
+// O atributo `disabled`, não a palavra: as classes do botão têm "disabled:" (variantes do Tailwind).
+const desligado = (trecho: string | undefined) => /\sdisabled(?:=""|[\s>])/.test(trecho ?? "");
+const botaoDe = (html: string, texto: string) =>
+  new RegExp(`<button[^>]*>(?:(?!</button>)[\\s\\S])*${texto}[\\s\\S]*?</button>`).exec(html)?.[0];
+
+describe("barra de consulta ocupada (carregando)", () => {
+  const chips = [{ id: "a", nome: "Primeiro", contagem: 3 }];
+  it("desliga os chips e o Limpar filtros enquanto a transição não termina", () => {
+    const html = renderToStaticMarkup(
+      <BarraDeConsulta
+        rotulo="Buscar"
+        chips={chips}
+        parametros={new URLSearchParams("chip=a")}
+        ocupada
+      />,
+    );
+    expect(desligado(botaoDe(html, "Primeiro"))).toBe(true);
+    expect(desligado(botaoDe(html, "Limpar filtros"))).toBe(true);
+  });
+  it("a busca continua aceitando digitação (a última resposta é a que vale)", () => {
+    const html = renderToStaticMarkup(
+      <BarraDeConsulta rotulo="Buscar" chips={chips} parametros={new URLSearchParams()} ocupada />,
+    );
+    expect(html).toMatch(/<input[^>]*type="search"/);
+    expect(/<input[^>]*disabled/.test(html)).toBe(false);
+  });
+  it("sem estar ocupada, nada é desligado", () => {
+    const html = renderToStaticMarkup(
+      <BarraDeConsulta rotulo="Buscar" chips={chips} parametros={new URLSearchParams("chip=a")} />,
+    );
+    expect(desligado(botaoDe(html, "Primeiro"))).toBe(false);
+    expect(desligado(botaoDe(html, "Limpar filtros"))).toBe(false);
+  });
+});

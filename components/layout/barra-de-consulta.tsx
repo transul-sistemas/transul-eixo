@@ -4,6 +4,7 @@ import { IconSearch } from "@tabler/icons-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
 import { formatarInteiro } from "@/components/formato/numero";
+import { useLista } from "@/components/tabela/pendencia-da-lista";
 import { Button } from "@/components/ui/button";
 import {
   alternarChip,
@@ -31,6 +32,8 @@ interface PropsVisuais {
   /** Texto do campo enquanto a pessoa digita (antes de ir para a URL). */
   buscaDigitada?: string;
   aoDigitar?: (texto: string) => void;
+  /** Uma navegação está a caminho: chips e Limpar filtros não aceitam novo clique. */
+  ocupada?: boolean;
 }
 
 /**
@@ -45,6 +48,7 @@ export function BarraDeConsulta({
   aoNavegar,
   buscaDigitada,
   aoDigitar,
+  ocupada = false,
 }: PropsVisuais) {
   const consulta = lerConsulta(parametros);
   const ativa = consultaAtiva(consulta);
@@ -83,6 +87,7 @@ export function BarraDeConsulta({
               key={chip.id}
               type="button"
               aria-pressed={ligado}
+              disabled={ocupada}
               // Zerado e desligado fica apagado, mas clicável; ligado continua normal para poder desligar.
               data-zerado={chip.contagem === 0 && !ligado ? "true" : undefined}
               onClick={() =>
@@ -115,7 +120,11 @@ export function BarraDeConsulta({
 
       <div className="ml-auto flex flex-wrap items-center gap-2">
         {ativa ? (
-          <Button variant="ghost" onClick={() => ir({ busca: "", chips: [] }, false)}>
+          <Button
+            variant="ghost"
+            disabled={ocupada}
+            onClick={() => ir({ busca: "", chips: [] }, false)}
+          >
             Limpar filtros
           </Button>
         ) : null}
@@ -136,6 +145,7 @@ function Ligada(props: Pick<PropsVisuais, "rotulo" | "chips">) {
   const rota = usePathname();
   const lidos = useSearchParams();
   const router = useRouter();
+  const lista = useLista();
   const parametros = new URLSearchParams(lidos.toString());
   const buscaDaUrl = lerConsulta(parametros).busca;
 
@@ -157,9 +167,11 @@ function Ligada(props: Pick<PropsVisuais, "rotulo" | "chips">) {
   });
   useEffect(() => () => clearTimeout(espera.current), []);
 
+  // Dentro de uma lista, a navegação roda na transição compartilhada: a tabela fica esmaecida.
   function navegar(url: string, substituir: boolean) {
-    if (substituir) router.replace(url);
-    else router.push(url);
+    const ir = () => (substituir ? router.replace(url) : router.push(url));
+    if (lista) lista.iniciar(ir);
+    else ir();
   }
 
   // Ação da barra (chip, limpar filtros): vale o que a pessoa acabou de escolher, e o que ainda
@@ -190,6 +202,7 @@ function Ligada(props: Pick<PropsVisuais, "rotulo" | "chips">) {
       parametros={parametros}
       rota={rota}
       aoNavegar={aoNavegar}
+      ocupada={lista?.pendente ?? false}
       buscaDigitada={rascunho}
       aoDigitar={aoDigitar}
     />

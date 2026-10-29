@@ -111,6 +111,7 @@ export function TabelaDeDados<T extends object>({
                     ) : (
                       <button
                         type="button"
+                        disabled={pendente}
                         onClick={() => aoOrdenar(campo)}
                         className="hover:text-foreground focus-visible:ring-ring/50 -mx-1 inline-flex items-center gap-1 rounded px-1 outline-none focus-visible:ring-3"
                       >

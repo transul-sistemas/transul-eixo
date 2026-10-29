@@ -2,16 +2,15 @@
 
 import { IconAlertTriangle } from "@tabler/icons-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useTransition } from "react";
 import { Etiqueta } from "@/components/etiqueta";
 import { Placa } from "@/components/placa";
 import {
   CAMPOS_ORDENAVEIS_DE_PLACAS,
   type LinhaDePlaca,
   NOMES_DOS_TIPOS,
-  PADRAO_DA_LISTA_DE_PLACAS,
 } from "@/lib/dados/placas-tipos";
-import { lerTabela, mudarConsulta } from "@/lib/navegacao/tabela";
+import { lerTabela, mudarConsulta, type PadraoDaTabela } from "@/lib/navegacao/tabela";
+import { useLista } from "./pendencia-da-lista";
 import { type ColunaDeTabela, type Ordem, TabelaDeDados } from "./tabela-de-dados";
 
 const SEM_VALOR = <span className="text-muted-foreground">—</span>;
@@ -104,26 +103,36 @@ const COLUNAS: readonly ColunaDeTabela<LinhaDePlaca>[] = [
 ];
 
 /** A tabela da lista de placas: a ordem mora na URL, e a página sai do servidor já cortada. */
-export function TabelaDePlacas({ linhas, ordem }: { linhas: LinhaDePlaca[]; ordem: Ordem }) {
+export function TabelaDePlacas({
+  linhas,
+  ordem,
+  padrao,
+}: {
+  linhas: LinhaDePlaca[];
+  ordem: Ordem;
+  padrao: PadraoDaTabela;
+}) {
   const rota = usePathname();
   const parametros = useSearchParams();
   const router = useRouter();
-  const [pendente, iniciar] = useTransition();
+  const lista = useLista();
 
   function ordenarPor(campo: string) {
     const atual = lerTabela(
       new URLSearchParams(parametros.toString()),
-      PADRAO_DA_LISTA_DE_PLACAS,
+      padrao,
       CAMPOS_ORDENAVEIS_DE_PLACAS,
     ).ordem;
     const sentido = atual.campo === campo && atual.sentido === "asc" ? "desc" : "asc";
     const novos = mudarConsulta(
       new URLSearchParams(parametros.toString()),
       { ordem: { campo, sentido } },
-      PADRAO_DA_LISTA_DE_PLACAS,
+      padrao,
       CAMPOS_ORDENAVEIS_DE_PLACAS,
     ).toString();
-    iniciar(() => router.push(novos ? `${rota}?${novos}` : rota, { scroll: false }));
+    const ir = () => router.push(novos ? `${rota}?${novos}` : rota, { scroll: false });
+    if (lista) lista.iniciar(ir);
+    else ir();
   }
 
   return (
@@ -134,7 +143,8 @@ export function TabelaDePlacas({ linhas, ordem }: { linhas: LinhaDePlaca[]; orde
       idDaLinha={(linha) => linha.id}
       ordem={ordem}
       aoOrdenar={ordenarPor}
-      pendente={pendente}
+      pendente={lista?.pendente ?? false}
+      densidade={lista?.preferencias.densidade ?? "compacta"}
     />
   );
 }

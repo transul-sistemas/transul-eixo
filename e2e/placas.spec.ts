@@ -161,7 +161,7 @@ test.describe("lista de placas: estados", () => {
   test("carregando: o título e a consulta ficam, e o esqueleto ocupa o lugar da tabela", async ({
     page,
   }) => {
-    await page.goto(`${ROTA}?lento=1500`, { waitUntil: "commit" });
+    await page.goto(`${ROTA}?lento=2500`, { waitUntil: "commit" });
     await expect(esqueleto(page)).toBeVisible();
     await expect(page.getByRole("heading", { level: 1, name: "Placas" })).toBeVisible();
     await expect(tabela(page)).toBeVisible({ timeout: 15_000 });
@@ -242,5 +242,154 @@ test.describe("lista de placas: estados", () => {
     await chip(page, "Fora").click();
     await expect(chip(page, "Fora")).toHaveAttribute("aria-pressed", "false");
     await expect(linhas(page).first()).toContainText("AAA0A00");
+  });
+});
+
+test.describe("lista de placas: preferências em cookie", () => {
+  const NOME = "eixo-tabela-placas";
+  const tamanho = (page: Page) => page.getByLabel("Linhas por página");
+  const densidade = (page: Page, nome: string) =>
+    page.getByRole("group", { name: "Densidade" }).getByRole("button", { name: nome });
+  const alturaDaLinha = async (page: Page) =>
+    (await linhas(page).first().boundingBox())?.height ?? 0;
+
+  async function semeiaCookie(page: Page, valor: string, baseURL: string | undefined) {
+    await page
+      .context()
+      .addCookies([{ name: NOME, value: valor, url: baseURL ?? "http://localhost:3000" }]);
+  }
+
+  test("o padrão é 25 linhas e densidade compacta", async ({ page }) => {
+    await abrirHidratada(page, ROTA);
+    await expect(tamanho(page)).toHaveValue("25");
+    await expect(densidade(page, "Compacta")).toHaveAttribute("aria-pressed", "true");
+    await expect(densidade(page, "Confortável")).toHaveAttribute("aria-pressed", "false");
+  });
+
+  test("escolher 50 por página mostra 50, vai ao cookie e é lembrado ao recarregar e voltar", async ({
+    page,
+  }) => {
+    await abrirHidratada(page, `${ROTA}?pagina=3`);
+    await tamanho(page).selectOption("50");
+    await expect(linhas(page)).toHaveCount(50);
+    await expect(resumo(page)).toContainText("Mostrando 1–50 de");
+    await expect(page).not.toHaveURL(/tam=/);
+    await expect(page).not.toHaveURL(/pagina=/);
+    const cookies = await page.context().cookies();
+    expect(cookies.find((c) => c.name === NOME)?.value).toContain("50");
+    await page.reload();
+    await expect(linhas(page)).toHaveCount(50);
+    await expect(tamanho(page)).toHaveValue("50");
+    await abrirHidratada(page, "/frota/carteira");
+    await abrirHidratada(page, ROTA);
+    await expect(linhas(page)).toHaveCount(50);
+  });
+
+  test("tam na URL vale mais que o cookie, e o servidor limita a 100", async ({
+    page,
+    baseURL,
+  }) => {
+    await semeiaCookie(page, encodeURIComponent('{"tam":50}'), baseURL);
+    await abrirHidratada(page, ROTA);
+    await expect(linhas(page)).toHaveCount(50);
+    await abrirHidratada(page, `${ROTA}?tam=100`);
+    await expect(linhas(page)).toHaveCount(100);
+    await abrirHidratada(page, `${ROTA}?tam=500`);
+    await expect(linhas(page)).toHaveCount(100);
+    await abrirHidratada(page, `${ROTA}?tam=abc`);
+    await expect(linhas(page)).toHaveCount(50);
+  });
+
+  test("a densidade confortável aumenta a linha, vai ao cookie e sobrevive a recarregar", async ({
+    page,
+  }) => {
+    await abrirHidratada(page, ROTA);
+    const compacta = await alturaDaLinha(page);
+    await densidade(page, "Confortável").click();
+    await expect(densidade(page, "Confortável")).toHaveAttribute("aria-pressed", "true");
+    const confortavel = await alturaDaLinha(page);
+    expect(confortavel).toBeGreaterThan(compacta + 6);
+    expect((await page.context().cookies()).find((c) => c.name === NOME)?.value).toContain(
+      "confortavel",
+    );
+    await page.reload();
+    await expect(densidade(page, "Confortável")).toHaveAttribute("aria-pressed", "true");
+    expect(await alturaDaLinha(page)).toBeCloseTo(confortavel, 0);
+  });
+
+  test("mudar a densidade não perde filtro, ordem nem página", async ({ page }) => {
+    await abrirHidratada(page, `${ROTA}?chip=impedida&ordem=-gestor&pagina=2`);
+    await densidade(page, "Confortável").click();
+    await expect(page).toHaveURL(/chip=impedida&ordem=-gestor&pagina=2/);
+    await expect(resumo(page)).toContainText("Mostrando 26–50 de");
+  });
+
+  test("cookie corrompido ou adulterado cai no padrão, sem erro", async ({ page, baseURL }) => {
+    for (const valor of [
+      "lixo",
+      encodeURIComponent("lixo{{"),
+      "%E0%A4%A",
+      encodeURIComponent('{"tam":9999,"densidade":"enorme","colunas":["xxx"]}'),
+      // grande demais para nós (limite de 2000), mas ainda cabe nos 4 KB que o navegador aceita
+      encodeURIComponent(JSON.stringify({ tam: 50, colunas: Array(200).fill("placa") })),
+    ]) {
+      await semeiaCookie(page, valor, baseURL);
+      await abrirHidratada(page, ROTA);
+      await expect(page.getByRole("main").getByRole("alert")).toHaveCount(0);
+      await expect(linhas(page)).toHaveCount(25);
+      await expect(densidade(page, "Compacta")).toHaveAttribute("aria-pressed", "true");
+    }
+  });
+});
+
+test.describe("lista de placas: feedback de carregando", () => {
+  const ocupada = (page: Page) => tabela(page).and(page.locator('[aria-busy="true"]'));
+
+  test("clicar num chip esmaece a tabela, e chips e páginas não aceitam novo clique", async ({
+    page,
+  }) => {
+    await abrirHidratada(page, `${ROTA}?lento=2500`);
+    await chip(page, "Pátio").click();
+    await expect(ocupada(page)).toBeVisible();
+    await expect(chip(page, "Atenção")).toBeDisabled();
+    await expect(page.getByRole("link", { name: "Próxima página" })).toHaveAttribute(
+      "aria-disabled",
+      "true",
+    );
+    await chip(page, "Atenção").click({ force: true });
+    await expect(tabela(page)).toHaveAttribute("aria-busy", "false", { timeout: 10_000 });
+    await expect(page).toHaveURL(/chip=patio/);
+    await expect(page).not.toHaveURL(/chip=atencao/);
+    await expect(chip(page, "Atenção")).toBeEnabled();
+  });
+
+  test("a busca esmaece a tabela enquanto o servidor responde", async ({ page }) => {
+    await abrirHidratada(page, `${ROTA}?lento=2500`);
+    await busca(page).fill("AAA0A1");
+    await expect(ocupada(page)).toBeVisible();
+    await expect(tabela(page)).toHaveAttribute("aria-busy", "false", { timeout: 10_000 });
+    await expect(page).toHaveURL(/q=AAA0A1/);
+  });
+
+  test("a paginação esmaece a tabela e um segundo clique não pula duas páginas", async ({
+    page,
+  }) => {
+    await abrirHidratada(page, `${ROTA}?lento=2500`);
+    const proxima = page.getByRole("link", { name: "Próxima página" });
+    await proxima.click();
+    await expect(ocupada(page)).toBeVisible();
+    await proxima.click({ force: true });
+    await expect(tabela(page)).toHaveAttribute("aria-busy", "false", { timeout: 10_000 });
+    await expect(page).toHaveURL(/pagina=2/);
+    await expect(page).not.toHaveURL(/pagina=3/);
+    await expect(resumo(page)).toContainText("Mostrando 26–50 de");
+  });
+
+  test("ordenar por cabeçalho também bloqueia chips enquanto carrega", async ({ page }) => {
+    await abrirHidratada(page, `${ROTA}?lento=2500`);
+    await tabela(page).getByRole("columnheader", { name: /^Tipo/ }).getByRole("button").click();
+    await expect(ocupada(page)).toBeVisible();
+    await expect(chip(page, "Pátio")).toBeDisabled();
+    await expect(tabela(page)).toHaveAttribute("aria-busy", "false", { timeout: 10_000 });
   });
 });

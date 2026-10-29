@@ -1,18 +1,28 @@
+import { cookies } from "next/headers";
 import { connection } from "next/server";
 import { hojeEmSaoPaulo } from "@/components/formato/data";
 import { BarraDeConsultaDaPagina } from "@/components/layout/barra-de-consulta";
 import { PaginaDeLeitura } from "@/components/layout/pagina-de-leitura";
 import { EsqueletoDaTabela, ListaVazia } from "@/components/tabela/estados";
+import { DensidadeDaTabela } from "@/components/tabela/densidade";
 import { Paginador } from "@/components/tabela/paginador";
+import { ProvedorDaLista } from "@/components/tabela/pendencia-da-lista";
 import { TabelaDePlacas } from "@/components/tabela/tabela-de-placas";
 import {
   CAMPOS_ORDENAVEIS_DE_PLACAS,
+  IDS_DAS_COLUNAS_DE_PLACAS,
   listarPlacas,
   PADRAO_DA_LISTA_DE_PLACAS,
 } from "@/lib/dados/placas";
 import { NOMES_DOS_CHIPS } from "@/lib/dominio/status";
 import { acharTela } from "@/lib/navegacao/catalogo";
-import { escreverTabela, lerTabela, type ConsultaDeTabela } from "@/lib/navegacao/tabela";
+import { lerPreferencias, NOME_DO_COOKIE_DE_PLACAS } from "@/lib/navegacao/preferencias-da-tabela";
+import {
+  type ConsultaDeTabela,
+  escreverTabela,
+  lerTabela,
+  type PadraoDaTabela,
+} from "@/lib/navegacao/tabela";
 import { STATUS } from "@/lib/visual/tons";
 
 export type ParametrosDaBusca = Promise<Record<string, string | string[] | undefined>>;
@@ -48,11 +58,15 @@ function comFiltros(c: ConsultaDeTabela): boolean {
 }
 
 /** A mesma tela sem busca, chips, siglas nem baixadas; o contexto global (período etc.) fica. */
-function enderecoSemFiltros(parametros: URLSearchParams, consulta: ConsultaDeTabela): string {
+function enderecoSemFiltros(
+  parametros: URLSearchParams,
+  consulta: ConsultaDeTabela,
+  padrao: PadraoDaTabela,
+): string {
   const limpa = escreverTabela(
     parametros,
     { ...consulta, busca: "", chips: [], siglas: [], baixadas: false, pagina: 1 },
-    PADRAO_DA_LISTA_DE_PLACAS,
+    padrao,
   ).toString();
   return limpa ? `${ROTA}?${limpa}` : ROTA;
 }
@@ -79,7 +93,13 @@ export function PaginaDePlacasCarregando() {
 export async function PaginaDePlacas({ searchParams }: { searchParams: ParametrosDaBusca }) {
   await connection();
   const parametros = paraParametros(await searchParams);
-  const consulta = lerTabela(parametros, PADRAO_DA_LISTA_DE_PLACAS, CAMPOS_ORDENAVEIS_DE_PLACAS);
+  // As preferências vêm do cookie, validadas; o `tam` da URL, se houver, vale mais.
+  const preferencias = lerPreferencias(
+    (await cookies()).get(NOME_DO_COOKIE_DE_PLACAS)?.value,
+    IDS_DAS_COLUNAS_DE_PLACAS,
+  );
+  const padrao = { tam: preferencias.tam, ordem: PADRAO_DA_LISTA_DE_PLACAS.ordem };
+  const consulta = lerTabela(parametros, padrao, CAMPOS_ORDENAVEIS_DE_PLACAS);
   const pagina = await listarPlacas(consulta, hojeEmSaoPaulo(new Date()), {
     simulacao: simulacaoDe(parametros),
   });
@@ -87,45 +107,50 @@ export async function PaginaDePlacas({ searchParams }: { searchParams: Parametro
   const filtrosAtivos = comFiltros(consulta);
 
   return (
-    <PaginaDeLeitura
-      titulo={titulo}
-      descricao={descricao}
-      consulta={
-        <BarraDeConsultaDaPagina
-          rotulo="Buscar placa"
-          chips={STATUS.map((id) => ({
-            id,
-            nome: NOMES_DOS_CHIPS[id],
-            contagem: pagina.contagens[id] ?? 0,
-          }))}
-        />
-      }
-    >
-      {pagina.total === 0 ? (
-        filtrosAtivos ? (
-          <ListaVazia
-            titulo="Nenhuma placa encontrada"
-            descricao="Nenhuma placa combina com a busca e os filtros escolhidos. Tire um filtro ou limpe tudo para ver a lista inteira."
-            hrefLimpar={enderecoSemFiltros(parametros, consulta)}
+    <ProvedorDaLista preferenciasIniciais={preferencias}>
+      <PaginaDeLeitura
+        titulo={titulo}
+        descricao={descricao}
+        consulta={
+          <BarraDeConsultaDaPagina
+            rotulo="Buscar placa"
+            chips={STATUS.map((id) => ({
+              id,
+              nome: NOMES_DOS_CHIPS[id],
+              contagem: pagina.contagens[id] ?? 0,
+            }))}
           />
+        }
+      >
+        <div className="flex justify-end">
+          <DensidadeDaTabela />
+        </div>
+        {pagina.total === 0 ? (
+          filtrosAtivos ? (
+            <ListaVazia
+              titulo="Nenhuma placa encontrada"
+              descricao="Nenhuma placa combina com a busca e os filtros escolhidos. Tire um filtro ou limpe tudo para ver a lista inteira."
+              hrefLimpar={enderecoSemFiltros(parametros, consulta, padrao)}
+            />
+          ) : (
+            <ListaVazia
+              titulo="Ainda não há placas"
+              descricao="Quando houver placas cadastradas, elas aparecem aqui."
+            />
+          )
         ) : (
-          <ListaVazia
-            titulo="Ainda não há placas"
-            descricao="Quando houver placas cadastradas, elas aparecem aqui."
-          />
-        )
-      ) : (
-        <TabelaDePlacas linhas={pagina.linhas} ordem={consulta.ordem} />
-      )}
-      <Paginador
-        pagina={pagina.pagina}
-        paginas={pagina.paginas}
-        total={pagina.total}
-        tam={pagina.tam}
-        itens="placas"
-        padrao={PADRAO_DA_LISTA_DE_PLACAS}
-        campos={CAMPOS_ORDENAVEIS_DE_PLACAS}
-      />
-    </PaginaDeLeitura>
+          <TabelaDePlacas linhas={pagina.linhas} ordem={consulta.ordem} padrao={padrao} />
+        )}
+        <Paginador
+          pagina={pagina.pagina}
+          paginas={pagina.paginas}
+          total={pagina.total}
+          tam={pagina.tam}
+          itens="placas"
+          padrao={padrao}
+          campos={CAMPOS_ORDENAVEIS_DE_PLACAS}
+        />
+      </PaginaDeLeitura>
+    </ProvedorDaLista>
   );
 }
