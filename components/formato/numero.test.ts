@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { formatarKm, formatarKmPorLitro, formatarLitros, formatarPercentual } from "./numero";
+import {
+  formatarInteiro,
+  formatarKm,
+  formatarKmPorLitro,
+  formatarLitros,
+  formatarPercentual,
+} from "./numero";
 
 describe("números", () => {
   it("km sem casas, com milhar", () => {
@@ -28,5 +34,22 @@ describe("números", () => {
       expect(f(undefined)).toBe("—");
       expect(f(Number.NaN)).toBe("—");
     }
+  });
+});
+
+describe("formatarInteiro (contagens)", () => {
+  it("separa o milhar com ponto e não tem casas", () => {
+    expect(formatarInteiro(983)).toBe("983");
+    expect(formatarInteiro(1234)).toBe("1.234");
+    expect(formatarInteiro(1234567)).toBe("1.234.567");
+  });
+  it("arredonda para o inteiro mais próximo e não mostra menos zero", () => {
+    expect(formatarInteiro(12.6)).toBe("13");
+    expect(formatarInteiro(-0.4)).toBe("0");
+  });
+  it("valor ausente ou inválido vira travessão", () => {
+    expect(formatarInteiro(null)).toBe("—");
+    expect(formatarInteiro(undefined)).toBe("—");
+    expect(formatarInteiro(Number.NaN)).toBe("—");
   });
 });

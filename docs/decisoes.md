@@ -8,6 +8,78 @@ Modelo de entrada:
 
 ---
 
+## 29/10/2026 — Fase 2B: revisão independente
+
+- **Corrigido na 2B:** Esc dentro do painel flutuante do modo compacto reabria o painel; a pausa da busca da barra de consulta usava a URL antiga (apagava chip recém-ligado) e o texto digitado podia sumir quando a URL anterior chegava; tocar na tela atual não fechava a gaveta; o foco ia para um botão oculto quando a gaveta fechava por a tela crescer; ids de grupo repetidos entre a barra real e a cópia da demonstração. Cada um com teste.
+- **Fica para a Fase 3 (autorização):** as telas e as páginas de módulo não conferem a visibilidade do perfil quando se digita a URL (hoje o perfil é sempre Administrador). A regra 5 do CLAUDE.md (RLS no banco) é o que garante; a navegação só esconde. A Fase 3 acrescenta a conferência na rota, com 404.
+- **Aceito por ora:** com a gaveta aberta, Ctrl+K ainda abre a busca e o link "Pular para o conteúdo" fica fora da área inerte; o estado da barra não acompanha outra aba aberta (sem evento `storage`); Gestor de frota e Operacional veem "Nenhuma tela disponível" até haver telas prontas para eles (provisório, a Fase 3 define o que cada perfil vê); a maior parte do comportamento da barra e da gaveta é provada por e2e, não por teste de unidade (a renderização no servidor não lê o armazenamento nem o `matchMedia`).
+- **Quem decidiu:** Alexandre aprovou o checkpoint F; os itens acima são proposta de Claude para revisão no PR.
+
+---
+
+## 29/10/2026 — Fase 2B, Tarefa 8: casca para tablet e celular
+
+- **Decisão:**
+  - **Gaveta abaixo de 1024 px.** A barra lateral vira uma gaveta (`role="dialog"`, "Menu do sistema") aberta pelo botão "Abrir menu" do topo. Fecha com "Fechar menu", Esc, toque no fundo e ao mudar de tela; o foco volta ao "Abrir menu". Com ela aberta, topo e conteúdo ficam `inert`.
+  - **Modo compacto só no computador.** O compacto guardado vale a partir de 1024 px; na gaveta o menu é sempre inteiro (a busca do menu precisa de espaço).
+  - **Contexto recolhido.** Abaixo de 1024 px o período, a filial, a operação e o regime ficam atrás do botão "Contexto" (só o ícone no celular). Trilha, busca rápida e tema continuam no topo.
+  - **Aviso de dispositivo.** No celular (abaixo de 768 px), tela que o catálogo não marca para celular mostra "Esta tela funciona melhor em um computador." Só avisa: a tela continua utilizável. No tablet nenhuma tela avisa.
+  - **Testes por dispositivo.** Projetos Playwright `tablet-820` (820 × 1180, toque) e `celular-390` (390 × 844); rodam só `e2e/casca.spec.ts`, que confere ausência de rolagem horizontal em 9 telas, a gaveta, o contexto recolhido e o aviso.
+- **Ordem no celular:** o contexto aberto aparece logo abaixo do botão "Contexto", antes da busca e do tema, e o HTML tem a mesma ordem; foco (Tab) e leitura de tela coincidem com o que se vê. A trilha pode quebrar em duas linhas no celular: aceito.
+- **Motivo:** o CLAUDE.md define 1366 e 1920 como telas de referência, mas Pátio, Totem, Carteira, Tarefas e Status diário precisam funcionar no celular.
+- **Alternativas descartadas:** barra lateral sempre compacta no tablet; contexto sempre visível em duas linhas no celular.
+- **Quem decidiu:** Alexandre (gaveta abaixo de 1024 px e contexto recolhido, no checkpoint C); detalhes: Claude, para revisão no checkpoint F.
+
+---
+
+## 29/10/2026 — Dados de exemplo até o Acompanhamento da Frota ficar pronto
+
+- **Decisão:**
+  - **Construir com dados de exemplo** até o Acompanhamento da Frota ficar pronto. Só depois vêm o **Supabase Pro**, a **análise da v1** e a **importação**.
+  - Os dados de exemplo ficam em **`lib/exemplo/`**, com **placas fictícias** (`AAA0A00` em diante), **na mesma forma do modelo futuro**: placa única, composição com vigência, gestor, CR e status por evento.
+  - Eles incluem **casos feios, de propósito**: modelo "A DEFINIR", cavalo com dois CRs, implemento solto há muitos dias, composição sem motorista e documento vencido.
+  - **Nunca são importados fora de desenvolvimento e testes.**
+- **Motivo:** ver e testar o Acompanhamento com dados parecidos com os de verdade (inclusive os ruins que a lista de saneamento da v1 já mostrou) sem depender do banco de produção, do plano Pro nem da importação.
+- **Relação com outras decisões:** mantém a regra de que o Supabase Pro e o backup são obrigatórios **antes** de importar dados reais da v1; só muda a ordem (Acompanhamento primeiro, importação depois).
+- **Ainda não feito:** `lib/exemplo/` não existe; nasce com a primeira função da Frota. Para o "nunca fora de desenvolvimento e testes" valer por ferramenta, e não só por combinado, o plano é um teste que barra qualquer importação de `lib/exemplo/` fora de testes, de telas de desenvolvimento e da própria pasta.
+- **Quem decidiu:** Alexandre.
+
+## 29/10/2026 — Busca rápida (Ctrl+K) e ações reservadas para a 2D (Fase 2B, Tarefa 7)
+
+- **Decisão:**
+  - **Ctrl+K** (⌘K no Mac) abre e fecha a busca rápida, também com o foco num campo de texto (é o atalho de busca do sistema). O botão **Buscar** do topo faz o mesmo. **Esc** fecha e devolve o foco a quem estava com ele. Digitar na janela não aciona Ctrl+B.
+  - **Lê só o catálogo:** telas, os **quatro modos do Acompanhamento** (Grade, Agora, Censo e Mapa, que abrem com `?modo=`) e ações. Sem acento nem maiúscula, e o nome que combina melhor vem primeiro.
+  - **Ações reservadas:** o catálogo ganhou `ACOES` com **Receber placa** (Operacional) e **Disponibilizar ao Operacional** (Frota), as duas em `em-breve`. Aparecem no grupo Ações para Administrador e Diretoria, **desabilitadas**, e escolher uma mostra "Esta ação chega com os assistentes (entrega 2D)." sem navegar. Quando a 2D entregar o wizard, a ação passa a `pronto` e executa.
+  - **Sem termo:** a janela mostra os **Fixados** (os da barra lateral) e os **Recentes** (as 5 últimas telas abertas, guardadas no navegador por usuário).
+  - **O contexto global acompanha a escolha** (período, filial, operação e regime).
+  - **Acessibilidade:** campo `combobox` ligado a uma lista `listbox` com grupos; as setas dão a volta nas pontas; Enter abre; a opção ativa é anunciada.
+- **Como:** o diálogo é o do base-ui, sem biblioteca nova (nada de `cmdk`). As regras (montar grupos, mover, recentes) são funções puras testadas à parte.
+- **Quem decidiu:** Alexandre aprovou o escopo; os detalhes acima foram escolhas da implementação.
+
+## 29/10/2026 — Topo, contexto global e layout de leitura (Fase 2B, Tarefa 6)
+
+- **Decisão:**
+  - **Contexto global na URL:** período (`?periodo=aaaa-mm`), filial, operação e regime ficam na URL; só vai para ela o que difere do padrão (mês de hoje em São Paulo, "todas", "todas", "gerencial"). Valor inválido volta ao padrão. Mudar o contexto usa `push`, então Voltar devolve o contexto anterior.
+  - **O contexto acompanha a pessoa:** os links da barra lateral, da trilha e das páginas de módulo (`/frota`, `/pessoas`...) levam o contexto da URL atual. Filtros da tela (busca, chips, modo) não vão junto.
+  - **Opções provisórias:** filial e operação só têm "Todas" e o regime só "Gerencial" até os cadastros chegarem (Fase 4).
+  - **Período com o campo de mês nativo do navegador** (`<input type="month">`). **Limitação conhecida: o Firefox para computador não tem seletor de mês**; lá o campo vira texto (`aaaa-mm`), que continua válido e funciona, só sem calendário. Chrome e Edge mostram o seletor. Aceito por Alexandre; se o Firefox virar requisito, o campo é trocado por um seletor próprio.
+  - **Trilha clicável** (Módulo › Tela › Modo) lida do catálogo; o módulo leva à primeira tela que o perfil abre.
+  - **Botão de tema** passou a viver no topo (saiu da página de demonstração).
+  - **Layout de leitura** (`PaginaDeLeitura`): título e ações → barra de consulta → KPIs → conteúdo, em largura total. A barra de consulta (busca, chips com contagem) guarda `?q=` e `?chip=` na URL; **Mais filtros e Visões salvas aparecem desabilitados** até a tabela (entrega 2C). Os KPIs recebem o valor já formatado pelos componentes de `components/formato/`.
+  - **Pular para o conteúdo** é o primeiro item do teclado, e o `main#conteudo` recebe o foco.
+  - **Contagem dos chips** usa `formatarInteiro` (separador de milhar), em `components/formato/`.
+- **Como:** o topo é calculado a cada acesso (o mês de hoje só existe na hora do pedido) dentro de um `Suspense`, e o resto da página continua pré-renderizado. Os links usam um `Suspense` próprio com o link comum como reserva, então o HTML do servidor não muda.
+- **Quem decidiu:** Alexandre aprovou o escopo; os detalhes acima foram escolhas da implementação.
+
+## 29/10/2026 — Catálogo da 2B aprovado, com o campo "modos" e rotas "lista"
+
+- **Decisão:**
+  - **Catálogo aprovado:** 9 módulos e 35 telas, como está em `docs/superpowers/plans/2026-10-29-fase-2b-esqueleto-de-navegacao.md`. Mapa do sistema fica `em-breve`. Celular só em Pátio, Totem, Carteira, Tarefas e Status diário; Acompanhamento e Ordens de carregamento em desktop e tablet.
+  - **Campo opcional `modos`** na tela: Frota › Acompanhamento tem Grade, Agora, Censo e Mapa (`?modo=grade|agora|censo|mapa` na URL). Os modos não são rotas, então a regra "nenhuma rota fora do catálogo" continua valendo. Um teste garante os quatro modos e que a busca (`Ctrl+K`) os encontre ("Frota › Acompanhamento › Mapa").
+  - **Rota "lista":** tela com o mesmo nome do módulo usa `lista`. `/operacoes/operacoes` vira `/operacoes/lista` e `/pessoas/pessoas` vira `/pessoas/lista`, como pediu Alexandre. Pela mesma regra, `/parceiros/parceiros` vira `/parceiros/lista` (aceito por Alexandre). Os nomes de módulos, telas e perfis não mudam.
+- **Motivo:** rotas como `/pessoas/pessoas` repetem o nome sem informar nada; os modos precisam ser achados e testados sem virar rota.
+- **Quem decidiu:** Alexandre.
+
 ## 29/10/2026 — Fase 2B: catálogo, rotas e contexto (respostas ao plano)
 
 - **Decisão:**

@@ -31,3 +31,8 @@ export function formatarKmPorLitro(n: number | null | undefined): string {
 export function formatarPercentual(pontos: number | null | undefined): string {
   return valido(pontos) ? `${umaCasa.format(pontos)}%` : "—";
 }
+
+/** Contagem: inteiro com separador de milhar (`1234` → `"1.234"`). */
+export function formatarInteiro(n: number | null | undefined): string {
+  return valido(n) ? semCasas.format(n) : "—";
+}
