@@ -8,6 +8,23 @@ Modelo de entrada:
 
 ---
 
+## 29/10/2026 — Lista de placas (2C-1): servidor dirige, porta única do exemplo, cookie validado
+
+- **Decisão:**
+  - **Abordagem B:** a página lê a URL (`q`, `chip`, `sigla`, `baixadas`, `ordem`, `pagina`, `tam`) e as preferências, valida com Zod e chama `listarPlacas()` em `lib/dados/`, que devolve só a página e os totais. O TanStack Table roda em modo manual (colunas, visibilidade, ordem das colunas); não pagina, ordena nem filtra.
+  - **Porta única do exemplo:** só `lib/dados/fonte-de-exemplo.ts` importa `lib/exemplo/` e ela lança erro a menos que `EIXO_DADOS=exemplo`. O teste de barramento libera apenas ela, os testes e `app/**/desenvolvimento/`.
+  - **`EIXO_DADOS` nunca é definida na Vercel nem em produção.** Vive em `.env.development` (comitado, sem segredo, só `pnpm dev`), no `webServer` do Playwright e no código da fonte. Um teste (`lib/qualidade/eixo-dados.test.ts`) barra a variável em configuração da Vercel, `.env.production`, workflows de deploy e fora dos arquivos liberados.
+  - **Preferências em cookie** (`eixo-tabela-placas`: tamanho da página, densidade, colunas e ordem), validadas na leitura (valor permitido, coluna existente) com padrão se inválido; gravadas no cliente por `document.cookie` (preferência visual, não é Server Action). No login (Fase 3) passam para o banco.
+  - **Contagem dos chips:** a de cada grupo ignora a seleção do próprio grupo e respeita a busca, os outros grupos e "inclui baixadas"; chip com zero fica apagado e, se selecionado, continua clicável.
+  - **Teto de 100 linhas** por página no servidor; **"inclui baixadas"** (VND e SUC) desligado por padrão. Padrões: 25 linhas (25, 50, 100), densidade compacta, ordem inicial por placa.
+  - **Colunas padrão:** Placa, Tipo, Modelo, Conjunto, Gestor, Operação, Situação (sigla e nome) e Alertas. No seletor, desligadas: KM, CR e valor FIPE. Em 1920 aparecem também Motorista, Filial e Dias na situação.
+  - **Chips por tipo de ativo** entram como segundo grupo (Tarefa 9).
+- **Motivo:** paginação, ordem e totais no servidor (CLAUDE.md, regra 7 e "Qualidade de interação"); trocar o exemplo pelo banco muda só `lib/dados/`.
+- **Alternativas descartadas:** lista toda no navegador (quebra a paginação no servidor); rota de API com TanStack Query (camada a mais, fica para atualização em tempo real).
+- **Quem decidiu:** Alexandre.
+
+---
+
 ## 29/10/2026 — Qualidade de interação: seis regras para toda tela a partir da 2C
 
 - **Decisão:** o CLAUDE.md ganha a seção "Qualidade de interação" (fechar é fechar; estado na URL; paginação no servidor; listagens; aproveitamento de tela; foco e teclado). Vale para toda tela a partir da Fase 2C. Cada regra tem teste automático nos componentes de base; o teste nasce com o componente que a regra protege, e a entrega só fecha com os testes aplicáveis passando. Complementa as "Armadilhas conhecidas" (regras 1 a 4 e 6 delas caem na tabela).
