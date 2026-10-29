@@ -30,10 +30,10 @@ O sistema se chama **TranSul Eixo**: feito para a TranSul, com identidade própr
 | Item | Definição |
 | --- | --- |
 | Nome | **TranSul Eixo** (no dia a dia, Eixo). A versão fica só interna |
-| Logotipo | Mini placa Mercosul com a faixa no azul da Frota e **EIXO** na placa; ao lado, o texto **TranSul Eixo** |
+| Logotipo | Mini placa Mercosul com a faixa na cor da Frota (índigo) e **EIXO** na placa; ao lado, o texto **TranSul Eixo** |
 | Ícone | A mini placa com a letra E (aba do navegador, barra recolhida, atalho no celular) |
 | Fonte | Barlow; Barlow Semi Condensed nas placas |
-| Cores dos módulos | Frota `#3D5AFE`, Operacional `#FF7A3D`, Operações `#7C5CFF`, Pessoas `#E8508A`, Parceiros `#13A8A4`, Resultados `#1FA971`, Cadastros e Administração `#64748B` |
+| Cores dos módulos | Frota `#4338CA`, Operacional `#FF7A3D`, Operações `#7C5CFF`, Pessoas `#E8508A`, Parceiros `#13A8A4`, Resultados `#1FA971`, Cadastros e Administração `#64748B` |
 | Status | Em atividade `#22A06B`, Atenção `#E8A317`, Impedida `#E5484D`, Pátio `#2E9BEA`, Fora `#8A94A6`. Etiquetas suaves nas telas, cor sólida no modo TV |
 | Base | Fundo `#F6F7FB`, superfícies brancas, texto `#0F1729`, linhas `#ECEEF4`. Azul de ação do Eixo `#3355FF` (botões e links). Modo escuro de primeira classe |
 | Regra das cores | Mesma intensidade em todas; cada cor tem versão forte (ícone, cabeçalho, botão) e suave (fundos). Cor de módulo diz onde você está; cor de status diz como está a placa |
