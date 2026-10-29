@@ -200,6 +200,22 @@ Doze fases, cada uma com uma entrega que você consegue ver funcionando e um cri
 
 As fases 7 e 8 podem trocar de ordem se a decisão do primeiro módulo mudar.
 
+## Alicerce e estratégia de entrega
+
+Decidido em 29/10/2026. **Alicerce completo primeiro, funções depois, uma por vez.** A estrutura total do sistema existe desde o início; o que ainda não foi construído aparece como "Em breve".
+
+- **Fase 2 em quatro entregas**, cada uma com branch, tela de demonstração e pull request: 2A base visual, 2B esqueleto de navegação, 2C dados (tabela, painel de espiar, ficha padrão) e 2D wizard. ECharts fica fora da Fase 2.
+- **Catálogo único de navegação** em `lib/navegacao/`: todos os módulos e telas (Início, Frota, Operacional, Operações, Pessoas, Parceiros, Resultados, Cadastros, Administração), cada tela com nome, ícone Tabler, cor do módulo, rota, módulo e ação de permissão e estado (`pronto`, `em-breve`, `restrito`). Barra lateral, Ctrl+K, trilha e rotas leem só esse catálogo.
+- **Um componente para tela não construída:** `TelaEmBreve` (nome, ícone, cor do módulo, uma linha do que a tela fará). Itens `em-breve` são visíveis só para Administrador e Diretoria.
+- **Teste de rotas:** toda rota do catálogo existe e abre; nenhuma rota existe fora do catálogo.
+- **Primeira função em uso:** Acompanhamento da Frota (Grade, Agora, Censo, Mapa), com Carteira e "Disponibilizar ao Operacional". Ordem depois: Pessoas/RH e Parceiros, Operacional, Operações e Resultados, ideias extras. Esta ordem substitui a ordem das fases 7 a 10 do roteiro acima; o conteúdo de cada fase continua valendo.
+- **Toda escrita usa o motor de wizard** (entrega 2D). Nenhuma tela de escrita nasce fora dele.
+- **Celular e tablet:** Pátio, totem, status diário, carteira e aprovação de casos entram no desenho desde a 2B.
+- **Glossário:** cada métrica entra em `docs/glossario.md` antes do código que a usa.
+- **Premissas:** SDo/DOC e MAv/MAN são status separados; as etapas do Operacional, registradas na hora e com lançamento retroativo, valem para o Acompanhamento da Frota; alçada de ajustes, documentos de agregados e sorteio ficam fora do primeiro módulo.
+- **Dados:** Supabase Pro e backup são obrigatórios antes de importar dados reais da v1. A Fase 3 (núcleo, vigência, RLS) usa o modelo mais forte.
+- **Backlog de ideias:** detector de abastecimento, multas com condutor, checklist com fotos, leitura de documentos, book da diretoria.
+
 ## Cronograma estimado
 
 Com uma pessoa construindo com o Claude Code, a Frota entra em uso por volta de 22/03/2027 e o sistema completo fica pronto por volta de agosto de 2027.
@@ -310,12 +326,13 @@ O plano gratuito da Vercel não permite uso comercial, e o gratuito do Supabase 
 Nenhuma destas trava as fases 0 a 3; cada uma tem uma premissa até ser decidida.
 
 - [ ] **Corte da competência**: resolvido em 29/10, regra gerencial confirmada (ver Competência gerencial).
-- [ ] **Primeiro módulo em uso**: Acompanhamento da Frota ou fechamento de Parceiros. Premissa: Frota.
-- [ ] **Telas para celular e tablet**. Premissa: Pátio, totem, Status diário, confirmação da Carteira e aprovação de casos.
-- [ ] **Documentos dos motoristas de agregados**. Premissa: controlados como os demais.
-- [ ] **Sorteio**. Premissa: mesma chance para todos os elegíveis, sem cupons extras.
-- [ ] **Etapas do Operacional**. Premissa: registradas na hora, com lançamento retroativo permitido.
-- [ ] **SDo/DOC e MAv/MAN**. Premissa: separados até confirmar se significam o mesmo.
+- [x] **Primeiro módulo em uso**: Acompanhamento da Frota (Grade, Agora, Censo, Mapa), com Carteira e "Disponibilizar ao Operacional". Decidido em 29/10/2026.
+- [x] **Telas para celular e tablet**: Pátio, totem, status diário, carteira e aprovação de casos entram no desenho desde a 2B. Decidido em 29/10/2026.
+- [ ] **Documentos dos motoristas de agregados**. Premissa: controlados como os demais. Fora do primeiro módulo.
+- [ ] **Sorteio**. Premissa: mesma chance para todos os elegíveis, sem cupons extras. Fora do primeiro módulo.
+- [ ] **Etapas do Operacional**. Premissa: registradas na hora, com lançamento retroativo permitido; vale para o Acompanhamento da Frota.
+- [x] **SDo/DOC e MAv/MAN**: são status separados. Decidido em 29/10/2026.
+- [ ] **Alçada de ajustes**. Fora do primeiro módulo.
 - [ ] **Logotipo e cores oficiais da TranSul**. Azul oficial da TranSul `#151F6D` e azul de ação do Eixo `#3355FF` definidos em 29/10/2026. Falta o arquivo vetorial oficial do símbolo; até lá, o logo em PNG provisório (`public/marca/`) fica isolado em `components/marca/assinatura-transul.tsx` e em `app/icon.svg`; o SVG oficial deve ser pedido à agência.
 - [ ] **Regras do Porto** (contratos, abatimentos e acréscimos): detalhar na fase 10 a partir do código da v1.
 
