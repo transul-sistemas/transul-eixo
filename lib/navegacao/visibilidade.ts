@@ -1,12 +1,12 @@
 import { CATALOGO, type IdDoModulo, type ModuloDoCatalogo, type Tela } from "./catalogo";
 import { MODULOS_POR_PERFIL, PERFIS_QUE_VEEM_EM_BREVE, type Perfil } from "./perfis";
 
-function temOModulo(perfil: Perfil, modulo: IdDoModulo): boolean {
+export function temOModulo(perfil: Perfil, modulo: IdDoModulo): boolean {
   const permitidos = MODULOS_POR_PERFIL[perfil];
   return permitidos === "todos" || permitidos.includes(modulo);
 }
 
-function veEmBreve(perfil: Perfil): boolean {
+export function veEmBreve(perfil: Perfil): boolean {
   return PERFIS_QUE_VEEM_EM_BREVE.includes(perfil);
 }
 

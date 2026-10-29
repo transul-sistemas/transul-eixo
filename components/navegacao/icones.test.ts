@@ -1,10 +1,15 @@
 import { describe, expect, it } from "vitest";
+import { ACOES } from "@/lib/navegacao/acoes";
 import { CATALOGO, todasAsTelas } from "@/lib/navegacao/catalogo";
 import { iconeDe } from "./icones";
 
 describe("iconeDe", () => {
   const nomes = [
-    ...new Set([...CATALOGO.map((m) => m.icone), ...todasAsTelas().map((t) => t.icone)]),
+    ...new Set([
+      ...CATALOGO.map((m) => m.icone),
+      ...todasAsTelas().map((t) => t.icone),
+      ...ACOES.map((a) => a.icone),
+    ]),
   ];
 
   it.each(nomes)("%s resolve para um componente do Tabler", (nome) => {

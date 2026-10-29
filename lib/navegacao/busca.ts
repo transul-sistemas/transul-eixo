@@ -56,11 +56,15 @@ function candidatos(perfil: Perfil, catalogo: readonly ModuloDoCatalogo[]): Cand
 }
 
 /** 0: o nome começa pelo que foi digitado; 1: uma palavra do nome começa; 2: o nome contém; 3: só o contexto. */
-function pontuar(candidato: Candidato, termo: string, primeiro: string): number {
-  if (candidato.alvo.startsWith(termo)) return 0;
-  if (candidato.alvo.split(" ").some((palavra) => palavra.startsWith(primeiro))) return 1;
-  if (candidato.alvo.includes(primeiro)) return 2;
+export function notaDoNome(alvo: string, termo: string, primeiro: string): number {
+  if (alvo.startsWith(termo)) return 0;
+  if (alvo.split(" ").some((palavra) => palavra.startsWith(primeiro))) return 1;
+  if (alvo.includes(primeiro)) return 2;
   return 3;
+}
+
+function pontuar(candidato: Candidato, termo: string, primeiro: string): number {
+  return notaDoNome(candidato.alvo, termo, primeiro);
 }
 
 /**
