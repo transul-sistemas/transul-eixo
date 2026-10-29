@@ -64,7 +64,13 @@ const CELULAS: Record<
   string,
   Pick<ColunaDeTabela<LinhaDePlaca>, "campoDeOrdem" | "celula" | "classe">
 > = {
-  placa: { campoDeOrdem: "placa", celula: (linha) => <Placa placa={linha.placa} tamanho="m" /> },
+  placa: {
+    campoDeOrdem: "placa",
+    // Na densidade compacta a mini placa é a menor: a linha cabe em ~34 px em vez de ~45.
+    celula: (linha, { densidade }) => (
+      <Placa placa={linha.placa} tamanho={densidade === "compacta" ? "p" : "m"} />
+    ),
+  },
   tipo: { campoDeOrdem: "tipo", celula: (linha) => NOMES_DOS_TIPOS[linha.tipo] },
   modelo: { campoDeOrdem: "modelo", celula: (linha) => linha.modelo },
   conjunto: { campoDeOrdem: "conjunto", celula: (linha) => <Conjunto linha={linha} /> },

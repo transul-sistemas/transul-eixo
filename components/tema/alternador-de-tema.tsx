@@ -5,17 +5,19 @@ import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 
 // O texto do botão não depende do tema, para não gerar diferença entre servidor e navegador.
-// No celular só o ícone aparece; o nome "Alternar tema" continua para quem usa leitor de tela.
+// Abaixo de 1536 px só o ícone aparece (o topo do 1366 já é apertado); o nome "Alternar tema"
+// continua para o leitor de tela e vira tooltip (`title`).
 export function AlternadorDeTema() {
   const { resolvedTheme, setTheme } = useTheme();
   return (
     <Button
       variant="outline"
+      title="Alternar tema"
       onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
-      className="max-lg:h-10 max-sm:w-10 max-sm:px-0"
+      className="max-2xl:w-9 max-2xl:px-0 max-lg:h-10 max-sm:w-10"
     >
-      <IconSunMoon aria-hidden className="sm:hidden" />
-      <span className="max-sm:sr-only">Alternar tema</span>
+      <IconSunMoon aria-hidden className="2xl:hidden" />
+      <span className="max-2xl:sr-only">Alternar tema</span>
     </Button>
   );
 }

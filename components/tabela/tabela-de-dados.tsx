@@ -11,7 +11,8 @@ export interface ColunaDeTabela<T extends object> {
   titulo: string;
   /** Campo do parâmetro `ordem`; sem ele, o cabeçalho não ordena. */
   campoDeOrdem?: string;
-  celula: (linha: T) => ReactNode;
+  /** `densidade` deixa a célula se ajustar (a Placa usa a mini placa menor na compacta). */
+  celula: (linha: T, contexto: { densidade: "compacta" | "confortavel" }) => ReactNode;
   /** Classes da coluna (alinhamento, largura). */
   classe?: string;
 }
@@ -55,11 +56,11 @@ export function TabelaDeDados<T extends object>({
         ajudante.display({
           id: coluna.id,
           header: coluna.titulo,
-          cell: ({ row }) => coluna.celula(row.original),
+          cell: ({ row }) => coluna.celula(row.original, { densidade }),
         }),
       ),
     );
-  }, [colunas]);
+  }, [colunas, densidade]);
 
   const tabela = useTable({
     features: funcoes,

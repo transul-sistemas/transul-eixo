@@ -3,7 +3,7 @@
 import { IconChevronLeft, IconChevronRight } from "@tabler/icons-react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import type { MouseEvent } from "react";
+import type { MouseEvent, ReactNode } from "react";
 import { formatarInteiro } from "@/components/formato/numero";
 import { mudarConsulta, type PadraoDaTabela } from "@/lib/navegacao/tabela";
 import { TAMANHOS_DE_PAGINA } from "@/lib/navegacao/preferencias-da-tabela";
@@ -20,6 +20,8 @@ interface Props {
   /** Os padrões e os campos de ordem da tabela, para o link da página não mexer no resto da URL. */
   padrao: PadraoDaTabela;
   campos: readonly string[];
+  /** Botões da lista (modo foco, colunas, densidade): ficam na mesma linha do resumo. */
+  ferramentas?: ReactNode;
 }
 
 /**
@@ -27,7 +29,16 @@ interface Props {
  * página (lembrado em cookie) e a troca de página. A página vai para a URL, então voltar e recarregar
  * devolvem à mesma página. Enquanto uma navegação está a caminho, os controles não aceitam clique.
  */
-export function Paginador({ pagina, paginas, total, tam, itens, padrao, campos }: Props) {
+export function Paginador({
+  pagina,
+  paginas,
+  total,
+  tam,
+  itens,
+  padrao,
+  campos,
+  ferramentas,
+}: Props) {
   const rota = usePathname();
   const parametros = useSearchParams();
   const router = useRouter();
@@ -103,15 +114,17 @@ export function Paginador({ pagina, paginas, total, tam, itens, padrao, campos }
   const temProxima = pagina < paginas;
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 text-sm">
+    <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 text-sm">
       <p data-testid="resumo-da-pagina" className="text-muted-foreground tabular-nums">
         Mostrando {formatarInteiro(primeiro)}–{formatarInteiro(ultimo)} de {formatarInteiro(total)}{" "}
         {itens}
       </p>
-      <div className="flex flex-wrap items-center gap-4">
+      <div className="flex flex-wrap items-center gap-3">
+        {ferramentas}
         <label className="text-muted-foreground flex items-center gap-2">
-          Linhas por página
+          Linhas
           <select
+            aria-label="Linhas por página"
             value={tam}
             disabled={ocupado || !lista}
             onChange={(evento) => aoMudarTamanho(Number(evento.target.value))}

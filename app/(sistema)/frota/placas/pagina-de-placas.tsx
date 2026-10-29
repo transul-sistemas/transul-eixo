@@ -138,14 +138,6 @@ export async function PaginaDePlacas({ searchParams }: { searchParams: Parametro
           <BarraDeConsultaDaPagina rotulo="Buscar placa" chips={chipsDaLista(pagina.contagens)} />
         }
       >
-        <div className="flex flex-wrap items-center justify-end gap-3">
-          <ModoFoco />
-          <SeletorDeColunas
-            definicoes={DEFINICOES_DAS_COLUNAS_DE_PLACAS}
-            titulos={TITULOS_DAS_COLUNAS_DE_PLACAS}
-          />
-          <DensidadeDaTabela />
-        </div>
         {pagina.total === 0 ? (
           filtrosAtivos ? (
             <ListaVazia
@@ -170,6 +162,16 @@ export async function PaginaDePlacas({ searchParams }: { searchParams: Parametro
           itens="placas"
           padrao={padrao}
           campos={CAMPOS_ORDENAVEIS_DE_PLACAS}
+          ferramentas={
+            <>
+              <ModoFoco />
+              <SeletorDeColunas
+                definicoes={DEFINICOES_DAS_COLUNAS_DE_PLACAS}
+                titulos={TITULOS_DAS_COLUNAS_DE_PLACAS}
+              />
+              <DensidadeDaTabela />
+            </>
+          }
         />
       </PaginaDeLeitura>
     </ProvedorDaLista>

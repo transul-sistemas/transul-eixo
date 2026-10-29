@@ -962,3 +962,104 @@ test.describe("lista de placas: modo foco", () => {
     await expect(entrar(page)).toBeVisible();
   });
 });
+
+test.describe("lista de placas: aproveitamento de tela", () => {
+  const caixa = (page: Page) => tabela(page).locator("xpath=..");
+  const linhasInteiras = (page: Page) =>
+    caixa(page).evaluate((c) => {
+      const cabecalho = (c.querySelector("thead") as HTMLElement).getBoundingClientRect();
+      const limite = c.getBoundingClientRect().bottom;
+      return [...c.querySelectorAll("tbody tr")].filter((tr) => {
+        const r = tr.getBoundingClientRect();
+        return r.top >= cabecalho.bottom - 1 && r.bottom <= limite + 1;
+      }).length;
+    });
+  const meioY = async (l: ReturnType<Page["locator"]>) => {
+    const b = await l.boundingBox();
+    return (b?.y ?? -999) + (b?.height ?? 0) / 2;
+  };
+
+  test("no 1366×768, densidade compacta, a tabela mostra pelo menos 9 linhas inteiras", async ({
+    page,
+  }, info) => {
+    test.skip(info.project.name !== "tela-1366", "o aceite é no 1366×768");
+    expect(page.viewportSize()).toEqual({ width: 1366, height: 768 });
+    await abrirHidratada(page, ROTA);
+    await expect(
+      page.getByRole("group", { name: "Densidade" }).getByRole("button", { name: "Compacta" }),
+    ).toHaveAttribute("aria-pressed", "true");
+    expect(await linhasInteiras(page)).toBeGreaterThanOrEqual(9);
+  });
+
+  test("em 1920 a tabela mostra ainda mais linhas (pelo menos 14)", async ({ page }, info) => {
+    test.skip(info.project.name !== "tela-1920", "só o 1920");
+    await abrirHidratada(page, ROTA);
+    expect(await linhasInteiras(page)).toBeGreaterThanOrEqual(14);
+  });
+
+  test("Mais filtros e Visões salvas ficam na linha da busca", async ({ page }) => {
+    await abrirHidratada(page, ROTA);
+    const busca = await meioY(consulta(page).getByRole("searchbox", { name: "Buscar placa" }));
+    for (const nome of ["Mais filtros", "Visões salvas"]) {
+      const y = await meioY(consulta(page).getByRole("button", { name: nome }));
+      expect(Math.abs(y - busca), nome).toBeLessThanOrEqual(6);
+    }
+  });
+
+  test("a descrição do título não aparece nas telas de lista (mas continua para leitor de tela)", async ({
+    page,
+  }) => {
+    await abrirHidratada(page, ROTA);
+    const descricao = page.getByText("Lista todas as placas e abre a ficha de cada uma.");
+    await expect(descricao).toHaveCount(1);
+    const caixaDaDescricao = await descricao.boundingBox();
+    expect((caixaDaDescricao?.width ?? 99) <= 2 && (caixaDaDescricao?.height ?? 99) <= 2).toBe(
+      true,
+    );
+  });
+
+  test("Modo foco, Colunas e Densidade ficam na linha da paginação, tudo numa linha só", async ({
+    page,
+  }) => {
+    await abrirHidratada(page, ROTA);
+    const referencia = await meioY(resumo(page));
+    const itens = [
+      page.getByRole("button", { name: "Modo foco", exact: true }),
+      page.getByRole("button", { name: "Colunas" }),
+      page.getByRole("group", { name: "Densidade" }),
+      page.getByLabel("Linhas por página"),
+      page.getByRole("link", { name: "Próxima página" }),
+    ];
+    for (const item of itens) {
+      expect(Math.abs((await meioY(item)) - referencia)).toBeLessThanOrEqual(8);
+    }
+  });
+
+  test("o botão de tema é só o ícone abaixo de 1536 px, com nome e tooltip; em 1920 mostra o texto", async ({
+    page,
+  }, info) => {
+    await abrirHidratada(page, ROTA);
+    const tema = page.locator("header").getByRole("button", { name: "Alternar tema" });
+    await expect(tema).toHaveAttribute("title", "Alternar tema");
+    const largura = (await tema.boundingBox())?.width ?? 0;
+    if (info.project.name === "tela-1920") expect(largura).toBeGreaterThan(80);
+    else expect(largura).toBeLessThanOrEqual(44);
+  });
+
+  test("no 1366 o topo cabe em duas linhas", async ({ page }, info) => {
+    test.skip(info.project.name !== "tela-1366", "só o 1366 é estreito");
+    await abrirHidratada(page, ROTA);
+    const altura = (await page.locator("header").boundingBox())?.height ?? 999;
+    expect(altura).toBeLessThanOrEqual(95);
+  });
+
+  test("a barra de consulta continua funcionando com o novo arranjo", async ({ page }) => {
+    await abrirHidratada(page, ROTA);
+    await busca(page).fill("AAA0A1");
+    await expect(page).toHaveURL(/q=AAA0A1/);
+    await consulta(page).getByRole("button", { name: "Limpar filtros" }).click();
+    await expect(page).not.toHaveURL(/q=/);
+    await chip(page, "Pátio").click();
+    await expect(page).toHaveURL(/chip=patio/);
+  });
+});

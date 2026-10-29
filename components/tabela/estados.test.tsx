@@ -1,5 +1,5 @@
 import { renderToStaticMarkup } from "react-dom/server";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { BarraDeConsulta } from "@/components/layout/barra-de-consulta";
 import { EsqueletoDaTabela, ErroDeCarregamento, ListaVazia } from "./estados";
 
@@ -168,5 +168,60 @@ describe("chips em grupos com rótulo", () => {
     );
     expect(semGrupo).not.toMatch(/aria-label="Situação"|aria-label="Tipo"/);
     expect(semGrupo).toContain("Primeiro");
+  });
+});
+
+describe("barra de consulta: a busca e as ações na mesma linha, os chips embaixo", () => {
+  const chips = [
+    { id: "a", nome: "Primeiro", contagem: 1, grupo: "Situação" },
+    { id: "c", nome: "Terceiro", contagem: 3, grupo: "Tipo" },
+  ];
+  const html = renderToStaticMarkup(
+    <BarraDeConsulta rotulo="Buscar" chips={chips} parametros={new URLSearchParams()} />,
+  );
+  it("na ordem do HTML (que é a da tela): busca, Mais filtros, Visões salvas, e só então os chips", () => {
+    const busca = html.indexOf('type="search"');
+    const mais = html.indexOf("Mais filtros");
+    const visoes = html.indexOf("Visões salvas");
+    const filtros = html.indexOf('aria-label="Filtros rápidos"');
+    expect(busca).toBeGreaterThan(-1);
+    expect(busca).toBeLessThan(mais);
+    expect(mais).toBeLessThan(visoes);
+    expect(visoes).toBeLessThan(filtros);
+  });
+  it("os chips ocupam a linha toda, abaixo da busca", () => {
+    expect(html).toMatch(/aria-label="Filtros rápidos"[^>]*class="[^"]*w-full/);
+  });
+  it("as ações ficam à direita da linha da busca", () => {
+    expect(html).toMatch(/<div class="[^"]*ml-auto[^"]*">(?:(?!<\/div>)[\s\S])*Mais filtros/);
+  });
+});
+
+describe("barra de consulta: sem avisos do React (chaves, props)", () => {
+  const renderizar = (chips: { id: string; nome: string; contagem?: number; grupo?: string }[]) => {
+    const erros = vi.spyOn(console, "error").mockImplementation(() => {});
+    renderToStaticMarkup(
+      <BarraDeConsulta rotulo="Buscar" chips={chips} parametros={new URLSearchParams()} />,
+    );
+    const chamadas = erros.mock.calls.map((c) => String(c[0]));
+    erros.mockRestore();
+    return chamadas;
+  };
+  it("com grupos, cada chip tem a sua chave", () => {
+    expect(
+      renderizar([
+        { id: "a", nome: "A", contagem: 1, grupo: "Situação" },
+        { id: "b", nome: "B", contagem: 1, grupo: "Situação" },
+        { id: "c", nome: "C", contagem: 1, grupo: "Tipo" },
+      ]),
+    ).toEqual([]);
+  });
+  it("sem grupos, também", () => {
+    expect(
+      renderizar([
+        { id: "a", nome: "A" },
+        { id: "b", nome: "B" },
+      ]),
+    ).toEqual([]);
   });
 });

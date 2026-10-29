@@ -47,7 +47,12 @@ export function PaginaDeLeitura({
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex flex-col gap-1">
           <h1 className="text-3xl font-semibold tracking-tight">{titulo}</h1>
-          {descricao ? <p className="text-muted-foreground max-w-[62ch]">{descricao}</p> : null}
+          {descricao ? (
+            // Na lista a altura é preciosa: a descrição sai da vista, mas fica para o leitor de tela.
+            <p className={cn("text-muted-foreground max-w-[62ch]", lista && "sr-only")}>
+              {descricao}
+            </p>
+          ) : null}
         </div>
         {acoes ? (
           <div role="group" aria-label="Ações" className="flex flex-wrap items-center gap-2">

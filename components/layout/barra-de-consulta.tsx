@@ -67,6 +67,7 @@ export function BarraDeConsulta({
     const ligado = consulta.chips.includes(chip.id);
     return (
       <button
+        key={chip.id}
         type="button"
         aria-pressed={ligado}
         disabled={ocupada}
@@ -114,11 +115,30 @@ export function BarraDeConsulta({
         />
       </div>
 
+      <div className="ml-auto flex flex-wrap items-center gap-2">
+        {ativa ? (
+          <Button
+            variant="ghost"
+            disabled={ocupada}
+            onClick={() => ir({ busca: "", chips: [] }, false)}
+          >
+            Limpar filtros
+          </Button>
+        ) : null}
+        <Button variant="outline" disabled title="Entra com a tabela (entrega 2C)">
+          Mais filtros
+        </Button>
+        <Button variant="outline" disabled title="Entra com a tabela (entrega 2C)">
+          Visões salvas
+        </Button>
+      </div>
+
       <div
         role="group"
         aria-label="Filtros rápidos"
         className={cn(
-          "flex flex-wrap items-center",
+          // Ocupa a linha toda, embaixo da busca e das ações (a ordem do HTML é a da tela).
+          "flex w-full flex-wrap items-center",
           // Com grupos rotulados, a linha quebra entre os grupos; sem grupos, entre os chips.
           temGrupos ? "gap-x-5 gap-y-2" : "gap-1.5",
         )}
@@ -140,24 +160,6 @@ export function BarraDeConsulta({
             <Fragment key="sem-grupo">{botoes}</Fragment>
           );
         })}
-      </div>
-
-      <div className="ml-auto flex flex-wrap items-center gap-2">
-        {ativa ? (
-          <Button
-            variant="ghost"
-            disabled={ocupada}
-            onClick={() => ir({ busca: "", chips: [] }, false)}
-          >
-            Limpar filtros
-          </Button>
-        ) : null}
-        <Button variant="outline" disabled title="Entra com a tabela (entrega 2C)">
-          Mais filtros
-        </Button>
-        <Button variant="outline" disabled title="Entra com a tabela (entrega 2C)">
-          Visões salvas
-        </Button>
       </div>
     </div>
   );
