@@ -26,7 +26,6 @@ Projeto técnico completo: `docs/projeto-tecnico.md`. Em caso de dúvida, pergun
 - Uma branch por entrega. Nada entra na `main` sem pull request com lint, tipos, testes e verificador do Supabase sem alertas.
 - Pare e peça aprovação nos checkpoints de cada plano.
 - **Nunca** coloque senha, chave ou token em arquivo, commit, log ou conversa. Use `.env.local` (fora do Git) e as variáveis da Vercel e do Supabase. Mantenha `.env.example` atualizado, sem valores.
-- **Nunca** conecte ao Supabase da v1 (`oubrtcgtugeijbrxvblc`). A cópia da v1 é lida só localmente, em `importacao/`.
 - Na dúvida entre duas leituras de uma regra de negócio, pergunte.
 
 ## Stack
