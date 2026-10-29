@@ -13,6 +13,11 @@ Projeto técnico completo: `docs/projeto-tecnico.md`. Em caso de dúvida, pergun
 5. **Permissão = módulo × ação × escopo**, aplicada no banco por RLS. A chave mestra (`service_role`) só existe nos workers.
 6. **O padrão visual é garantido pela ferramenta.** Nada de cor, tamanho de fonte ou formato de número escrito à mão.
 7. **Nada de tabela crua, de backup ou de cache sem necessidade.** O banco entrega totais prontos; nenhuma tela soma linhas no navegador.
+8. **O Supabase local roda só no Docker, e a nuvem só é tocada por Alexandre.**
+   - Proibido `supabase link`, `supabase login`, `supabase db push` e qualquer comando que fale com projeto na nuvem.
+   - Proibido usar as ferramentas MCP do Supabase (`list_projects`, `execute_sql`, `apply_migration` etc.) sem pedido explícito de Alexandre.
+   - O projeto da v1 (`oubrtcgtugeijbrxvblc`) nunca é usado, nem para leitura.
+   - O link com o `eixo-prod` é feito por Alexandre, em outro momento.
 
 ## Como trabalhar
 
