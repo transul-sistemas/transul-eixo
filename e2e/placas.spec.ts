@@ -33,16 +33,7 @@ test.describe("lista de placas", () => {
   test("as colunas padrão estão no cabeçalho, e KM, CR e Valor FIPE não", async ({ page }) => {
     await abrirHidratada(page, ROTA);
     const cabecalho = tabela(page).locator("thead");
-    for (const nome of [
-      "Placa",
-      "Tipo",
-      "Modelo",
-      "Conjunto",
-      "Gestor",
-      "Operação",
-      "Situação",
-      "Alertas",
-    ]) {
+    for (const nome of ["Placa", "Tipo", "Modelo", "Gestor", "Operação", "Situação", "Alertas"]) {
       await expect(
         cabecalho.getByRole("columnheader", { name: new RegExp(`^${nome}`) }),
       ).toBeVisible();
@@ -52,6 +43,28 @@ test.describe("lista de placas", () => {
         cabecalho.getByRole("columnheader", { name: new RegExp(`^${nome}`) }),
       ).toHaveCount(0);
     }
+  });
+
+  test("Alertas vem logo depois de Situação e cabe sem rolagem lateral; Conjunto só em tela larga", async ({
+    page,
+  }, info) => {
+    await abrirHidratada(page, ROTA);
+    const nomes = (await tabela(page).locator("thead th").allTextContents()).map((n) => n.trim());
+    const situacao = nomes.findIndex((n) => n.startsWith("Situação"));
+    const alertas = nomes.findIndex((n) => n.startsWith("Alertas"));
+    expect(situacao).toBeGreaterThanOrEqual(0);
+    expect(alertas).toBe(situacao + 1);
+    const medidas = await tabela(page).evaluate((t) => {
+      const caixa = t.parentElement as HTMLElement;
+      return { rolagem: caixa.scrollWidth, visivel: caixa.clientWidth };
+    });
+    // a tabela inteira, com Alertas, cabe na largura: nada precisa rolar para o lado
+    expect(medidas.rolagem).toBeLessThanOrEqual(medidas.visivel);
+    const cabecalhoDeAlertas = tabela(page).getByRole("columnheader", { name: /^Alertas/ });
+    await expect(cabecalhoDeAlertas).toBeInViewport();
+    const conjunto = tabela(page).getByRole("columnheader", { name: /^Conjunto/ });
+    if (info.project.name === "tela-1920") await expect(conjunto).toBeVisible();
+    else await expect(conjunto).toBeHidden();
   });
 
   test("a situação mostra a sigla exata e o nome por extenso", async ({ page }) => {

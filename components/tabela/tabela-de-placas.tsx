@@ -72,6 +72,9 @@ const COLUNAS: readonly ColunaDeTabela<LinhaDePlaca>[] = [
     id: "conjunto",
     titulo: "Conjunto",
     campoDeOrdem: "conjunto",
+    // Só em tela larga (1700 px ou mais): no 1366 o espaço é de Situação e Alertas. Continua no
+    // seletor de colunas (Tarefa 9) para quem quiser vê-la em qualquer tela.
+    classe: "hidden min-[1700px]:table-cell",
     celula: (linha) => <Conjunto linha={linha} />,
   },
   { id: "gestor", titulo: "Gestor", campoDeOrdem: "gestor", celula: (linha) => linha.gestor },
