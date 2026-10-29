@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { contraste, distancia } from "./contraste";
+import { contraste, distancia, misturar } from "./contraste";
 
 const css = readFileSync("app/tokens.css", "utf-8");
 
@@ -112,5 +112,50 @@ describe("no tema escuro a Frota continua distinta da ação e de Operações", 
     expect(
       distancia(valor(".dark", "--modulo-frota"), valor(".dark", "--modulo-operacoes")),
     ).toBeGreaterThan(7);
+  });
+});
+
+describe("misturar", () => {
+  it("mistura meio a meio e respeita os extremos", () => {
+    expect(misturar("#000000", "#FFFFFF", 0.5)).toBe("#808080");
+    expect(misturar("#3355FF", "#FFFFFF", 1)).toBe("#3355FF");
+    expect(misturar("#3355FF", "#FFFFFF", 0)).toBe("#FFFFFF");
+  });
+});
+
+describe.each([":root", ".dark"])("texto vermelho do valor negativo em %s", (seletor) => {
+  const negativo = () => valor(seletor, "--texto-negativo");
+  it("tem 4,5:1 sobre o fundo e sobre a superfície", () => {
+    expect(contraste(negativo(), valor(seletor, "--fundo"))).toBeGreaterThanOrEqual(4.5);
+    expect(contraste(negativo(), valor(seletor, "--superficie"))).toBeGreaterThanOrEqual(4.5);
+  });
+  it("tem 4,5:1 sobre o próprio fundo avermelhado (botão de excluir)", () => {
+    const tinta = misturar(negativo(), valor(seletor, "--superficie"), 0.2);
+    expect(contraste(negativo(), tinta)).toBeGreaterThanOrEqual(4.5);
+  });
+});
+
+// A etiqueta usa --texto sobre o fundo suave: 14% da cor forte no claro e 22% no escuro.
+describe.each([
+  [":root", 0.14],
+  [".dark", 0.22],
+])("texto da etiqueta sobre os fundos suaves em %s", (seletor, proporcao) => {
+  const fortes = [
+    "--modulo-frota",
+    "--modulo-operacional",
+    "--modulo-operacoes",
+    "--modulo-pessoas",
+    "--modulo-parceiros",
+    "--modulo-resultados",
+    "--modulo-cadastros",
+    "--status-em-atividade",
+    "--status-atencao",
+    "--status-impedida",
+    "--status-patio",
+    "--status-fora",
+  ];
+  it.each(fortes)("%s", (nome) => {
+    const suave = misturar(valor(seletor, nome), valor(seletor, "--superficie"), proporcao);
+    expect(contraste(valor(seletor, "--texto"), suave)).toBeGreaterThanOrEqual(4.5);
   });
 });

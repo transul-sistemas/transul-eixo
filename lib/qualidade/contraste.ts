@@ -42,3 +42,14 @@ export function distancia(a: string, b: string): number {
   const [l2, a2, b2] = oklab(b);
   return 100 * Math.hypot(l1 - l2, a1 - a2, b1 - b2);
 }
+
+/** Mistura `a` com `b`: `proporcao` de `a` (0 a 1) sobre `b`, em sRGB, como `color-mix(in srgb, ...)`. */
+export function misturar(a: string, b: string, proporcao: number): string {
+  const canais = (hex: string) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
+  const [ca, cb] = [canais(a), canais(b)] as [number[], number[]];
+  const mistura = ca.map((x, i) => Math.round(x * proporcao + (cb[i] ?? 0) * (1 - proporcao)));
+  return `#${mistura
+    .map((c) => c.toString(16).padStart(2, "0"))
+    .join("")
+    .toUpperCase()}`;
+}

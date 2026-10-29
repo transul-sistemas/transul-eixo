@@ -48,6 +48,7 @@
   --color-superficie: var(--superficie);
   --color-texto: var(--texto);
   --color-texto-suave: var(--texto-suave);
+  --color-texto-negativo: var(--texto-negativo);
   --color-linha: var(--linha);
   --color-acao: var(--acao);
   --color-acao-texto: var(--acao-texto);
@@ -94,7 +95,7 @@
   --muted-foreground: var(--texto-suave);
   --accent: color-mix(in srgb, var(--texto) 6%, var(--superficie));
   --accent-foreground: var(--texto);
-  --destructive: var(--status-impedida);
+  --destructive: var(--texto-negativo);
   --border: var(--linha);
   --input: var(--linha);
   --ring: var(--acao);

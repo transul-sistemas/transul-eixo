@@ -12,7 +12,7 @@ describe("<Moeda>", () => {
   it("negativo é marcado e fica em vermelho", () => {
     const html = renderToStaticMarkup(<Moeda valor={-1234} />);
     expect(html).toContain("data-negativo");
-    expect(html).toContain("text-destructive");
+    expect(html).toContain("text-texto-negativo");
   });
   it("zero e menos zero não são negativos", () => {
     expect(renderToStaticMarkup(<Moeda valor={0} />)).not.toContain("data-negativo");

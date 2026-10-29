@@ -40,13 +40,16 @@ const nomes = [
   "--marca-transul",
   "--placa-fundo",
   "--placa-texto",
+  "--placa-faixa",
+  "--texto-negativo",
   ...modulos.flatMap((m) => [`--modulo-${m}`, `--modulo-${m}-suave`]),
   ...status.flatMap((s) => [`--status-${s}`, `--status-${s}-suave`]),
 ];
 
 describe("tokens do Eixo", () => {
-  it("define 34 tokens por tema", () => {
-    expect(nomes).toHaveLength(34);
+  it("cada tema declara exatamente os tokens da lista", () => {
+    expect(Object.keys(claro).sort()).toEqual([...nomes].sort());
+    expect(Object.keys(escuro).sort()).toEqual([...nomes].sort());
   });
   it.each(nomes)("%s existe no tema claro e no escuro", (nome) => {
     expect(claro[nome], `${nome} no :root`).toBeTruthy();
@@ -76,6 +79,8 @@ describe("valores do tema claro (CLAUDE.md; Frota em índigo desde 29/10)", () =
     "--marca-transul": "#151F6D",
     "--placa-fundo": "#FFFFFF",
     "--placa-texto": "#0F1729",
+    "--placa-faixa": "#4338CA",
+    "--texto-negativo": "#B91C1C",
   };
   it.each(Object.entries(esperados))("%s = %s", (nome, valor) => {
     expect(claro[nome]?.toUpperCase()).toBe(valor);
@@ -83,9 +88,12 @@ describe("valores do tema claro (CLAUDE.md; Frota em índigo desde 29/10)", () =
 });
 
 describe("a placa de veículo é clara nos dois temas", () => {
-  it.each(["--placa-fundo", "--placa-texto"])("%s é igual no claro e no escuro", (nome) => {
-    expect(escuro[nome]?.toUpperCase()).toBe(claro[nome]?.toUpperCase());
-  });
+  it.each(["--placa-fundo", "--placa-texto", "--placa-faixa"])(
+    "%s é igual no claro e no escuro",
+    (nome) => {
+      expect(escuro[nome]?.toUpperCase()).toBe(claro[nome]?.toUpperCase());
+    },
+  );
 });
 
 describe("mesma intensidade nos dois temas (exceto a Frota)", () => {

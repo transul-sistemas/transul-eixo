@@ -13,6 +13,7 @@
   --superficie: #ffffff;
   --texto: #0f1729;
   --texto-suave: #5a6478;
+  --texto-negativo: #b91c1c;
   --linha: #eceef4;
 
   /* ação e marca */
@@ -23,6 +24,7 @@
   /* placa de veículo: clara também no tema escuro */
   --placa-fundo: #ffffff;
   --placa-texto: #0f1729;
+  --placa-faixa: #4338ca;
 
   /* módulos: forte e suave */
   --modulo-frota: #4338ca;
@@ -63,6 +65,7 @@
   --superficie: #161c2e;
   --texto: #e8ecf6;
   --texto-suave: #9aa4ba;
+  --texto-negativo: #ff8a8f;
   --linha: #263049;
 
   /* ação e marca */
@@ -73,6 +76,7 @@
   /* placa de veículo: igual ao tema claro */
   --placa-fundo: #ffffff;
   --placa-texto: #0f1729;
+  --placa-faixa: #4338ca;
 
   /* módulos: mesma cor forte do tema claro, exceto a Frota, mais clara para a bolinha aparecer
      sobre a superfície escura (3:1). Suave mais presente sobre a superfície escura. */

@@ -48,15 +48,14 @@ for (const tema of ["light", "dark"] as const) {
       await expect(negativo).toBeVisible();
       const cores = await page.evaluate(() => {
         const negativo = document.querySelector("[data-negativo]");
-        const comum = [...document.querySelectorAll("span.tabular-nums")].find(
-          (el) => !el.hasAttribute("data-negativo"),
-        );
-        return [
-          negativo && getComputedStyle(negativo).color,
-          comum && getComputedStyle(comum).color,
-        ];
+        const sonda = document.createElement("span");
+        sonda.style.color = "var(--texto-negativo)";
+        document.body.append(sonda);
+        const esperada = getComputedStyle(sonda).color;
+        sonda.remove();
+        return [negativo && getComputedStyle(negativo).color, esperada];
       });
-      expect(cores[0]).not.toBe(cores[1]);
+      expect(cores[0]).toBe(cores[1]);
     });
 
     test("o campo de moeda preenche a partir dos centavos", async ({ page }) => {
@@ -88,9 +87,11 @@ for (const tema of ["light", "dark"] as const) {
       await page.goto(ROTA);
       const html = page.locator("html");
       const escuroAntes = tema === "dark";
-      await expect(html).toHaveClass(escuroAntes ? /dark/ : /^((?!dark).)*$/);
+      if (escuroAntes) await expect(html).toHaveClass(/dark/);
+      else await expect(html).not.toHaveClass(/dark/);
       await page.getByRole("button", { name: "Alternar tema" }).click();
-      await expect(html).toHaveClass(escuroAntes ? /^((?!dark).)*$/ : /dark/);
+      if (escuroAntes) await expect(html).not.toHaveClass(/dark/);
+      else await expect(html).toHaveClass(/dark/);
     });
 
     test("mostra o azul de ação e o da Frota lado a lado", async ({ page }) => {

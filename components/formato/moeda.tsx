@@ -21,7 +21,7 @@ export function Moeda({
   return (
     <span
       data-negativo={negativo ? "" : undefined}
-      className={cn("block text-right tabular-nums", negativo && "text-destructive", className)}
+      className={cn("block text-right tabular-nums", negativo && "text-texto-negativo", className)}
     >
       {formatarMoeda(valor)}
     </span>
