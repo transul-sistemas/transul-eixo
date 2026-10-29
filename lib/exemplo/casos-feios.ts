@@ -19,7 +19,7 @@ export const CASOS_FEIOS: Record<string, CasoFeio> = {
   AAA0A03: {
     descricao: 'Modelo "A DEFINIR"',
     alerta: "modelo-a-definir",
-    ajustar: (p) => ({ ...p, modelo: "A DEFINIR" }),
+    ajustar: (p) => ({ ...p, modelo: "A DEFINIR", sigla: "DOp" }),
   },
   AAA0A05: {
     descricao: "Cavalo com dois CRs vigentes ao mesmo tempo",

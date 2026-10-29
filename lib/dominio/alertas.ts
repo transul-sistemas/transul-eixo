@@ -1,3 +1,4 @@
+import { diasEntre } from "./dias";
 import { type Sigla, grupoDaSigla } from "./status";
 
 export interface DadosParaAlertas {
@@ -24,14 +25,6 @@ export interface Alerta {
 
 /** Implemento sem cavalo por mais de 30 dias passa a ser alerta. */
 export const DIAS_DE_IMPLEMENTO_SOLTO = 30;
-
-const DIA_EM_MS = 86_400_000;
-
-function diasEntre(deData: string, ateData: string): number {
-  const a = Date.parse(`${deData.slice(0, 10)}T00:00:00Z`);
-  const b = Date.parse(`${ateData.slice(0, 10)}T00:00:00Z`);
-  return Math.round((b - a) / DIA_EM_MS);
-}
 
 /** O que está errado ou fora do esperado numa placa, na ordem em que aparece na tela. */
 export function alertasDaPlaca(dados: DadosParaAlertas, hoje: string): Alerta[] {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { alertasDaPlaca } from "@/lib/dominio/alertas";
-import { SIGLAS } from "@/lib/dominio/status";
+import { SIGLAS, SIGLAS_DE_BAIXA } from "@/lib/dominio/status";
 import { CASOS_FEIOS } from "./casos-feios";
 import { placasDeExemplo } from "./placas";
 
@@ -68,6 +68,12 @@ describe("placas de exemplo: casos feios, de propósito", () => {
         placas.find((p) => p.placa === placa),
         placa,
       ).toBeDefined();
+    }
+  });
+  it("nenhum caso feio é baixada: todos aparecem na lista por padrão", () => {
+    for (const placa of Object.keys(CASOS_FEIOS)) {
+      const achada = placas.find((p) => p.placa === placa)!;
+      expect(SIGLAS_DE_BAIXA, placa).not.toContain(achada.sigla);
     }
   });
   it("há modelo A DEFINIR, CRLV vencido, cavalo sem motorista, implemento solto e CR sobreposto", () => {
