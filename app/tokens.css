@@ -74,8 +74,9 @@
   --placa-fundo: #ffffff;
   --placa-texto: #0f1729;
 
-  /* módulos: mesma cor forte do tema claro; suave mais presente sobre a superfície escura */
-  --modulo-frota: #4338ca;
+  /* módulos: mesma cor forte do tema claro, exceto a Frota, mais clara para a bolinha aparecer
+     sobre a superfície escura (3:1). Suave mais presente sobre a superfície escura. */
+  --modulo-frota: #5e54d8;
   --modulo-frota-suave: color-mix(in srgb, var(--modulo-frota) 22%, var(--superficie));
   --modulo-operacional: #ff7a3d;
   --modulo-operacional-suave: color-mix(in srgb, var(--modulo-operacional) 22%, var(--superficie));

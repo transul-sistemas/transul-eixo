@@ -88,9 +88,16 @@ describe("a placa de veículo é clara nos dois temas", () => {
   });
 });
 
-describe("mesma intensidade nos dois temas", () => {
-  const fortes = [...modulos.map((m) => `--modulo-${m}`), ...status.map((s) => `--status-${s}`)];
+describe("mesma intensidade nos dois temas (exceto a Frota)", () => {
+  const fortes = [
+    ...modulos.filter((m) => m !== "frota").map((m) => `--modulo-${m}`),
+    ...status.map((s) => `--status-${s}`),
+  ];
   it.each(fortes)("%s tem a mesma cor forte no claro e no escuro", (nome) => {
     expect(escuro[nome]?.toUpperCase()).toBe(claro[nome]?.toUpperCase());
+  });
+  it("a Frota é mais clara no escuro, para a bolinha aparecer", () => {
+    expect(claro["--modulo-frota"]?.toUpperCase()).toBe("#4338CA");
+    expect(escuro["--modulo-frota"]?.toUpperCase()).toBe("#5E54D8");
   });
 });

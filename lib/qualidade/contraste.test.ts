@@ -78,3 +78,39 @@ describe("a Frota não se confunde com o azul de ação", () => {
     ).toBeGreaterThan(9);
   });
 });
+
+describe("cor forte visível sobre a superfície escura (mínimo de 3:1)", () => {
+  const fortes = [
+    "--acao",
+    "--modulo-frota",
+    "--modulo-operacional",
+    "--modulo-operacoes",
+    "--modulo-pessoas",
+    "--modulo-parceiros",
+    "--modulo-resultados",
+    "--modulo-cadastros",
+    "--status-em-atividade",
+    "--status-atencao",
+    "--status-impedida",
+    "--status-patio",
+    "--status-fora",
+  ];
+  it.each(fortes)("%s", (nome) => {
+    expect(contraste(valor(".dark", nome), valor(".dark", "--superficie"))).toBeGreaterThanOrEqual(
+      3,
+    );
+  });
+});
+
+describe("no tema escuro a Frota continua distinta da ação e de Operações", () => {
+  it("longe do azul de ação", () => {
+    expect(distancia(valor(".dark", "--modulo-frota"), valor(".dark", "--acao"))).toBeGreaterThan(
+      7,
+    );
+  });
+  it("longe de Operações", () => {
+    expect(
+      distancia(valor(".dark", "--modulo-frota"), valor(".dark", "--modulo-operacoes")),
+    ).toBeGreaterThan(7);
+  });
+});
