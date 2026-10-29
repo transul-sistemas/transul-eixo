@@ -82,13 +82,13 @@ function chipsDaLista(contagens?: Record<string, number>) {
     ...STATUS.map((id) => ({
       id,
       nome: NOMES_DOS_CHIPS[id],
-      grupo: "situacao",
+      grupo: "Situação",
       ...(contagens ? { contagem: contagens[id] ?? 0 } : {}),
     })),
     ...TIPOS_DE_ATIVO.map((id) => ({
       id,
       nome: NOMES_DOS_TIPOS[id],
-      grupo: "tipo",
+      grupo: "Tipo",
       ...(contagens ? { contagem: contagens[id] ?? 0 } : {}),
     })),
   ];

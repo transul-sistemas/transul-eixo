@@ -73,12 +73,14 @@ export function SeletorDeColunas({ definicoes, titulos }: Props) {
       </Popover.Trigger>
       <Popover.Portal>
         <Popover.Positioner align="end" sideOffset={6} className="z-50">
-          <Popover.Popup className="border-border bg-popover text-popover-foreground flex max-h-[70vh] w-80 flex-col gap-2 overflow-auto rounded-xl border p-3 shadow-lg outline-none">
-            <Popover.Title className="text-sm font-semibold">Colunas</Popover.Title>
-            <Popover.Description className="text-muted-foreground text-xs">
-              Escolha o que aparece e a ordem. A escolha fica salva para você.
-            </Popover.Description>
-            <ul className="flex flex-col gap-0.5">
+          <Popover.Popup className="border-border bg-popover text-popover-foreground flex max-h-[85dvh] w-80 flex-col overflow-hidden rounded-xl border shadow-lg outline-none">
+            <div className="flex shrink-0 flex-col gap-1 p-3 pb-2">
+              <Popover.Title className="text-sm font-semibold">Colunas</Popover.Title>
+              <Popover.Description className="text-muted-foreground text-xs">
+                Escolha o que aparece e a ordem. A escolha fica salva para você.
+              </Popover.Description>
+            </div>
+            <ul className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto px-3">
               {ordem.map((id) => {
                 const definicao = porId.get(id) as DefinicaoDeColuna;
                 const titulo = titulos[id] ?? id;
@@ -123,13 +125,15 @@ export function SeletorDeColunas({ definicoes, titulos }: Props) {
                 );
               })}
             </ul>
-            <button
-              type="button"
-              onClick={() => aplicar(SEM_ESCOLHA_DE_COLUNAS)}
-              className="border-input hover:bg-muted focus-visible:ring-ring/50 mt-1 h-9 rounded-lg border px-3 text-sm outline-none focus-visible:ring-3"
-            >
-              Restaurar padrão
-            </button>
+            <div className="border-border bg-popover shrink-0 border-t p-3">
+              <button
+                type="button"
+                onClick={() => aplicar(SEM_ESCOLHA_DE_COLUNAS)}
+                className="border-input hover:bg-muted focus-visible:ring-ring/50 h-9 w-full rounded-lg border px-3 text-sm outline-none focus-visible:ring-3"
+              >
+                Restaurar padrão
+              </button>
+            </div>
           </Popover.Popup>
         </Popover.Positioner>
       </Popover.Portal>

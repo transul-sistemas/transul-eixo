@@ -60,6 +60,43 @@ export function BarraDeConsulta({
     aoNavegar?.(texto ? `${rota}?${texto}` : rota, substituir);
   }
 
+  const temGrupos = chips.some((chip) => chip.grupo);
+  const grupos = agruparChips(chips);
+
+  function renderizarChip(chip: ChipDeConsulta) {
+    const ligado = consulta.chips.includes(chip.id);
+    return (
+      <button
+        type="button"
+        aria-pressed={ligado}
+        disabled={ocupada}
+        // Zerado e desligado fica apagado, mas clicável; ligado continua normal para poder desligar.
+        data-zerado={chip.contagem === 0 && !ligado ? "true" : undefined}
+        onClick={() => ir({ ...consulta, chips: alternarChip(consulta.chips, chip.id) }, false)}
+        className={cn(
+          "focus-visible:ring-ring/50 flex h-8 items-center gap-1.5 rounded-full border px-3 text-sm outline-none focus-visible:ring-3",
+          chip.contagem === 0 && !ligado && "opacity-50",
+          ligado
+            ? "bg-primary text-primary-foreground border-transparent"
+            : "border-border bg-card hover:bg-muted",
+        )}
+      >
+        <span>{chip.nome}</span>
+        {chip.contagem !== undefined ? (
+          <span
+            data-contagem={chip.id}
+            className={cn(
+              "rounded-full px-1.5 text-xs leading-5 tabular-nums",
+              ligado ? "bg-primary-foreground/20" : "bg-muted text-muted-foreground",
+            )}
+          >
+            {formatarInteiro(chip.contagem)}
+          </span>
+        ) : null}
+      </button>
+    );
+  }
+
   return (
     <div role="search" aria-label="Consulta" className="flex flex-wrap items-center gap-2">
       <div className="relative max-sm:w-full">
@@ -80,47 +117,27 @@ export function BarraDeConsulta({
       <div
         role="group"
         aria-label="Filtros rápidos"
-        className="flex flex-wrap items-center gap-1.5"
+        className={cn(
+          "flex flex-wrap items-center",
+          // Com grupos rotulados, a linha quebra entre os grupos; sem grupos, entre os chips.
+          temGrupos ? "gap-x-5 gap-y-2" : "gap-1.5",
+        )}
       >
-        {chips.map((chip, i) => {
-          const ligado = consulta.chips.includes(chip.id);
-          const comecaGrupo = i > 0 && chips[i - 1]?.grupo !== chip.grupo;
-          return (
-            <Fragment key={chip.id}>
-              {comecaGrupo ? (
-                <span aria-hidden className="bg-border mx-1 h-5 w-px max-sm:hidden" />
-              ) : null}
-              <button
-                type="button"
-                aria-pressed={ligado}
-                disabled={ocupada}
-                // Zerado e desligado fica apagado, mas clicável; ligado continua normal para poder desligar.
-                data-zerado={chip.contagem === 0 && !ligado ? "true" : undefined}
-                onClick={() =>
-                  ir({ ...consulta, chips: alternarChip(consulta.chips, chip.id) }, false)
-                }
-                className={cn(
-                  "focus-visible:ring-ring/50 flex h-8 items-center gap-1.5 rounded-full border px-3 text-sm outline-none focus-visible:ring-3",
-                  chip.contagem === 0 && !ligado && "opacity-50",
-                  ligado
-                    ? "bg-primary text-primary-foreground border-transparent"
-                    : "border-border bg-card hover:bg-muted",
-                )}
-              >
-                <span>{chip.nome}</span>
-                {chip.contagem !== undefined ? (
-                  <span
-                    data-contagem={chip.id}
-                    className={cn(
-                      "rounded-full px-1.5 text-xs leading-5 tabular-nums",
-                      ligado ? "bg-primary-foreground/20" : "bg-muted text-muted-foreground",
-                    )}
-                  >
-                    {formatarInteiro(chip.contagem)}
-                  </span>
-                ) : null}
-              </button>
-            </Fragment>
+        {grupos.map((grupo) => {
+          const botoes = grupo.chips.map((chip) => renderizarChip(chip));
+          return grupo.rotulo ? (
+            <div
+              key={grupo.rotulo}
+              role="group"
+              aria-label={grupo.rotulo}
+              // Um grupo nunca quebra por dentro (no celular, onde não cabe, ele pode).
+              className="flex flex-wrap items-center gap-1.5 sm:flex-nowrap"
+            >
+              <span className="text-muted-foreground mr-0.5 text-xs">{grupo.rotulo}</span>
+              {botoes}
+            </div>
+          ) : (
+            <Fragment key="sem-grupo">{botoes}</Fragment>
           );
         })}
       </div>
@@ -144,6 +161,17 @@ export function BarraDeConsulta({
       </div>
     </div>
   );
+}
+
+/** Agrupa chips vizinhos do mesmo grupo, mantendo a ordem. Chips sem grupo ficam soltos. */
+function agruparChips(chips: readonly ChipDeConsulta[]) {
+  const grupos: { rotulo?: string; chips: ChipDeConsulta[] }[] = [];
+  for (const chip of chips) {
+    const ultimo = grupos.at(-1);
+    if (ultimo && ultimo.rotulo === chip.grupo) ultimo.chips.push(chip);
+    else grupos.push({ rotulo: chip.grupo, chips: [chip] });
+  }
+  return grupos;
 }
 
 const ESPERA_DA_BUSCA_MS = 250;

@@ -639,3 +639,106 @@ test.describe("lista de placas: chips por tipo de ativo", () => {
     }
   });
 });
+
+test.describe("lista de placas: grupos de chips com rótulo", () => {
+  const grupo = (page: Page, nome: string) =>
+    consulta(page).getByRole("group", { name: nome, exact: true });
+  const topos = async (page: Page, nome: string) =>
+    grupo(page, nome)
+      .getByRole("button")
+      .evaluateAll((botoes) => botoes.map((b) => Math.round(b.getBoundingClientRect().y)));
+
+  test("cada grupo tem o seu rótulo visível: Situação e Tipo", async ({ page }) => {
+    await abrirHidratada(page, ROTA);
+    await expect(grupo(page, "Situação")).toBeVisible();
+    await expect(grupo(page, "Tipo")).toBeVisible();
+    await expect(grupo(page, "Situação")).toContainText("Situação");
+    await expect(grupo(page, "Tipo")).toContainText("Tipo");
+    await expect(grupo(page, "Situação").getByRole("button")).toHaveCount(5);
+    await expect(grupo(page, "Tipo").getByRole("button")).toHaveCount(6);
+  });
+
+  test("a quebra de linha acontece entre os grupos, nunca dentro de um", async ({ page }) => {
+    await abrirHidratada(page, ROTA);
+    for (const nome of ["Situação", "Tipo"]) {
+      const ys = await topos(page, nome);
+      expect(new Set(ys).size, `chips de ${nome} em linhas diferentes: ${ys}`).toBe(1);
+    }
+    const situacao = await grupo(page, "Situação").boundingBox();
+    const tipo = await grupo(page, "Tipo").boundingBox();
+    expect(situacao && tipo).toBeTruthy();
+    // ou lado a lado (mesma linha) ou um embaixo do outro, mas nunca sobrepostos
+    const mesmaLinha = Math.abs((tipo?.y ?? 0) - (situacao?.y ?? 0)) < 4;
+    const embaixo = (tipo?.y ?? 0) >= (situacao?.y ?? 0) + (situacao?.height ?? 0) - 1;
+    expect(mesmaLinha || embaixo).toBe(true);
+  });
+
+  test("no 1366 os dois grupos não cabem juntos: o Tipo desce inteiro para a linha de baixo", async ({
+    page,
+  }, info) => {
+    test.skip(info.project.name !== "tela-1366", "só o 1366 é estreito para isso");
+    await abrirHidratada(page, ROTA);
+    const situacao = await grupo(page, "Situação").boundingBox();
+    const tipo = await grupo(page, "Tipo").boundingBox();
+    expect((tipo?.y ?? 0) > (situacao?.y ?? 0) + 10).toBe(true);
+  });
+
+  test("os filtros continuam funcionando com os grupos rotulados", async ({ page }) => {
+    await abrirHidratada(page, ROTA);
+    await grupo(page, "Tipo")
+      .getByRole("button", { name: /^Cavalo/ })
+      .click();
+    await expect(page).toHaveURL(/chip=cavalo/);
+    await grupo(page, "Situação")
+      .getByRole("button", { name: /^Pátio/ })
+      .click();
+    await expect(page).toHaveURL(/chip=patio/);
+  });
+});
+
+test.describe("lista de placas: menu Colunas com rodapé fixo", () => {
+  const botaoColunas = (page: Page) => page.getByRole("button", { name: "Colunas" });
+  const painel = (page: Page) => page.getByRole("dialog", { name: "Colunas" });
+
+  test("Restaurar padrão fica sempre à vista, sem rolar, e o menu usa até 85% da altura", async ({
+    page,
+  }) => {
+    await abrirHidratada(page, ROTA);
+    await botaoColunas(page).click();
+    await expect(painel(page)).toBeVisible();
+    const altura = page.viewportSize()?.height ?? 0;
+    const caixa = await painel(page).boundingBox();
+    expect(caixa?.height ?? 0).toBeLessThanOrEqual(altura * 0.85 + 1);
+    const restaurar = painel(page).getByRole("button", { name: "Restaurar padrão" });
+    await expect(restaurar).toBeInViewport({ ratio: 1 });
+    const rodape = await restaurar.boundingBox();
+    expect((rodape?.y ?? 0) + (rodape?.height ?? 0)).toBeLessThanOrEqual(
+      (caixa?.y ?? 0) + (caixa?.height ?? 0) + 1,
+    );
+  });
+
+  test("a lista de colunas rola por dentro: a última coluna fica ao alcance, e o rodapé não se mexe", async ({
+    page,
+  }, info) => {
+    test.skip(info.project.name !== "tela-1366", "no 1920 a lista inteira cabe sem rolar");
+    await abrirHidratada(page, ROTA);
+    await botaoColunas(page).click();
+    const restaurar = painel(page).getByRole("button", { name: "Restaurar padrão" });
+    const antes = await restaurar.boundingBox();
+    const ultima = painel(page).getByRole("checkbox", { name: "Valor FIPE", exact: true });
+    await ultima.scrollIntoViewIfNeeded();
+    await expect(ultima).toBeInViewport();
+    const depois = await restaurar.boundingBox();
+    expect(depois?.y).toBe(antes?.y);
+    await expect(restaurar).toBeInViewport({ ratio: 1 });
+  });
+
+  test("Restaurar padrão continua funcionando", async ({ page }) => {
+    await abrirHidratada(page, ROTA);
+    await botaoColunas(page).click();
+    await painel(page).getByRole("checkbox", { name: "KM", exact: true }).check();
+    await expect(tabela(page).getByRole("columnheader", { name: /^KM/ })).toBeVisible();
+    await painel(page).getByRole("button", { name: "Restaurar padrão" }).click();
+    await expect(tabela(page).getByRole("columnheader", { name: /^KM/ })).toHaveCount(0);
+  });
+});

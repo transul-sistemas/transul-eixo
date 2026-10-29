@@ -125,3 +125,48 @@ describe("barra de consulta ocupada (carregando)", () => {
     expect(desligado(botaoDe(html, "Limpar filtros"))).toBe(false);
   });
 });
+
+describe("chips em grupos com rótulo", () => {
+  const chips = [
+    { id: "a", nome: "Primeiro", contagem: 1, grupo: "Situação" },
+    { id: "b", nome: "Segundo", contagem: 2, grupo: "Situação" },
+    { id: "c", nome: "Terceiro", contagem: 3, grupo: "Tipo" },
+  ];
+  const html = renderToStaticMarkup(
+    <BarraDeConsulta rotulo="Buscar" chips={chips} parametros={new URLSearchParams()} />,
+  );
+
+  it("cada grupo é um grupo nomeado, com o rótulo visível", () => {
+    expect(html).toMatch(/role="group"[^>]*aria-label="Situação"/);
+    expect(html).toMatch(/role="group"[^>]*aria-label="Tipo"/);
+    expect(html).toMatch(/<span[^>]*>Situação<\/span>/);
+    expect(html).toMatch(/<span[^>]*>Tipo<\/span>/);
+  });
+  it("os chips ficam dentro do grupo certo", () => {
+    const iSituacao = html.indexOf('aria-label="Situação"');
+    const iTipo = html.indexOf('aria-label="Tipo"');
+    expect(iSituacao).toBeLessThan(html.indexOf("Primeiro"));
+    expect(html.indexOf("Segundo")).toBeLessThan(iTipo);
+    expect(iTipo).toBeLessThan(html.indexOf("Terceiro"));
+  });
+  it("o grupo não quebra por dentro (a quebra é entre os grupos), e o conjunto quebra", () => {
+    const grupo =
+      /<div[^>]*aria-label="Situação"[^>]*class="([^"]*)"|<div[^>]*class="([^"]*)"[^>]*aria-label="Situação"/.exec(
+        html,
+      );
+    const classes = grupo?.[1] ?? grupo?.[2] ?? "";
+    expect(classes).toContain("sm:flex-nowrap");
+    expect(html).toMatch(/aria-label="Filtros rápidos"[^>]*class="[^"]*flex-wrap/);
+  });
+  it("sem grupos (como na demonstração) não aparece rótulo nenhum", () => {
+    const semGrupo = renderToStaticMarkup(
+      <BarraDeConsulta
+        rotulo="Buscar"
+        chips={[{ id: "a", nome: "Primeiro", contagem: 1 }]}
+        parametros={new URLSearchParams()}
+      />,
+    );
+    expect(semGrupo).not.toMatch(/aria-label="Situação"|aria-label="Tipo"/);
+    expect(semGrupo).toContain("Primeiro");
+  });
+});
