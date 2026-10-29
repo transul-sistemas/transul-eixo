@@ -186,6 +186,9 @@ export function BarraLateral({
   const eraGaveta = useRef(false);
   const [termo, setTermo] = useState("");
   const [painel, setPainel] = useState<string | null>(null);
+  const ignorarFoco = useRef(false);
+  // A cópia da demonstração convive com a barra real na mesma página: ids não podem se repetir.
+  const prefixoDeId = incorporada ? "grupo-demonstracao" : "grupo";
 
   // Ao entrar numa tela, o grupo do módulo dela abre.
   useEffect(() => {
@@ -227,7 +230,9 @@ export function BarraLateral({
       botaoFechar.current?.focus();
     } else if (eraGaveta.current) {
       eraGaveta.current = false;
-      document.querySelector<HTMLElement>('[aria-controls="menu-principal"]')?.focus();
+      // Se a gaveta fechou porque a tela cresceu, o Abrir menu está oculto e não recebe foco.
+      const abrir = document.querySelector<HTMLElement>('[aria-controls="menu-principal"]');
+      if (abrir && abrir.getClientRects().length > 0) abrir.focus();
     }
   }, [emGaveta]);
 
@@ -273,8 +278,11 @@ export function BarraLateral({
 
   function aoTeclarNoModulo(evento: KeyboardEvent<HTMLLIElement>) {
     if (evento.key !== "Escape" || painel === null) return;
+    // Devolver o foco ao módulo dispara o onFocus do item, que reabriria o painel.
+    ignorarFoco.current = true;
     setPainel(null);
     (evento.currentTarget.firstElementChild as HTMLElement | null)?.focus();
+    ignorarFoco.current = false;
   }
 
   return (
@@ -291,6 +299,10 @@ export function BarraLateral({
         data-barra={incorporada ? "demonstracao" : "principal"}
         data-gaveta={incorporada ? undefined : emGaveta ? "aberta" : "fechada"}
         data-compacta={compacta ? "true" : "false"}
+        onClick={(evento) => {
+          // Tocar numa tela em que já se está não muda a rota, então a gaveta fecha aqui.
+          if (emGaveta && (evento.target as HTMLElement).closest("a")) gaveta.fechar();
+        }}
         role={emGaveta ? "dialog" : undefined}
         aria-modal={emGaveta ? true : undefined}
         aria-label={emGaveta ? "Menu do sistema" : undefined}
@@ -405,7 +417,7 @@ export function BarraLateral({
                         className="relative flex justify-center"
                         onMouseEnter={() => setPainel(modulo.id)}
                         onMouseLeave={() => setPainel(null)}
-                        onFocus={() => setPainel(modulo.id)}
+                        onFocus={() => !ignorarFoco.current && setPainel(modulo.id)}
                         onBlur={aoSairDoModulo}
                         onKeyDown={aoTeclarNoModulo}
                       >
@@ -454,7 +466,7 @@ export function BarraLateral({
                       <button
                         type="button"
                         aria-expanded={aberto}
-                        aria-controls={aberto ? `grupo-${modulo.id}` : undefined}
+                        aria-controls={aberto ? `${prefixoDeId}-${modulo.id}` : undefined}
                         onClick={() => loja.despachar({ tipo: "alternarGrupo", id: modulo.id })}
                         className={cn(
                           "hover:bg-sidebar-accent focus-visible:ring-ring flex w-full items-center gap-2.5 rounded-lg px-2 py-2 text-left outline-none focus-visible:ring-2 max-lg:py-2.5",
@@ -477,7 +489,7 @@ export function BarraLateral({
                       </button>
                       {aberto ? (
                         <ul
-                          id={`grupo-${modulo.id}`}
+                          id={`${prefixoDeId}-${modulo.id}`}
                           className="border-border mt-0.5 ml-4 flex flex-col gap-0.5 border-l pl-2"
                         >
                           {modulo.telas.map((tela) => itemDe(modulo, tela))}

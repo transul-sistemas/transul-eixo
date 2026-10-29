@@ -139,26 +139,45 @@ function Ligada(props: Pick<PropsVisuais, "rotulo" | "chips">) {
   // O que a pessoa digita aparece na hora; a URL acompanha depois de uma pausa.
   const [rascunho, setRascunho] = useState<string | undefined>(undefined);
   const [urlAnterior, setUrlAnterior] = useState(buscaDaUrl);
+  // Enquanto há texto digitado que a URL ainda não recebeu, a URL antiga não apaga o rascunho.
+  const [pendente, setPendente] = useState(false);
   if (urlAnterior !== buscaDaUrl) {
     setUrlAnterior(buscaDaUrl);
-    setRascunho(undefined);
+    if (!pendente) setRascunho(undefined);
   }
 
   const espera = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  // A pausa da busca lê a URL de quando dispara, não a de quando a pessoa começou a digitar.
+  const atuais = useRef(parametros);
+  useEffect(() => {
+    atuais.current = parametros;
+  });
   useEffect(() => () => clearTimeout(espera.current), []);
 
-  function aoNavegar(url: string, substituir: boolean) {
+  function navegar(url: string, substituir: boolean) {
     if (substituir) router.replace(url);
     else router.push(url);
   }
 
+  // Ação da barra (chip, limpar filtros): vale o que a pessoa acabou de escolher, e o que ainda
+  // esperava a pausa é descartado, para não desfazer a escolha depois.
+  function aoNavegar(url: string, substituir: boolean) {
+    clearTimeout(espera.current);
+    setPendente(false);
+    setRascunho(undefined);
+    navegar(url, substituir);
+  }
+
   function aoDigitar(texto: string) {
     setRascunho(texto);
+    setPendente(true);
     clearTimeout(espera.current);
     espera.current = setTimeout(() => {
-      const proxima = escreverConsulta(parametros, { ...lerConsulta(parametros), busca: texto });
+      const base = atuais.current;
+      const proxima = escreverConsulta(base, { ...lerConsulta(base), busca: texto });
       const resto = proxima.toString();
-      aoNavegar(resto ? `${rota}?${resto}` : rota, true);
+      setPendente(false);
+      navegar(resto ? `${rota}?${resto}` : rota, true);
     }, ESPERA_DA_BUSCA_MS);
   }
 

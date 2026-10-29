@@ -151,6 +151,19 @@ test.describe("barra lateral: modo compacto e Ctrl+B", () => {
     await expect(modulo).toBeFocused();
   });
 
+  test("Esc fecha o painel também com o foco num item de dentro dele", async ({ page }) => {
+    await abrir(page, "/inicio/tarefas");
+    await page.keyboard.press("Control+b");
+    const modulo = menu(page).getByRole("link", { name: "Frota", exact: true });
+    const painel = page.getByRole("group", { name: "Telas de Frota" });
+    await modulo.focus();
+    await page.keyboard.press("Tab");
+    await expect(painel.locator(":focus")).toHaveCount(1);
+    await page.keyboard.press("Escape");
+    await expect(painel).toBeHidden();
+    await expect(modulo).toBeFocused();
+  });
+
   test("no modo compacto, clicar no módulo leva à primeira tela dele", async ({ page }) => {
     await abrir(page, "/inicio/tarefas");
     await page.keyboard.press("Control+b");
@@ -240,8 +253,12 @@ test.describe("barra lateral: contadores (barra da página de demonstração)", 
     await expect(demo.locator('[data-contador="operacional"]')).toHaveText("12");
     await expect(demo.locator('[data-contador="pessoas"]')).toHaveText("99+");
     await demo.getByRole("button", { name: /^Frota/ }).click();
-    await expect(demo.locator('#grupo-frota [data-contador="frota.placas"]')).toHaveText("3");
-    await expect(demo.locator('#grupo-frota [data-contador="frota.carteira"]')).toHaveText("2");
+    await expect(
+      demo.locator('#grupo-demonstracao-frota [data-contador="frota.placas"]'),
+    ).toHaveText("3");
+    await expect(
+      demo.locator('#grupo-demonstracao-frota [data-contador="frota.carteira"]'),
+    ).toHaveText("2");
   });
 
   test("a barra da demonstração não grava memória nem responde a Ctrl+B", async ({ page }) => {

@@ -92,6 +92,16 @@ test.describe("casca pequena: gaveta do menu", () => {
     await expect(page.locator("[inert]")).toHaveCount(0);
   });
 
+  test("tocar na tela em que já está também fecha a gaveta", async ({ page }) => {
+    await abrirHidratada(page, "/inicio/tarefas");
+    await abrirMenu(page).click();
+    await gaveta(page)
+      .getByRole("link", { name: /^Tarefas/ })
+      .click();
+    await expect(page).toHaveURL(/\/inicio\/tarefas/);
+    await expect(gaveta(page)).toBeHidden();
+  });
+
   test("fecha com o botão Fechar menu e devolve o foco ao Abrir menu", async ({ page }) => {
     await abrirHidratada(page, "/inicio/tarefas");
     await abrirMenu(page).click();

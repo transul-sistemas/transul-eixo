@@ -8,6 +8,15 @@ Modelo de entrada:
 
 ---
 
+## 29/10/2026 — Fase 2B: revisão independente
+
+- **Corrigido na 2B:** Esc dentro do painel flutuante do modo compacto reabria o painel; a pausa da busca da barra de consulta usava a URL antiga (apagava chip recém-ligado) e o texto digitado podia sumir quando a URL anterior chegava; tocar na tela atual não fechava a gaveta; o foco ia para um botão oculto quando a gaveta fechava por a tela crescer; ids de grupo repetidos entre a barra real e a cópia da demonstração. Cada um com teste.
+- **Fica para a Fase 3 (autorização):** as telas e as páginas de módulo não conferem a visibilidade do perfil quando se digita a URL (hoje o perfil é sempre Administrador). A regra 5 do CLAUDE.md (RLS no banco) é o que garante; a navegação só esconde. A Fase 3 acrescenta a conferência na rota, com 404.
+- **Aceito por ora:** com a gaveta aberta, Ctrl+K ainda abre a busca e o link "Pular para o conteúdo" fica fora da área inerte; o estado da barra não acompanha outra aba aberta (sem evento `storage`); Gestor de frota e Operacional veem "Nenhuma tela disponível" até haver telas prontas para eles (provisório, a Fase 3 define o que cada perfil vê); a maior parte do comportamento da barra e da gaveta é provada por e2e, não por teste de unidade (a renderização no servidor não lê o armazenamento nem o `matchMedia`).
+- **Quem decidiu:** Alexandre aprovou o checkpoint F; os itens acima são proposta de Claude para revisão no PR.
+
+---
+
 ## 29/10/2026 — Fase 2B, Tarefa 8: casca para tablet e celular
 
 - **Decisão:**

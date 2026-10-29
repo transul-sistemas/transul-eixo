@@ -67,7 +67,45 @@ test.describe("layout de leitura (página de demonstração)", () => {
   });
 });
 
+test("a demonstração tem duas barras e nenhum id repetido", async ({ page }) => {
+  await abrirHidratada(page, ROTA);
+  for (const grupo of ["Início", "Frota"]) {
+    for (const barra of ["principal", "demonstracao"]) {
+      const botao = page
+        .locator(`aside[data-barra="${barra}"]`)
+        .getByRole("button", { name: new RegExp(`^${grupo}`) });
+      if ((await botao.getAttribute("aria-expanded")) === "false") await botao.click();
+    }
+  }
+  const repetidos = await page.evaluate(() => {
+    const vistos = new Map<string, number>();
+    for (const e of document.querySelectorAll("[id]")) {
+      vistos.set(e.id, (vistos.get(e.id) ?? 0) + 1);
+    }
+    return [...vistos].filter(([, n]) => n > 1).map(([id]) => id);
+  });
+  expect(repetidos).toEqual([]);
+});
+
 test.describe("barra de consulta na URL", () => {
+  test("clicar num chip logo depois de digitar não perde o chip", async ({ page }) => {
+    await abrirHidratada(page, ROTA);
+    await busca(page).fill("ab");
+    await chip(page, "Atenção").click();
+    await page.waitForTimeout(700);
+    await expect(page).toHaveURL(/chip=atencao/);
+    await expect(chip(page, "Atenção")).toHaveAttribute("aria-pressed", "true");
+  });
+
+  test("o que se digita não some quando a URL da busca anterior chega", async ({ page }) => {
+    await abrirHidratada(page, ROTA);
+    await busca(page).pressSequentially("ab", { delay: 5 });
+    await page.waitForTimeout(260);
+    await busca(page).pressSequentially("cd", { delay: 5 });
+    await expect(busca(page)).toHaveValue("abcd");
+    await expect(page).toHaveURL(/q=abcd/);
+  });
+
   test("ligar um chip põe na URL, e Voltar desliga", async ({ page }) => {
     await abrirHidratada(page, ROTA);
     await expect(chip(page, "Atenção")).toHaveAttribute("aria-pressed", "false");
