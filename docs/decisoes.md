@@ -8,6 +8,30 @@ Modelo de entrada:
 
 ---
 
+## 29/10/2026 — Símbolo provisório da TranSul isolado em dois lugares
+
+- **Decisão:** o símbolo da TranSul (provisório) existe só em `components/marca/simbolo-transul.tsx` e em `app/icon.svg`. O logotipo é a placa do Eixo com o símbolo dentro, "EIXO" embaixo, "TranSul Eixo" ao lado e a assinatura "para TranSul" em `#151F6D`. As placas de veículo continuam sem o símbolo. Quando chegar o arquivo vetorial oficial, a troca mexe só nesses dois arquivos.
+- **Motivo:** o arquivo oficial ainda não chegou (pendência do projeto técnico).
+- **Quem decidiu:** Alexandre.
+
+## 29/10/2026 — icon.svg com cores literais (exceção só para esse arquivo)
+
+- **Decisão:** `app/icon.svg` é o único arquivo `.svg` autorizado a ter cor literal. Nenhum outro `.svg` do projeto pode conter hexadecimal; um teste confere.
+- **Motivo:** o ícone da aba é um SVG estático, que não enxerga as variáveis CSS da página (os tokens).
+- **Quem decidiu:** Alexandre.
+
+## 29/10/2026 — Azuis do Eixo e da TranSul
+
+- **Decisão:** o azul oficial da TranSul é `#151F6D`, só na assinatura "para TranSul". O azul de ação do Eixo (botões e links) é `#3355FF`. O `#0B3D91` provisório foi removido do projeto técnico.
+- **Motivo:** substituir a premissa provisória pelas cores definidas.
+- **Quem decidiu:** Alexandre.
+
+## 29/10/2026 — Fase 2 em quatro entregas; ECharts fora da Fase 2
+
+- **Decisão:** 2A base visual; 2B esqueleto (barra lateral, topo, Ctrl+K, trilha, layout de leitura); 2C dados (tabela TanStack, painel de espiar, ficha padrão); 2D wizard (React Hook Form + Zod, stepper, resumo ao vivo, "+" em painel lateral, rascunho). Cada uma com branch, tela de demonstração e pull request próprios. ECharts fica fora da Fase 2.
+- **Motivo:** a Fase 2 do roteiro reúne vários projetos independentes.
+- **Quem decidiu:** Alexandre.
+
 ## 29/10/2026 — Projeto eixo-prod criado no Supabase, vazio e sem link até a Fase 3
 
 - **Decisão:**

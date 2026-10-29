@@ -35,7 +35,7 @@ O sistema se chama **TranSul Eixo**: feito para a TranSul, com identidade própr
 | Fonte | Barlow; Barlow Semi Condensed nas placas |
 | Cores dos módulos | Frota `#3D5AFE`, Operacional `#FF7A3D`, Operações `#7C5CFF`, Pessoas `#E8508A`, Parceiros `#13A8A4`, Resultados `#1FA971`, Cadastros e Administração `#64748B` |
 | Status | Em atividade `#22A06B`, Atenção `#E8A317`, Impedida `#E5484D`, Pátio `#2E9BEA`, Fora `#8A94A6`. Etiquetas suaves nas telas, cor sólida no modo TV |
-| Base | Fundo `#F6F7FB`, superfícies brancas, texto `#0F1729`, linhas `#ECEEF4`. Modo escuro de primeira classe |
+| Base | Fundo `#F6F7FB`, superfícies brancas, texto `#0F1729`, linhas `#ECEEF4`. Azul de ação do Eixo `#3355FF` (botões e links). Modo escuro de primeira classe |
 | Regra das cores | Mesma intensidade em todas; cada cor tem versão forte (ícone, cabeçalho, botão) e suave (fundos). Cor de módulo diz onde você está; cor de status diz como está a placa |
 | Marca TranSul | Azul oficial `#151F6D` só na assinatura "para TranSul" do login, PDFs e e-mails. Pendente: arquivo vetorial do símbolo |
 | Nomes técnicos | Repositório `transul-eixo`, Supabase `eixo-prod`, Vercel `eixo`, endereço `eixo.<domínio da TranSul>` |
@@ -316,7 +316,7 @@ Nenhuma destas trava as fases 0 a 3; cada uma tem uma premissa até ser decidida
 - [ ] **Sorteio**. Premissa: mesma chance para todos os elegíveis, sem cupons extras.
 - [ ] **Etapas do Operacional**. Premissa: registradas na hora, com lançamento retroativo permitido.
 - [ ] **SDo/DOC e MAv/MAN**. Premissa: separados até confirmar se significam o mesmo.
-- [ ] **Logotipo e cores oficiais da TranSul**. Premissa: azul de ação `#0B3D91` até receber a marca.
+- [ ] **Logotipo e cores oficiais da TranSul**. Azul oficial da TranSul `#151F6D` e azul de ação do Eixo `#3355FF` definidos em 29/10/2026. Falta o arquivo vetorial oficial do símbolo; até lá, o símbolo provisório fica isolado em `components/marca/simbolo-transul.tsx` e em `app/icon.svg`.
 - [ ] **Regras do Porto** (contratos, abatimentos e acréscimos): detalhar na fase 10 a partir do código da v1.
 
 **Pendências da v1, fora do projeto:** segunda cópia do backup no Drive, desligar os 12 workflows restantes no GitHub e avisar a equipe e a diretoria sobre a saída do ar em 01/11.
