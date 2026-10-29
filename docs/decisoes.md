@@ -8,6 +8,13 @@ Modelo de entrada:
 
 ---
 
+## 29/10/2026 — Ícones e fonte provisórios na Fase 1 (lucide e Geist), Tabler e Barlow na Fase 2
+
+- **Decisão:** o esqueleto da Fase 1 mantém o padrão do shadcn e do `create-next-app`: ícones **lucide** (`components.json`) e fonte **Geist** (`app/layout.tsx`). A Fase 2 troca para **Tabler** (ícones) e **Barlow** (fonte), como pede o `CLAUDE.md`, junto com os tokens do Eixo.
+- **Motivo:** a Fase 1 não define identidade visual; trocar agora seria trabalho jogado fora.
+- **Quem decidiu:** Alexandre.
+- **Observação:** o 2FA (MFA) do Supabase Auth e o cache dos navegadores do Playwright no CI também ficam para a Fase 2.
+
 ## 29/10/2026 — Repositório do GitHub deve ser criado como privado
 
 - **Decisão:** o repositório `transul-eixo` na organização `transul-sistemas` é criado como **privado**.
