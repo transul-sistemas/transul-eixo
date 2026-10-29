@@ -21,7 +21,7 @@
   --marca-transul: #151f6d;
 
   /* módulos: forte e suave */
-  --modulo-frota: #3d5afe;
+  --modulo-frota: #4338ca;
   --modulo-frota-suave: color-mix(in srgb, var(--modulo-frota) 14%, var(--superficie));
   --modulo-operacional: #ff7a3d;
   --modulo-operacional-suave: color-mix(in srgb, var(--modulo-operacional) 14%, var(--superficie));
@@ -67,7 +67,7 @@
   --marca-transul: #a9b6ff;
 
   /* módulos: mesma cor forte do tema claro; suave mais presente sobre a superfície escura */
-  --modulo-frota: #3d5afe;
+  --modulo-frota: #4338ca;
   --modulo-frota-suave: color-mix(in srgb, var(--modulo-frota) 22%, var(--superficie));
   --modulo-operacional: #ff7a3d;
   --modulo-operacional-suave: color-mix(in srgb, var(--modulo-operacional) 22%, var(--superficie));

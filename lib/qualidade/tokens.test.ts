@@ -52,9 +52,9 @@ describe("tokens do Eixo", () => {
   });
 });
 
-describe("valores do tema claro (CLAUDE.md)", () => {
+describe("valores do tema claro (CLAUDE.md; Frota em índigo desde 29/10)", () => {
   const esperados: Record<string, string> = {
-    "--modulo-frota": "#3D5AFE",
+    "--modulo-frota": "#4338CA",
     "--modulo-operacional": "#FF7A3D",
     "--modulo-operacoes": "#7C5CFF",
     "--modulo-pessoas": "#E8508A",

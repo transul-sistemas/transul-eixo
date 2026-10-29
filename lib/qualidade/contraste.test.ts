@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { contraste } from "./contraste";
+import { contraste, distancia } from "./contraste";
 
 const css = readFileSync("app/tokens.css", "utf-8");
 
@@ -41,5 +41,40 @@ describe.each([":root", ".dark"])("contraste mínimo de 4,5:1 em %s", (seletor) 
     expect(
       contraste(valor(seletor, "--acao-texto"), valor(seletor, "--acao")),
     ).toBeGreaterThanOrEqual(4.5);
+  });
+});
+
+// Regra de texto: a cor forte serve de bolinha, ícone e faixa. Texto branco sobre cor forte
+// (cabeçalho colorido) só onde o contraste passa; nas demais, o cabeçalho usa --texto.
+describe("texto branco sobre cor forte (cabeçalho colorido)", () => {
+  const passa: Record<string, boolean> = {
+    "--modulo-frota": true,
+    "--modulo-operacional": false,
+    "--modulo-operacoes": false,
+    "--modulo-pessoas": false,
+    "--modulo-parceiros": false,
+    "--modulo-resultados": false,
+    "--modulo-cadastros": true,
+    "--status-em-atividade": false,
+    "--status-atencao": false,
+    "--status-impedida": false,
+    "--status-patio": false,
+    "--status-fora": false,
+  };
+  it.each(Object.entries(passa))("%s: branco passa em 4,5:1 = %s", (nome, esperado) => {
+    expect(contraste("#FFFFFF", valor(":root", nome)) >= 4.5).toBe(esperado);
+  });
+});
+
+describe("a Frota não se confunde com o azul de ação", () => {
+  it("a cor da Frota está longe da cor de ação", () => {
+    expect(distancia(valor(":root", "--modulo-frota"), valor(":root", "--acao"))).toBeGreaterThan(
+      9,
+    );
+  });
+  it("a cor da Frota está longe da cor de Operações", () => {
+    expect(
+      distancia(valor(":root", "--modulo-frota"), valor(":root", "--modulo-operacoes")),
+    ).toBeGreaterThan(9);
   });
 });
