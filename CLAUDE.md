@@ -55,6 +55,25 @@ docs/           projeto técnico, glossário de métricas, registro de decisões
 - Sincronização incremental, só com as colunas usadas; log por 30 dias; autoconferência de contagem e total em R$ a cada execução.
 - Backups fora do banco. Nenhuma tabela `backup_*`.
 
+## Armadilhas conhecidas
+
+Cada regra tem teste automático. "Ativo" já roda em `lib/qualidade/armadilhas.test.ts`; os demais nascem junto com o código que a regra protege, e a fase só fecha com os testes aplicáveis passando. Detalhes e donos dos testes em `docs/decisoes.md`.
+
+1. Ordenação paginada sempre com desempate pela chave única.
+2. Atualizar a lista nunca volta à página 1; voltar da ficha devolve página e linha.
+3. "Selecionar todos" diz se vale para a página ou para o filtro; ação em lote devolve "X de Y".
+4. Todo carregamento trata carregando, vazio, erro e tentar de novo; busca digitada cancela a resposta anterior.
+5. Edição concorrente: coluna de versão e aviso "este registro mudou".
+6. Chave única no banco contra duplicata, além do botão bloqueado.
+7. Toda gravação confere o erro e devolve a linha.
+8. Toda Server Action valida a entrada (Zod) e confere permissão com `exigirPermissao()`. **Ativo.**
+9. Toda política RLS tem teste pgTAP com usuário de cada perfil, sempre com a chave do usuário, nunca com a `service_role`. **Ativo** (política sem teste; chave mestra fora de `workers/`).
+10. Função `SECURITY DEFINER` só com `-- justificativa:` registrada ao lado. **Ativo.**
+11. Toda gravação invalida o cache afetado.
+12. Intervalos de tempo sempre `[início, fim)`, com teste nos limites (corte do dia 10 e vigências).
+13. Índice em toda chave estrangeira e filtro; índice parcial para exclusão lógica (`excluido_em`). **Ativo.**
+14. Consultas pedem só as colunas necessárias (sem `select *` em `lib/dados/`). **Ativo.**
+
 ## Modelo de domínio (resumo)
 
 - **Raízes:** Pessoas (chave CPF), Frota (placa + RENAVAM; placa convertida para Mercosul é a mesma), Operações (operação e CR), Parceiros (CPF/CNPJ + CODPARC).

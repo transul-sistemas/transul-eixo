@@ -8,6 +8,36 @@ Modelo de entrada:
 
 ---
 
+## 29/10/2026 — Armadilhas conhecidas: 14 regras, cada uma com teste
+
+- **Decisão:** o CLAUDE.md ganha a seção "Armadilhas conhecidas" com 14 regras. Cada regra tem teste automático onde é possível; onde o código ainda não existe, o teste é **compromisso de entrega**: nasce junto com o código e a fase só fecha com os testes aplicáveis passando. A Fase 2C fecha assim.
+- **Motivo:** são erros que se repetem em sistemas de gestão e custam caro depois (lista que volta à página 1, duplicata, política sem teste, `service_role` vazando para o navegador).
+- **Alternativas descartadas:** só registrar as regras em texto; esperar a Fase 3 para pensar nelas.
+- **Quem decidiu:** Alexandre.
+
+| # | Regra | Teste | Situação |
+|---|-------|-------|----------|
+| 1 | Ordenação paginada com desempate pela chave única | Vitest em `lib/dados/` (consulta de página com empate) e pgTAP | Nasce com a primeira consulta paginada (2C) |
+| 2 | Atualizar não volta à página 1; voltar da ficha devolve página e linha | Playwright na tabela (2C): atualizar mantém a página; voltar da ficha mantém página e linha | Nasce com a tabela (2C) |
+| 3 | "Selecionar todos" diz página ou filtro; lote devolve "X de Y" | Vitest do resultado do lote e Playwright | Nasce com a seleção em lote (2C) |
+| 4 | Carregando, vazio, erro, tentar de novo; busca cancela a resposta anterior | Vitest com `AbortController` e Playwright com rede lenta e com falha | Nasce com o primeiro carregamento (2C) |
+| 5 | Coluna de versão e aviso "este registro mudou" | pgTAP (atualização com versão velha não grava) e Playwright | Nasce com a primeira tabela editável |
+| 6 | Chave única no banco além do botão bloqueado | pgTAP (`throws_ok` em duplicata) | Nasce com cada tabela com chave natural (placa, CPF) |
+| 7 | Toda gravação confere o erro e devolve a linha | Vitest: função única de gravação em `lib/dados/` rejeita erro e devolve a linha | Nasce com ela (Fase 3) |
+| 8 | Server Action valida (Zod) e confere permissão | **Ativo:** todo arquivo `"use server"` precisa de `parse`/`safeParse` e `exigirPermissao()` | Ativo (sem ação ainda: passa vazio) |
+| 9 | Política RLS testada por perfil, com a chave do usuário | **Ativo:** política sem teste pgTAP falha; `service_role` fora de `workers/` falha. Por perfil: pgTAP | Ativo para as duas verificações; por perfil nasce com cada política (Fase 3) |
+| 10 | `SECURITY DEFINER` só com justificativa | **Ativo:** exige `-- justificativa:` até 4 linhas ao redor | Ativo |
+| 11 | Gravação invalida o cache afetado | Vitest: cada ação chama `updateTag`/`revalidateTag` das suas etiquetas | Nasce com a primeira ação de gravação |
+| 12 | Intervalos `[início, fim)`, com limites testados | Vitest em `lib/dominio/` (vigência, corte do dia 10) e pgTAP com `EXCLUDE` e `tstzrange` | Nasce com `lib/dominio/vigencia` e `competencia` |
+| 13 | Índice em toda chave estrangeira e filtro; parcial para exclusão lógica | **Ativo:** chave estrangeira sem índice falha; `excluido_em` sem índice parcial falha. Filtro: revisão com `EXPLAIN` | Ativo para chave estrangeira e exclusão lógica |
+| 14 | Consultas pedem só as colunas necessárias | **Ativo:** `select *` em `lib/dados/` falha | Ativo |
+
+- **Como ler "Ativo":** `lib/qualidade/armadilhas.test.ts` prova cada verificação com um exemplo bom e um ruim e a aplica ao repositório. Hoje passa vazio (ainda não há tabela, política nem Server Action), e passa a barrar no primeiro caso que aparecer.
+- **Convenção fixada pela regra 8:** a conferência de permissão chama-se `exigirPermissao(módulo, ação)`; a Fase 3 a implementa.
+- **Limite honesto:** as verificações de SQL leem texto, não o banco. O verificador do Supabase e o pgTAP continuam sendo a prova final.
+
+---
+
 ## 29/10/2026 — Fase 2B: revisão independente
 
 - **Corrigido na 2B:** Esc dentro do painel flutuante do modo compacto reabria o painel; a pausa da busca da barra de consulta usava a URL antiga (apagava chip recém-ligado) e o texto digitado podia sumir quando a URL anterior chegava; tocar na tela atual não fechava a gaveta; o foco ia para um botão oculto quando a gaveta fechava por a tela crescer; ids de grupo repetidos entre a barra real e a cópia da demonstração. Cada um com teste.
@@ -79,6 +109,8 @@ Modelo de entrada:
   - **Rota "lista":** tela com o mesmo nome do módulo usa `lista`. `/operacoes/operacoes` vira `/operacoes/lista` e `/pessoas/pessoas` vira `/pessoas/lista`, como pediu Alexandre. Pela mesma regra, `/parceiros/parceiros` vira `/parceiros/lista` (aceito por Alexandre). Os nomes de módulos, telas e perfis não mudam.
 - **Motivo:** rotas como `/pessoas/pessoas` repetem o nome sem informar nada; os modos precisam ser achados e testados sem virar rota.
 - **Quem decidiu:** Alexandre.
+
+---
 
 ## 29/10/2026 — Fase 2B: catálogo, rotas e contexto (respostas ao plano)
 
