@@ -5,8 +5,9 @@ const nextConfig: NextConfig = {
   cacheComponents: true,
   partialPrefetching: true,
   // O indicador do Next em desenvolvimento fica no canto inferior esquerdo e cobriria o botão de
-  // recolher da barra lateral.
-  devIndicators: { position: "bottom-right" },
+  // recolher da barra lateral. Nos testes do Playwright (EIXO_TESTES=1) ele some, porque no celular
+  // emulado cai sobre botões do topo; o pnpm dev normal não muda.
+  devIndicators: process.env.EIXO_TESTES === "1" ? false : { position: "bottom-right" },
   turbopack: {
     rules: {
       "*.css": {
