@@ -46,8 +46,8 @@ const eslintConfig = defineConfig([
   ...nextTs,
   { rules: regrasDeFormato },
   { files: ["components/formato/**"], rules: { "no-restricted-syntax": "off" } },
-  // O teste das regras precisa de hex e toLocaleString como texto de exemplo.
-  { files: ["lib/qualidade/regras-lint.test.ts"], rules: { "no-restricted-syntax": "off" } },
+  // Os testes de qualidade precisam de hex e toLocaleString como dado de exemplo e esperado.
+  { files: ["lib/qualidade/*.test.ts"], rules: { "no-restricted-syntax": "off" } },
   prettier,
   globalIgnores([
     // Default ignores of eslint-config-next:
