@@ -23,6 +23,11 @@ describe("<Logotipo>", () => {
     expect(html).not.toContain("para");
     expect(html).toContain('data-recorte="simbolo"');
   });
+  it("a faixa da placa do logotipo usa o token da placa", () => {
+    const html = renderToStaticMarkup(<Logotipo />);
+    expect(html).toContain("var(--placa-faixa)");
+    expect(html).not.toContain("--modulo-");
+  });
   it("não leva cor escrita à mão", () => {
     expect(renderToStaticMarkup(<Logotipo />)).not.toContain("#");
   });

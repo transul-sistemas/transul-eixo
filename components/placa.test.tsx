@@ -23,6 +23,11 @@ describe("<Placa>", () => {
     );
     expect(new Set([p, m, g]).size).toBe(3);
   });
+  it("a faixa usa o token da placa, igual nos dois temas, e não a cor de um módulo", () => {
+    const html = renderToStaticMarkup(<Placa placa="ABC1D23" />);
+    expect(html).toContain("var(--placa-faixa)");
+    expect(html).not.toContain("--modulo-");
+  });
   it("não leva cor escrita à mão nem a assinatura da TranSul", () => {
     const html = renderToStaticMarkup(<Placa placa="ABC1D23" />);
     expect(html).not.toContain("#");

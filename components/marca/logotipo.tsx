@@ -11,7 +11,7 @@ function PlacaDoEixo() {
       style={estilo}
       className="flex h-12 w-16 shrink-0 flex-col overflow-hidden rounded-[5px] border border-[var(--placa-texto)]/25 bg-[var(--placa-fundo)] text-[var(--placa-texto)]"
     >
-      <span className="h-2.5 w-full bg-[var(--modulo-frota)]" />
+      <span className="h-2.5 w-full bg-[var(--placa-faixa)]" />
       <span className="flex flex-1 flex-col items-center justify-center gap-0.5">
         <AssinaturaTranSul apenasSimbolo className="h-4" />
         <span className="font-placa text-xs leading-none font-bold tracking-[0.2em]">EIXO</span>

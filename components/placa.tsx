@@ -30,7 +30,7 @@ export function Placa({
         className,
       )}
     >
-      <span aria-hidden className={cn("w-full bg-[var(--modulo-frota)]", faixa)} />
+      <span aria-hidden className={cn("w-full bg-[var(--placa-faixa)]", faixa)} />
       <span
         aria-hidden
         className={cn(
