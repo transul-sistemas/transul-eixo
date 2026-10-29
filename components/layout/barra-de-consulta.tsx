@@ -83,11 +83,14 @@ export function BarraDeConsulta({
               key={chip.id}
               type="button"
               aria-pressed={ligado}
+              // Zerado e desligado fica apagado, mas clicável; ligado continua normal para poder desligar.
+              data-zerado={chip.contagem === 0 && !ligado ? "true" : undefined}
               onClick={() =>
                 ir({ ...consulta, chips: alternarChip(consulta.chips, chip.id) }, false)
               }
               className={cn(
                 "focus-visible:ring-ring/50 flex h-8 items-center gap-1.5 rounded-full border px-3 text-sm outline-none focus-visible:ring-3",
+                chip.contagem === 0 && !ligado && "opacity-50",
                 ligado
                   ? "bg-primary text-primary-foreground border-transparent"
                   : "border-border bg-card hover:bg-muted",
