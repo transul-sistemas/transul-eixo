@@ -27,6 +27,8 @@ export function AssinaturaTranSul({
   const recorte = RECORTES[apenasSimbolo ? "simbolo" : "inteiro"];
   const estilo: CSSProperties = {
     aspectRatio: recorte.proporcao,
+    // No modo de alto contraste do Windows a cor da máscara não pode ser trocada pelo sistema.
+    forcedColorAdjust: "none",
     backgroundColor: "var(--cor-da-marca, var(--marca-transul))",
     maskImage: `url(${IMAGEM})`,
     WebkitMaskImage: `url(${IMAGEM})`,
