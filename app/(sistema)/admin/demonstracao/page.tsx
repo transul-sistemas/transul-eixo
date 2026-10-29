@@ -305,7 +305,7 @@ export default function Demonstracao() {
           titulo="Barra lateral"
           explicacao="A mesma barra do sistema, com contadores de exemplo. Esta cópia não grava memória nem responde a Ctrl+B; a de verdade está à esquerda da tela."
         >
-          <div className="max-w-64">
+          <div className="max-w-72">
             <BarraLateral
               incorporada
               perfil="Administrador"

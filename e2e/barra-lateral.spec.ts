@@ -73,6 +73,22 @@ test.describe("barra lateral: grupos", () => {
     await expect(grupo(page, "Pessoas")).toHaveAttribute("aria-expanded", "true");
   });
 
+  test("os nomes das telas cabem numa linha, sem ser cortados com reticências", async ({
+    page,
+  }) => {
+    await abrir(page, "/inicio/tarefas");
+    await grupo(page, "Frota").click();
+    for (const nome of ["Resumo do dia", "Mapa do sistema", "Acompanhamento", "Abastecimento"]) {
+      const texto = menu(page).getByText(nome, { exact: true }).first();
+      await expect(texto).toBeVisible();
+      const caixa = await texto.boundingBox();
+      // Uma linha de text-sm tem 20 px; duas linhas passariam de 30.
+      expect(caixa?.height, nome).toBeLessThan(26);
+      const cortado = await texto.evaluate((el) => el.scrollWidth > el.clientWidth);
+      expect(cortado, `${nome} está cortado`).toBe(false);
+    }
+  });
+
   test("telas em breve levam a etiqueta, e a Demonstração não", async ({ page }) => {
     await abrir(page, "/admin/demonstracao");
     const demo = menu(page).getByRole("link", { name: /^Demonstração/ });

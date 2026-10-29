@@ -92,7 +92,7 @@ function ItemDaTela({ modulo, tela, ativa, fixada, quantidade, aoFixar, aoNavega
   const conteudo = (
     <>
       <IconeDoCatalogo nome={tela.icone} className="size-4 shrink-0" />
-      <span className="flex-1 truncate">{tela.nome}</span>
+      <span className="min-w-0 flex-1 leading-tight">{tela.nome}</span>
       {tela.estado === "em-breve" ? (
         <span className="text-muted-foreground text-xs">Em breve</span>
       ) : null}
@@ -247,7 +247,7 @@ export function BarraLateral({
       className={cn(
         "border-border bg-sidebar text-sidebar-foreground flex shrink-0 flex-col text-sm",
         incorporada ? "h-[34rem] rounded-xl border" : "sticky top-0 h-screen border-r",
-        compacta ? "w-20" : "w-64",
+        compacta ? "w-20" : "w-72",
       )}
     >
       <div className={cn("flex h-16 shrink-0 items-center", compacta ? "justify-center" : "px-3")}>
