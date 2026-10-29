@@ -45,7 +45,7 @@ describe("rotas e catálogo", () => {
     (rota, id) => {
       expect(rotasDasPaginas).toContain(rota);
       const codigo = readFileSync(`app/(sistema)${rota}/page.tsx`, "utf-8");
-      expect(codigo).toContain(`irParaOModulo("${id}")`);
+      expect(codigo).toContain(`<IrParaOModulo modulo="${id}"`);
     },
   );
   it("não há duas páginas para a mesma rota", () => {

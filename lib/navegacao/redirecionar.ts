@@ -1,11 +1,17 @@
-import { notFound, redirect } from "next/navigation";
 import type { IdDoModulo } from "./catalogo";
-import { perfilAtual } from "./perfis";
+import { anexarContexto } from "./contexto";
+import type { Perfil } from "./perfis";
 import { rotaInicialDoModulo } from "./visibilidade";
 
-/** Página de um módulo (/frota, /pessoas...): leva à primeira tela visível ao perfil, ou 404. */
-export function irParaOModulo(modulo: IdDoModulo): never {
-  const rota = rotaInicialDoModulo(perfilAtual(), modulo);
-  if (!rota) notFound();
-  redirect(rota);
+/**
+ * Para onde /frota, /pessoas etc. levam: a primeira tela que o perfil abre, com o contexto global
+ * da URL (período, filial, operação, regime). Sem tela aberta, não há destino.
+ */
+export function destinoDoModulo(
+  perfil: Perfil,
+  modulo: IdDoModulo,
+  parametros: URLSearchParams,
+): string | undefined {
+  const rota = rotaInicialDoModulo(perfil, modulo);
+  return rota ? anexarContexto(rota, parametros) : undefined;
 }

@@ -1,5 +1,5 @@
-import { irParaOModulo } from "@/lib/navegacao/redirecionar";
+import { IrParaOModulo } from "@/components/navegacao/ir-para-o-modulo";
 
-export default function Modulo() {
-  return irParaOModulo("operacional");
+export default function Modulo({ searchParams }: PageProps<"/operacional">) {
+  return <IrParaOModulo modulo="operacional" searchParams={searchParams} />;
 }
