@@ -13,6 +13,12 @@ Projeto técnico completo: `docs/projeto-tecnico.md`. Em caso de dúvida, pergun
 5. **Permissão = módulo × ação × escopo**, aplicada no banco por RLS. A chave mestra (`service_role`) só existe nos workers.
 6. **O padrão visual é garantido pela ferramenta.** Nada de cor, tamanho de fonte ou formato de número escrito à mão.
 7. **Nada de tabela crua, de backup ou de cache sem necessidade.** O banco entrega totais prontos; nenhuma tela soma linhas no navegador.
+8. **O Supabase local roda só no Docker, e a nuvem só é tocada por Alexandre.**
+   - Proibido `supabase link`, `supabase login`, `supabase db push` e qualquer comando que fale com projeto na nuvem.
+   - Proibido usar as ferramentas MCP do Supabase (`list_projects`, `execute_sql`, `apply_migration` etc.) sem pedido explícito de Alexandre.
+   - O projeto da v1 (`oubrtcgtugeijbrxvblc`) nunca é usado, nem para leitura.
+   - Ler a cópia local da v1 em `importacao/` continua permitido. Conectar ao Supabase da v1 continua proibido.
+   - O link com o `eixo-prod` é feito por Alexandre, em outro momento.
 
 ## Como trabalhar
 
@@ -21,7 +27,6 @@ Projeto técnico completo: `docs/projeto-tecnico.md`. Em caso de dúvida, pergun
 - Uma branch por entrega. Nada entra na `main` sem pull request com lint, tipos, testes e verificador do Supabase sem alertas.
 - Pare e peça aprovação nos checkpoints de cada plano.
 - **Nunca** coloque senha, chave ou token em arquivo, commit, log ou conversa. Use `.env.local` (fora do Git) e as variáveis da Vercel e do Supabase. Mantenha `.env.example` atualizado, sem valores.
-- **Nunca** conecte ao Supabase da v1 (`oubrtcgtugeijbrxvblc`). A cópia da v1 é lida só localmente, em `importacao/`.
 - Na dúvida entre duas leituras de uma regra de negócio, pergunte.
 
 ## Stack

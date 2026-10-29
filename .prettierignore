@@ -1,0 +1,14 @@
+node_modules/
+.next/
+.agents/
+.claude/
+coverage/
+playwright-report/
+test-results/
+pnpm-lock.yaml
+skills-lock.json
+supabase/.temp/
+next-env.d.ts
+docs/
+CLAUDE.md
+AGENTS.md
