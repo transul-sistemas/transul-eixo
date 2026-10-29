@@ -5,6 +5,7 @@ import { BarraDeConsultaDaPagina } from "@/components/layout/barra-de-consulta";
 import { PaginaDeLeitura } from "@/components/layout/pagina-de-leitura";
 import { EsqueletoDaTabela, ListaVazia } from "@/components/tabela/estados";
 import { DensidadeDaTabela } from "@/components/tabela/densidade";
+import { MaisFiltrosDePlacas } from "@/components/tabela/mais-filtros";
 import { ModoFoco } from "@/components/tabela/modo-foco";
 import { Paginador } from "@/components/tabela/paginador";
 import { SeletorDeColunas } from "@/components/tabela/seletor-de-colunas";
@@ -22,6 +23,7 @@ import {
 } from "@/lib/dados/placas";
 import { NOMES_DOS_CHIPS } from "@/lib/dominio/status";
 import { acharTela } from "@/lib/navegacao/catalogo";
+import { dicaDoChipDeSituacao } from "@/lib/navegacao/filtros-avancados";
 import { lerPreferencias, NOME_DO_COOKIE_DE_PLACAS } from "@/lib/navegacao/preferencias-da-tabela";
 import {
   type ConsultaDeTabela,
@@ -84,6 +86,7 @@ function chipsDaLista(contagens?: Record<string, number>) {
       id,
       nome: NOMES_DOS_CHIPS[id],
       grupo: "Situação",
+      dica: dicaDoChipDeSituacao(id),
       ...(contagens ? { contagem: contagens[id] ?? 0 } : {}),
     })),
     ...TIPOS_DE_ATIVO.map((id) => ({
@@ -135,7 +138,14 @@ export async function PaginaDePlacas({ searchParams }: { searchParams: Parametro
         titulo={titulo}
         descricao={descricao}
         consulta={
-          <BarraDeConsultaDaPagina rotulo="Buscar placa" chips={chipsDaLista(pagina.contagens)} />
+          <BarraDeConsultaDaPagina
+            rotulo="Buscar placa"
+            chips={chipsDaLista(pagina.contagens)}
+            filtrosExtras={["sigla", "baixadas"]}
+            maisFiltros={
+              <MaisFiltrosDePlacas padrao={padrao} campos={CAMPOS_ORDENAVEIS_DE_PLACAS} />
+            }
+          />
         }
       >
         {pagina.total === 0 ? (

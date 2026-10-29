@@ -1063,3 +1063,183 @@ test.describe("lista de placas: aproveitamento de tela", () => {
     await expect(page).toHaveURL(/chip=patio/);
   });
 });
+
+test.describe("lista de placas: Mais filtros (sigla exata e inclui baixadas)", () => {
+  const abrirMais = async (page: Page) => {
+    await consulta(page)
+      .getByRole("button", { name: /^Mais filtros/ })
+      .click();
+    await expect(painelMais(page)).toBeVisible();
+  };
+  const painelMais = (page: Page) => page.getByRole("dialog", { name: "Mais filtros" });
+  const caixaSigla = (page: Page, rotulo: string) =>
+    painelMais(page).getByRole("checkbox", { name: rotulo, exact: true });
+  const baixadas = (page: Page) =>
+    painelMais(page).getByRole("checkbox", { name: /Inclui baixadas/ });
+
+  test("o botão está ligado, e Visões salvas continua desligado com a dica da próxima entrega", async ({
+    page,
+  }) => {
+    await abrirHidratada(page, ROTA);
+    await expect(consulta(page).getByRole("button", { name: /^Mais filtros/ })).toBeEnabled();
+    const visoes = consulta(page).getByRole("button", { name: "Visões salvas" });
+    await expect(visoes).toBeDisabled();
+    await expect(visoes).toHaveAttribute("title", "Entra na próxima entrega");
+  });
+
+  test("o painel lista as 26 siglas, com o nome por extenso, agrupadas pelo chip de origem", async ({
+    page,
+  }) => {
+    await abrirHidratada(page, ROTA);
+    await abrirMais(page);
+    await expect(painelMais(page).getByRole("checkbox")).toHaveCount(27); // 26 siglas + baixadas
+    for (const grupo of ["Em atividade", "Atenção", "Impedida", "Pátio", "Fora"]) {
+      await expect(painelMais(page).getByRole("group", { name: grupo, exact: true })).toBeVisible();
+    }
+    await expect(caixaSigla(page, "PÁT Pátio")).toBeVisible();
+    await expect(caixaSigla(page, "DOp Disponível no Operacional")).toBeVisible();
+    await expect(caixaSigla(page, "MAc Manutenção / carregado")).toBeVisible();
+    await expect(caixaSigla(page, "VND Vendido")).toBeVisible();
+    const pat = painelMais(page).getByRole("group", { name: "Pátio", exact: true });
+    await expect(pat.getByRole("checkbox")).toHaveCount(1);
+    const fora = painelMais(page).getByRole("group", { name: "Fora", exact: true });
+    await expect(fora.getByRole("checkbox")).toHaveCount(5);
+  });
+
+  test("o painel traz Inclui baixadas (VND e SUC), desligado por padrão", async ({ page }) => {
+    await abrirHidratada(page, ROTA);
+    await abrirMais(page);
+    await expect(baixadas(page)).not.toBeChecked();
+    await expect(baixadas(page)).toHaveAccessibleName(/VND e SUC/);
+  });
+
+  test("marcar PÁT filtra pela sigla exata, vai à URL e mostra o número no botão", async ({
+    page,
+  }) => {
+    await abrirHidratada(page, ROTA);
+    await abrirMais(page);
+    await caixaSigla(page, "PÁT Pátio").check();
+    await expect(page).toHaveURL(/sigla=P%C3%81T/);
+    await expect(consulta(page).getByRole("button", { name: /^Mais filtros/ })).toContainText("1");
+    for (const texto of await linhas(page).allTextContents()) expect(texto).toContain("PÁT");
+    await page.reload();
+    await abrirMais(page);
+    await expect(caixaSigla(page, "PÁT Pátio")).toBeChecked();
+  });
+
+  test("duas siglas valem OU, e a contagem dos chips acompanha", async ({ page }) => {
+    await abrirHidratada(page, ROTA);
+    await abrirMais(page);
+    await caixaSigla(page, "DOp Disponível no Operacional").check();
+    await caixaSigla(page, "ACe Aguardando carregamento").check();
+    await expect(page).toHaveURL(/sigla=DOp/);
+    await expect(page).toHaveURL(/sigla=ACe/);
+    const textos = await linhas(page).allTextContents();
+    expect(textos.length).toBeGreaterThan(0);
+    for (const t of textos) expect(/DOp|ACe/.test(t)).toBe(true);
+    await expect(consulta(page).getByRole("button", { name: /^Mais filtros/ })).toContainText("2");
+    // só o chip Em atividade tem o que contar
+    expect(await contagemDoChip(page, "patio")).toBe(0);
+    expect(await contagemDoChip(page, "em-atividade")).toBeGreaterThan(0);
+  });
+
+  test("a sigla combina em E com o chip: Fora com PÁT não acha nada, e Limpar filtros devolve a lista", async ({
+    page,
+  }) => {
+    await abrirHidratada(page, `${ROTA}?chip=fora&sigla=P%C3%81T`);
+    await expect(page.getByTestId("lista-vazia")).toBeVisible();
+    await page.getByTestId("lista-vazia").getByRole("link", { name: "Limpar filtros" }).click();
+    await expect(page).not.toHaveURL(/sigla=|chip=/);
+    await expect(linhas(page).first()).toBeVisible();
+  });
+
+  test("Inclui baixadas mostra as placas VND e SUC e muda o total e a contagem", async ({
+    page,
+  }) => {
+    await abrirHidratada(page, ROTA);
+    const totalAntes = await totalDoResumo(page);
+    const foraAntes = await contagemDoChip(page, "fora");
+    await abrirMais(page);
+    await baixadas(page).check();
+    await expect(page).toHaveURL(/baixadas=1/);
+    await expect.poll(() => totalDoResumo(page)).toBeGreaterThan(totalAntes);
+    expect(await contagemDoChip(page, "fora")).toBeGreaterThan(foraAntes);
+    await page.keyboard.press("Escape");
+    await abrirHidratada(page, `${ROTA}?baixadas=1&sigla=VND&tam=100`);
+    for (const texto of await linhas(page).allTextContents()) expect(texto).toContain("VND");
+    await expect(linhas(page).first()).toBeVisible();
+  });
+
+  test("marcar uma sigla volta à página 1", async ({ page }) => {
+    await abrirHidratada(page, `${ROTA}?pagina=3`);
+    await abrirMais(page);
+    await caixaSigla(page, "ETc Em trânsito carregado").check();
+    await expect(page).toHaveURL(/sigla=ETc/);
+    await expect(page).not.toHaveURL(/pagina=/);
+  });
+
+  test("Esc fecha o painel e o foco volta ao botão; funciona só com o teclado", async ({
+    page,
+  }) => {
+    await abrirHidratada(page, ROTA);
+    const botao = consulta(page).getByRole("button", { name: /^Mais filtros/ });
+    await botao.focus();
+    await page.keyboard.press("Enter");
+    await expect(painelMais(page)).toBeVisible();
+    await caixaSigla(page, "FOg Folga").focus();
+    await page.keyboard.press("Space");
+    await expect(page).toHaveURL(/sigla=FOg/);
+    await page.keyboard.press("Escape");
+    await expect(painelMais(page)).toBeHidden();
+    await expect(botao).toBeFocused();
+  });
+
+  test("Limpar filtros da barra também tira as siglas e o inclui baixadas", async ({ page }) => {
+    await abrirHidratada(page, `${ROTA}?sigla=PÁT&baixadas=1`);
+    await consulta(page).getByRole("button", { name: "Limpar filtros" }).click();
+    await expect(page).not.toHaveURL(/sigla=|baixadas=/);
+  });
+
+  test("o menu tem o botão Limpar seleção, que tira só as siglas e o inclui baixadas", async ({
+    page,
+  }) => {
+    await abrirHidratada(page, `${ROTA}?chip=cavalo&sigla=P%C3%81T&baixadas=1`);
+    await abrirMais(page);
+    await painelMais(page).getByRole("button", { name: "Limpar seleção" }).click();
+    await expect(page).not.toHaveURL(/sigla=|baixadas=/);
+    await expect(page).toHaveURL(/chip=cavalo/);
+  });
+
+  test("os chips de situação têm tooltip com as siglas e os nomes por extenso", async ({
+    page,
+  }) => {
+    await abrirHidratada(page, ROTA);
+    await expect(chip(page, "Pátio")).toHaveAttribute("title", /PÁT Pátio/);
+    await expect(chip(page, "Fora")).toHaveAttribute("title", /VND Vendido/);
+    await expect(chip(page, "Fora")).toHaveAttribute("title", /baixadas/i);
+    await expect(chip(page, "Em atividade")).toHaveAttribute(
+      "title",
+      /DOp Disponível no Operacional/,
+    );
+  });
+
+  test("a situação na linha mostra a sigla e o nome, e o tooltip repete o nome", async ({
+    page,
+  }) => {
+    await abrirHidratada(page, `${ROTA}?q=AAA0A00`);
+    const etiqueta = linhas(page).first().locator('[data-tom^="status:"]');
+    await expect(etiqueta).toContainText("DEs");
+    await expect(etiqueta).toContainText("Descarregando");
+    await expect(etiqueta).toHaveAttribute("title", "Descarregando");
+  });
+
+  test("durante o carregamento o painel não aceita novo clique", async ({ page }) => {
+    await abrirHidratada(page, `${ROTA}?lento=2500`);
+    await abrirMais(page);
+    await caixaSigla(page, "PÁT Pátio").check();
+    await expect(caixaSigla(page, "DOp Disponível no Operacional")).toBeDisabled();
+    await expect(baixadas(page)).toBeDisabled();
+    await expect(tabela(page)).toHaveAttribute("aria-busy", "false", { timeout: 10_000 });
+    await expect(caixaSigla(page, "DOp Disponível no Operacional")).toBeEnabled();
+  });
+});

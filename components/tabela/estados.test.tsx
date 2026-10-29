@@ -225,3 +225,75 @@ describe("barra de consulta: sem avisos do React (chaves, props)", () => {
     ).toEqual([]);
   });
 });
+
+describe("barra de consulta: Mais filtros, filtros extras e dica dos chips", () => {
+  const chips = [{ id: "a", nome: "Primeiro", contagem: 1, dica: "Primeiro: A Alfa, B Beta." }];
+
+  it("com o painel no lugar, ele aparece e some o botão desligado", () => {
+    const html = renderToStaticMarkup(
+      <BarraDeConsulta
+        rotulo="Buscar"
+        chips={chips}
+        parametros={new URLSearchParams()}
+        maisFiltros={<span data-teste="painel">Painel de filtros</span>}
+      />,
+    );
+    expect(html).toContain('data-teste="painel"');
+    expect(html).not.toMatch(/<button[^>]*>Mais filtros<\/button>/);
+  });
+  it("sem o painel (como na demonstração), o botão continua desligado", () => {
+    const html = renderToStaticMarkup(
+      <BarraDeConsulta rotulo="Buscar" chips={chips} parametros={new URLSearchParams()} />,
+    );
+    expect(html).toMatch(/<button[^>]*>Mais filtros<\/button>/);
+  });
+  it("Visões salvas segue desligado, com a dica da próxima entrega", () => {
+    const html = renderToStaticMarkup(
+      <BarraDeConsulta
+        rotulo="Buscar"
+        chips={chips}
+        parametros={new URLSearchParams()}
+        maisFiltros={<span>Painel</span>}
+      />,
+    );
+    expect(html).toMatch(
+      /<button[^>]*title="Entra na próxima entrega"[^>]*>Visões salvas<\/button>/,
+    );
+  });
+  it("filtro extra na URL conta como consulta ativa: Limpar filtros aparece", () => {
+    const comExtra = renderToStaticMarkup(
+      <BarraDeConsulta
+        rotulo="Buscar"
+        chips={chips}
+        parametros={new URLSearchParams("sigla=PÁT")}
+        filtrosExtras={["sigla", "baixadas"]}
+      />,
+    );
+    expect(comExtra).toContain("Limpar filtros");
+    const semExtra = renderToStaticMarkup(
+      <BarraDeConsulta
+        rotulo="Buscar"
+        chips={chips}
+        parametros={new URLSearchParams()}
+        filtrosExtras={["sigla", "baixadas"]}
+      />,
+    );
+    expect(semExtra).not.toContain("Limpar filtros");
+  });
+  it("sem declarar os extras, um parâmetro alheio não vira filtro", () => {
+    const html = renderToStaticMarkup(
+      <BarraDeConsulta
+        rotulo="Buscar"
+        chips={chips}
+        parametros={new URLSearchParams("sigla=PÁT")}
+      />,
+    );
+    expect(html).not.toContain("Limpar filtros");
+  });
+  it("a dica do chip vira tooltip", () => {
+    const html = renderToStaticMarkup(
+      <BarraDeConsulta rotulo="Buscar" chips={chips} parametros={new URLSearchParams()} />,
+    );
+    expect(html).toMatch(/<button[^>]*title="Primeiro: A Alfa, B Beta\."/);
+  });
+});

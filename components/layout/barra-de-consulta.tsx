@@ -2,7 +2,7 @@
 
 import { IconSearch } from "@tabler/icons-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Fragment, Suspense, useEffect, useRef, useState } from "react";
+import { Fragment, type ReactNode, Suspense, useEffect, useRef, useState } from "react";
 import { formatarInteiro } from "@/components/formato/numero";
 import { useLista } from "@/components/tabela/pendencia-da-lista";
 import { Button } from "@/components/ui/button";
@@ -21,6 +21,8 @@ export interface ChipDeConsulta {
   readonly contagem?: number;
   /** Chips de grupos diferentes aparecem separados (cada grupo conta ignorando a própria seleção). */
   readonly grupo?: string;
+  /** Tooltip do chip (por exemplo, as siglas que ele agrupa). */
+  readonly dica?: string;
 }
 
 interface PropsVisuais {
@@ -36,6 +38,10 @@ interface PropsVisuais {
   aoDigitar?: (texto: string) => void;
   /** Uma navegação está a caminho: chips e Limpar filtros não aceitam novo clique. */
   ocupada?: boolean;
+  /** O painel de Mais filtros da tela; sem ele, o botão aparece desligado. */
+  maisFiltros?: ReactNode;
+  /** Parâmetros da URL que são filtros da tela (Mais filtros): contam como consulta ativa e saem no Limpar filtros. */
+  filtrosExtras?: readonly string[];
 }
 
 /**
@@ -51,12 +57,16 @@ export function BarraDeConsulta({
   buscaDigitada,
   aoDigitar,
   ocupada = false,
+  maisFiltros,
+  filtrosExtras = [],
 }: PropsVisuais) {
   const consulta = lerConsulta(parametros);
-  const ativa = consultaAtiva(consulta);
+  const ativa = consultaAtiva(consulta) || filtrosExtras.some((chave) => parametros.has(chave));
 
-  function ir(proxima: typeof consulta, substituir: boolean) {
-    const texto = escreverConsulta(parametros, proxima).toString();
+  function ir(proxima: typeof consulta, substituir: boolean, limpandoTudo = false) {
+    const novos = escreverConsulta(parametros, proxima);
+    if (limpandoTudo) for (const chave of filtrosExtras) novos.delete(chave);
+    const texto = novos.toString();
     aoNavegar?.(texto ? `${rota}?${texto}` : rota, substituir);
   }
 
@@ -69,6 +79,7 @@ export function BarraDeConsulta({
       <button
         key={chip.id}
         type="button"
+        title={chip.dica}
         aria-pressed={ligado}
         disabled={ocupada}
         // Zerado e desligado fica apagado, mas clicável; ligado continua normal para poder desligar.
@@ -120,15 +131,17 @@ export function BarraDeConsulta({
           <Button
             variant="ghost"
             disabled={ocupada}
-            onClick={() => ir({ busca: "", chips: [] }, false)}
+            onClick={() => ir({ busca: "", chips: [] }, false, true)}
           >
             Limpar filtros
           </Button>
         ) : null}
-        <Button variant="outline" disabled title="Entra com a tabela (entrega 2C)">
-          Mais filtros
-        </Button>
-        <Button variant="outline" disabled title="Entra com a tabela (entrega 2C)">
+        {maisFiltros ?? (
+          <Button variant="outline" disabled title="Entra com a tabela (entrega 2C)">
+            Mais filtros
+          </Button>
+        )}
+        <Button variant="outline" disabled title="Entra na próxima entrega">
           Visões salvas
         </Button>
       </div>
@@ -178,7 +191,7 @@ function agruparChips(chips: readonly ChipDeConsulta[]) {
 
 const ESPERA_DA_BUSCA_MS = 250;
 
-function Ligada(props: Pick<PropsVisuais, "rotulo" | "chips">) {
+function Ligada(props: Pick<PropsVisuais, "rotulo" | "chips" | "maisFiltros" | "filtrosExtras">) {
   const rota = usePathname();
   const lidos = useSearchParams();
   const router = useRouter();
@@ -247,7 +260,9 @@ function Ligada(props: Pick<PropsVisuais, "rotulo" | "chips">) {
 }
 
 /** A barra de consulta ligada à URL da página: use esta nas telas. */
-export function BarraDeConsultaDaPagina(props: Pick<PropsVisuais, "rotulo" | "chips">) {
+export function BarraDeConsultaDaPagina(
+  props: Pick<PropsVisuais, "rotulo" | "chips" | "maisFiltros" | "filtrosExtras">,
+) {
   return (
     <Suspense fallback={<BarraDeConsulta {...props} />}>
       <Ligada {...props} />
