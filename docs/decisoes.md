@@ -12,7 +12,7 @@ Modelo de entrada:
 
 - **Decisão:**
   - **Indicador "N" do Next só some nos testes do Playwright em desenvolvimento** (`EIXO_TESTES=1`, definida no servidor de testes em `playwright.config.ts`). O `pnpm dev` normal não muda: o indicador continua no canto inferior direito. Motivo: no celular emulado o indicador cobria o botão "Contexto" e travava testes que passavam em produção. Testes: `lib/qualidade/indicador-do-next.test.ts` (a configuração) e, em `e2e/casca.spec.ts`, o botão do indicador não existe e nada cobre o botão Contexto; com a variável em `0`, o e2e falha (mutação conferida).
-  - **Se o `pnpm dev` já estiver rodando na porta 3000**, o Playwright reutiliza esse servidor, que tem o indicador ligado. Para o e2e em desenvolvimento valer sem o indicador, pare o `pnpm dev` antes (o Playwright sobe o seu). No CI e em `next start` o indicador nunca existe.
+  - **O e2e em desenvolvimento só vale com o `pnpm dev` parado.** Se ele já estiver rodando na porta 3000, o Playwright reutiliza esse servidor, que tem o indicador ligado. Para o e2e em desenvolvimento valer sem o indicador, pare o `pnpm dev` antes (o Playwright sobe o seu). No CI e em `next start` o indicador nunca existe.
   - **O teste "busca digitada cancela a resposta anterior" é guarda contra regressão**, não detecta mutação: ele atrasa só a resposta da primeira busca e confere que a tela fica na última, mas o roteador do Next já descarta a resposta antiga, então não há como fazê-lo falhar mudando o nosso código. Ele passa a falhar se alguém trocar a navegação por estado local que aceite resposta fora de ordem.
 - **Quem decidiu:** Alexandre.
 
