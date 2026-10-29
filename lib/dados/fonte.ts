@@ -1,5 +1,5 @@
 import type { ConsultaDeTabela } from "@/lib/navegacao/tabela";
-import type { OpcoesDaConsulta, PaginaDePlacas } from "./placas";
+import type { OpcoesDaConsulta, PaginaDePlacas } from "./placas-tipos";
 
 export const MENSAGEM_SO_COM_EXEMPLO = "A fonte de exemplo só roda com EIXO_DADOS=exemplo";
 

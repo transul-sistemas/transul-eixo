@@ -12,7 +12,7 @@ import {
   type OpcoesDaConsulta,
   type PaginaDePlacas,
   TIPOS_DE_ATIVO,
-} from "./placas";
+} from "./placas-tipos";
 
 // A única porta para lib/exemplo/ (o teste de barramento libera só este arquivo). A consulta roda
 // em memória, mas com as mesmas regras que a consulta ao banco terá: filtros, ordem estável com
