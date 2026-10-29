@@ -2,7 +2,7 @@
 
 import { IconSearch } from "@tabler/icons-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useRef, useState } from "react";
+import { Fragment, Suspense, useEffect, useRef, useState } from "react";
 import { formatarInteiro } from "@/components/formato/numero";
 import { useLista } from "@/components/tabela/pendencia-da-lista";
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,8 @@ export interface ChipDeConsulta {
   readonly nome: string;
   /** Quantos itens o chip alcança. Vem pronta do banco; a tela não soma linhas. */
   readonly contagem?: number;
+  /** Chips de grupos diferentes aparecem separados (cada grupo conta ignorando a própria seleção). */
+  readonly grupo?: string;
 }
 
 interface PropsVisuais {
@@ -80,40 +82,45 @@ export function BarraDeConsulta({
         aria-label="Filtros rápidos"
         className="flex flex-wrap items-center gap-1.5"
       >
-        {chips.map((chip) => {
+        {chips.map((chip, i) => {
           const ligado = consulta.chips.includes(chip.id);
+          const comecaGrupo = i > 0 && chips[i - 1]?.grupo !== chip.grupo;
           return (
-            <button
-              key={chip.id}
-              type="button"
-              aria-pressed={ligado}
-              disabled={ocupada}
-              // Zerado e desligado fica apagado, mas clicável; ligado continua normal para poder desligar.
-              data-zerado={chip.contagem === 0 && !ligado ? "true" : undefined}
-              onClick={() =>
-                ir({ ...consulta, chips: alternarChip(consulta.chips, chip.id) }, false)
-              }
-              className={cn(
-                "focus-visible:ring-ring/50 flex h-8 items-center gap-1.5 rounded-full border px-3 text-sm outline-none focus-visible:ring-3",
-                chip.contagem === 0 && !ligado && "opacity-50",
-                ligado
-                  ? "bg-primary text-primary-foreground border-transparent"
-                  : "border-border bg-card hover:bg-muted",
-              )}
-            >
-              <span>{chip.nome}</span>
-              {chip.contagem !== undefined ? (
-                <span
-                  data-contagem={chip.id}
-                  className={cn(
-                    "rounded-full px-1.5 text-xs leading-5 tabular-nums",
-                    ligado ? "bg-primary-foreground/20" : "bg-muted text-muted-foreground",
-                  )}
-                >
-                  {formatarInteiro(chip.contagem)}
-                </span>
+            <Fragment key={chip.id}>
+              {comecaGrupo ? (
+                <span aria-hidden className="bg-border mx-1 h-5 w-px max-sm:hidden" />
               ) : null}
-            </button>
+              <button
+                type="button"
+                aria-pressed={ligado}
+                disabled={ocupada}
+                // Zerado e desligado fica apagado, mas clicável; ligado continua normal para poder desligar.
+                data-zerado={chip.contagem === 0 && !ligado ? "true" : undefined}
+                onClick={() =>
+                  ir({ ...consulta, chips: alternarChip(consulta.chips, chip.id) }, false)
+                }
+                className={cn(
+                  "focus-visible:ring-ring/50 flex h-8 items-center gap-1.5 rounded-full border px-3 text-sm outline-none focus-visible:ring-3",
+                  chip.contagem === 0 && !ligado && "opacity-50",
+                  ligado
+                    ? "bg-primary text-primary-foreground border-transparent"
+                    : "border-border bg-card hover:bg-muted",
+                )}
+              >
+                <span>{chip.nome}</span>
+                {chip.contagem !== undefined ? (
+                  <span
+                    data-contagem={chip.id}
+                    className={cn(
+                      "rounded-full px-1.5 text-xs leading-5 tabular-nums",
+                      ligado ? "bg-primary-foreground/20" : "bg-muted text-muted-foreground",
+                    )}
+                  >
+                    {formatarInteiro(chip.contagem)}
+                  </span>
+                ) : null}
+              </button>
+            </Fragment>
           );
         })}
       </div>

@@ -2,13 +2,19 @@
 
 import { IconAlertTriangle } from "@tabler/icons-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useMemo } from "react";
 import { Etiqueta } from "@/components/etiqueta";
+import { Moeda } from "@/components/formato/moeda";
+import { formatarInteiro, formatarKm } from "@/components/formato/numero";
 import { Placa } from "@/components/placa";
 import {
   CAMPOS_ORDENAVEIS_DE_PLACAS,
+  DEFINICOES_DAS_COLUNAS_DE_PLACAS,
   type LinhaDePlaca,
   NOMES_DOS_TIPOS,
+  TITULOS_DAS_COLUNAS_DE_PLACAS,
 } from "@/lib/dados/placas-tipos";
+import { colunasVisiveis } from "@/lib/navegacao/colunas-da-tabela";
 import { lerTabela, mudarConsulta, type PadraoDaTabela } from "@/lib/navegacao/tabela";
 import { useLista } from "./pendencia-da-lista";
 import { type ColunaDeTabela, type Ordem, TabelaDeDados } from "./tabela-de-dados";
@@ -52,40 +58,19 @@ function Alertas({ linha }: { linha: LinhaDePlaca }) {
   );
 }
 
-// Fora do componente: a lista de colunas precisa ser estável entre renderizações.
-const COLUNAS: readonly ColunaDeTabela<LinhaDePlaca>[] = [
-  {
-    id: "placa",
-    titulo: "Placa",
-    campoDeOrdem: "placa",
-    celula: (linha) => <Placa placa={linha.placa} tamanho="m" />,
-  },
-  {
-    id: "tipo",
-    titulo: "Tipo",
-    campoDeOrdem: "tipo",
-    celula: (linha) => NOMES_DOS_TIPOS[linha.tipo],
-  },
-  { id: "modelo", titulo: "Modelo", campoDeOrdem: "modelo", celula: (linha) => linha.modelo },
-  {
-    id: "conjunto",
-    titulo: "Conjunto",
-    campoDeOrdem: "conjunto",
-    // Só em tela larga (1700 px ou mais): no 1366 o espaço é de Situação e Alertas. Continua no
-    // seletor de colunas (Tarefa 9) para quem quiser vê-la em qualquer tela.
-    classe: "hidden min-[1700px]:table-cell",
-    celula: (linha) => <Conjunto linha={linha} />,
-  },
-  { id: "gestor", titulo: "Gestor", campoDeOrdem: "gestor", celula: (linha) => linha.gestor },
-  {
-    id: "operacao",
-    titulo: "Operação",
-    campoDeOrdem: "operacao",
-    celula: (linha) => textoOuTraco(linha.operacao),
-  },
-  {
-    id: "situacao",
-    titulo: "Situação",
+// Fora do componente: as colunas por id são estáveis entre renderizações. O que aparece e em que
+// ordem sai das preferências (cookie) e das definições, em `colunasVisiveis`.
+const CELULAS: Record<
+  string,
+  Pick<ColunaDeTabela<LinhaDePlaca>, "campoDeOrdem" | "celula" | "classe">
+> = {
+  placa: { campoDeOrdem: "placa", celula: (linha) => <Placa placa={linha.placa} tamanho="m" /> },
+  tipo: { campoDeOrdem: "tipo", celula: (linha) => NOMES_DOS_TIPOS[linha.tipo] },
+  modelo: { campoDeOrdem: "modelo", celula: (linha) => linha.modelo },
+  conjunto: { campoDeOrdem: "conjunto", celula: (linha) => <Conjunto linha={linha} /> },
+  gestor: { campoDeOrdem: "gestor", celula: (linha) => linha.gestor },
+  operacao: { campoDeOrdem: "operacao", celula: (linha) => textoOuTraco(linha.operacao) },
+  situacao: {
     campoDeOrdem: "situacao",
     celula: (linha) => (
       <Etiqueta status={linha.grupo} titulo={linha.nomeDaSituacao}>
@@ -94,13 +79,29 @@ const COLUNAS: readonly ColunaDeTabela<LinhaDePlaca>[] = [
       </Etiqueta>
     ),
   },
-  {
-    id: "alertas",
-    titulo: "Alertas",
-    campoDeOrdem: "alertas",
-    celula: (linha) => <Alertas linha={linha} />,
+  alertas: { campoDeOrdem: "alertas", celula: (linha) => <Alertas linha={linha} /> },
+  motorista: { campoDeOrdem: "motorista", celula: (linha) => textoOuTraco(linha.motorista) },
+  filial: { campoDeOrdem: "filial", celula: (linha) => linha.filial },
+  dias: {
+    campoDeOrdem: "dias",
+    classe: "text-right tabular-nums",
+    celula: (linha) => formatarInteiro(linha.diasNoStatus),
   },
-];
+  km: {
+    campoDeOrdem: "km",
+    classe: "text-right tabular-nums",
+    celula: (linha) => formatarKm(linha.km),
+  },
+  cr: { campoDeOrdem: "cr", celula: (linha) => textoOuTraco(linha.cr) },
+  fipe: {
+    campoDeOrdem: "fipe",
+    classe: "text-right",
+    celula: (linha) => <Moeda valor={linha.valorFipeCentavos} />,
+  },
+};
+
+/** O padrão de tela larga: o CSS esconde abaixo de 1700 px enquanto a pessoa não escolheu colunas. */
+const CLASSE_SO_EM_TELA_LARGA = "hidden min-[1700px]:table-cell";
 
 /** A tabela da lista de placas: a ordem mora na URL, e a página sai do servidor já cortada. */
 export function TabelaDePlacas({
@@ -116,6 +117,26 @@ export function TabelaDePlacas({
   const parametros = useSearchParams();
   const router = useRouter();
   const lista = useLista();
+  const colunasEscolhidas = lista?.preferencias.colunas ?? null;
+  const ordemEscolhida = lista?.preferencias.ordemDasColunas ?? null;
+  const colunas = useMemo(
+    () =>
+      colunasVisiveis(DEFINICOES_DAS_COLUNAS_DE_PLACAS, {
+        colunas: colunasEscolhidas,
+        ordemDasColunas: ordemEscolhida,
+      }).map<ColunaDeTabela<LinhaDePlaca>>(({ id, soEmTelaLarga }) => {
+        const base = CELULAS[id] as NonNullable<(typeof CELULAS)[string]>;
+        return {
+          id,
+          titulo: TITULOS_DAS_COLUNAS_DE_PLACAS[id] ?? id,
+          ...base,
+          classe: [base.classe, soEmTelaLarga ? CLASSE_SO_EM_TELA_LARGA : undefined]
+            .filter(Boolean)
+            .join(" "),
+        };
+      }),
+    [colunasEscolhidas, ordemEscolhida],
+  );
 
   function ordenarPor(campo: string) {
     const atual = lerTabela(
@@ -138,7 +159,7 @@ export function TabelaDePlacas({
   return (
     <TabelaDeDados
       rotulo="Placas"
-      colunas={COLUNAS}
+      colunas={colunas}
       linhas={linhas}
       idDaLinha={(linha) => linha.id}
       ordem={ordem}

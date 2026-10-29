@@ -1,3 +1,4 @@
+import type { DefinicaoDeColuna } from "@/lib/navegacao/colunas-da-tabela";
 import type { Alerta } from "@/lib/dominio/alertas";
 import type { Sigla } from "@/lib/dominio/status";
 import type { Status } from "@/lib/visual/tons";
@@ -28,26 +29,51 @@ export const CAMPOS_ORDENAVEIS_DE_PLACAS = [
   "fipe",
   "dias",
   "motorista",
+  "filial",
   "crlv",
 ] as const;
 
-/** Todas as colunas que a lista pode mostrar (o cookie de preferências só aceita estas). */
-export const IDS_DAS_COLUNAS_DE_PLACAS = [
-  "placa",
-  "tipo",
-  "modelo",
-  "conjunto",
-  "gestor",
-  "operacao",
-  "situacao",
-  "alertas",
-  "km",
-  "cr",
-  "fipe",
-  "motorista",
-  "filial",
-  "dias",
-] as const;
+/**
+ * As colunas da lista: o que cada uma é no padrão da tela (sempre, só em tela larga ou fora) e qual
+ * é fixa. O cookie de preferências só aceita estes ids.
+ */
+export const DEFINICOES_DAS_COLUNAS_DE_PLACAS: readonly DefinicaoDeColuna[] = [
+  { id: "placa", padrao: "sempre", fixa: true },
+  { id: "tipo", padrao: "sempre" },
+  { id: "modelo", padrao: "sempre" },
+  { id: "conjunto", padrao: "largura" },
+  { id: "gestor", padrao: "sempre" },
+  { id: "operacao", padrao: "sempre" },
+  { id: "situacao", padrao: "sempre" },
+  { id: "alertas", padrao: "sempre" },
+  { id: "motorista", padrao: "largura" },
+  { id: "filial", padrao: "fora" },
+  { id: "dias", padrao: "largura" },
+  { id: "km", padrao: "fora" },
+  { id: "cr", padrao: "fora" },
+  { id: "fipe", padrao: "fora" },
+];
+
+export const IDS_DAS_COLUNAS_DE_PLACAS: readonly string[] = DEFINICOES_DAS_COLUNAS_DE_PLACAS.map(
+  (d) => d.id,
+);
+
+export const TITULOS_DAS_COLUNAS_DE_PLACAS: Record<string, string> = {
+  placa: "Placa",
+  tipo: "Tipo",
+  modelo: "Modelo",
+  conjunto: "Conjunto",
+  gestor: "Gestor",
+  operacao: "Operação",
+  situacao: "Situação",
+  alertas: "Alertas",
+  motorista: "Motorista",
+  filial: "Filial",
+  dias: "Dias na situação",
+  km: "KM",
+  cr: "CR",
+  fipe: "Valor FIPE",
+};
 
 export interface LinhaDePlaca {
   id: string;

@@ -118,6 +118,8 @@ function chaveDe(linha: LinhaDePlaca, campo: string): Chave {
       return linha.valorFipeCentavos;
     case "dias":
       return linha.diasNoStatus;
+    case "filial":
+      return simples(linha.filial);
     case "motorista":
       return linha.motorista === null ? null : simples(linha.motorista);
     case "crlv":

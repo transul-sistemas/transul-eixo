@@ -6,13 +6,18 @@ import { PaginaDeLeitura } from "@/components/layout/pagina-de-leitura";
 import { EsqueletoDaTabela, ListaVazia } from "@/components/tabela/estados";
 import { DensidadeDaTabela } from "@/components/tabela/densidade";
 import { Paginador } from "@/components/tabela/paginador";
+import { SeletorDeColunas } from "@/components/tabela/seletor-de-colunas";
 import { ProvedorDaLista } from "@/components/tabela/pendencia-da-lista";
 import { TabelaDePlacas } from "@/components/tabela/tabela-de-placas";
 import {
   CAMPOS_ORDENAVEIS_DE_PLACAS,
+  DEFINICOES_DAS_COLUNAS_DE_PLACAS,
   IDS_DAS_COLUNAS_DE_PLACAS,
   listarPlacas,
+  NOMES_DOS_TIPOS,
   PADRAO_DA_LISTA_DE_PLACAS,
+  TIPOS_DE_ATIVO,
+  TITULOS_DAS_COLUNAS_DE_PLACAS,
 } from "@/lib/dados/placas";
 import { NOMES_DOS_CHIPS } from "@/lib/dominio/status";
 import { acharTela } from "@/lib/navegacao/catalogo";
@@ -71,6 +76,24 @@ function enderecoSemFiltros(
   return limpa ? `${ROTA}?${limpa}` : ROTA;
 }
 
+/** Os dois grupos de chips: situação (cinco chips) e tipo de ativo (seis). */
+function chipsDaLista(contagens?: Record<string, number>) {
+  return [
+    ...STATUS.map((id) => ({
+      id,
+      nome: NOMES_DOS_CHIPS[id],
+      grupo: "situacao",
+      ...(contagens ? { contagem: contagens[id] ?? 0 } : {}),
+    })),
+    ...TIPOS_DE_ATIVO.map((id) => ({
+      id,
+      nome: NOMES_DOS_TIPOS[id],
+      grupo: "tipo",
+      ...(contagens ? { contagem: contagens[id] ?? 0 } : {}),
+    })),
+  ];
+}
+
 /** O que a pessoa vê enquanto a página chega: o título, a barra de consulta e o esqueleto. */
 export function PaginaDePlacasCarregando() {
   const { titulo, descricao } = cabecalho();
@@ -78,12 +101,7 @@ export function PaginaDePlacasCarregando() {
     <PaginaDeLeitura
       titulo={titulo}
       descricao={descricao}
-      consulta={
-        <BarraDeConsultaDaPagina
-          rotulo="Buscar placa"
-          chips={STATUS.map((id) => ({ id, nome: NOMES_DOS_CHIPS[id] }))}
-        />
-      }
+      consulta={<BarraDeConsultaDaPagina rotulo="Buscar placa" chips={chipsDaLista()} />}
     >
       <EsqueletoDaTabela rotulo="Carregando placas" />
     </PaginaDeLeitura>
@@ -112,17 +130,14 @@ export async function PaginaDePlacas({ searchParams }: { searchParams: Parametro
         titulo={titulo}
         descricao={descricao}
         consulta={
-          <BarraDeConsultaDaPagina
-            rotulo="Buscar placa"
-            chips={STATUS.map((id) => ({
-              id,
-              nome: NOMES_DOS_CHIPS[id],
-              contagem: pagina.contagens[id] ?? 0,
-            }))}
-          />
+          <BarraDeConsultaDaPagina rotulo="Buscar placa" chips={chipsDaLista(pagina.contagens)} />
         }
       >
-        <div className="flex justify-end">
+        <div className="flex flex-wrap items-center justify-end gap-3">
+          <SeletorDeColunas
+            definicoes={DEFINICOES_DAS_COLUNAS_DE_PLACAS}
+            titulos={TITULOS_DAS_COLUNAS_DE_PLACAS}
+          />
           <DensidadeDaTabela />
         </div>
         {pagina.total === 0 ? (

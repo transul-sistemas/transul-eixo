@@ -393,3 +393,249 @@ test.describe("lista de placas: feedback de carregando", () => {
     await expect(tabela(page)).toHaveAttribute("aria-busy", "false", { timeout: 10_000 });
   });
 });
+
+test.describe("lista de placas: colunas escolhíveis e reordenáveis", () => {
+  const NOME = "eixo-tabela-placas";
+  const botaoColunas = (page: Page) => page.getByRole("button", { name: "Colunas" });
+  const painel = (page: Page) => page.getByRole("dialog", { name: "Colunas" });
+  const caixa = (page: Page, nome: string) =>
+    painel(page).getByRole("checkbox", { name: nome, exact: true });
+  // só os visíveis: a coluna "só em tela larga" continua no DOM, escondida por CSS
+  const cabecalhos = async (page: Page) =>
+    (await tabela(page).getByRole("columnheader").allTextContents()).map((t) => t.trim());
+  const abrir = async (page: Page) => {
+    await botaoColunas(page).click();
+    await expect(painel(page)).toBeVisible();
+  };
+  const cookie = async (page: Page) =>
+    decodeURIComponent((await page.context().cookies()).find((c) => c.name === NOME)?.value ?? "");
+
+  test("o menu lista as 14 colunas: Placa fixa, KM, CR e Valor FIPE desligadas", async ({
+    page,
+  }) => {
+    await abrirHidratada(page, ROTA);
+    await abrir(page);
+    await expect(painel(page).getByRole("checkbox")).toHaveCount(14);
+    await expect(caixa(page, "Placa")).toBeChecked();
+    await expect(caixa(page, "Placa")).toBeDisabled();
+    for (const nome of ["Tipo", "Modelo", "Gestor", "Operação", "Situação", "Alertas"]) {
+      await expect(caixa(page, nome)).toBeChecked();
+    }
+    for (const nome of ["KM", "CR", "Valor FIPE", "Filial"]) {
+      await expect(caixa(page, nome)).not.toBeChecked();
+    }
+  });
+
+  test("ligar KM mostra a coluna, grava no cookie e sobrevive a recarregar", async ({ page }) => {
+    await abrirHidratada(page, ROTA);
+    await abrir(page);
+    await caixa(page, "KM").check();
+    await expect(tabela(page).getByRole("columnheader", { name: /^KM/ })).toBeVisible();
+    await expect(tabela(page).locator("tbody tr").first()).not.toContainText("undefined");
+    expect(await cookie(page)).toContain('"km"');
+    await expect(page).toHaveURL(/\/frota\/placas$/);
+    await page.reload();
+    await expect(tabela(page).getByRole("columnheader", { name: /^KM/ })).toBeVisible();
+  });
+
+  test("desligar Gestor tira a coluna", async ({ page }) => {
+    await abrirHidratada(page, ROTA);
+    await abrir(page);
+    await caixa(page, "Gestor").uncheck();
+    await expect(tabela(page).getByRole("columnheader", { name: /^Gestor/ })).toHaveCount(0);
+    await expect(tabela(page).getByRole("columnheader", { name: /^Tipo/ })).toBeVisible();
+  });
+
+  test("Mover Modelo para a esquerda troca com Tipo, e a ordem sobrevive a recarregar", async ({
+    page,
+  }) => {
+    const primeiras = async () =>
+      (await cabecalhos(page)).slice(0, 3).map((t) => t.replace(/\s.*/, ""));
+    await abrirHidratada(page, ROTA);
+    await abrir(page);
+    await painel(page).getByRole("button", { name: "Mover Modelo para a esquerda" }).click();
+    await expect.poll(primeiras).toEqual(["Placa", "Modelo", "Tipo"]);
+    await page.reload();
+    await expect(tabela(page)).toBeVisible();
+    await expect.poll(primeiras).toEqual(["Placa", "Modelo", "Tipo"]);
+  });
+
+  test("a Placa não se move nem se desliga, e a primeira coluna depois dela não vai para a esquerda", async ({
+    page,
+  }) => {
+    await abrirHidratada(page, ROTA);
+    await abrir(page);
+    await expect(painel(page).getByRole("button", { name: /Mover Placa/ })).toHaveCount(0);
+    await expect(
+      painel(page).getByRole("button", { name: "Mover Tipo para a esquerda" }),
+    ).toBeDisabled();
+    await expect(
+      painel(page).getByRole("button", { name: "Mover Tipo para a direita" }),
+    ).toBeEnabled();
+  });
+
+  test("Esc fecha o menu e o foco volta ao botão Colunas", async ({ page }) => {
+    await abrirHidratada(page, ROTA);
+    await abrir(page);
+    await page.keyboard.press("Escape");
+    await expect(painel(page)).toBeHidden();
+    await expect(botaoColunas(page)).toBeFocused();
+  });
+
+  test("funciona só com o teclado: Tab até a caixa e Espaço liga a coluna", async ({ page }) => {
+    await abrirHidratada(page, ROTA);
+    await botaoColunas(page).focus();
+    await page.keyboard.press("Enter");
+    await expect(painel(page)).toBeVisible();
+    await caixa(page, "CR").focus();
+    await page.keyboard.press("Space");
+    await expect(tabela(page).getByRole("columnheader", { name: /^CR/ })).toBeVisible();
+  });
+
+  test("Restaurar padrão devolve as colunas e a ordem", async ({ page }) => {
+    await abrirHidratada(page, ROTA);
+    const inicial = await cabecalhos(page);
+    await abrir(page);
+    await caixa(page, "KM").check();
+    await painel(page).getByRole("button", { name: "Mover Modelo para a esquerda" }).click();
+    await expect.poll(() => cabecalhos(page)).not.toEqual(inicial);
+    await painel(page).getByRole("button", { name: "Restaurar padrão" }).click();
+    await expect.poll(() => cabecalhos(page)).toEqual(inicial);
+    expect(await cookie(page)).toContain('"colunas":null');
+  });
+
+  test("em 1920 aparecem mais colunas que em 1366, sem rolagem lateral nem da página nem da tabela", async ({
+    page,
+  }, info) => {
+    await abrirHidratada(page, ROTA);
+    const nomes = (await cabecalhos(page)).map((t) => t.replace(/\s.*/, ""));
+    const medidas = await tabela(page).evaluate((t) => {
+      const c = t.parentElement as HTMLElement;
+      return { rolagem: c.scrollWidth, visivel: c.clientWidth };
+    });
+    expect(medidas.rolagem).toBeLessThanOrEqual(medidas.visivel);
+    if (info.project.name === "tela-1920") {
+      for (const n of ["Conjunto", "Motorista", "Dias"]) expect(nomes).toContain(n);
+      expect(nomes.length).toBe(10);
+    } else {
+      for (const n of ["Conjunto", "Motorista", "Dias"]) expect(nomes).not.toContain(n);
+      expect(nomes.length).toBe(7);
+    }
+  });
+
+  test("a escolha da pessoa vale em qualquer largura: Conjunto ligado aparece no 1366", async ({
+    page,
+  }) => {
+    await abrirHidratada(page, ROTA);
+    await abrir(page);
+    await caixa(page, "Conjunto").check();
+    await expect(tabela(page).getByRole("columnheader", { name: /^Conjunto/ })).toBeVisible();
+    await caixa(page, "Conjunto").uncheck();
+    await expect(tabela(page).getByRole("columnheader", { name: /^Conjunto/ })).toHaveCount(0);
+  });
+
+  test("com as 14 colunas ligadas a página não rola; só a tabela rola", async ({ page }) => {
+    await abrirHidratada(page, ROTA);
+    await abrir(page);
+    for (const nome of [
+      "Conjunto",
+      "Motorista",
+      "Filial",
+      "Dias na situação",
+      "KM",
+      "CR",
+      "Valor FIPE",
+    ]) {
+      await caixa(page, nome).check();
+    }
+    await page.keyboard.press("Escape");
+    await expect.poll(async () => (await cabecalhos(page)).length).toBe(14);
+    const medidas = await page.evaluate(() => ({
+      pagina: document.documentElement.scrollWidth,
+      janela: window.innerWidth,
+    }));
+    expect(medidas.pagina).toBeLessThanOrEqual(medidas.janela);
+    const tabelaRola = await tabela(page).evaluate((t) => {
+      const c = t.parentElement as HTMLElement;
+      return c.scrollWidth > c.clientWidth;
+    });
+    expect(tabelaRola).toBe(true);
+  });
+
+  test("dá para ordenar pelas colunas novas (KM, Valor FIPE, Motorista)", async ({ page }) => {
+    await abrirHidratada(page, ROTA);
+    await abrir(page);
+    await caixa(page, "KM").check();
+    await caixa(page, "Valor FIPE").check();
+    await page.keyboard.press("Escape");
+    await tabela(page).getByRole("columnheader", { name: /^KM/ }).getByRole("button").click();
+    await expect(page).toHaveURL(/ordem=km/);
+    await tabela(page)
+      .getByRole("columnheader", { name: /^Valor FIPE/ })
+      .getByRole("button")
+      .click();
+    await expect(page).toHaveURL(/ordem=fipe/);
+  });
+});
+
+test.describe("lista de placas: chips por tipo de ativo", () => {
+  const TIPOS = ["cavalo", "implemento", "equipamento", "caminhao", "veiculo-pequeno", "apoio"];
+  const contagens = async (page: Page, ids: string[]) => {
+    const resultado: Record<string, number> = {};
+    for (const id of ids) {
+      const texto = (await consulta(page).locator(`[data-contagem="${id}"]`).textContent()) ?? "0";
+      resultado[id] = Number(texto.replaceAll(".", ""));
+    }
+    return resultado;
+  };
+  const STATUS = ["em-atividade", "atencao", "impedida", "patio", "fora"];
+
+  test("há seis chips de tipo, e a soma deles é o total", async ({ page }) => {
+    await abrirHidratada(page, ROTA);
+    for (const nome of [
+      "Cavalo",
+      "Implemento",
+      "Equipamento",
+      "Caminhão",
+      "Veículo pequeno",
+      "Apoio",
+    ]) {
+      await expect(chip(page, nome)).toBeVisible();
+    }
+    const porTipo = await contagens(page, TIPOS);
+    const soma = Object.values(porTipo).reduce((a, b) => a + b, 0);
+    expect(soma).toBe(await totalDoResumo(page));
+  });
+
+  test("filtrar por Cavalo muda as contagens de situação, mas não as de tipo", async ({ page }) => {
+    await abrirHidratada(page, ROTA);
+    const tiposAntes = await contagens(page, TIPOS);
+    const statusAntes = await contagens(page, STATUS);
+    await chip(page, "Cavalo").click();
+    await expect(page).toHaveURL(/chip=cavalo/);
+    await expect(chip(page, "Cavalo")).toHaveAttribute("aria-pressed", "true");
+    await expect(linhas(page).first()).toContainText("Cavalo");
+    const tiposDepois = await contagens(page, TIPOS);
+    const statusDepois = await contagens(page, STATUS);
+    expect(tiposDepois).toEqual(tiposAntes);
+    expect(statusDepois).not.toEqual(statusAntes);
+    expect(Object.values(statusDepois).reduce((a, b) => a + b, 0)).toBe(tiposAntes["cavalo"]);
+    expect(await totalDoResumo(page)).toBe(tiposAntes["cavalo"]);
+  });
+
+  test("dois tipos valem OU, e tipo com situação vale E", async ({ page }) => {
+    await abrirHidratada(page, ROTA);
+    const base = await contagens(page, TIPOS);
+    await chip(page, "Cavalo").click();
+    await expect(page).toHaveURL(/chip=cavalo/);
+    await chip(page, "Apoio").click();
+    await expect(page).toHaveURL(/chip=apoio/);
+    expect(await totalDoResumo(page)).toBe((base["cavalo"] ?? 0) + (base["apoio"] ?? 0));
+    await chip(page, "Pátio").click();
+    await expect(page).toHaveURL(/chip=patio/);
+    for (const texto of await linhas(page).allTextContents()) {
+      expect(texto).toContain("PÁT");
+      expect(/Cavalo|Apoio/.test(texto)).toBe(true);
+    }
+  });
+});
