@@ -125,7 +125,7 @@ function Amostra({ nome, forte, suave }: { nome: string; forte: string; suave: s
     <li className="border-border bg-card overflow-hidden rounded-lg border">
       <div className={`h-2.5 ${forte}`} />
       <div className={`flex items-center gap-2 px-3 py-2.5 text-sm ${suave}`}>
-        <span aria-hidden className={`size-2 rounded-full ${forte}`} />
+        <span aria-hidden className={`size-2 shrink-0 rounded-full ${forte}`} />
         {nome}
       </div>
     </li>
