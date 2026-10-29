@@ -13,6 +13,7 @@ import {
 import { AssinaturaTranSul } from "@/components/marca/assinatura-transul";
 import { Logotipo } from "@/components/marca/logotipo";
 import { Placa } from "@/components/placa";
+import { BarraLateral } from "@/components/navegacao/barra-lateral";
 import { AlternadorDeTema } from "@/components/tema/alternador-de-tema";
 import { Button } from "@/components/ui/button";
 import { MODULOS, STATUS, type Modulo, type Status } from "@/lib/visual/tons";
@@ -62,6 +63,14 @@ const CLASSE_DO_STATUS: Record<Status, { forte: string; suave: string }> = {
   fora: { forte: "bg-status-fora", suave: "bg-status-fora-suave" },
 };
 
+// Contadores só da demonstração: o sistema ainda não tem de onde tirar tarefas ou casos.
+const CONTADORES_DE_EXEMPLO = {
+  "frota.placas": 3,
+  "frota.carteira": 2,
+  "operacional.patio": 12,
+  "pessoas.status-diario": 120,
+};
+
 function Secao({
   titulo,
   explicacao,
@@ -101,7 +110,7 @@ function Amostra({ nome, forte, suave }: { nome: string; forte: string; suave: s
 
 export default function Demonstracao() {
   return (
-    <main className="flex w-full flex-col gap-8 px-8 py-8">
+    <div className="flex w-full flex-col gap-8 px-8 py-8">
       <header className="flex flex-wrap items-center justify-between gap-6">
         <Logotipo />
         <AlternadorDeTema />
@@ -293,6 +302,23 @@ export default function Demonstracao() {
         </Secao>
 
         <Secao
+          titulo="Barra lateral"
+          explicacao="A mesma barra do sistema, com contadores de exemplo. Esta cópia não grava memória nem responde a Ctrl+B; a de verdade está à esquerda da tela."
+        >
+          <div className="max-w-64">
+            <BarraLateral
+              incorporada
+              perfil="Administrador"
+              usuario="demonstracao"
+              rotulo="Menu de demonstração"
+              rotaAtual="/inicio/tarefas"
+              contadores={CONTADORES_DE_EXEMPLO}
+              estadoInicial={{ fixados: ["frota.placas"] }}
+            />
+          </div>
+        </Secao>
+
+        <Secao
           titulo="Logotipo e assinatura"
           explicacao="Logo provisório da TranSul em PNG, pintado pelo token da marca. O SVG oficial deve ser pedido à agência."
         >
@@ -307,6 +333,6 @@ export default function Demonstracao() {
           </div>
         </Secao>
       </div>
-    </main>
+    </div>
   );
 }

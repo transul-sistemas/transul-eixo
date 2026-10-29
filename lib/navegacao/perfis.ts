@@ -21,3 +21,6 @@ export const MODULOS_POR_PERFIL: Record<Perfil, "todos" | readonly IdDoModulo[]>
 export function perfilAtual(): Perfil {
   return "Administrador";
 }
+
+/** Provisório até haver login: a memória da barra lateral é guardada por este nome. */
+export const USUARIO_PROVISORIO = "provisorio";
