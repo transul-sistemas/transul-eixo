@@ -215,6 +215,8 @@ Decidido em 29/10/2026. **Alicerce completo primeiro, funções depois, uma por 
 - **Premissas:** SDo/DOC e MAv/MAN são status separados; as etapas do Operacional, registradas na hora e com lançamento retroativo, valem para o Acompanhamento da Frota; alçada de ajustes, documentos de agregados e sorteio ficam fora do primeiro módulo.
 - **Dados:** Supabase Pro e backup são obrigatórios antes de importar dados reais da v1. A Fase 3 (núcleo, vigência, RLS) usa o modelo mais forte.
 - **Backlog de ideias:** detector de abastecimento, multas com condutor, checklist com fotos, leitura de documentos, book da diretoria.
+- **Backlog da 2.0 e pendências de plano:** ver as seções "Backlog da 2.0" e "Pendências e decisões em aberto" abaixo.
+- **Ritmo de validação visual, em toda entrega:** ao fim de cada checkpoint, capturas em 1366 e 1920, claro e escuro, e a rota para abrir com `pnpm dev`. A entrega só avança com a aprovação do visual. Enquanto o Acompanhamento da Frota não estiver pronto, as telas usam os dados de exemplo de `lib/exemplo/` (nunca importados fora de desenvolvimento e testes).
 
 ## Cronograma estimado
 
@@ -321,6 +323,16 @@ A infraestrutura fixa fica em torno de US$ 45 por mês, mais o uso da IA com tet
 
 O plano gratuito da Vercel não permite uso comercial, e o gratuito do Supabase não tem backup e já restringiu a v1 por tráfego. Por isso os dois entram no Pro desde o primeiro dia.
 
+## Backlog da 2.0
+
+O que já está decidido que existe, mas fica fora do primeiro módulo (Acompanhamento da Frota). Cada item entra por ordem de prioridade, com `brainstorming` antes.
+
+- **AGEU (manter o cadastro):** o cadastro do AGEU continua existindo na 2.0; ele entra na importação sem ser apagado nem unificado com outro. Também consta na lista de saneamento (seção "Migração dos dados da v1").
+- **CPF do FRANCINALDO (confirmar na fonte):** o CPF registrado precisa ser confirmado na fonte (Sankhya ou documento) antes da importação. Também consta na lista de saneamento.
+- **Sorteio e premiação:** fora do primeiro módulo. Premissa: o sorteio dá a mesma chance a todos os elegíveis, sem cupons extras. A regra fica em `lib/dominio/` com testes, e a tela em Pessoas › Diárias e premiação e Campanhas.
+- **Resend:** e-mail de saída do sistema (conta e domínio verificado já previstos na Fase 0). Premissa: só entra quando um módulo precisar enviar e-mail, com React Email.
+- **Ticket Log:** o **Sankhya é a fonte principal do abastecimento**. O Ticket Log só **confere** os lançamentos: cada abastecimento é casado pelo **identificador da transação**, e o que não casar vira exceção para revisão. Não substitui nem altera o fato importado do Sankhya.
+
 ## Pendências e decisões em aberto
 
 Nenhuma destas trava as fases 0 a 3; cada uma tem uma premissa até ser decidida.
@@ -328,6 +340,7 @@ Nenhuma destas trava as fases 0 a 3; cada uma tem uma premissa até ser decidida
 - [ ] **Corte da competência**: resolvido em 29/10, regra gerencial confirmada (ver Competência gerencial).
 - [x] **Primeiro módulo em uso**: Acompanhamento da Frota (Grade, Agora, Censo, Mapa), com Carteira e "Disponibilizar ao Operacional". Decidido em 29/10/2026.
 - [x] **Telas para celular e tablet**: Pátio, totem, status diário, carteira e aprovação de casos entram no desenho desde a 2B. Decidido em 29/10/2026.
+- [ ] **Vercel Pro e GitHub Team**: pendências **antes da produção**, uma ao lado da outra (o GitHub Team também libera a proteção da `main`). O Supabase Pro vem antes, antes de importar dados reais da v1.
 - [ ] **Documentos dos motoristas de agregados**. Premissa: controlados como os demais. Fora do primeiro módulo.
 - [ ] **Sorteio**. Premissa: mesma chance para todos os elegíveis, sem cupons extras. Fora do primeiro módulo.
 - [ ] **Etapas do Operacional**. Premissa: registradas na hora, com lançamento retroativo permitido; vale para o Acompanhamento da Frota.
