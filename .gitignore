@@ -1,0 +1,32 @@
+# dependências e builds
+node_modules/
+.next/
+out/
+coverage/
+*.tsbuildinfo
+next-env.d.ts
+.vercel/
+
+# testes
+playwright-report/
+test-results/
+
+# segredos: nunca versionar
+.env
+.env.local
+.env.*.local
+
+# supabase local
+supabase/.temp/
+supabase/.branches/
+
+# python (workers e importação)
+__pycache__/
+.venv/
+importacao/dados/
+
+# sistema
+.DS_Store
+Thumbs.db
+
+# Entram no versionamento (não ignorar): .agents/, .claude/skills/, skills-lock.json
