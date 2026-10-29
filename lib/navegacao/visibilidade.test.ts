@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { acharTela, CATALOGO, type ModuloDoCatalogo, type Tela } from "./catalogo";
 import { PERFIS } from "./perfis";
-import { modulosVisiveis, podeAbrir } from "./visibilidade";
+import { modulosVisiveis, podeAbrir, rotaInicialDoModulo } from "./visibilidade";
 
 function tela(id: string, estado: Tela["estado"], modulo: Tela["permissao"]["modulo"]): Tela {
   return {
@@ -114,5 +114,44 @@ describe("modulosVisiveis (catálogo real)", () => {
   });
   it("o catálogo real continua com 9 módulos", () => {
     expect(CATALOGO).toHaveLength(9);
+  });
+});
+
+describe("rotaInicialDoModulo (para onde /frota, /pessoas etc. redirecionam)", () => {
+  it("é a primeira tela que o perfil pode abrir, no catálogo de teste", () => {
+    expect(rotaInicialDoModulo("Administrador", "frota", FIXTURE)).toBe("/frota/pronta");
+    expect(rotaInicialDoModulo("Gestor de frota", "frota", FIXTURE)).toBe("/frota/pronta");
+    expect(rotaInicialDoModulo("Gestor de frota", "inicio", FIXTURE)).toBe("/inicio/pronta");
+  });
+  it("pula telas que o perfil não pode abrir", () => {
+    const catalogo: readonly ModuloDoCatalogo[] = [
+      modulo("frota", [
+        tela("trancada", "restrito", "frota"),
+        tela("breve", "em-breve", "frota"),
+        tela("pronta", "pronto", "frota"),
+      ]),
+    ];
+    expect(rotaInicialDoModulo("Gestor de frota", "frota", catalogo)).toBe("/frota/pronta");
+    expect(rotaInicialDoModulo("Administrador", "frota", catalogo)).toBe("/frota/breve");
+  });
+  it("sem tela aberta para o perfil não há para onde ir", () => {
+    expect(rotaInicialDoModulo("Operacional", "operacional", FIXTURE)).toBeUndefined();
+    expect(rotaInicialDoModulo("Operacional", "frota", FIXTURE)).toBeUndefined();
+  });
+  it("módulo que não existe no catálogo não tem rota", () => {
+    expect(rotaInicialDoModulo("Administrador", "resultados", FIXTURE)).toBeUndefined();
+  });
+  it("no catálogo real, o Administrador vai para a primeira tela de cada módulo", () => {
+    for (const m of CATALOGO) {
+      expect(rotaInicialDoModulo("Administrador", m.id), m.id).toBe(m.telas[0]?.rota);
+    }
+    expect(rotaInicialDoModulo("Administrador", "frota")).toBe("/frota/acompanhamento");
+    expect(rotaInicialDoModulo("Administrador", "inicio")).toBe("/inicio/tarefas");
+  });
+  it("no catálogo real, quem não vê nada não é levado a lugar nenhum", () => {
+    for (const m of CATALOGO) {
+      expect(rotaInicialDoModulo("Gestor de frota", m.id), m.id).toBeUndefined();
+      expect(rotaInicialDoModulo("Operacional", m.id), m.id).toBeUndefined();
+    }
   });
 });

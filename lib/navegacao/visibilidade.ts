@@ -35,3 +35,12 @@ export function modulosVisiveis(
     .map((modulo) => ({ ...modulo, telas: modulo.telas.filter((t) => apareceNoMenu(perfil, t)) }))
     .filter((modulo) => modulo.telas.length > 0);
 }
+
+/** Para onde o módulo leva: a primeira tela que o perfil pode abrir, ou nada se não houver. */
+export function rotaInicialDoModulo(
+  perfil: Perfil,
+  modulo: IdDoModulo,
+  catalogo: readonly ModuloDoCatalogo[] = CATALOGO,
+): string | undefined {
+  return catalogo.find((m) => m.id === modulo)?.telas.find((t) => podeAbrir(perfil, t))?.rota;
+}
