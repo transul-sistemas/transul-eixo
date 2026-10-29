@@ -8,6 +8,18 @@ Modelo de entrada:
 
 ---
 
+## 29/10/2026 — Busca rápida (Ctrl+K) e ações reservadas para a 2D (Fase 2B, Tarefa 7)
+
+- **Decisão:**
+  - **Ctrl+K** (⌘K no Mac) abre e fecha a busca rápida, também com o foco num campo de texto (é o atalho de busca do sistema). O botão **Buscar** do topo faz o mesmo. **Esc** fecha e devolve o foco a quem estava com ele. Digitar na janela não aciona Ctrl+B.
+  - **Lê só o catálogo:** telas, os **quatro modos do Acompanhamento** (Grade, Agora, Censo e Mapa, que abrem com `?modo=`) e ações. Sem acento nem maiúscula, e o nome que combina melhor vem primeiro.
+  - **Ações reservadas:** o catálogo ganhou `ACOES` com **Receber placa** (Operacional) e **Disponibilizar ao Operacional** (Frota), as duas em `em-breve`. Aparecem no grupo Ações para Administrador e Diretoria, **desabilitadas**, e escolher uma mostra "Esta ação chega com os assistentes (entrega 2D)." sem navegar. Quando a 2D entregar o wizard, a ação passa a `pronto` e executa.
+  - **Sem termo:** a janela mostra os **Fixados** (os da barra lateral) e os **Recentes** (as 5 últimas telas abertas, guardadas no navegador por usuário).
+  - **O contexto global acompanha a escolha** (período, filial, operação e regime).
+  - **Acessibilidade:** campo `combobox` ligado a uma lista `listbox` com grupos; as setas dão a volta nas pontas; Enter abre; a opção ativa é anunciada.
+- **Como:** o diálogo é o do base-ui, sem biblioteca nova (nada de `cmdk`). As regras (montar grupos, mover, recentes) são funções puras testadas à parte.
+- **Quem decidiu:** Alexandre aprovou o escopo; os detalhes acima foram escolhas da implementação.
+
 ## 29/10/2026 — Topo, contexto global e layout de leitura (Fase 2B, Tarefa 6)
 
 - **Decisão:**
