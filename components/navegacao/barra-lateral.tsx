@@ -491,7 +491,7 @@ export function BarraLateral({
           )}
         </nav>
 
-        <div className="border-border shrink-0 border-t p-2">
+        <div className={cn("border-border shrink-0 border-t p-2", !incorporada && "max-lg:hidden")}>
           <button
             type="button"
             aria-label={compacta ? "Expandir menu" : "Recolher menu"}

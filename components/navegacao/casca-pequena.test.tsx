@@ -31,6 +31,12 @@ describe("<BarraLateral>: gaveta (abaixo de 1024 px)", () => {
     expect(html).not.toContain("data-gaveta");
     expect(html).not.toContain('id="menu-principal"');
   });
+  it("o botão de recolher (modo compacto) não aparece na gaveta, só no computador", () => {
+    expect(barra()).toMatch(
+      /<div class="[^"]*max-lg:hidden[^"]*"><button[^>]*aria-label="Recolher menu"/,
+    );
+    expect(barra({ incorporada: true })).not.toContain("max-lg:hidden");
+  });
   it("fechada, a gaveta sai da ordem do teclado em tela pequena", () => {
     expect(barra()).toContain("max-lg:invisible");
   });
