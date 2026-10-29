@@ -25,3 +25,13 @@ export function variavelDoModulo(modulo: Modulo): string {
 export function variavelDoStatus(status: Status): string {
   return `--status-${status}`;
 }
+
+/**
+ * Variáveis CSS da cor forte e da suave de um módulo (ou do azul de ação, usado pelo Início).
+ * Administração usa a cor de Cadastros.
+ */
+export function variaveisDeCor(cor: "acao" | Modulo): { forte: string; suave: string } {
+  if (cor === "acao") return { forte: "--acao", suave: "--acao-suave" };
+  const forte = variavelDoModulo(cor);
+  return { forte, suave: `${forte}-suave` };
+}
