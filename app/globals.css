@@ -111,6 +111,14 @@
   --sidebar-ring: var(--acao);
 }
 
+/* Controles nativos (calendário do mês, listas, barras de rolagem) seguem o tema. */
+:root {
+  color-scheme: light;
+}
+.dark {
+  color-scheme: dark;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
