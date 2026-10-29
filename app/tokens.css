@@ -19,6 +19,7 @@
   /* ação e marca */
   --acao: #3355ff;
   --acao-texto: #ffffff;
+  --acao-suave: color-mix(in srgb, var(--acao) 14%, var(--superficie));
   --marca-transul: #151f6d;
 
   /* placa de veículo: clara também no tema escuro */
@@ -71,6 +72,7 @@
   /* ação e marca */
   --acao: #3355ff;
   --acao-texto: #ffffff;
+  --acao-suave: color-mix(in srgb, var(--acao) 22%, var(--superficie));
   --marca-transul: #a9b6ff;
 
   /* placa de veículo: igual ao tema claro */

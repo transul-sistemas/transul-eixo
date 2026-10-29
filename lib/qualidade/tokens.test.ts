@@ -37,6 +37,7 @@ const nomes = [
   "--linha",
   "--acao",
   "--acao-texto",
+  "--acao-suave",
   "--marca-transul",
   "--placa-fundo",
   "--placa-texto",

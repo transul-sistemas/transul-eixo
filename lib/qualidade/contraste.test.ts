@@ -141,6 +141,7 @@ describe.each([
   [".dark", 0.22],
 ])("texto da etiqueta sobre os fundos suaves em %s", (seletor, proporcao) => {
   const fortes = [
+    "--acao",
     "--modulo-frota",
     "--modulo-operacional",
     "--modulo-operacoes",

@@ -36,8 +36,9 @@ Next.js (App Router) + TypeScript estrito · Node 24 LTS · pnpm (via corepack) 
 ## Estrutura
 
 ```
-app/            telas por módulo: inicio/ frota/ operacional/ operacoes/ pessoas/ parceiros/ resultados/ cadastros/ admin/
+app/(sistema)/  telas do sistema, uma pasta por módulo: inicio/ frota/ operacional/ operacoes/ pessoas/ parceiros/ resultados/ cadastros/ admin/ (a URL não leva o grupo)
 components/     sistema visual: placa, régua de status, wizard, ficha, tabela, filtros, barra lateral, moeda
+lib/navegacao/  catálogo único de módulos e telas (barra lateral, Ctrl+K, trilha e rotas leem só ele), visibilidade por perfil e busca
 lib/dominio/    regras puras com testes (vigência, cascata, competência, nomenclatura de conjuntos, sorteio)
 lib/dados/      consultas tipadas ao banco
 supabase/       migrações, catálogos iniciais (seed) e testes pgTAP
