@@ -18,7 +18,8 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: process.env.CI ? "pnpm build && pnpm start" : "pnpm dev",
+    // No CI o passo anterior do workflow já rodou o build.
+    command: process.env.CI ? "pnpm start" : "pnpm dev",
     url: "http://localhost:3000",
     reuseExistingServer: !process.env.CI,
     timeout: 180_000,
