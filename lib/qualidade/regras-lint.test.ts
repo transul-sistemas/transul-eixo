@@ -27,6 +27,30 @@ describe("ESLint: cor hexadecimal", () => {
   it("não barra texto comum com #", async () => {
     expect(await lintar('const t = "Item #12";')).toHaveLength(0);
   });
+  it("não barra número de pedido com # (só dígitos)", async () => {
+    expect(await lintar('const t = "Pedido #1234";')).toHaveLength(0);
+  });
+});
+
+describe("ESLint: cor hexadecimal embutida em texto maior", () => {
+  it("barra valor arbitrário do Tailwind", async () => {
+    expect(await lintar('const c = "bg-[#FF7A3D] p-2";')).toHaveLength(1);
+  });
+  it("barra hex depois de dois-pontos (CSS em texto)", async () => {
+    expect(await lintar('const c = "color:#fff";')).toHaveLength(1);
+  });
+  it("barra hex depois de palavra e espaço", async () => {
+    expect(await lintar('const c = "1px solid #fff";')).toHaveLength(1);
+  });
+  it("barra hex dentro de função CSS", async () => {
+    expect(await lintar('const c = "linear-gradient(#fff, #000)";')).toHaveLength(1);
+  });
+  it("barra hex embutido em template literal", async () => {
+    expect(await lintar("const c = `color: #3D5AFE;`;")).toHaveLength(1);
+  });
+  it("permite hex embutido em components/formato/", async () => {
+    expect(await lintar('const c = "bg-[#FF7A3D]";', "components/formato/cor.ts")).toHaveLength(0);
+  });
 });
 
 describe("ESLint: formatação de número", () => {
