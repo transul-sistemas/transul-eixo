@@ -8,6 +8,19 @@ Modelo de entrada:
 
 ---
 
+## 29/10/2026 — Lista de placas (2C-1, Tarefa 11): siglas por extenso e Mais filtros
+
+- **Decisão:**
+  - **Mais filtros** passa a funcionar na lista de placas: um painel com as **26 siglas exatas**, cada uma com a sigla e o **nome por extenso** (glossário), agrupadas pelo chip de origem (Em atividade, Atenção, Impedida, Pátio, Fora), mais o interruptor **"Inclui baixadas (VND e SUC)"**, desligado por padrão. O botão mostra quantos filtros avançados estão ligados.
+  - Tudo na URL (`?sigla=…` repetido e `?baixadas=1`); mudar qualquer um volta à página 1. **Sigla e chip combinam em E** (Fora com PÁT não acha nada); duas siglas valem OU. Marcar é na hora (otimista), e durante o carregamento o painel não aceita novo clique.
+  - **Tooltip dos chips de situação:** lista as siglas do grupo com o nome por extenso (o do Fora avisa que VND e SUC só entram com "Inclui baixadas"). A linha da tabela já mostra sigla e nome, e o tooltip da etiqueta repete o nome.
+  - **"Limpar filtros" da barra também tira as siglas e o "inclui baixadas"** (os parâmetros da tela são declarados em `filtrosExtras`); o painel tem o seu "Limpar seleção", que tira só esses dois.
+  - **"Visões salvas"** continua desligado, agora com a dica "Entra na próxima entrega".
+  - As regras puras (grupos, rótulos, dica, contagem) ficam em `lib/navegacao/filtros-avancados.ts`, testadas contra as 26 siglas e o glossário.
+- **Quem decidiu:** Alexandre (nomes das siglas e tabela sigla → chip).
+
+---
+
 ## 29/10/2026 — Lista de placas no 1366: mais linhas à vista (aceite de 9 linhas)
 
 - **Decisão (aprovada por Alexandre no checkpoint 5):**
