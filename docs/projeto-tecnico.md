@@ -316,7 +316,7 @@ Nenhuma destas trava as fases 0 a 3; cada uma tem uma premissa até ser decidida
 - [ ] **Sorteio**. Premissa: mesma chance para todos os elegíveis, sem cupons extras.
 - [ ] **Etapas do Operacional**. Premissa: registradas na hora, com lançamento retroativo permitido.
 - [ ] **SDo/DOC e MAv/MAN**. Premissa: separados até confirmar se significam o mesmo.
-- [ ] **Logotipo e cores oficiais da TranSul**. Azul oficial da TranSul `#151F6D` e azul de ação do Eixo `#3355FF` definidos em 29/10/2026. Falta o arquivo vetorial oficial do símbolo; até lá, o símbolo provisório fica isolado em `components/marca/simbolo-transul.tsx` e em `app/icon.svg`.
+- [ ] **Logotipo e cores oficiais da TranSul**. Azul oficial da TranSul `#151F6D` e azul de ação do Eixo `#3355FF` definidos em 29/10/2026. Falta o arquivo vetorial oficial do símbolo; até lá, o logo em PNG provisório (`public/marca/`) fica isolado em `components/marca/assinatura-transul.tsx` e em `app/icon.svg`; o SVG oficial deve ser pedido à agência.
 - [ ] **Regras do Porto** (contratos, abatimentos e acréscimos): detalhar na fase 10 a partir do código da v1.
 
 **Pendências da v1, fora do projeto:** segunda cópia do backup no Drive, desligar os 12 workflows restantes no GitHub e avisar a equipe e a diretoria sobre a saída do ar em 01/11.

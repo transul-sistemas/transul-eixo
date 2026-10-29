@@ -8,11 +8,12 @@ Modelo de entrada:
 
 ---
 
-## 29/10/2026 — Símbolo provisório da TranSul isolado em dois lugares
+## 29/10/2026 — Logo da TranSul em PNG provisório; pedir o SVG oficial à agência
 
-- **Decisão:** o símbolo da TranSul (provisório) existe só em `components/marca/simbolo-transul.tsx` e em `app/icon.svg`. O logotipo é a placa do Eixo com o símbolo dentro, "EIXO" embaixo, "TranSul Eixo" ao lado e a assinatura "para TranSul" em `#151F6D`. As placas de veículo continuam sem o símbolo. Quando chegar o arquivo vetorial oficial, a troca mexe só nesses dois arquivos.
-- **Motivo:** o arquivo oficial ainda não chegou (pendência do projeto técnico).
+- **Decisão:** o logo oficial horizontal da TranSul (preto, PNG com fundo transparente, 1854 × 653) entra em `public/marca/transul-horizontal-preto.png` como **provisório**. O arquivo só é usado por um componente, `components/marca/assinatura-transul.tsx`, que serve à assinatura "para TranSul" e ao símbolo dentro do logotipo do Eixo. Quando o SVG oficial chegar, a troca mexe só nesse componente e em `app/icon.svg`. O SVG vetorial oficial **deve ser pedido à agência** (pendência).
+- **Motivo:** PNG não escala bem e não permite trocar de cor com nitidez em telas grandes ou PDFs; a marca oficial precisa de vetor.
 - **Quem decidiu:** Alexandre.
+- **Observação:** as placas de veículo continuam sem o símbolo.
 
 ## 29/10/2026 — icon.svg com cores literais (exceção só para esse arquivo)
 
