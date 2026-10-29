@@ -8,6 +8,19 @@ Modelo de entrada:
 
 ---
 
+## 29/10/2026 — Fase 2B: catálogo, rotas e contexto (respostas ao plano)
+
+- **Decisão:**
+  - **Telas novas** no catálogo: Operacional › Totem e Pessoas › Status diário. A aprovação de casos fica em Início › Tarefas.
+  - **Rotas do sistema** em `app/(sistema)/<módulo>/`, para a casca (barra lateral, topo) não valer para o futuro login. A URL não muda. A linha "Estrutura" do `CLAUDE.md` é editada na Tarefa 3 da 2B, junto com a mudança das pastas.
+  - **Regime** do contexto global: só "Gerencial" por ora.
+  - **Perfis** conhecidos pela barra: Administrador, Diretoria, Gestor de frota e Operacional.
+  - **A rota `/`** redireciona para Início › Tarefas.
+  - **Validação visual** ao fim de cada checkpoint: capturas em 1366 e 1920, claro e escuro, e a rota para abrir com `pnpm dev`.
+  - O catálogo (35 telas em 9 módulos) só vira código depois da aprovação do checkpoint A.
+- **Motivo:** fechar as perguntas do plano da 2B antes de escrever código.
+- **Quem decidiu:** Alexandre.
+
 ## 29/10/2026 — Alicerce geral: estrutura completa primeiro, funções uma por vez
 
 - **Decisão:**
@@ -33,7 +46,7 @@ Modelo de entrada:
 - **Motivo:** o primeiro pull request da 2A falhou no CI no teste "algarismos têm largura fixa" (76 px contra 83 px). O diagnóstico impresso pelo teste mostrou a Barlow carregada e `tabular-nums` ativo, mas com algarismos de larguras diferentes: a versão reduzida da fonte que o `next/font/google` baixou no CI não trazia os algarismos tabulares (`tnum`), embora a baixada na minha máquina trouxesse (arquivos de 5 a 10 KB, contra 22 KB do arquivo completo do Google). O build de produção na Vercel se comportaria como o CI. Medindo os 7 arquivos completos num navegador, todos têm `tnum`. Hospedar os arquivos também tira a rede do build.
 - **Efeito:** o nome da família no CSS passa a ser o nome da variável no layout (`Barlow`, `BarlowSemiCondensed`). Um teste (`lib/qualidade/fontes.test.ts`) exige os 7 arquivos com mais de 15 KB, a licença e o `import` de `next/font/local`; o teste de tela de largura fixa continua sendo a prova de verdade.
 - **Alternativas descartadas:** só esperar a fonte carregar no teste (não era o problema); desligar o teste; aceitar algarismos proporcionais.
-- **Quem decidiu:** a implementação, ao corrigir um defeito de verdade achado pelo CI; Alexandre pode reverter. Substitui a escolha "next/font/google" registrada no plano da 2A.
+- **Quem decidiu:** Alexandre confirmou em 29/10/2026 que as fontes ficam hospedadas (a implementação propôs, ao corrigir um defeito de verdade achado pelo CI). Substitui a escolha "next/font/google" registrada no plano da 2A.
 
 ## 29/10/2026 — Correções do code review da Fase 2A
 

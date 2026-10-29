@@ -15,7 +15,7 @@
 - Estratégia: **alicerce completo primeiro, funções depois, uma por vez.** A estrutura total existe desde o início; o que não foi construído aparece como "Em breve".
 - **Catálogo único** em `lib/navegacao/`: todos os módulos e telas, cada tela com nome, ícone Tabler, cor do módulo, rota, permissão (módulo e ação) e estado (`pronto`, `em-breve`, `restrito`). Barra lateral, Ctrl+K, trilha e rotas leem só o catálogo.
 - **Um componente de tela vazia:** `TelaEmBreve` (nome, ícone, cor do módulo, uma linha do que a tela fará). Telas `em-breve` só aparecem para **Administrador** e **Diretoria**.
-- Módulos e telas (de `CLAUDE.md`): Início (Tarefas, Resumo do dia, Mapa do sistema) · Frota (Acompanhamento, Placas, Abastecimento, Carteira, Análise) · Operacional (Pátio, Ordens de carregamento, Análise) · Operações (Operações, Comparativo, Análise) · Pessoas (Pessoas, Escala, Documentos, Diárias e premiação, Campanhas, Análise) · Parceiros (Parceiros, Conciliação, Livro do acionista, Locação) · Resultados (Visão geral, Por operação, Maturação, Fechamentos, Ajustes) · Cadastros · Administração.
+- Módulos e telas (de `CLAUDE.md`): Início (Tarefas, Resumo do dia, Mapa do sistema) · Frota (Acompanhamento, Placas, Abastecimento, Carteira, Análise) · Operacional (Pátio, Ordens de carregamento, Análise) · Operações (Operações, Comparativo, Análise) · Pessoas (Pessoas, Escala, Documentos, Diárias e premiação, Campanhas, Análise) · Parceiros (Parceiros, Conciliação, Livro do acionista, Locação) · Resultados (Visão geral, Por operação, Maturação, Fechamentos, Ajustes) · Cadastros · Administração. Acrescentadas por decisão de 29/10/2026: Operacional › **Totem** e Pessoas › **Status diário**; a aprovação de casos fica em Início › **Tarefas**.
 - Barra lateral: grupos recolhíveis, modo compacto com painel flutuante, busca no menu, fixados, contadores que sobem ao grupo, memória por usuário, `Ctrl+B` (recolher) e `Ctrl+K` (buscar). Cada pessoa vê só o que pode usar.
 - Esqueleto de leitura: contexto global (período, filial, operação, regime) → título e ações → barra de consulta → KPIs → conteúdo. Filtro, aba e rolagem ficam na URL; voltar devolve ao mesmo ponto.
 - **Celular e tablet entram no desenho desde esta fase:** Pátio, totem, status diário, carteira e aprovação de casos são telas marcadas para celular e tablet; abaixo de `lg` a barra lateral vira gaveta.
@@ -37,9 +37,58 @@
 
 ---
 
-## Checkpoint A — Catálogo aprovado (antes da casca)
+## Checkpoint A: catálogo proposto, para aprovação antes de qualquer código
 
-Mostrar a tabela completa do catálogo (módulo, tela, rota, estado, dispositivos, permissão) e as perguntas de "Perguntas para Alexandre". **PARE: aguardar aprovação.**
+Não há tela neste checkpoint: o que se aprova é o catálogo abaixo (**35 telas em 9 módulos**), que vira `lib/navegacao/catalogo.ts` na Tarefa 1. Por isso a validação visual (capturas em 1366 e 1920, claro e escuro, e a rota para abrir com `pnpm dev`) começa no checkpoint B, quando existirem telas.
+
+Como ler: o módulo leva para a sua primeira tela visível (não há página de módulo). Estado: tudo `em-breve`, menos a Demonstração (`pronto`). A **Frota › Acompanhamento** é a primeira função a sair de `em-breve`, logo depois da 2B. Permissão é `<módulo>.ver` (a ação `ver` é a única nesta fase; criar e editar entram com os wizards). A `cor` é a do módulo: Início usa o azul de ação e Administração usa a de Cadastros.
+
+| Módulo | Tela | Ícone | Rota | Estado | Dispositivos | Permissão | O que a tela fará |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| **Início** (`IconHome2`, cor ação) | Tarefas | `IconChecklist` | `/inicio/tarefas` | em-breve | desktop, tablet, celular | `inicio.ver` | Reúne o que espera a sua ação, como a aprovação de casos. |
+|  | Resumo do dia | `IconSunHigh` | `/inicio/resumo-do-dia` | em-breve | desktop, tablet | `inicio.ver` | Mostra, em uma página, como a operação está hoje. |
+|  | Mapa do sistema | `IconSitemap` | `/inicio/mapa-do-sistema` | em-breve | desktop | `inicio.ver` | Mostra todos os módulos e telas e o que já está pronto. |
+| **Frota** (`IconTruck`, cor frota) | Acompanhamento | `IconListDetails` | `/frota/acompanhamento` | em-breve | desktop, tablet | `frota.ver` | Acompanha cada placa pela régua de status: grade, agora, censo e mapa. |
+|  | Placas | `IconLicense` | `/frota/placas` | em-breve | desktop, tablet | `frota.ver` | Lista todas as placas e abre a ficha de cada uma. |
+|  | Abastecimento | `IconGasStation` | `/frota/abastecimento` | em-breve | desktop | `frota.ver` | Mostra o abastecimento por placa, com litros e consumo. |
+|  | Carteira | `IconWallet` | `/frota/carteira` | em-breve | desktop, tablet, celular | `frota.ver` | Confirma a carteira mensal e disponibiliza placas ao Operacional. |
+|  | Análise | `IconChartLine` | `/frota/analise` | em-breve | desktop | `frota.ver` | Explica as variações da frota em quatro camadas. |
+| **Operacional** (`IconBuildingWarehouse`, cor operacional) | Pátio | `IconParking` | `/operacional/patio` | em-breve | desktop, tablet, celular | `operacional.ver` | Mostra as placas no pátio e a fila por ordem de chegada. |
+|  | Totem | `IconTicket` | `/operacional/totem` | em-breve | tablet, celular | `operacional.ver` | Registra a chegada do motorista no totem e o coloca na fila. |
+|  | Ordens de carregamento | `IconClipboardList` | `/operacional/ordens-de-carregamento` | em-breve | desktop, tablet | `operacional.ver` | Acompanha cada ordem de carregamento de ponta a ponta. |
+|  | Análise | `IconChartLine` | `/operacional/analise` | em-breve | desktop | `operacional.ver` | Mede o tempo de cada etapa do Operacional. |
+| **Operações** (`IconRoute`, cor operacoes) | Operações | `IconRoute2` | `/operacoes/operacoes` | em-breve | desktop | `operacoes.ver` | Lista as operações e abre a ficha de cada uma. |
+|  | Comparativo | `IconScale` | `/operacoes/comparativo` | em-breve | desktop | `operacoes.ver` | Compara o resultado entre operações. |
+|  | Análise | `IconChartLine` | `/operacoes/analise` | em-breve | desktop | `operacoes.ver` | Explica as variações de cada operação. |
+| **Pessoas** (`IconUsers`, cor pessoas) | Pessoas | `IconUser` | `/pessoas/pessoas` | em-breve | desktop, tablet | `pessoas.ver` | Lista as pessoas e abre a ficha de cada uma. |
+|  | Escala | `IconCalendarWeek` | `/pessoas/escala` | em-breve | desktop, tablet | `pessoas.ver` | Monta e acompanha a escala do mês. |
+|  | Status diário | `IconCalendarCheck` | `/pessoas/status-diario` | em-breve | desktop, tablet, celular | `pessoas.ver` | Registra o status do dia de cada pessoa. |
+|  | Documentos | `IconFiles` | `/pessoas/documentos` | em-breve | desktop | `pessoas.ver` | Controla os documentos e os vencimentos. |
+|  | Diárias e premiação | `IconCash` | `/pessoas/diarias-e-premiacao` | em-breve | desktop | `pessoas.ver` | Calcula as diárias e as premiações do período. |
+|  | Campanhas | `IconSpeakerphone` | `/pessoas/campanhas` | em-breve | desktop | `pessoas.ver` | Gerencia as campanhas e acompanha os resultados. |
+|  | Análise | `IconChartLine` | `/pessoas/analise` | em-breve | desktop | `pessoas.ver` | Explica as variações de pessoal. |
+| **Parceiros** (`IconHeartHandshake`, cor parceiros) | Parceiros | `IconBuildingStore` | `/parceiros/parceiros` | em-breve | desktop | `parceiros.ver` | Lista os parceiros e abre a ficha de cada um. |
+|  | Conciliação | `IconArrowsExchange` | `/parceiros/conciliacao` | em-breve | desktop | `parceiros.ver` | Confere os valores dos parceiros com o Sankhya. |
+|  | Livro do acionista | `IconBook` | `/parceiros/livro-do-acionista` | em-breve | desktop | `parceiros.ver` | Mostra o livro do acionista e os seus lançamentos. |
+|  | Locação | `IconKey` | `/parceiros/locacao` | em-breve | desktop | `parceiros.ver` | Acompanha os contratos de locação. |
+| **Resultados** (`IconChartBar`, cor resultados) | Visão geral | `IconLayoutDashboard` | `/resultados/visao-geral` | em-breve | desktop | `resultados.ver` | Mostra o resultado do mês e de onde ele vem. |
+|  | Por operação | `IconRoute` | `/resultados/por-operacao` | em-breve | desktop | `resultados.ver` | Mostra o resultado de cada operação. |
+|  | Maturação | `IconHourglass` | `/resultados/maturacao` | em-breve | desktop | `resultados.ver` | Acompanha a quitação da dívida antiga. |
+|  | Fechamentos | `IconLock` | `/resultados/fechamentos` | em-breve | desktop | `resultados.ver` | Guarda a foto de cada mês fechado. |
+|  | Ajustes | `IconAdjustments` | `/resultados/ajustes` | em-breve | desktop | `resultados.ver` | Registra ajustes justificados, com aprovação por alçada. |
+| **Cadastros** (`IconDatabase`, cor cadastros) | Catálogos e parâmetros | `IconListDetails` | `/cadastros/catalogos` | em-breve | desktop | `cadastros.ver` | Mantém catálogos, regras e parâmetros, como o dia do corte da competência. |
+| **Administração** (`IconSettings`, cor cadastros) | Usuários e perfis | `IconUserShield` | `/admin/usuarios-e-perfis` | em-breve | desktop | `admin.ver` | Gerencia usuários, perfis e permissões. |
+|  | Auditoria | `IconHistory` | `/admin/auditoria` | em-breve | desktop | `admin.ver` | Mostra quem fez o quê, quando e por quê. |
+|  | Demonstração | `IconPalette` | `/admin/demonstracao` | pronto | desktop | `admin.ver` | Mostra a base visual do Eixo, componente por componente. |
+
+**Propostas minhas, fora do `CLAUDE.md` e dos seus pedidos** (diga se retiro ou troco): a tela única de Cadastros ("Catálogos e parâmetros", pelo schema `config`), e as telas de Administração "Usuários e perfis" e "Auditoria" (pelo schema `auditoria` e pela Fase 3). Os nomes dos ícones foram conferidos no pacote instalado (o Tabler não tem `IconHandshake`; usei `IconHeartHandshake`).
+
+**Perguntas em aberto neste checkpoint**
+1. Aprova o catálogo como está, ou quer retirar, trocar ou renomear alguma tela?
+2. Início › Mapa do sistema fica `em-breve` mesmo podendo ser gerado só do catálogo. Prefere já deixá-lo `pronto` na 2B?
+3. Frota › Acompanhamento e Operacional › Ordens de carregamento levam `desktop, tablet`; só Pátio, Totem, Carteira, Tarefas e Status diário levam celular. Está certo?
+
+**PARE: aguardar aprovação.**
 
 ---
 
@@ -87,6 +136,7 @@ Mostrar a tabela completa do catálogo (módulo, tela, rota, estado, dispositivo
 
 **Arquivos:**
 - Mover: `app/admin/demonstracao/` para `app/(sistema)/admin/demonstracao/` (mantendo a URL); criar `app/(sistema)/<modulo>/<tela>/page.tsx` para cada tela do catálogo; `app/page.tsx` passa a redirecionar para `/inicio/tarefas`.
+- Modificar: `CLAUDE.md` (linha "Estrutura": rotas do sistema em `app/(sistema)/<módulo>/` e `lib/navegacao/`); **autorizado por Alexandre em 29/10/2026**, na mesma tarefa que move as rotas.
 - Criar: `components/navegacao/tela-em-breve.tsx`, `components/navegacao/icones.ts`
 - Teste: `components/navegacao/tela-em-breve.test.tsx`, `lib/navegacao/rotas.test.ts`, `e2e/rotas.spec.ts`
 
@@ -209,7 +259,7 @@ Mostrar a tabela completa do catálogo (módulo, tela, rota, estado, dispositivo
 
 **Arquivos:**
 - Modificar: `app/(sistema)/admin/demonstracao/page.tsx` (agora dentro da casca real)
-- Modificar: `CLAUDE.md` (linha "Estrutura": `app/(sistema)/` e `lib/navegacao/`) — **mudança de regra: só com o OK de Alexandre no checkpoint A**
+- (A linha "Estrutura" do `CLAUDE.md` já foi editada na Tarefa 3.)
 
 - [ ] **Passo 1:** `verification-before-completion`: `pnpm lint`, `pnpm format:check`, `pnpm typecheck`, `pnpm test`, `pnpm build`, `CI=1 pnpm test:e2e`, `supabase test db` (Docker). Colar a saída resumida.
 - [ ] **Passo 2:** `requesting-code-review` na branch inteira; corrigir críticos e importantes, um commit por assunto.
@@ -219,13 +269,15 @@ Mostrar a tabela completa do catálogo (módulo, tela, rota, estado, dispositivo
 
 ---
 
-## Perguntas para Alexandre
+## Respostas de Alexandre (29/10/2026)
 
-1. **Telas que o catálogo ainda não tem.** Para cumprir "Pátio, totem, status diário, carteira e aprovação de casos", proponho acrescentar: Operacional › **Totem**; Pessoas › **Status diário**; Início › **Tarefas** cobre a aprovação de casos. Posso incluir essas duas telas novas?
-2. **Estrutura de pastas.** Para a casca não valer no futuro login, as rotas do sistema ficam em `app/(sistema)/<módulo>/`. Isso muda a linha "Estrutura" do `CLAUDE.md` (a URL não muda). Posso editar essa linha?
-3. **Regime.** No contexto global, o "regime" tem quais valores? Proponho só "Gerencial" por enquanto (a competência gerencial já está definida), e acrescentar "Contábil" e "Caixa" quando existirem.
-4. **Perfis.** Uso os quatro nomes de perfil que o `CLAUDE.md` cita (Administrador, Diretoria, Gestor de frota, Operacional). Faltam outros que a barra precise conhecer?
-5. **Tela inicial.** `/` redireciona para Início › Tarefas. Está certo, ou a primeira tela é o Resumo do dia?
+1. **Telas novas:** acrescentar Operacional › Totem e Pessoas › Status diário; a aprovação de casos fica em Início › Tarefas.
+2. **Estrutura de pastas:** mover as rotas para `app/(sistema)/<módulo>/` e editar a linha "Estrutura" do `CLAUDE.md`; a URL não muda.
+3. **Regime** do contexto global: só "Gerencial" por ora.
+4. **Perfis:** Administrador, Diretoria, Gestor de frota e Operacional bastam por ora.
+5. **Tela inicial:** a rota `/` redireciona para Início › Tarefas.
+6. **Fontes:** a Barlow continua hospedada no repositório (`next/font/local`, com a licença OFL).
+7. **Validação visual:** ao fim de cada checkpoint, capturas em 1366 e 1920, claro e escuro, e a rota para abrir com `pnpm dev`.
 
 ## Decisões minhas (para conferir)
 
