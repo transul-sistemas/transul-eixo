@@ -8,6 +8,18 @@ Modelo de entrada:
 
 ---
 
+## 29/10/2026 — Dados de exemplo até o Acompanhamento da Frota ficar pronto
+
+- **Decisão:**
+  - **Construir com dados de exemplo** até o Acompanhamento da Frota ficar pronto. Só depois vêm o **Supabase Pro**, a **análise da v1** e a **importação**.
+  - Os dados de exemplo ficam em **`lib/exemplo/`**, com **placas fictícias** (`AAA0A00` em diante), **na mesma forma do modelo futuro**: placa única, composição com vigência, gestor, CR e status por evento.
+  - Eles incluem **casos feios, de propósito**: modelo "A DEFINIR", cavalo com dois CRs, implemento solto há muitos dias, composição sem motorista e documento vencido.
+  - **Nunca são importados fora de desenvolvimento e testes.**
+- **Motivo:** ver e testar o Acompanhamento com dados parecidos com os de verdade (inclusive os ruins que a lista de saneamento da v1 já mostrou) sem depender do banco de produção, do plano Pro nem da importação.
+- **Relação com outras decisões:** mantém a regra de que o Supabase Pro e o backup são obrigatórios **antes** de importar dados reais da v1; só muda a ordem (Acompanhamento primeiro, importação depois).
+- **Ainda não feito:** `lib/exemplo/` não existe; nasce com a primeira função da Frota. Para o "nunca fora de desenvolvimento e testes" valer por ferramenta, e não só por combinado, o plano é um teste que barra qualquer importação de `lib/exemplo/` fora de testes, de telas de desenvolvimento e da própria pasta.
+- **Quem decidiu:** Alexandre.
+
 ## 29/10/2026 — Busca rápida (Ctrl+K) e ações reservadas para a 2D (Fase 2B, Tarefa 7)
 
 - **Decisão:**
