@@ -8,6 +8,18 @@ Modelo de entrada:
 
 ---
 
+## 29/10/2026 — components.json fica com "lucide"; componentes do shadcn trocam o ícone por Tabler
+
+- **Decisão:** o shadcn instalado (4.23) não conhece a biblioteca `tabler` (só `lucide`, `hugeicons` e `phosphor`). O `iconLibrary` do `components.json` continua `"lucide"`, e o `lucide-react` não está mais instalado. Todo componente adicionado com `shadcn add` deve ter os ícones trocados por Tabler (`@tabler/icons-react`) antes do commit.
+- **Motivo:** o Eixo usa ícones Tabler (`CLAUDE.md`), mas o CLI não gera componentes com eles.
+- **Quem decidiu:** Alexandre.
+
+## 29/10/2026 — Remoção do favicon.ico está no commit 35364ef
+
+- **Decisão:** o `app/favicon.ico` foi removido dentro do commit `35364ef` ("tokens da placa de veículo"), não no commit do ícone (`de2f31a`). O histórico não é reescrito.
+- **Motivo:** a remoção já estava preparada no índice quando o commit dos tokens foi feito. O conteúdo está certo, só a mensagem não a cita.
+- **Quem decidiu:** Alexandre.
+
 ## 29/10/2026 — Frota em índigo (#4338CA), longe do azul de ação
 
 - **Decisão:** a cor do módulo Frota passa de `#3D5AFE` para `#4338CA` (índigo). O azul de ação continua `#3355FF`.
