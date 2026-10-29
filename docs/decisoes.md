@@ -8,6 +8,20 @@ Modelo de entrada:
 
 ---
 
+## 29/10/2026 — Lista de placas no 1366: mais linhas à vista (aceite de 9 linhas)
+
+- **Decisão (aprovada por Alexandre no checkpoint 5):**
+  - **Busca e ações na mesma linha:** "Mais filtros" e "Visões salvas" saem da linha dos chips e vão para a linha da busca; os chips ocupam a linha de baixo. A ordem do HTML é a ordem da tela (busca, ações, chips).
+  - **Descrição do título escondida nas telas de lista** (`PaginaDeLeitura lista`): sai da vista e continua para o leitor de tela (`sr-only`).
+  - **Modo foco, Colunas e Densidade na linha da paginação,** junto do resumo, do tamanho de página e das setas (o rótulo visível do seletor virou "Linhas"; o nome acessível continua "Linhas por página").
+  - **Botão de tema só com o ícone abaixo de 1536 px** (2xl), com nome acessível e tooltip "Alternar tema". O topo do 1366 passa de três linhas para duas.
+  - **Densidade compacta usa a mini placa menor** (`Placa tamanho="p"`); a confortável mantém a média. A linha compacta cai de cerca de 45 para 34 px.
+- **Teste de aceite:** no 1366×768, densidade compacta, a tabela mostra pelo menos 9 linhas inteiras (e 14 no 1920). O teste foi visto falhando (5 linhas) antes das mudanças. Medido depois: **9 linhas no 1366 e 18 no 1920 na compacta; 6 e 13 na confortável.** O 1366 está na margem do aceite: qualquer elemento novo acima da tabela precisa ser pago com outra economia.
+- **Também:** um aviso de chave do React (só aparece em desenvolvimento) derrubava testes que exigem console limpo; ganhou teste unitário que pega a falta de chave, conferido com mutação.
+- **Quem decidiu:** Alexandre.
+
+---
+
 ## 29/10/2026 — Testes de tela: indicador do Next desligado e teste-guarda da busca
 
 - **Decisão:**
