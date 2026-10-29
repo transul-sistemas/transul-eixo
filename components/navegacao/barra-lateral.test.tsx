@@ -102,7 +102,7 @@ describe("<BarraLateral>: modo compacto", () => {
     const html = barra({ estadoInicial: { compacta: true } });
     expect(html).toContain('data-compacta="true"');
     expect(html).toContain('aria-label="Frota"');
-    expect(html).toContain('href="/frota"');
+    expect(html).toContain('href="/frota/acompanhamento"');
     expect(html).not.toContain('type="search"');
     expect(html).not.toContain("aria-expanded=");
   });

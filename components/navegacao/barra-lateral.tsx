@@ -9,7 +9,6 @@ import {
   IconSearch,
   IconX,
 } from "@tabler/icons-react";
-import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   type CSSProperties,
@@ -30,11 +29,12 @@ import {
 } from "@/lib/navegacao/estado-da-barra";
 import { criarLoja } from "@/lib/navegacao/loja-da-barra";
 import type { Perfil } from "@/lib/navegacao/perfis";
-import { modulosVisiveis } from "@/lib/navegacao/visibilidade";
+import { modulosVisiveis, podeAbrir } from "@/lib/navegacao/visibilidade";
 import { cn } from "@/lib/utils";
 import { variaveisDeCor } from "@/lib/visual/tons";
 import { Logotipo } from "@/components/marca/logotipo";
 import { IconeDoCatalogo } from "./icones";
+import { LinkComContexto } from "./link-com-contexto";
 
 export interface PropsDaBarra {
   perfil: Perfil;
@@ -110,14 +110,14 @@ function ItemDaTela({ modulo, tela, ativa, fixada, quantidade, aoFixar, aoNavega
           {conteudo}
         </span>
       ) : (
-        <Link
+        <LinkComContexto
           href={tela.rota}
           aria-current={ativa ? "page" : undefined}
           onClick={aoNavegar}
           className={classes}
         >
           {conteudo}
-        </Link>
+        </LinkComContexto>
       )}
       <button
         type="button"
@@ -301,14 +301,14 @@ export function BarraLateral({
             <ul className="flex flex-col gap-0.5">
               {resultados.map((r) => (
                 <li key={r.rota} style={estiloDaCor(r.modulo.cor)}>
-                  <Link
+                  <LinkComContexto
                     href={r.rota}
                     onClick={limpar}
                     className="hover:bg-sidebar-accent focus-visible:ring-ring flex items-center gap-2 rounded-lg px-2 py-1.5 outline-none focus-visible:ring-2"
                   >
                     <IconeDoCatalogo nome={r.tela.icone} className="size-4 shrink-0" />
                     <span className="truncate">{r.rotulo}</span>
-                  </Link>
+                  </LinkComContexto>
                 </li>
               ))}
             </ul>
@@ -329,6 +329,7 @@ export function BarraLateral({
                 const soma = somas[modulo.id];
                 const aberto = estado.gruposAbertos.includes(modulo.id);
                 const ativo = modulo.id === moduloAtual;
+                const primeiraAberta = modulo.telas.find((t) => podeAbrir(perfil, t))?.rota;
 
                 if (compacta) {
                   return (
@@ -342,8 +343,8 @@ export function BarraLateral({
                       onBlur={aoSairDoModulo}
                       onKeyDown={aoTeclarNoModulo}
                     >
-                      <Link
-                        href={modulo.rota}
+                      <LinkComContexto
+                        href={primeiraAberta ?? modulo.rota}
                         aria-label={soma ? `${modulo.nome}, ${soma} itens` : modulo.nome}
                         aria-current={ativo ? "true" : undefined}
                         className={cn(
@@ -361,7 +362,7 @@ export function BarraLateral({
                             className="absolute top-1.5 right-1.5 size-2 rounded-full bg-[var(--tom-forte)]"
                           />
                         ) : null}
-                      </Link>
+                      </LinkComContexto>
                       {painel === modulo.id ? (
                         <div className="absolute top-0 left-full z-30 pl-2">
                           <div
