@@ -56,7 +56,7 @@ export function BarraDeConsulta({
 
   return (
     <div role="search" aria-label="Consulta" className="flex flex-wrap items-center gap-2">
-      <div className="relative">
+      <div className="relative max-sm:w-full">
         <IconSearch
           aria-hidden
           className="text-muted-foreground pointer-events-none absolute top-2.5 left-2.5 size-4"
@@ -67,7 +67,7 @@ export function BarraDeConsulta({
           placeholder={rotulo}
           value={buscaDigitada ?? consulta.busca}
           onChange={(evento) => aoDigitar?.(evento.target.value)}
-          className="border-input bg-card focus-visible:border-ring focus-visible:ring-ring/50 h-9 w-64 rounded-lg border pr-3 pl-8 text-sm outline-none focus-visible:ring-3 [&::-webkit-search-cancel-button]:hidden"
+          className="border-input bg-card focus-visible:border-ring focus-visible:ring-ring/50 h-9 w-full rounded-lg border pr-3 pl-8 text-sm outline-none focus-visible:ring-3 sm:w-64 [&::-webkit-search-cancel-button]:hidden"
         />
       </div>
 

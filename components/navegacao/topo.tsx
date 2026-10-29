@@ -1,7 +1,8 @@
 "use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import type { ReactNode } from "react";
+import { type ReactNode, useState, useSyncExternalStore } from "react";
+import { IconAdjustmentsHorizontal, IconMenu2 } from "@tabler/icons-react";
 import {
   type ContextoGlobal,
   escreverContexto,
@@ -11,9 +12,11 @@ import {
   type OpcoesDoContexto,
   periodoValido,
 } from "@/lib/navegacao/contexto";
+import { gaveta } from "@/lib/navegacao/gaveta";
 import { type Perfil, USUARIO_PROVISORIO } from "@/lib/navegacao/perfis";
 import { migalhas } from "@/lib/navegacao/trilha";
 import { AlternadorDeTema } from "@/components/tema/alternador-de-tema";
+import { cn } from "@/lib/utils";
 import { BuscaRapida } from "./busca-rapida";
 import { LinkComContexto } from "./link-com-contexto";
 
@@ -79,6 +82,8 @@ export function Topo({
   aoNavegar,
 }: PropsDoTopo) {
   const contexto = lerContexto(parametros, hoje, opcoes);
+  const menuAberto = useSyncExternalStore(gaveta.assinar, gaveta.estaAberta, () => false);
+  const [contextoAberto, setContextoAberto] = useState(false);
   const caminho = rota.split("?")[0] ?? rota;
   const trilha = migalhas(rota, perfil, parametros.get("modo"));
 
@@ -89,8 +94,18 @@ export function Topo({
   }
 
   return (
-    <header className="border-border bg-background sticky top-0 z-20 flex flex-wrap items-center justify-between gap-x-6 gap-y-2 border-b px-8 py-2">
-      <nav aria-label="Trilha">
+    <header className="border-border bg-background sticky top-0 z-20 flex flex-wrap items-center gap-x-3 gap-y-2 border-b px-4 py-2 sm:px-8 lg:justify-between lg:gap-x-6">
+      <button
+        type="button"
+        aria-label="Abrir menu"
+        aria-controls="menu-principal"
+        aria-expanded={menuAberto}
+        onClick={() => gaveta.abrir()}
+        className="border-input bg-card hover:bg-muted focus-visible:ring-ring/50 grid size-10 shrink-0 place-items-center rounded-lg border outline-none focus-visible:ring-3 lg:hidden"
+      >
+        <IconMenu2 aria-hidden className="size-5" />
+      </button>
+      <nav aria-label="Trilha" className="min-w-0 flex-1 lg:flex-none">
         <ol className="flex flex-wrap items-center gap-1.5 text-sm">
           {trilha.map((migalha, i) => (
             <li key={`${i}-${migalha.texto}`} className="flex items-center gap-1.5">
@@ -118,11 +133,25 @@ export function Topo({
         </ol>
       </nav>
 
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2 max-lg:contents">
+        <button
+          type="button"
+          aria-controls="contexto-global"
+          aria-expanded={contextoAberto}
+          onClick={() => setContextoAberto((aberto) => !aberto)}
+          className="border-input bg-card hover:bg-muted focus-visible:ring-ring/50 flex h-10 items-center gap-2 rounded-lg border px-2.5 text-sm outline-none focus-visible:ring-3 lg:hidden"
+        >
+          <IconAdjustmentsHorizontal aria-hidden className="size-4" />
+          <span className="max-sm:sr-only">Contexto</span>
+        </button>
         <div
+          id="contexto-global"
           role="group"
           aria-label="Contexto global"
-          className="flex flex-wrap items-center gap-2"
+          className={cn(
+            "w-full flex-wrap items-center gap-2 max-lg:order-last lg:w-auto",
+            contextoAberto ? "flex" : "hidden lg:flex",
+          )}
         >
           <Controle rotulo="Período">
             <input

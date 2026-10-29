@@ -310,7 +310,7 @@ export function BuscaRapida({
         className="border-input bg-card text-muted-foreground hover:bg-muted focus-visible:ring-ring/50 flex h-9 items-center gap-2 rounded-lg border px-2.5 text-sm outline-none focus-visible:ring-3"
       >
         <IconSearch aria-hidden className="size-4" />
-        <span>Buscar</span>
+        <span className="max-sm:sr-only">Buscar</span>
         <kbd className="border-border rounded border px-1.5 font-sans text-xs">Ctrl+K</kbd>
       </button>
 

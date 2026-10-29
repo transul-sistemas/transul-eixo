@@ -19,7 +19,7 @@ interface Props {
  */
 export function PaginaDeLeitura({ titulo, descricao, acoes, consulta, kpis, children }: Props) {
   return (
-    <div className="flex flex-1 flex-col gap-5 px-8 py-6">
+    <div className="flex flex-1 flex-col gap-5 px-4 py-6 sm:px-8">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex flex-col gap-1">
           <h1 className="text-3xl font-semibold tracking-tight">{titulo}</h1>

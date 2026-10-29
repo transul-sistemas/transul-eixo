@@ -1,4 +1,6 @@
 import { type ReactNode, Suspense } from "react";
+import { AreaPrincipal } from "@/components/navegacao/area-principal";
+import { AvisoDeDispositivo } from "@/components/navegacao/aviso-de-dispositivo";
 import { BarraLateral } from "@/components/navegacao/barra-lateral";
 import { TopoDoSistema, TopoReservado } from "@/components/navegacao/topo-do-sistema";
 import { perfilAtual, USUARIO_PROVISORIO } from "@/lib/navegacao/perfis";
@@ -13,14 +15,15 @@ export default function LayoutDoSistema({ children }: { children: ReactNode }) {
         Pular para o conteúdo
       </a>
       <BarraLateral perfil={perfilAtual()} usuario={USUARIO_PROVISORIO} />
-      <div className="flex min-w-0 flex-1 flex-col">
+      <AreaPrincipal>
         <Suspense fallback={<TopoReservado />}>
           <TopoDoSistema />
         </Suspense>
+        <AvisoDeDispositivo />
         <main id="conteudo" tabIndex={-1} className="flex flex-1 flex-col outline-none">
           {children}
         </main>
-      </div>
+      </AreaPrincipal>
     </div>
   );
 }

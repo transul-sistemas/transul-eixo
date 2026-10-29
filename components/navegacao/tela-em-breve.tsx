@@ -32,7 +32,7 @@ export function TelaEmBreve({ rota }: { rota: string }) {
   } as CSSProperties;
 
   return (
-    <div style={estilo} className="flex flex-1 items-start px-8 py-10">
+    <div style={estilo} className="flex flex-1 items-start px-4 py-8 sm:px-8 sm:py-10">
       <div className="flex max-w-[62ch] gap-5">
         <span aria-hidden className="w-1 shrink-0 rounded-full bg-[var(--tom-forte)]" />
         <div className="flex flex-col gap-4">
