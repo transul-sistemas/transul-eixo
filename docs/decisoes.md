@@ -8,6 +8,14 @@ Modelo de entrada:
 
 ---
 
+## 29/10/2026 — Prova do teste "tocar na tela atual fecha a gaveta"
+
+- **O que foi feito:** o teste `e2e/casca.spec.ts` ("tocar na tela em que já está também fecha a gaveta") foi escrito junto da correção e, por um erro do próprio teste, o primeiro vermelho não veio do defeito. A prova foi refeita depois: removido só o `onClick` da `<aside>` em `components/navegacao/barra-lateral.tsx`, o teste falhou em `celular-390` e `tablet-820` com `expect(aside[data-barra="principal"]).toBeHidden()` recebendo `visible` (a gaveta continuou aberta após tocar no link da tela atual). Restaurada a correção, os dois passaram.
+- **Motivo:** teste que nunca foi visto falhando pelo motivo certo não prova nada.
+- **Quem decidiu:** Alexandre.
+
+---
+
 ## 29/10/2026 — Armadilhas conhecidas: 14 regras, cada uma com teste
 
 - **Decisão:** o CLAUDE.md ganha a seção "Armadilhas conhecidas" com 14 regras. Cada regra tem teste automático onde é possível; onde o código ainda não existe, o teste é **compromisso de entrega**: nasce junto com o código e a fase só fecha com os testes aplicáveis passando. A Fase 2C fecha assim.
