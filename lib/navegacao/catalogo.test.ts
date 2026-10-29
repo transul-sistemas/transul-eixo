@@ -81,9 +81,9 @@ describe("catálogo: telas", () => {
       expect(tela.descricao.endsWith("."), tela.id).toBe(true);
     }
   });
-  it("tudo está em-breve, menos a Demonstração, que está pronta", () => {
+  it("tudo está em-breve, menos a Demonstração e as Placas, que estão prontas", () => {
     const prontas = telas.filter((t) => t.estado === "pronto").map((t) => t.id);
-    expect(prontas).toEqual(["admin.demonstracao"]);
+    expect(prontas).toEqual(["frota.placas", "admin.demonstracao"]);
     expect(telas.filter((t) => t.estado === "restrito")).toEqual([]);
     expect(acharTela("/inicio/mapa-do-sistema")?.tela.estado).toBe("em-breve");
   });

@@ -44,7 +44,7 @@ describe("<BarraLateral>: grupos", () => {
     expect(contar(html, "Em breve")).toBe(2);
   });
   it("quem não vê nenhuma tela recebe um aviso, não uma barra vazia", () => {
-    const html = barra({ perfil: "Gestor de frota", rotaAtual: "/" });
+    const html = barra({ perfil: "Operacional", rotaAtual: "/" });
     expect(html).toContain("Nenhuma tela disponível para o seu perfil.");
     expect(html).not.toContain("aria-expanded=");
   });
@@ -92,7 +92,7 @@ describe("<BarraLateral>: fixados", () => {
       'aria-label="Fixados"',
     );
     expect(
-      barra({ perfil: "Gestor de frota", estadoInicial: { fixados: ["frota.placas"] } }),
+      barra({ perfil: "Operacional", estadoInicial: { fixados: ["frota.placas"] } }),
     ).not.toContain('href="/frota/placas"');
   });
 });

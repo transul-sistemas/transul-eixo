@@ -101,3 +101,12 @@ export function grupoDaSigla(sigla: Sigla): Status {
 export function ehBaixada(sigla: Sigla): boolean {
   return SIGLAS_DE_BAIXA.includes(sigla);
 }
+
+/** Os cinco chips de status, com o nome que a tela mostra. */
+export const NOMES_DOS_CHIPS: Record<Status, string> = {
+  "em-atividade": "Em atividade",
+  atencao: "Atenção",
+  impedida: "Impedida",
+  patio: "Pátio",
+  fora: "Fora",
+};

@@ -100,8 +100,10 @@ describe("modulosVisiveis (catálogo real)", () => {
       expect(visiveis.flatMap((m) => m.telas)).toHaveLength(35);
     }
   });
-  it("enquanto tudo estiver em breve, Gestor de frota e Operacional não veem nada", () => {
-    expect(modulosVisiveis("Gestor de frota")).toEqual([]);
+  it("com só as Placas prontas, o Gestor de frota vê Frota › Placas e o Operacional não vê nada", () => {
+    expect(modulosVisiveis("Gestor de frota").map((m) => [m.id, m.telas.map((t) => t.id)])).toEqual(
+      [["frota", ["frota.placas"]]],
+    );
     expect(modulosVisiveis("Operacional")).toEqual([]);
   });
   it("a Demonstração, pronta, só abre para quem tem o módulo de Administração", () => {
@@ -150,8 +152,9 @@ describe("rotaInicialDoModulo (para onde /frota, /pessoas etc. redirecionam)", (
   });
   it("no catálogo real, quem não vê nada não é levado a lugar nenhum", () => {
     for (const m of CATALOGO) {
-      expect(rotaInicialDoModulo("Gestor de frota", m.id), m.id).toBeUndefined();
       expect(rotaInicialDoModulo("Operacional", m.id), m.id).toBeUndefined();
+      const esperado = m.id === "frota" ? "/frota/placas" : undefined;
+      expect(rotaInicialDoModulo("Gestor de frota", m.id), m.id).toBe(esperado);
     }
   });
 });

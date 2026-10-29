@@ -45,8 +45,8 @@ describe("migalhas (a trilha: Módulo › Tela › Modo)", () => {
     expect(migalhas("/", "Administrador")).toEqual([]);
   });
   it("perfil que não abre nada no módulo vê o nome dele, sem link", () => {
-    const [modulo] = migalhas("/frota/placas", "Gestor de frota");
-    expect(modulo).toEqual({ texto: "Frota" });
+    const [modulo] = migalhas("/pessoas/escala", "Gestor de frota");
+    expect(modulo).toEqual({ texto: "Pessoas" });
   });
   it("a última migalha é sempre a página atual", () => {
     for (const rota of ["/inicio/tarefas", "/pessoas/escala", "/admin/auditoria"]) {
