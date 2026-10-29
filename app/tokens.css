@@ -20,6 +20,10 @@
   --acao-texto: #ffffff;
   --marca-transul: #151f6d;
 
+  /* placa de veículo: clara também no tema escuro */
+  --placa-fundo: #ffffff;
+  --placa-texto: #0f1729;
+
   /* módulos: forte e suave */
   --modulo-frota: #4338ca;
   --modulo-frota-suave: color-mix(in srgb, var(--modulo-frota) 14%, var(--superficie));
@@ -65,6 +69,10 @@
   --acao: #3355ff;
   --acao-texto: #ffffff;
   --marca-transul: #a9b6ff;
+
+  /* placa de veículo: igual ao tema claro */
+  --placa-fundo: #ffffff;
+  --placa-texto: #0f1729;
 
   /* módulos: mesma cor forte do tema claro; suave mais presente sobre a superfície escura */
   --modulo-frota: #4338ca;
