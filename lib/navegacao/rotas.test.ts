@@ -1,7 +1,7 @@
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { todasAsTelas } from "./catalogo";
+import { CATALOGO, todasAsTelas } from "./catalogo";
 
 // A regra "rota ⇔ catálogo": toda rota do catálogo tem página, e nenhuma página existe fora dele.
 
@@ -27,17 +27,27 @@ function rotaDe(arquivo: string): string {
 const paginas = paginasDe("app");
 const rotasDasPaginas = paginas.map(rotaDe);
 const telas = todasAsTelas();
+const rotasDeModulo = CATALOGO.map((m) => m.rota);
 
 describe("rotas e catálogo", () => {
   it.each(telas.map((t) => [t.rota, t.id] as const))("a rota %s (%s) tem página", (rota) => {
     expect(rotasDasPaginas).toContain(rota);
   });
-  it("nenhuma página existe fora do catálogo, exceto a raiz", () => {
+  it("nenhuma página existe fora do catálogo, exceto a raiz e a de cada módulo", () => {
     const foraDoCatalogo = rotasDasPaginas.filter(
-      (rota) => rota !== "/" && !telas.some((t) => t.rota === rota),
+      (rota) =>
+        rota !== "/" && !rotasDeModulo.includes(rota) && !telas.some((t) => t.rota === rota),
     );
     expect(foraDoCatalogo).toEqual([]);
   });
+  it.each(CATALOGO.map((m) => [m.rota, m.id] as const))(
+    "o módulo %s tem página, que redireciona para a sua primeira tela visível",
+    (rota, id) => {
+      expect(rotasDasPaginas).toContain(rota);
+      const codigo = readFileSync(`app/(sistema)${rota}/page.tsx`, "utf-8");
+      expect(codigo).toContain(`irParaOModulo("${id}")`);
+    },
+  );
   it("não há duas páginas para a mesma rota", () => {
     expect(new Set(rotasDasPaginas).size).toBe(rotasDasPaginas.length);
   });

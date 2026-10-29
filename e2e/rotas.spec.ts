@@ -47,7 +47,6 @@ test.describe("fora do catálogo", () => {
     "/operacoes/operacoes",
     "/pessoas/pessoas",
     "/parceiros/parceiros",
-    "/frota",
   ]) {
     test(`${rota} não existe`, async ({ page }) => {
       const resposta = await page.goto(rota);
@@ -63,6 +62,26 @@ test.describe("modos do Acompanhamento", () => {
       expect(resposta?.status()).toBe(200);
       await expect(page.getByRole("heading", { level: 1, name: "Acompanhamento" })).toBeVisible();
       await expect(page.getByText("Modos previstos: Grade, Agora, Censo e Mapa.")).toBeVisible();
+    });
+  }
+});
+
+test.describe("cada módulo leva à sua primeira tela", () => {
+  const destinos: Record<string, string> = {
+    "/inicio": "/inicio/tarefas",
+    "/frota": "/frota/acompanhamento",
+    "/operacional": "/operacional/patio",
+    "/operacoes": "/operacoes/lista",
+    "/pessoas": "/pessoas/lista",
+    "/parceiros": "/parceiros/lista",
+    "/resultados": "/resultados/visao-geral",
+    "/cadastros": "/cadastros/catalogos",
+    "/admin": "/admin/usuarios-e-perfis",
+  };
+  for (const [modulo, destino] of Object.entries(destinos)) {
+    test(`${modulo} redireciona para ${destino}`, async ({ page }) => {
+      await page.goto(modulo);
+      await expect(page).toHaveURL(new RegExp(`${destino}$`));
     });
   }
 });
