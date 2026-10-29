@@ -11,15 +11,18 @@ import {
   type OpcoesDoContexto,
   periodoValido,
 } from "@/lib/navegacao/contexto";
-import type { Perfil } from "@/lib/navegacao/perfis";
+import { type Perfil, USUARIO_PROVISORIO } from "@/lib/navegacao/perfis";
 import { migalhas } from "@/lib/navegacao/trilha";
 import { AlternadorDeTema } from "@/components/tema/alternador-de-tema";
+import { BuscaRapida } from "./busca-rapida";
 import { LinkComContexto } from "./link-com-contexto";
 
 export interface PropsDoTopo {
   /** Dia de hoje em São Paulo, `aaaa-mm-dd`: é de onde vem o período padrão. */
   hoje: string;
   perfil: Perfil;
+  /** De quem são os fixados e os recentes da busca rápida (provisório até haver login). */
+  usuario?: string;
   /** Rota da página (padrão da navegação): a trilha e os links partem dela. */
   rota: string;
   /** Parâmetros da URL: o contexto e o `?modo=` são lidos daqui. */
@@ -69,6 +72,7 @@ function Escolha({
 export function Topo({
   hoje,
   perfil,
+  usuario = USUARIO_PROVISORIO,
   rota,
   parametros = new URLSearchParams(),
   opcoes = OPCOES_PROVISORIAS,
@@ -153,6 +157,13 @@ export function Topo({
             />
           </Controle>
         </div>
+        <BuscaRapida
+          perfil={perfil}
+          usuario={usuario}
+          rota={caminho}
+          parametros={parametros}
+          aoNavegar={aoNavegar}
+        />
         <AlternadorDeTema />
       </div>
     </header>

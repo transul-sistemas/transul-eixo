@@ -55,6 +55,11 @@ describe("<Topo>: trilha e tema", () => {
     expect(html).toContain("Mapa");
     expect(html).toContain('href="/frota/acompanhamento"');
   });
+  it("a busca rápida (Ctrl+K) fica no topo", () => {
+    const html = topo();
+    expect(html).toContain('aria-keyshortcuts="Control+K"');
+    expect(html).toContain("Buscar");
+  });
   it("o botão de tema fica no topo", () => {
     expect(topo()).toContain("Alternar tema");
   });
