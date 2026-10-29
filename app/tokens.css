@@ -1,0 +1,113 @@
+/*
+ * Tokens do Eixo. Único arquivo do projeto onde cor hexadecimal é permitida
+ * (Stylelint e docs/decisoes.md). Todo o resto usa estas variáveis.
+ *
+ * Cor de módulo diz onde a pessoa está; cor de status diz como está a placa. Nunca misturar.
+ * Forte: ícone, cabeçalho, botão. Suave: fundos. O módulo Início usa o azul de ação.
+ * Administração usa a cor de Cadastros.
+ */
+
+:root {
+  /* base */
+  --fundo: #f6f7fb;
+  --superficie: #ffffff;
+  --texto: #0f1729;
+  --texto-suave: #5a6478;
+  --texto-negativo: #b91c1c;
+  --linha: #eceef4;
+
+  /* ação e marca */
+  --acao: #3355ff;
+  --acao-texto: #ffffff;
+  --marca-transul: #151f6d;
+
+  /* placa de veículo: clara também no tema escuro */
+  --placa-fundo: #ffffff;
+  --placa-texto: #0f1729;
+  --placa-faixa: #4338ca;
+
+  /* módulos: forte e suave */
+  --modulo-frota: #4338ca;
+  --modulo-frota-suave: color-mix(in srgb, var(--modulo-frota) 14%, var(--superficie));
+  --modulo-operacional: #ff7a3d;
+  --modulo-operacional-suave: color-mix(in srgb, var(--modulo-operacional) 14%, var(--superficie));
+  --modulo-operacoes: #7c5cff;
+  --modulo-operacoes-suave: color-mix(in srgb, var(--modulo-operacoes) 14%, var(--superficie));
+  --modulo-pessoas: #e8508a;
+  --modulo-pessoas-suave: color-mix(in srgb, var(--modulo-pessoas) 14%, var(--superficie));
+  --modulo-parceiros: #13a8a4;
+  --modulo-parceiros-suave: color-mix(in srgb, var(--modulo-parceiros) 14%, var(--superficie));
+  --modulo-resultados: #1fa971;
+  --modulo-resultados-suave: color-mix(in srgb, var(--modulo-resultados) 14%, var(--superficie));
+  --modulo-cadastros: #64748b;
+  --modulo-cadastros-suave: color-mix(in srgb, var(--modulo-cadastros) 14%, var(--superficie));
+
+  /* status da placa: forte e suave */
+  --status-em-atividade: #22a06b;
+  --status-em-atividade-suave: color-mix(
+    in srgb,
+    var(--status-em-atividade) 14%,
+    var(--superficie)
+  );
+  --status-atencao: #e8a317;
+  --status-atencao-suave: color-mix(in srgb, var(--status-atencao) 14%, var(--superficie));
+  --status-impedida: #e5484d;
+  --status-impedida-suave: color-mix(in srgb, var(--status-impedida) 14%, var(--superficie));
+  --status-patio: #2e9bea;
+  --status-patio-suave: color-mix(in srgb, var(--status-patio) 14%, var(--superficie));
+  --status-fora: #8a94a6;
+  --status-fora-suave: color-mix(in srgb, var(--status-fora) 14%, var(--superficie));
+}
+
+.dark {
+  /* base */
+  --fundo: #0e1322;
+  --superficie: #161c2e;
+  --texto: #e8ecf6;
+  --texto-suave: #9aa4ba;
+  --texto-negativo: #ff8a8f;
+  --linha: #263049;
+
+  /* ação e marca */
+  --acao: #3355ff;
+  --acao-texto: #ffffff;
+  --marca-transul: #a9b6ff;
+
+  /* placa de veículo: igual ao tema claro */
+  --placa-fundo: #ffffff;
+  --placa-texto: #0f1729;
+  --placa-faixa: #4338ca;
+
+  /* módulos: mesma cor forte do tema claro, exceto a Frota, mais clara para a bolinha aparecer
+     sobre a superfície escura (3:1). Suave mais presente sobre a superfície escura. */
+  --modulo-frota: #5e54d8;
+  --modulo-frota-suave: color-mix(in srgb, var(--modulo-frota) 22%, var(--superficie));
+  --modulo-operacional: #ff7a3d;
+  --modulo-operacional-suave: color-mix(in srgb, var(--modulo-operacional) 22%, var(--superficie));
+  --modulo-operacoes: #7c5cff;
+  --modulo-operacoes-suave: color-mix(in srgb, var(--modulo-operacoes) 22%, var(--superficie));
+  --modulo-pessoas: #e8508a;
+  --modulo-pessoas-suave: color-mix(in srgb, var(--modulo-pessoas) 22%, var(--superficie));
+  --modulo-parceiros: #13a8a4;
+  --modulo-parceiros-suave: color-mix(in srgb, var(--modulo-parceiros) 22%, var(--superficie));
+  --modulo-resultados: #1fa971;
+  --modulo-resultados-suave: color-mix(in srgb, var(--modulo-resultados) 22%, var(--superficie));
+  --modulo-cadastros: #64748b;
+  --modulo-cadastros-suave: color-mix(in srgb, var(--modulo-cadastros) 22%, var(--superficie));
+
+  /* status da placa */
+  --status-em-atividade: #22a06b;
+  --status-em-atividade-suave: color-mix(
+    in srgb,
+    var(--status-em-atividade) 22%,
+    var(--superficie)
+  );
+  --status-atencao: #e8a317;
+  --status-atencao-suave: color-mix(in srgb, var(--status-atencao) 22%, var(--superficie));
+  --status-impedida: #e5484d;
+  --status-impedida-suave: color-mix(in srgb, var(--status-impedida) 22%, var(--superficie));
+  --status-patio: #2e9bea;
+  --status-patio-suave: color-mix(in srgb, var(--status-patio) 22%, var(--superficie));
+  --status-fora: #8a94a6;
+  --status-fora-suave: color-mix(in srgb, var(--status-fora) 22%, var(--superficie));
+}

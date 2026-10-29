@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
+@import "./tokens.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -8,7 +9,7 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-placa: var(--font-placa);
   --font-heading: var(--font-sans);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
@@ -18,11 +19,6 @@
   --color-sidebar-primary: var(--sidebar-primary);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar: var(--sidebar);
-  --color-chart-5: var(--chart-5);
-  --color-chart-4: var(--chart-4);
-  --color-chart-3: var(--chart-3);
-  --color-chart-2: var(--chart-2);
-  --color-chart-1: var(--chart-1);
   --color-ring: var(--ring);
   --color-input: var(--input);
   --color-border: var(--border);
@@ -46,75 +42,72 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+
+  /* tokens do Eixo como utilitários do Tailwind (bg-modulo-frota-suave, text-texto-suave...) */
+  --color-fundo: var(--fundo);
+  --color-superficie: var(--superficie);
+  --color-texto: var(--texto);
+  --color-texto-suave: var(--texto-suave);
+  --color-texto-negativo: var(--texto-negativo);
+  --color-linha: var(--linha);
+  --color-acao: var(--acao);
+  --color-acao-texto: var(--acao-texto);
+  --color-marca-transul: var(--marca-transul);
+  --color-modulo-frota: var(--modulo-frota);
+  --color-modulo-frota-suave: var(--modulo-frota-suave);
+  --color-modulo-operacional: var(--modulo-operacional);
+  --color-modulo-operacional-suave: var(--modulo-operacional-suave);
+  --color-modulo-operacoes: var(--modulo-operacoes);
+  --color-modulo-operacoes-suave: var(--modulo-operacoes-suave);
+  --color-modulo-pessoas: var(--modulo-pessoas);
+  --color-modulo-pessoas-suave: var(--modulo-pessoas-suave);
+  --color-modulo-parceiros: var(--modulo-parceiros);
+  --color-modulo-parceiros-suave: var(--modulo-parceiros-suave);
+  --color-modulo-resultados: var(--modulo-resultados);
+  --color-modulo-resultados-suave: var(--modulo-resultados-suave);
+  --color-modulo-cadastros: var(--modulo-cadastros);
+  --color-modulo-cadastros-suave: var(--modulo-cadastros-suave);
+  --color-status-em-atividade: var(--status-em-atividade);
+  --color-status-em-atividade-suave: var(--status-em-atividade-suave);
+  --color-status-atencao: var(--status-atencao);
+  --color-status-atencao-suave: var(--status-atencao-suave);
+  --color-status-impedida: var(--status-impedida);
+  --color-status-impedida-suave: var(--status-impedida-suave);
+  --color-status-patio: var(--status-patio);
+  --color-status-patio-suave: var(--status-patio-suave);
+  --color-status-fora: var(--status-fora);
+  --color-status-fora-suave: var(--status-fora-suave);
 }
 
+/* Variáveis do shadcn ligadas aos tokens do Eixo: o tema claro/escuro vem de tokens.css. */
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
+  --background: var(--fundo);
+  --foreground: var(--texto);
+  --card: var(--superficie);
+  --card-foreground: var(--texto);
+  --popover: var(--superficie);
+  --popover-foreground: var(--texto);
+  --primary: var(--acao);
+  --primary-foreground: var(--acao-texto);
+  --secondary: color-mix(in srgb, var(--texto) 6%, var(--superficie));
+  --secondary-foreground: var(--texto);
+  --muted: color-mix(in srgb, var(--texto) 6%, var(--superficie));
+  --muted-foreground: var(--texto-suave);
+  --accent: color-mix(in srgb, var(--texto) 6%, var(--superficie));
+  --accent-foreground: var(--texto);
+  --destructive: var(--texto-negativo);
+  --border: var(--linha);
+  --input: var(--linha);
+  --ring: var(--acao);
   --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
-}
-
-.dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --sidebar: var(--superficie);
+  --sidebar-foreground: var(--texto);
+  --sidebar-primary: var(--acao);
+  --sidebar-primary-foreground: var(--acao-texto);
+  --sidebar-accent: color-mix(in srgb, var(--texto) 6%, var(--superficie));
+  --sidebar-accent-foreground: var(--texto);
+  --sidebar-border: var(--linha);
+  --sidebar-ring: var(--acao);
 }
 
 @layer base {

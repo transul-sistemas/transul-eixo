@@ -68,6 +68,31 @@ describe("ESLint: formatação de número", () => {
   });
 });
 
+describe("ESLint: outras formas de formatar à mão", () => {
+  it("barra toLocaleDateString e toLocaleTimeString", async () => {
+    expect(await lintar("d.toLocaleDateString();")).toHaveLength(1);
+    expect(await lintar("d.toLocaleTimeString();")).toHaveLength(1);
+  });
+  it("barra Intl.DateTimeFormat, com e sem new", async () => {
+    expect(await lintar('new Intl.DateTimeFormat("pt-BR");')).toHaveLength(1);
+    expect(await lintar('Intl.DateTimeFormat("pt-BR");')).toHaveLength(1);
+  });
+  it("barra Intl usado por apelido", async () => {
+    expect(await lintar("const Formato = Intl.NumberFormat;")).toHaveLength(1);
+  });
+  it("barra toFixed", async () => {
+    expect(await lintar("n.toFixed(2);")).toHaveLength(1);
+  });
+  it("não barra toLocaleLowerCase nem localeCompare", async () => {
+    expect(await lintar("t.toLocaleLowerCase();")).toHaveLength(0);
+    expect(await lintar("a.localeCompare(b);")).toHaveLength(0);
+  });
+  it("permite tudo isso em components/formato/", async () => {
+    const caminho = "components/formato/data.ts";
+    expect(await lintar("d.toLocaleDateString(); n.toFixed(2);", caminho)).toHaveLength(0);
+  });
+});
+
 describe("ESLint: exceção só em components/formato/", () => {
   const caminho = "components/formato/moeda.ts";
   it("permite toLocaleString", async () => {

@@ -67,9 +67,9 @@ docs/           projeto técnico, glossário de métricas, registro de decisões
 
 - Nome: **TranSul Eixo** (no dia a dia, Eixo). Logotipo: mini placa Mercosul com faixa azul e "EIXO", e o texto "TranSul Eixo" ao lado. Ícone: mini placa com "E".
 - Fonte: Barlow; Barlow Semi Condensed nas placas. Toda placa de veículo aparece como mini placa Mercosul.
-- Cores dos módulos: Frota `#3D5AFE`, Operacional `#FF7A3D`, Operações `#7C5CFF`, Pessoas `#E8508A`, Parceiros `#13A8A4`, Resultados `#1FA971`, Cadastros e Administração `#64748B`. Cada cor tem versão forte e suave.
+- Cores dos módulos: Frota `#4338CA`, Operacional `#FF7A3D`, Operações `#7C5CFF`, Pessoas `#E8508A`, Parceiros `#13A8A4`, Resultados `#1FA971`, Cadastros e Administração `#64748B`. Cada cor tem versão forte e suave.
 - Status: em atividade `#22A06B`, atenção `#E8A317`, impedida `#E5484D`, pátio `#2E9BEA`, fora `#8A94A6`. Etiquetas suaves nas telas; cor sólida só no modo TV.
-- Base: fundo `#F6F7FB`, superfícies brancas, texto `#0F1729`, linhas `#ECEEF4`. Modo escuro de primeira classe. Azul TranSul `#151F6D` só na assinatura "para TranSul".
+- Base: fundo `#F6F7FB`, superfícies brancas, texto `#0F1729`, linhas `#ECEEF4`. Azul de ação do Eixo `#3355FF`. Modo escuro de primeira classe. Azul TranSul `#151F6D` só na assinatura "para TranSul".
 - Cor de módulo diz onde a pessoa está; cor de status diz como está a placa. Nunca misturar.
 
 ## Padrões de tela (obrigatórios)
