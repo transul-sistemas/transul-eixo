@@ -8,6 +8,20 @@ Modelo de entrada:
 
 ---
 
+## 29/10/2026 — Lista de placas (2C-1): mudanças em relação ao plano
+
+- **Decisão (aprovada por Alexandre no checkpoint 1):**
+  - **Datas dos dados de exemplo relativas a "hoje":** `placasDeExemplo(hoje)` calcula início de situação, vigências de CR e vencimento de CRLV a partir do dia pedido, em vez de uma lista fixa. A lista, os dias na situação e os alertas não envelhecem, e os testes não quebram com o tempo.
+  - **`?lento=ms` e `?falha=1` são opção da consulta, não parte dela** (`opcoes.simulacao`). Só a fonte de exemplo obedece, e só depois de conferir `EIXO_DADOS=exemplo`; a página apenas repassa o que vem da URL. Dois testes garantem isso (um de execução, um que lê o código).
+  - **Placas é tela pronta e o Gestor de frota a vê** (Frota › Placas). O Operacional continua sem nenhuma tela até haver telas prontas para ele; seis testes de visibilidade foram atualizados para refletir isso.
+  - **Tipos de ativo intercalados** no gerador, em ciclo fixo de 24 placas (6 cavalos, 10 implementos, 2 equipamentos, 3 caminhões, 2 veículos pequenos, 1 apoio), sem sorteio, para a primeira página mostrar variedade. A ordem inicial segue por placa. Os casos feios foram reassociados às placas de cavalo e de implemento solto correspondentes (`AAA0A04`, `AAA0A10`, `AAA0A14`, `AAA0A19`, `AAA0A22`, `AAA0A24`, `AAA0A28` e `AAA0C17`).
+  - **Mudar a consulta volta à página 1 desde `escreverConsulta`** (tira o parâmetro `pagina`), então a barra de consulta e a tabela se comportam igual.
+  - **Tipos e constantes da lista** ficam em `lib/dados/placas-tipos.ts`, sem importar a fonte, para o navegador não puxar código de servidor. O TanStack Table 9 usa `useTable` e `tableFeatures`; a tabela genérica exige `T extends object`.
+- **Mantido:** topo em duas linhas no 1366 (Alexandre decide depois de usar).
+- **Quem decidiu:** Alexandre.
+
+---
+
 ## 29/10/2026 — Lista de placas (2C-1): servidor dirige, porta única do exemplo, cookie validado
 
 - **Decisão:**

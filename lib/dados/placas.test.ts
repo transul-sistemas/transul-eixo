@@ -258,6 +258,14 @@ describe("listarPlacas: fonte", () => {
     await listarPlacas(consulta(), HOJE, { simulacao: { lentoMs: 120 } });
     expect(Date.now() - antes).toBeGreaterThanOrEqual(110);
   });
+  it("lento e falha não têm efeito fora da fonte de exemplo: a fonte recusa antes de obedecer", async () => {
+    vi.stubEnv("EIXO_DADOS", "");
+    const antes = Date.now();
+    await expect(
+      listarPlacas(consulta(), HOJE, { simulacao: { falha: true, lentoMs: 800 } }),
+    ).rejects.toThrow("A fonte de exemplo só roda com EIXO_DADOS=exemplo");
+    expect(Date.now() - antes).toBeLessThan(400);
+  });
   it("devolve o formato da página", async () => {
     const pagina: PaginaDePlacas = await listar();
     expect(Object.keys(pagina).sort()).toEqual(
