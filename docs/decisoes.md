@@ -8,6 +8,17 @@ Modelo de entrada:
 
 ---
 
+## 29/10/2026 — Backlog da 2.0, ritmo de validação visual e GitHub Team
+
+- **Decisão:**
+  - **Seção "Backlog da 2.0"** (em `docs/projeto-tecnico.md` e resumida no `CLAUDE.md`): AGEU (manter o cadastro); CPF do FRANCINALDO (confirmar na fonte); sorteio e premiação (mesma chance para todos os elegíveis, sem cupons extras); Resend; Ticket Log. **O Sankhya é a fonte principal do abastecimento; o Ticket Log só confere, casado pelo identificador da transação.** AGEU e FRANCINALDO continuam também na lista de saneamento da v1.
+  - **Ritmo de validação visual vale para toda entrega**, não só para a 2B: ao fim de cada checkpoint, capturas em 1366 e 1920, claro e escuro, e a rota para abrir com `pnpm dev`. Entra no `CLAUDE.md` ("Como trabalhar").
+  - **GitHub Team passa a ser pendência antes da produção, ao lado do Vercel Pro** (já constava só nesta decisão, em "Pendências de plano antes da importação e da produção"; agora também em `docs/projeto-tecnico.md` › Pendências e no `CLAUDE.md`).
+- **Motivo:** a auditoria de 29/10 mostrou que esses itens estavam registrados só em parte ou só em um dos documentos.
+- **Quem decidiu:** Alexandre.
+
+---
+
 ## 29/10/2026 — Qualidade de interação: seis regras para toda tela a partir da 2C
 
 - **Decisão:** o CLAUDE.md ganha a seção "Qualidade de interação" (fechar é fechar; estado na URL; paginação no servidor; listagens; aproveitamento de tela; foco e teclado). Vale para toda tela a partir da Fase 2C. Cada regra tem teste automático nos componentes de base; o teste nasce com o componente que a regra protege, e a entrega só fecha com os testes aplicáveis passando. Complementa as "Armadilhas conhecidas" (regras 1 a 4 e 6 delas caem na tabela).
