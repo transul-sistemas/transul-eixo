@@ -24,19 +24,20 @@ const regrasDeFormato = {
       message: "Cor hexadecimal fora de components/formato/. Use os tokens do sistema visual.",
     },
     {
-      selector: "CallExpression[callee.property.name='toLocaleString']",
+      selector: "CallExpression[callee.property.name=/^toLocale(Date|Time)?String$/]",
       message:
-        "toLocaleString fora de components/formato/. Use o componente de formato (moeda, data, km...).",
+        "toLocale*String fora de components/formato/. Use o componente de formato (moeda, data, km...).",
     },
     {
-      selector: "CallExpression[callee.object.name='Intl'][callee.property.name='NumberFormat']",
+      selector:
+        "MemberExpression[object.name='Intl'][property.name=/^(NumberFormat|DateTimeFormat|RelativeTimeFormat|ListFormat|PluralRules)$/]",
       message:
-        "Intl.NumberFormat fora de components/formato/. Use o componente de formato (moeda, data, km...).",
+        "Intl fora de components/formato/. Use o componente de formato (moeda, data, km...).",
     },
     {
-      selector: "NewExpression[callee.object.name='Intl'][callee.property.name='NumberFormat']",
+      selector: "CallExpression[callee.property.name='toFixed']",
       message:
-        "Intl.NumberFormat fora de components/formato/. Use o componente de formato (moeda, data, km...).",
+        "toFixed fora de components/formato/. Formate com o componente de formato (km, litros, percentual...).",
     },
   ],
 };
