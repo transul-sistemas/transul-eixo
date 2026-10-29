@@ -239,6 +239,7 @@ export function BuscaRapida({
     setContexto({
       fixados: armazenamento ? lerEstado(usuario, armazenamento).fixados : [],
       recentes: armazenamento ? lerRecentes(usuario, armazenamento) : [],
+      atual: acharTela(rota)?.tela.id,
     });
     setTermo("");
     setAtivo(0);

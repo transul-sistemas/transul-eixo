@@ -32,6 +32,8 @@ export interface ContextoDaBusca {
   readonly fixados: readonly string[];
   /** Ids das últimas telas abertas, a mais recente primeiro. */
   readonly recentes: readonly string[];
+  /** Id da tela em que a pessoa está: ela não é um recente. */
+  readonly atual?: string;
 }
 
 const LIMITE_DE_RECENTES = 5;
@@ -99,7 +101,9 @@ export function montarGrupos(
   const grupos: GrupoDaBusca[] = [];
   if (normalizar(termo) === "") {
     const fixados = itensPorId(contexto.fixados, perfil, catalogo);
+    // Fixados e a tela atual não se repetem em Recentes.
     const jaMostrados = new Set(fixados.map((item) => item.id));
+    if (contexto.atual !== undefined) jaMostrados.add(contexto.atual);
     const recentes = itensPorId(contexto.recentes, perfil, catalogo, jaMostrados);
     if (fixados.length > 0) grupos.push({ id: "fixados", titulo: "Fixados", itens: fixados });
     if (recentes.length > 0) grupos.push({ id: "recentes", titulo: "Recentes", itens: recentes });

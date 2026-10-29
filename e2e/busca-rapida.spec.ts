@@ -173,7 +173,8 @@ test.describe("busca rápida: sem termo", () => {
     await abrirBusca(page);
     const recentes = janela(page).getByRole("group", { name: "Recentes" });
     await expect(recentes.getByRole("option", { name: /^Frota › Placas/ })).toBeVisible();
-    await expect(recentes.getByRole("option", { name: /^Início › Tarefas/ })).toBeVisible();
+    // A tela em que a pessoa já está não é um recente.
+    await expect(recentes.getByRole("option", { name: /^Início › Tarefas/ })).toHaveCount(0);
   });
 
   test("mostra as telas fixadas na barra lateral em Fixados", async ({ page }) => {

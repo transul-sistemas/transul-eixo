@@ -114,6 +114,43 @@ describe("montarGrupos: sem termo (fixados e recentes)", () => {
   });
 });
 
+describe("montarGrupos: a tela atual não é um recente", () => {
+  it("tira a tela atual de Recentes", () => {
+    const grupos = montarGrupos("", "Administrador", {
+      fixados: [],
+      recentes: ["frota.placas", "frota.carteira"],
+      atual: "frota.placas",
+    });
+    expect(grupos.map((g) => g.id)).toEqual(["recentes"]);
+    expect(grupos[0]?.itens.map((i) => i.rotulo)).toEqual(["Frota › Carteira"]);
+  });
+  it("se só a tela atual foi visitada, o grupo Recentes não aparece", () => {
+    expect(
+      montarGrupos("", "Administrador", {
+        fixados: [],
+        recentes: ["frota.placas"],
+        atual: "frota.placas",
+      }),
+    ).toEqual([]);
+  });
+  it("a tela atual continua nos Fixados, se estiver fixada", () => {
+    const grupos = montarGrupos("", "Administrador", {
+      fixados: ["frota.placas"],
+      recentes: ["frota.placas"],
+      atual: "frota.placas",
+    });
+    expect(grupos.map((g) => g.id)).toEqual(["fixados"]);
+  });
+  it("com termo, a tela atual aparece normalmente nos resultados", () => {
+    const grupos = montarGrupos("placas", "Administrador", {
+      fixados: [],
+      recentes: [],
+      atual: "frota.placas",
+    });
+    expect(achatar(grupos).map((i) => i.rotulo)).toContain("Frota › Placas");
+  });
+});
+
 describe("achatar e mover (a lista que o teclado percorre)", () => {
   it("achatar junta os itens dos grupos, na ordem", () => {
     const grupos = montarGrupos("placa", "Administrador", SEM_CONTEXTO);
