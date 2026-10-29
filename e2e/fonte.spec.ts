@@ -17,6 +17,6 @@ test.describe("fontes do Eixo", () => {
     const variavel = await page.evaluate(() =>
       getComputedStyle(document.documentElement).getPropertyValue("--font-placa"),
     );
-    expect(variavel).toContain("Barlow Semi Condensed");
+    expect(variavel).toContain("BarlowSemiCondensed");
   });
 });
