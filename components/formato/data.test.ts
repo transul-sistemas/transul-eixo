@@ -11,6 +11,14 @@ describe("formatarData", () => {
     expect(formatarData("2026-03-01T01:00:00Z")).toBe("28/02/2026");
     expect(formatarData(new Date("2026-03-01T12:00:00Z"))).toBe("01/03/2026");
   });
+  it("instante sem fuso vale como a hora de parede: o dia não depende da máquina", () => {
+    expect(formatarData("2026-10-29T23:30:00")).toBe("29/10/2026");
+    expect(formatarData("2026-10-29T00:00:00.000")).toBe("29/10/2026");
+  });
+  it("instante com fuso é convertido para São Paulo", () => {
+    expect(formatarData("2026-10-29T23:30:00-03:00")).toBe("29/10/2026");
+    expect(formatarData("2026-10-30T01:00:00Z")).toBe("29/10/2026");
+  });
   it("data que não existe vira travessão", () => {
     expect(formatarData("2026-02-30")).toBe("—");
     expect(formatarData("lixo")).toBe("—");

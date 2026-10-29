@@ -5,6 +5,8 @@ const diaDeSaoPaulo = new Intl.DateTimeFormat("pt-BR", {
   year: "numeric",
 });
 
+const SEM_FUSO = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d+)?)?$/;
+
 function dataSoComDia(texto: string): string | null {
   const achado = /^(\d{4})-(\d{2})-(\d{2})$/.exec(texto);
   if (!achado) return null;
@@ -24,6 +26,10 @@ export function formatarData(valor: string | Date | null | undefined): string {
     const soDia = dataSoComDia(valor);
     if (soDia !== null) return soDia;
   }
+  // Instante sem fuso ("2026-10-29T23:30:00") é hora de parede: o dia é o do próprio texto, em
+  // qualquer máquina (servidor em UTC, navegador em São Paulo).
+  if (typeof valor === "string" && SEM_FUSO.test(valor))
+    return dataSoComDia(valor.slice(0, 10)) ?? "—";
   const instante = typeof valor === "string" ? new Date(valor) : valor;
   return Number.isNaN(instante.getTime()) ? "—" : diaDeSaoPaulo.format(instante);
 }
