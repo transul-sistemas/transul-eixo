@@ -103,6 +103,17 @@ Cada regra tem teste automático. "Ativo" já roda em `lib/qualidade/armadilhas.
 - Esqueleto de leitura: contexto global (período, filial, operação, regime) → título e ações → barra de consulta (busca, chips com contagem, mais filtros, visões salvas) → KPIs → conteúdo.
 - Toda raiz tem a mesma ficha: cabeçalho, linha do tempo pela régua, abas (Resumo, Linha do tempo, Mapa, Documentos, Resultado, Mapa mental) e ações.
 
+## Qualidade de interação
+
+Vale para toda tela a partir da Fase 2C. Cada regra tem teste automático nos componentes de base (tabela, painel lateral, diálogo, assistente); a entrega só fecha com os testes aplicáveis passando. Tabela de testes em `docs/decisoes.md`.
+
+1. **Fechar é fechar.** Fechar painel, diálogo ou assistente volta à tela de origem com filtros, página, ordem e rolagem intactos. Assistente com dados preenchidos pergunta antes de descartar e salva rascunho. O botão voltar do navegador desfaz um passo e nunca joga para fora do sistema.
+2. **Estado na URL.** Filtros, busca, ordem, página e modo ficam na URL; recarregar ou compartilhar o link devolve a mesma visão.
+3. **Paginação no servidor.** Tamanho de página escolhido e lembrado; voltar da ficha devolve à mesma página e linha; rolagem só dentro da tabela (cabeçalho e primeira coluna fixos), nunca na página; total sempre visível e respeitando os filtros.
+4. **Listagens.** Sem registro fantasma depois de salvar ou excluir (a lista atualiza). Exclusão lógica com filtro "inclui arquivados". Seleção que deixa de existir é desmarcada. Ação em lote devolve "X de Y". Clique duplo não duplica. Edição concorrente avisa. Carregando (esqueleto), vazio e erro (com "Tentar de novo") sempre tratados.
+5. **Aproveitamento de tela.** Largura total; densidade compacta ou confortável por usuário; colunas escolhíveis e reordenáveis; modo foco; em 1920 aparecem mais colunas, sem apenas esticar.
+6. **Foco e teclado.** O foco volta a quem abriu o painel; Esc fecha; Enter confirma; aviso de "não salvo" ao sair; ação destrutiva pede confirmação com o nome do item; atualização dos dados não tira da pessoa o que ela está fazendo.
+
 ## Textos da interface
 
 - Português, frases com letra minúscula normal, sem rótulos em maiúsculas.

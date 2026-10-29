@@ -8,6 +8,26 @@ Modelo de entrada:
 
 ---
 
+## 29/10/2026 — Qualidade de interação: seis regras para toda tela a partir da 2C
+
+- **Decisão:** o CLAUDE.md ganha a seção "Qualidade de interação" (fechar é fechar; estado na URL; paginação no servidor; listagens; aproveitamento de tela; foco e teclado). Vale para toda tela a partir da Fase 2C. Cada regra tem teste automático nos componentes de base; o teste nasce com o componente que a regra protege, e a entrega só fecha com os testes aplicáveis passando. Complementa as "Armadilhas conhecidas" (regras 1 a 4 e 6 delas caem na tabela).
+- **Motivo:** são os defeitos que mais irritam em sistemas de gestão (perder filtro e página ao fechar um painel, link que não leva à mesma visão, registro fantasma, rolagem da página inteira).
+- **Alternativas descartadas:** deixar para a revisão de cada tela; testar só no fim da Fase 2.
+- **Quem decidiu:** Alexandre.
+
+| Regra | Teste | Componente de base | Nasce em |
+|-------|-------|--------------------|----------|
+| 1 Fechar é fechar | Playwright: filtro, página, ordem e rolagem iguais depois de fechar painel ou diálogo; voltar desfaz um passo e não sai do sistema. Assistente: pergunta antes de descartar e salva rascunho | tabela, painel lateral, diálogo | 2C-1 e 2C-2; assistente na 2D |
+| 2 Estado na URL | Vitest do leitor e do escritor de consulta (ida e volta); Playwright: recarregar devolve a mesma visão | `lib/navegacao/consulta`, tabela | 2C-1 |
+| 3 Paginação no servidor | Vitest da função de página (total respeita o filtro, desempate pela chave); Playwright: tamanho lembrado, voltar da ficha devolve página e linha, a página não rola na horizontal nem na vertical além da tabela | `lib/dados/`, tabela | 2C-1 (voltar da ficha: 2C-3) |
+| 4 Listagens | Vitest: seleção some se o registro some, lote devolve "X de Y". Playwright: esqueleto, vazio, erro com "Tentar de novo", clique duplo não duplica, lista atualiza após gravar | tabela, estados | 2C-1; gravação e concorrência a partir da 2D |
+| 5 Aproveitamento de tela | Playwright em 1366 e 1920: densidade guardada por usuário, colunas escolhidas e reordenadas guardadas, mais colunas em 1920 sem rolagem lateral da página, modo foco | tabela | 2C-1 |
+| 6 Foco e teclado | Playwright: foco volta ao botão que abriu o painel, Esc fecha, Enter confirma, destrutivo mostra o nome do item, "não salvo" avisa ao sair | painel lateral, diálogo | 2C-2; "não salvo" e destrutivo na 2D |
+
+- **Honestidade sobre o estado:** hoje nenhum componente de base existe, então nenhum teste desta tabela está ativo. A 2C-1 só fecha com os que se aplicam a ela passando.
+
+---
+
 ## 29/10/2026 — Prova do teste "tocar na tela atual fecha a gaveta"
 
 - **O que foi feito:** o teste `e2e/casca.spec.ts` ("tocar na tela em que já está também fecha a gaveta") foi escrito junto da correção e, por um erro do próprio teste, o primeiro vermelho não veio do defeito. A prova foi refeita depois: removido só o `onClick` da `<aside>` em `components/navegacao/barra-lateral.tsx`, o teste falhou em `celular-390` e `tablet-820` com `expect(aside[data-barra="principal"]).toBeHidden()` recebendo `visible` (a gaveta continuou aberta após tocar no link da tela atual). Restaurada a correção, os dois passaram.
