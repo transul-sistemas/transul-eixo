@@ -8,6 +8,33 @@ Modelo de entrada:
 
 ---
 
+## 29/10/2026 — Repositório do GitHub deve ser criado como privado
+
+- **Decisão:** o repositório `transul-eixo` na organização `transul-sistemas` é criado como **privado**.
+- **Motivo:** arquivos versionados (`CLAUDE.md`, `docs/`) citam o identificador do projeto da v1 e, no futuro, terão dados da empresa.
+- **Alternativas descartadas:** repositório público.
+- **Quem decidiu:** Alexandre.
+
+## 29/10/2026 — Validação do workflow só no primeiro pull request
+
+- **Decisão:** `.github/workflows/pull-request.yml` não é validado localmente com validador externo (`pnpm dlx @action-validator/cli`). A validação acontece no primeiro pull request.
+- **Motivo:** o validador baixaria e executaria um pacote externo na máquina; o risco não compensa para um arquivo de 53 linhas.
+- **Alternativas descartadas:** liberar o validador externo.
+- **Quem decidiu:** Alexandre.
+
+## 29/10/2026 — Supabase só local, sem nuvem e sem o projeto da v1
+
+- **Decisão:**
+  - o Supabase local roda só no Docker;
+  - são proibidos `supabase link`, `supabase login`, `supabase db push` e qualquer comando que fale com um projeto na nuvem;
+  - são proibidas as ferramentas MCP do Supabase (`list_projects`, `execute_sql`, `apply_migration` etc.) sem pedido explícito de Alexandre;
+  - o projeto da v1 (`oubrtcgtugeijbrxvblc`) nunca é usado, nem para leitura;
+  - o `link` com o `eixo-prod` é feito por Alexandre, em outro momento.
+- **Motivo:** a Fase 1 é toda local; evitar qualquer escrita ou leitura acidental em banco de produção ou no da v1.
+- **Alternativas descartadas:** liberar leitura da v1 pelo MCP; deixar o `link` para o assistente.
+- **Quem decidiu:** Alexandre.
+- **Observação:** o job `banco` do pull request usa `supabase start` no runner, sem token, `link` nem segredo.
+
 ## 29/10/2026 — Cor hexadecimal barrada em todo CSS, exceto no arquivo de tokens
 
 - **Decisão:** o Stylelint (`color-no-hex`) barra cor hexadecimal em qualquer arquivo `.css`. A única exceção é **`app/tokens.css`**, o arquivo de tokens que será criado na Fase 2. O ESLint barra hexadecimal em TS/TSX/JS fora de `components/formato/`.
