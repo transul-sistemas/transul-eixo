@@ -1,0 +1,79 @@
+import { ESLint } from "eslint";
+import stylelint from "stylelint";
+import { describe, expect, it } from "vitest";
+
+const eslint = new ESLint({ overrideConfigFile: "eslint.config.mjs" });
+
+async function lintar(codigo: string, caminho = "app/teste.tsx"): Promise<string[]> {
+  const [resultado] = await eslint.lintText(codigo, { filePath: caminho });
+  return (resultado?.messages ?? []).filter((m) => m.severity === 2).map((m) => m.message);
+}
+
+async function lintarCss(codigo: string, caminho: string): Promise<string[]> {
+  const resultado = await stylelint.lint({ code: codigo, codeFilename: caminho });
+  return resultado.results.flatMap((r) => r.warnings.map((w) => w.text));
+}
+
+describe("ESLint: cor hexadecimal", () => {
+  it("barra hex de 6 dígitos em maiúscula", async () => {
+    expect(await lintar('const c = "#FF7A3D";')).toHaveLength(1);
+  });
+  it("barra hex de 3 dígitos", async () => {
+    expect(await lintar('const c = "#fff";')).toHaveLength(1);
+  });
+  it("barra hex em template literal", async () => {
+    expect(await lintar("const c = `#3D5AFE`;")).toHaveLength(1);
+  });
+  it("não barra texto comum com #", async () => {
+    expect(await lintar('const t = "Item #12";')).toHaveLength(0);
+  });
+});
+
+describe("ESLint: formatação de número", () => {
+  it("barra toLocaleString", async () => {
+    expect(await lintar('n.toLocaleString("pt-BR");')).toHaveLength(1);
+  });
+  it("barra toLocaleString com encadeamento opcional", async () => {
+    expect(await lintar("n?.toLocaleString();")).toHaveLength(1);
+  });
+  it("barra new Intl.NumberFormat", async () => {
+    expect(await lintar('new Intl.NumberFormat("pt-BR");')).toHaveLength(1);
+  });
+  it("barra Intl.NumberFormat sem new", async () => {
+    expect(await lintar('Intl.NumberFormat("pt-BR");')).toHaveLength(1);
+  });
+});
+
+describe("ESLint: exceção só em components/formato/", () => {
+  const caminho = "components/formato/moeda.ts";
+  it("permite toLocaleString", async () => {
+    expect(await lintar('n.toLocaleString("pt-BR");', caminho)).toHaveLength(0);
+  });
+  it("permite Intl.NumberFormat", async () => {
+    expect(await lintar('new Intl.NumberFormat("pt-BR");', caminho)).toHaveLength(0);
+  });
+  it("permite hex", async () => {
+    expect(await lintar('const c = "#FF7A3D";', caminho)).toHaveLength(0);
+  });
+  it("não vale para components/formato-x/", async () => {
+    expect(
+      await lintar('n.toLocaleString("pt-BR");', "components/formato-x/moeda.ts"),
+    ).toHaveLength(1);
+  });
+});
+
+describe("Stylelint: cor hexadecimal em CSS", () => {
+  const css = ":root { --x: #FF7A3D; }";
+  it("barra hex em app/globals.css", async () => {
+    expect(await lintarCss(css, "app/globals.css")).toHaveLength(1);
+  });
+  it("barra hex em qualquer outro CSS", async () => {
+    expect(await lintarCss("a { color: #fff; }", "components/x/estilo.css")).toHaveLength(1);
+  });
+  it("permite hex em app/tokens.css (único arquivo de tokens)", async () => {
+    expect(await lintarCss(css, "app/tokens.css")).toHaveLength(0);
+  });
+  it("não barra cor sem hex", async () => {
+    expect(await lintarCss("a { color: oklch(0.5 0.1 200); }", "app/globals.css")).toHaveLength(0);
+  });
+});
