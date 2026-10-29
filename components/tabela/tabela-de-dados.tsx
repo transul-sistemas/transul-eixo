@@ -70,7 +70,9 @@ export function TabelaDeDados<T extends object>({
   const porId = new Map(colunas.map((coluna) => [coluna.id, coluna]));
 
   return (
-    <div className="border-border bg-card overflow-x-auto rounded-xl border">
+    // `relative`: o texto só para leitor de tela (sr-only) é posicionado em absoluto e, sem isso,
+    // escaparia do contêiner e alargaria a página.
+    <div className="border-border bg-card relative overflow-x-auto rounded-xl border">
       <table
         aria-label={rotulo}
         aria-busy={pendente}

@@ -141,3 +141,93 @@ test.describe("lista de placas", () => {
     expect(medidas.conteudo).toBeLessThanOrEqual(medidas.janela);
   });
 });
+
+test.describe("lista de placas: estados", () => {
+  const esqueleto = (page: Page) => page.getByRole("status", { name: "Carregando placas" });
+
+  test("carregando: o título e a consulta ficam, e o esqueleto ocupa o lugar da tabela", async ({
+    page,
+  }) => {
+    await page.goto(`${ROTA}?lento=1500`, { waitUntil: "commit" });
+    await expect(esqueleto(page)).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1, name: "Placas" })).toBeVisible();
+    await expect(tabela(page)).toBeVisible({ timeout: 15_000 });
+    await expect(esqueleto(page)).toHaveCount(0);
+  });
+
+  test("vazio: explica o que houve e Limpar filtros devolve a lista", async ({ page }) => {
+    await abrirHidratada(page, `${ROTA}?q=zzzzzzzz`);
+    const vazio = page.getByTestId("lista-vazia");
+    await expect(vazio).toBeVisible();
+    await expect(vazio).toContainText("Nenhuma placa encontrada");
+    await expect(resumo(page)).toContainText("Mostrando 0–0 de 0 placas");
+    await vazio.getByRole("link", { name: "Limpar filtros" }).click();
+    await expect(page).not.toHaveURL(/q=/);
+    await expect(tabela(page)).toBeVisible();
+    await expect(linhas(page).first()).toContainText("AAA0A00");
+  });
+
+  test("erro: diz o que houve, mantém o título e Tentar de novo recarrega a lista", async ({
+    page,
+  }) => {
+    await abrirHidratada(page, `${ROTA}?falha=1`, "header");
+    const alerta = page.getByRole("main").getByRole("alert");
+    await expect(alerta).toContainText("Não foi possível carregar as placas");
+    await expect(page.getByRole("heading", { level: 1, name: "Placas" })).toBeVisible();
+    // O servidor "se recupera": os próximos pedidos chegam sem a falha simulada.
+    await page.route(/falha=1/, (rota) => {
+      const url = new URL(rota.request().url());
+      url.searchParams.delete("falha");
+      return rota.continue({ url: url.toString() });
+    });
+    await alerta.getByRole("button", { name: "Tentar de novo" }).click();
+    await expect(tabela(page)).toBeVisible();
+    await expect(page.getByRole("main").getByRole("alert")).toHaveCount(0);
+  });
+
+  test("busca digitada cancela a resposta anterior (só vale a última)", async ({ page }) => {
+    await abrirHidratada(page, ROTA);
+    // A resposta da primeira busca demora e chega depois da segunda: não pode trocar a lista.
+    await page.route(/[?&]q=AAA0A0(&|$)/, async (rota) => {
+      await new Promise((resolver) => setTimeout(resolver, 1800));
+      await rota.continue();
+    });
+    await busca(page).fill("AAA0A0");
+    await page.waitForTimeout(450); // a primeira busca já saiu e está parada no servidor
+    await busca(page).fill("AAA0A1");
+    await expect(page).toHaveURL(/q=AAA0A1/);
+    await expect(resumo(page)).toContainText("de 9 placas", { timeout: 10_000 });
+    for (const texto of await linhas(page).allTextContents()) expect(texto).toContain("AAA0A1");
+    await page.waitForTimeout(2500); // a resposta atrasada já chegou: a tela continua na última
+    await expect(page).toHaveURL(/q=AAA0A1/);
+    await expect(busca(page)).toHaveValue("AAA0A1");
+    await expect(resumo(page)).toContainText("de 9 placas");
+    for (const texto of await linhas(page).allTextContents()) expect(texto).toContain("AAA0A1");
+  });
+
+  test("atualizar a página mantém filtro, ordem e página (armadilha 2)", async ({ page }) => {
+    await abrirHidratada(page, `${ROTA}?chip=impedida&ordem=-gestor&pagina=2`);
+    await expect(resumo(page)).toContainText("Mostrando 26–50 de");
+    await page.reload();
+    await expect(page).toHaveURL(/chip=impedida&ordem=-gestor&pagina=2/);
+    await expect(chip(page, "Impedida")).toHaveAttribute("aria-pressed", "true");
+    await expect(tabela(page).getByRole("columnheader", { name: /^Gestor/ })).toHaveAttribute(
+      "aria-sort",
+      "descending",
+    );
+    await expect(resumo(page)).toContainText("Mostrando 26–50 de");
+  });
+
+  test("chip com zero fica apagado; o ligado com zero continua clicável", async ({ page }) => {
+    await abrirHidratada(page, `${ROTA}?q=AAA0A00`);
+    await expect(chip(page, "Fora")).toHaveAttribute("data-zerado", "true");
+    await expect(chip(page, "Fora")).toBeEnabled();
+    await abrirHidratada(page, `${ROTA}?q=AAA0A00&chip=fora`);
+    await expect(chip(page, "Fora")).toHaveAttribute("aria-pressed", "true");
+    await expect(chip(page, "Fora")).not.toHaveAttribute("data-zerado", "true");
+    await expect(page.getByTestId("lista-vazia")).toBeVisible();
+    await chip(page, "Fora").click();
+    await expect(chip(page, "Fora")).toHaveAttribute("aria-pressed", "false");
+    await expect(linhas(page).first()).toContainText("AAA0A00");
+  });
+});

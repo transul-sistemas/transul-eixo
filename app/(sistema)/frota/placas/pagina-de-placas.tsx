@@ -2,7 +2,7 @@ import { connection } from "next/server";
 import { hojeEmSaoPaulo } from "@/components/formato/data";
 import { BarraDeConsultaDaPagina } from "@/components/layout/barra-de-consulta";
 import { PaginaDeLeitura } from "@/components/layout/pagina-de-leitura";
-import { EsqueletoDaTabela } from "@/components/tabela/estados";
+import { EsqueletoDaTabela, ListaVazia } from "@/components/tabela/estados";
 import { Paginador } from "@/components/tabela/paginador";
 import { TabelaDePlacas } from "@/components/tabela/tabela-de-placas";
 import {
@@ -12,7 +12,7 @@ import {
 } from "@/lib/dados/placas";
 import { NOMES_DOS_CHIPS } from "@/lib/dominio/status";
 import { acharTela } from "@/lib/navegacao/catalogo";
-import { lerTabela } from "@/lib/navegacao/tabela";
+import { escreverTabela, lerTabela, type ConsultaDeTabela } from "@/lib/navegacao/tabela";
 import { STATUS } from "@/lib/visual/tons";
 
 export type ParametrosDaBusca = Promise<Record<string, string | string[] | undefined>>;
@@ -43,6 +43,20 @@ function simulacaoDe(parametros: URLSearchParams) {
   };
 }
 
+function comFiltros(c: ConsultaDeTabela): boolean {
+  return c.busca !== "" || c.chips.length > 0 || c.siglas.length > 0 || c.baixadas;
+}
+
+/** A mesma tela sem busca, chips, siglas nem baixadas; o contexto global (período etc.) fica. */
+function enderecoSemFiltros(parametros: URLSearchParams, consulta: ConsultaDeTabela): string {
+  const limpa = escreverTabela(
+    parametros,
+    { ...consulta, busca: "", chips: [], siglas: [], baixadas: false, pagina: 1 },
+    PADRAO_DA_LISTA_DE_PLACAS,
+  ).toString();
+  return limpa ? `${ROTA}?${limpa}` : ROTA;
+}
+
 /** O que a pessoa vê enquanto a página chega: o título, a barra de consulta e o esqueleto. */
 export function PaginaDePlacasCarregando() {
   const { titulo, descricao } = cabecalho();
@@ -70,6 +84,7 @@ export async function PaginaDePlacas({ searchParams }: { searchParams: Parametro
     simulacao: simulacaoDe(parametros),
   });
   const { titulo, descricao } = cabecalho();
+  const filtrosAtivos = comFiltros(consulta);
 
   return (
     <PaginaDeLeitura
@@ -86,7 +101,22 @@ export async function PaginaDePlacas({ searchParams }: { searchParams: Parametro
         />
       }
     >
-      <TabelaDePlacas linhas={pagina.linhas} ordem={consulta.ordem} />
+      {pagina.total === 0 ? (
+        filtrosAtivos ? (
+          <ListaVazia
+            titulo="Nenhuma placa encontrada"
+            descricao="Nenhuma placa combina com a busca e os filtros escolhidos. Tire um filtro ou limpe tudo para ver a lista inteira."
+            hrefLimpar={enderecoSemFiltros(parametros, consulta)}
+          />
+        ) : (
+          <ListaVazia
+            titulo="Ainda não há placas"
+            descricao="Quando houver placas cadastradas, elas aparecem aqui."
+          />
+        )
+      ) : (
+        <TabelaDePlacas linhas={pagina.linhas} ordem={consulta.ordem} />
+      )}
       <Paginador
         pagina={pagina.pagina}
         paginas={pagina.paginas}
