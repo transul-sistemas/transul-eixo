@@ -95,6 +95,23 @@ test.describe("topo: contexto global na URL", () => {
   });
 });
 
+test.describe("topo: no computador", () => {
+  test("não mostra Abrir menu nem Contexto: a barra e o contexto já estão à vista", async ({
+    page,
+  }) => {
+    await abrirHidratada(page, "/frota/placas");
+    await expect(page.getByRole("button", { name: "Abrir menu" })).toBeHidden();
+    await expect(page.getByRole("button", { name: "Contexto", exact: true })).toBeHidden();
+    await expect(page.locator('aside[data-barra="principal"]')).toBeVisible();
+    await expect(page.getByRole("group", { name: "Contexto global" })).toBeVisible();
+  });
+
+  test("não mostra o aviso de celular", async ({ page }) => {
+    await abrirHidratada(page, "/pessoas/escala");
+    await expect(page.getByRole("note")).toBeHidden();
+  });
+});
+
 test.describe("topo: trilha", () => {
   test("mostra Módulo e Tela, com o módulo clicável e a tela atual marcada", async ({ page }) => {
     await abrirHidratada(page, "/frota/placas");
