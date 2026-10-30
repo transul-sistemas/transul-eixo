@@ -98,6 +98,24 @@ export interface LinhaDePlaca {
   filial: string;
 }
 
+/** O detalhe de uma placa para o painel de espiar: a linha da lista mais o que só o painel mostra. */
+export interface DetalheDaPlaca extends LinhaDePlaca {
+  ano: number | null;
+  renavam: string;
+  /** Desde quando está nesta situação, `aaaa-mm-ddThh:mm`. */
+  desde: string;
+  /** Todas as vigências de CR, `[início, fim)`; `fim` nulo = em aberto. */
+  crs: { codigo: string; nome: string; inicio: string; fim: string | null }[];
+  /** Os CRs vigentes hoje (mais de um é o alerta de CR sobreposto), do mais antigo ao mais novo. */
+  crsVigentes: { codigo: string; nome: string; inicio: string; fim: string | null }[];
+}
+
+/** O que a página entrega ao painel: o detalhe, ou o motivo de não haver. */
+export type DadosDoPainel =
+  | { placa: string; situacao: "ok"; detalhe: DetalheDaPlaca }
+  | { placa: string; situacao: "nao-encontrada" }
+  | { placa: string; situacao: "erro" };
+
 export interface PaginaDePlacas {
   linhas: LinhaDePlaca[];
   /** Quantas placas passam por todos os filtros (a soma é do servidor, nunca do navegador). */
@@ -111,7 +129,7 @@ export interface PaginaDePlacas {
 
 export interface OpcoesDaConsulta {
   /** Só para testar os estados da tela, e só na fonte de exemplo. */
-  simulacao?: { lentoMs?: number; falha?: boolean };
+  simulacao?: { lentoMs?: number; falha?: boolean; falhaNoPainel?: boolean };
 }
 
 /** Nomes para a tela. */

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatarData, hojeEmSaoPaulo } from "./data";
+import { formatarData, formatarDataEHora, hojeEmSaoPaulo } from "./data";
 
 describe("formatarData", () => {
   it("texto aaaa-mm-dd vira dd/mm/aaaa sem passar por fuso", () => {
@@ -45,5 +45,29 @@ describe("hojeEmSaoPaulo", () => {
   });
   it("completa mês e dia com zero", () => {
     expect(hojeEmSaoPaulo(new Date("2026-01-05T12:00:00Z"))).toBe("2026-01-05");
+  });
+});
+
+describe("formatarDataEHora", () => {
+  it("texto sem fuso é hora de parede: dd/mm/aaaa hh:mm do próprio texto", () => {
+    expect(formatarDataEHora("2026-10-29T08:05")).toBe("29/10/2026 08:05");
+    expect(formatarDataEHora("2026-10-29T23:30:00")).toBe("29/10/2026 23:30");
+  });
+  it("meia-noite e fim do dia ficam no mesmo dia", () => {
+    expect(formatarDataEHora("2026-10-29T00:00")).toBe("29/10/2026 00:00");
+    expect(formatarDataEHora("2026-10-29T23:59")).toBe("29/10/2026 23:59");
+  });
+  it("só o dia mostra só o dia", () => {
+    expect(formatarDataEHora("2026-10-29")).toBe("29/10/2026");
+  });
+  it("instante com fuso vale em São Paulo", () => {
+    expect(formatarDataEHora("2026-03-01T01:00:00Z")).toBe("28/02/2026 22:00");
+  });
+  it("vazio e inválido viram traço", () => {
+    expect(formatarDataEHora(null)).toBe("—");
+    expect(formatarDataEHora(undefined)).toBe("—");
+    expect(formatarDataEHora("")).toBe("—");
+    expect(formatarDataEHora("lixo")).toBe("—");
+    expect(formatarDataEHora("2026-02-30T10:00")).toBe("—");
   });
 });
