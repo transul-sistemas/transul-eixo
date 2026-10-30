@@ -24,7 +24,24 @@ Modelo de entrada:
 
 ---
 
-## 31/10/2026 — Ficha da placa (2C-3): a aba na URL, o 404 de verdade e o que foi aceito
+## 30/10/2026 — Lista de placas (2C-3): retorno só na volta, Apoio único e filtros em caixas
+
+- **Retorno da lista (armadilha 2):**
+  - **Só restaura página, rolagem e foco quando a volta é por Voltar/Avançar do navegador ou pelos links "Voltar à lista" e da trilha.** Visita nova (menu, link direto) começa no topo, sem restaurar nada.
+  - **A janela de 30 minutos foi removida** (era um desvio: valia para qualquer visita). O ponto guardado não tem prazo; o que decide é o sinal de volta.
+  - **Sinal de volta ("armado"):** gravado no `popstate`/Navigation API (em captura) ou no clique dos links de voltar; vale 1,5 s e **não é consumido** ao ler, porque o Next 16 reativa efeitos mais de uma vez; é desarmado quando o restaurador age. O restaurador espera 60 ms (o Next mostra a lista antes do `popstate`); a rolagem de visita nova é zerada em `useLayoutEffect` (em timeout quebrava rolagens feitas logo depois de abrir).
+  - **`sessionStorage` bloqueado:** tudo é opcional; sem ele, a lista só abre no topo.
+- **Olhos de espiar alinhados:** largura fixa do link da placa por densidade (`w-20` compacta, `w-24` confortável); `min-w` não bastava.
+- **Tipos de ativo (30/10/2026):** "Veículo pequeno" e "Apoio" viraram **Apoio**. São cinco tipos: Cavalo, Implemento, Equipamento, Caminhão e Apoio. Atualizados: gerador de exemplo (ciclo de 24 passa a 3 apoios), catálogo, `CLAUDE.md` (edição autorizada por Alexandre), `docs/glossario.md` e `docs/projeto-tecnico.md`.
+- **Grupos de filtro da lista:**
+  - **Situação** ("como a placa está agora") em pílulas com a bolinha da régua; seleção com fundo azul claro e borda azul. **Tipo de ativo** ("o que é a placa") em retângulos de canto leve, sem bolinha; seleção com fundo escuro e texto claro (invertido no tema escuro). Cada grupo na sua caixa, com título, subtítulo e barra colorida na lateral. "N filtros ativos" ao lado da busca. A contagem de cada grupo ignora a própria seleção.
+  - **Caixas empilhadas em todas as larguras, e compactas:** lado a lado não cabe no 1366 (≈1174 px contra 1014 úteis) e a versão alta tirava linhas da tabela. A partir de 1024 px o título fica à esquerda dos chips (chips de 24 px); em tablet e celular o título fica em cima. Aceite mantido: 9 linhas no 1366×768 e 14 no 1920.
+  - **Só tokens.** Contraste testado nos dois temas: texto ≥ 4,5:1, bordas e barras ≥ 3:1. A bolinha de "Atenção" (âmbar) tem 2,17:1 no claro: é decorativa (o nome vem escrito no chip), por isso o teste pede ≥ 2:1.
+- **Quem decidiu:** Alexandre.
+
+---
+
+## 30/10/2026 — Ficha da placa (2C-3): a aba na URL, o 404 de verdade e o que foi aceito
 
 - **Relato:** a aba da ficha (`?aba=linha-do-tempo`) não ficava ao recarregar.
 - **O que se verificou:** abrir direto com `?aba=`, clicar na aba e dar F5, e Voltar e Avançar, em desenvolvimento (Chromium do Playwright e Chrome real) e em produção (Playwright, e o HTML do servidor lido com `curl`): **a aba persistiu em todos os casos; a falha relatada não foi reproduzida.** Se voltar a acontecer, são necessários o navegador, a versão e os passos exatos.
