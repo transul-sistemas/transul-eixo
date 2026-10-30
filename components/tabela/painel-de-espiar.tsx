@@ -3,7 +3,7 @@
 import { Drawer } from "@base-ui/react/drawer";
 import { IconX } from "@tabler/icons-react";
 import { useRouter } from "next/navigation";
-import { useRef, useState, useSyncExternalStore, useTransition } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore, useTransition } from "react";
 import { Placa } from "@/components/placa";
 import type { DadosDoPainel } from "@/lib/dados/placas-tipos";
 import { anuncioDaTroca, vizinhas } from "@/lib/navegacao/espiar";
@@ -100,8 +100,19 @@ export function PainelDeEspiar({
   const [mostrada, setMostrada] = useState<string | null>(placa);
   if (placa !== null && placa !== mostrada) setMostrada(placa);
   const [anuncio, setAnuncio] = useState("");
+  // O painel pode fechar por fora (Voltar do navegador): o aviso da troca não vaza para a próxima abertura.
+  if (placa === null && anuncio !== "") setAnuncio("");
   const [ultimos, setUltimos] = useState(dados);
   if (dados !== null && dados !== ultimos) setUltimos(dados);
+  const popup = useRef<HTMLDivElement>(null);
+  // Trocou de placa por um botão do resumo (o conjunto): o botão sumiu com o corpo e o foco cairia
+  // no body. Leva o foco ao título. Anterior e próxima ficam fora do corpo e mantêm o foco.
+  const placaAberta = placa !== null;
+  useEffect(() => {
+    const el = popup.current;
+    if (!el || !placaAberta) return;
+    if (!el.contains(document.activeElement)) titulo.current?.focus({ preventScroll: true });
+  }, [placa, placaAberta]);
   if (!lista) return null;
   const placaDoPainel = placa ?? mostrada;
 
@@ -113,7 +124,9 @@ export function PainelDeEspiar({
 
   // Os dados são da placa da URL, que chega depois do clique: enquanto a placa do painel e a dos
   // dados não coincidem, o painel mostra o esqueleto. Na saída guarda os últimos dados.
-  const doPainel = (dados ?? ultimos)?.placa === placaDoPainel ? (dados ?? ultimos) : null;
+  // Dados velhos só valem durante a saída (placa nula): reabrir uma placa que deu erro não mostra o erro antigo.
+  const doBase = dados ?? (placa === null ? ultimos : null);
+  const doPainel = doBase?.placa === placaDoPainel ? doBase : null;
 
   return (
     <Drawer.Root
@@ -130,6 +143,7 @@ export function PainelDeEspiar({
         <Drawer.Backdrop className="bg-foreground/40 fixed inset-0 z-40 transition-opacity duration-200 data-ending-style:opacity-0 data-starting-style:opacity-0 motion-reduce:transition-none" />
         <Drawer.Viewport className="fixed inset-0 z-50 flex items-stretch justify-end max-sm:items-end max-sm:justify-center">
           <Drawer.Popup
+            ref={popup}
             aria-label={`Resumo da placa ${placaDoPainel ?? ""}`}
             initialFocus={titulo}
             finalFocus={() => {
