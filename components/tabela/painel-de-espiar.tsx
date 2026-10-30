@@ -9,6 +9,7 @@ import type { DadosDoPainel } from "@/lib/dados/placas-tipos";
 import { anuncioDaTroca, vizinhas } from "@/lib/navegacao/espiar";
 import { NavegacaoDoPainel } from "./navegacao-do-painel";
 import { useLista } from "./pendencia-da-lista";
+import { guardarRetornoDaLista } from "./retorno-da-lista-no-navegador";
 import {
   BotaoDaFicha,
   ErroDoResumo,
@@ -203,7 +204,12 @@ export function PainelDeEspiar({
                 />
               )}
             </div>
-            {doPainel?.situacao === "ok" ? <BotaoDaFicha placa={doPainel.placa} /> : null}
+            {doPainel?.situacao === "ok" ? (
+              <BotaoDaFicha
+                placa={doPainel.placa}
+                aoAbrir={() => guardarRetornoDaLista(doPainel.placa)}
+              />
+            ) : null}
           </Drawer.Popup>
         </Drawer.Viewport>
       </Drawer.Portal>

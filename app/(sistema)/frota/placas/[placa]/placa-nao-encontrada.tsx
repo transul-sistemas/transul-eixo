@@ -1,5 +1,5 @@
 import { IconSearchOff } from "@tabler/icons-react";
-import { LinkComContexto } from "@/components/navegacao/link-com-contexto";
+import { LinkComRetorno } from "@/components/tabela/link-com-retorno";
 import { VoltarALista } from "./voltar-a-lista";
 
 /**
@@ -19,12 +19,13 @@ export function PlacaNaoEncontradaNaFicha({ placa }: { placa: string }) {
           Não há cadastro para a placa {placa}. Confira se ela está escrita certa no endereço ou
           procure pela lista de placas.
         </p>
-        <LinkComContexto
+        <LinkComRetorno
           href="/frota/placas"
+          rota={`/frota/placas/${placa}`}
           className="border-input bg-card hover:bg-muted focus-visible:ring-ring/50 inline-flex h-9 items-center rounded-lg border px-3 text-sm outline-none focus-visible:ring-3"
         >
           Ir para a lista de placas
-        </LinkComContexto>
+        </LinkComRetorno>
       </div>
     </div>
   );

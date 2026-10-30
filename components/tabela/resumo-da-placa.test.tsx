@@ -226,6 +226,10 @@ describe("Abrir ficha completa", () => {
     expect(marcacao).not.toContain("aria-disabled");
     expect(marcacao).not.toContain("Entra na próxima entrega");
   });
+  it("aceita um aviso de que a pessoa vai sair da lista (para guardar o ponto de retorno)", () => {
+    const html = renderToStaticMarkup(<BotaoDaFicha placa="AAA0A00" aoAbrir={() => {}} />);
+    expect(html).toContain("Abrir ficha completa");
+  });
   it("tem alvo de pelo menos 24 px e ocupa a largura do rodapé", () => {
     const marcacao = renderToStaticMarkup(<BotaoDaFicha placa="AAA0A00" />);
     expect(marcacao).toMatch(/class="[^"]*min-h-(?:8|9|10)/);

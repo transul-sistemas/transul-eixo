@@ -835,7 +835,7 @@ test.describe("lista de placas: rolagem só dentro da tabela", () => {
     expect(largura.total).toBeGreaterThan(largura.visivel);
     await caixa(page).evaluate((c) => (c.scrollLeft = 600));
     const esquerdaDaCaixa = (await caixa(page).boundingBox())?.x ?? 0;
-    const primeiraCelula = linhas(page).first().locator("td").first();
+    const primeiraCelula = linhas(page).first().locator("th[scope=row]");
     const celula = await primeiraCelula.boundingBox();
     expect(Math.abs((celula?.x ?? -99) - esquerdaDaCaixa)).toBeLessThanOrEqual(3);
     const quemEstaPorCima = await primeiraCelula.evaluate((td) => {

@@ -24,6 +24,8 @@ export interface ColunaDeTabela<T extends object> {
   ) => ReactNode;
   /** Classes da coluna (alinhamento, largura). */
   classe?: string;
+  /** A célula desta coluna é o cabeçalho da linha (`th scope="row"`): o nome do que a linha descreve. */
+  cabecalhoDeLinha?: boolean;
 }
 
 export interface Ordem {
@@ -181,20 +183,26 @@ export function TabelaDeDados<T extends object>({
               }
               className={cn("group/linha hover:bg-muted/50", aoClicarNaLinha && "cursor-pointer")}
             >
-              {linha.getAllCells().map((celula, posicao) => (
-                <td
-                  key={celula.id}
-                  className={cn(
-                    "border-border border-b px-3 align-middle whitespace-nowrap group-last/linha:border-b-0",
-                    posicao === 0 &&
-                      "bg-card group-hover/linha:bg-muted sticky left-0 z-10 border-r",
-                    densidade === "compacta" ? "py-1" : "py-2.5",
-                    porId.get(celula.column.id)?.classe,
-                  )}
-                >
-                  <tabela.FlexRender cell={celula} />
-                </td>
-              ))}
+              {linha.getAllCells().map((celula, posicao) => {
+                const ehCabecalho = porId.get(celula.column.id)?.cabecalhoDeLinha === true;
+                const Celula = ehCabecalho ? "th" : "td";
+                return (
+                  <Celula
+                    key={celula.id}
+                    {...(ehCabecalho ? { scope: "row" } : {})}
+                    className={cn(
+                      "border-border border-b px-3 align-middle whitespace-nowrap group-last/linha:border-b-0",
+                      ehCabecalho && "text-left font-normal",
+                      posicao === 0 &&
+                        "bg-card group-hover/linha:bg-muted sticky left-0 z-10 border-r",
+                      densidade === "compacta" ? "py-1" : "py-2.5",
+                      porId.get(celula.column.id)?.classe,
+                    )}
+                  >
+                    <tabela.FlexRender cell={celula} />
+                  </Celula>
+                );
+              })}
             </tr>
           ))}
         </tbody>

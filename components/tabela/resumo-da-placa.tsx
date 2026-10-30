@@ -254,11 +254,12 @@ export function ResumoDaPlaca({
 }
 
 /** O rodapé fixo do painel: leva à ficha completa da placa (o Voltar da ficha devolve ao painel). */
-export function BotaoDaFicha({ placa }: { placa: string }) {
+export function BotaoDaFicha({ placa, aoAbrir }: { placa: string; aoAbrir?: () => void }) {
   return (
     <div className="border-border shrink-0 border-t p-4">
       <LinkComContexto
         href={`/frota/placas/${placa}`}
+        onClick={aoAbrir}
         className={cn(buttonVariants({ variant: "outline" }), "min-h-8 w-full")}
       >
         Abrir ficha completa

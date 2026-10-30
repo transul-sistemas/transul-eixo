@@ -8,6 +8,7 @@ import { Moeda } from "@/components/formato/moeda";
 import { formatarInteiro, formatarKm } from "@/components/formato/numero";
 import { Placa } from "@/components/placa";
 import { CelulaDaPlaca } from "./celula-da-placa";
+import { guardarRetornoDaLista } from "./retorno-da-lista-no-navegador";
 import {
   CAMPOS_ORDENAVEIS_DE_PLACAS,
   DEFINICOES_DAS_COLUNAS_DE_PLACAS,
@@ -63,13 +64,20 @@ function Alertas({ linha }: { linha: LinhaDePlaca }) {
 // ordem sai das preferências (cookie) e das definições, em `colunasVisiveis`.
 const CELULAS: Record<
   string,
-  Pick<ColunaDeTabela<LinhaDePlaca>, "campoDeOrdem" | "celula" | "classe">
+  Pick<ColunaDeTabela<LinhaDePlaca>, "campoDeOrdem" | "celula" | "classe" | "cabecalhoDeLinha">
 > = {
   placa: {
     campoDeOrdem: "placa",
     // O botão "Espiar" é o controle; na compacta a mini placa é a menor (a linha cabe em ~34 px).
+    cabecalhoDeLinha: true,
     celula: (linha, { densidade, aoAbrir }) => (
-      <CelulaDaPlaca placa={linha.placa} densidade={densidade} aoAbrir={aoAbrir} />
+      <CelulaDaPlaca
+        placa={linha.placa}
+        densidade={densidade}
+        aoAbrir={aoAbrir}
+        hrefDaFicha={`/frota/placas/${linha.placa}`}
+        aoIrParaAFicha={() => guardarRetornoDaLista(linha.placa)}
+      />
     ),
   },
   tipo: { campoDeOrdem: "tipo", celula: (linha) => NOMES_DOS_TIPOS[linha.tipo] },

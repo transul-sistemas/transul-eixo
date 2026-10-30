@@ -54,6 +54,10 @@ function lerFormato(bruto: string): Retorno | null {
   };
 }
 
+function dentroDoPrazo(retorno: Retorno, agora: number): boolean {
+  return retorno.guardadoEm <= agora && agora - retorno.guardadoEm <= VALIDADE_DO_RETORNO_MS;
+}
+
 /**
  * O registro de retorno, se vale para esta URL agora. É de uma leitura só: o registro é apagado
  * sempre que existe, valendo ou não, para nunca restaurar a coisa errada mais tarde.
@@ -78,7 +82,52 @@ export function lerRetorno(
   const retorno = lerFormato(bruto);
   if (retorno === null) return null;
   if (retorno.url !== urlAtual) return null;
-  if (retorno.guardadoEm > agora) return null;
-  if (agora - retorno.guardadoEm > VALIDADE_DO_RETORNO_MS) return null;
+  if (!dentroDoPrazo(retorno, agora)) return null;
   return retorno;
+}
+
+/** O registro de retorno, se ainda vale, sem apagá-lo: o Voltar à lista da ficha só precisa saber para onde ir. */
+export function espiarRetorno(
+  armazenamento: Pick<Storage, "getItem">,
+  agora: number,
+): Retorno | null {
+  let bruto: string | null;
+  try {
+    bruto = armazenamento.getItem(CHAVE_DO_RETORNO);
+  } catch {
+    return null;
+  }
+  if (bruto === null) return null;
+  const retorno = lerFormato(bruto);
+  return retorno !== null && dentroDoPrazo(retorno, agora) ? retorno : null;
+}
+
+export type DestinoDoRetorno = { tipo: "linha"; placa: string } | { tipo: "tabela" };
+
+/** Para onde o foco volta: a linha de onde a pessoa saiu, ou a caixa da tabela se ela não está mais na página. */
+export function destinoDoRetorno(
+  retorno: Retorno,
+  placasDaPagina: readonly string[],
+): DestinoDoRetorno {
+  return placasDaPagina.includes(retorno.placa)
+    ? { tipo: "linha", placa: retorno.placa }
+    : { tipo: "tabela" };
+}
+
+const semConsultaNemBarraFinal = (caminho: string) =>
+  (caminho.split(/[?#]/)[0] ?? "").replace(/\/+$/, "");
+
+/**
+ * Para onde o Voltar à lista da ficha leva: a URL guardada (página, ordem e filtros), só se a página
+ * atual é uma ficha daquela lista (`/frota/placas/AAA0A00`) e o registro é daquela mesma lista.
+ * Fora disso, `null`: o link segue para a lista como sempre.
+ */
+export function urlDeVolta(
+  caminhoAtual: string,
+  rotaDaLista: string,
+  retorno: Retorno | null,
+): string | null {
+  if (retorno === null) return null;
+  if (!semConsultaNemBarraFinal(caminhoAtual).startsWith(`${rotaDaLista}/`)) return null;
+  return semConsultaNemBarraFinal(retorno.url) === rotaDaLista ? retorno.url : null;
 }

@@ -14,11 +14,11 @@ import {
 } from "@/lib/navegacao/contexto";
 import { gaveta } from "@/lib/navegacao/gaveta";
 import { type Perfil, USUARIO_PROVISORIO } from "@/lib/navegacao/perfis";
+import { LinkComRetorno } from "@/components/tabela/link-com-retorno";
 import { migalhas } from "@/lib/navegacao/trilha";
 import { AlternadorDeTema } from "@/components/tema/alternador-de-tema";
 import { cn } from "@/lib/utils";
 import { BuscaRapida } from "./busca-rapida";
-import { LinkComContexto } from "./link-com-contexto";
 
 export interface PropsDoTopo {
   /** Dia de hoje em São Paulo, `aaaa-mm-dd`: é de onde vem o período padrão. */
@@ -119,12 +119,13 @@ export function Topo({
                   {migalha.texto}
                 </span>
               ) : migalha.href ? (
-                <LinkComContexto
+                <LinkComRetorno
                   href={migalha.href}
+                  rota={rota}
                   className="text-muted-foreground hover:text-foreground underline-offset-4 hover:underline"
                 >
                   {migalha.texto}
-                </LinkComContexto>
+                </LinkComRetorno>
               ) : (
                 <span className="text-muted-foreground">{migalha.texto}</span>
               )}
