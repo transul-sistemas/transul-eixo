@@ -31,7 +31,7 @@ export function CelulaDaPlaca({ placa, densidade, aoAbrir, hrefDaFicha, aoIrPara
           aria-label={`Abrir ficha de ${placa}`}
           data-ficha-placa={placa}
           onClick={aoIrParaAFicha}
-          className="focus-visible:ring-ring/50 -m-0.5 inline-flex min-h-6 items-center rounded p-0.5 outline-none focus-visible:ring-3"
+          className={`focus-visible:ring-ring/50 -m-0.5 inline-flex min-h-6 items-center rounded p-0.5 outline-none focus-visible:ring-3 ${densidade === "compacta" ? "min-w-16" : "min-w-20"}`}
         >
           {mini}
         </LinkComContexto>
