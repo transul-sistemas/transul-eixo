@@ -47,7 +47,9 @@ export async function dadosDoPainel(
   try {
     const detalhe = await obterPlaca(placa, hoje, opcoes);
     return detalhe ? { placa, situacao: "ok", detalhe } : { placa, situacao: "nao-encontrada" };
-  } catch {
+  } catch (erro) {
+    // Sem logger no projeto ainda (Sentry entra depois): ao menos o erro fica no log do servidor.
+    console.error(`dadosDoPainel falhou para ${placa}`, erro);
     return { placa, situacao: "erro" };
   }
 }

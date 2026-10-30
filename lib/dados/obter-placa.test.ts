@@ -128,6 +128,14 @@ describe("dadosDoPainel: o que a página entrega ao painel, sem nunca derrubar a
     expect(dados).toEqual({ placa: "AAA0A04", situacao: "erro" });
   });
 
+  it("a falha é registrada (não some em silêncio) para quem der suporte achar", async () => {
+    const registro = vi.spyOn(console, "error").mockImplementation(() => {});
+    await dadosDoPainel("AAA0A04", HOJE, { simulacao: { falhaNoPainel: true } });
+    expect(registro).toHaveBeenCalledTimes(1);
+    expect(String(registro.mock.calls[0]?.[0])).toContain("AAA0A04");
+    registro.mockRestore();
+  });
+
   it("sem EIXO_DADOS=exemplo também vira erro do painel, não exceção", async () => {
     vi.stubEnv("EIXO_DADOS", "");
     expect(await dadosDoPainel("AAA0A04", HOJE)).toEqual({ placa: "AAA0A04", situacao: "erro" });
