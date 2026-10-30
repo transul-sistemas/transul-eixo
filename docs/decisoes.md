@@ -24,6 +24,18 @@ Modelo de entrada:
 
 ---
 
+## 30/10/2026 — Painel de espiar (2C-2): sinal real de hidratação no lugar do atraso fixo
+
+- **Decisão:**
+  - **O painel aberto por link direto (`?espiar=PLACA`) espera um sinal real de hidratação, não um atraso fixo de 150 ms.** Uma loja pequena (`lib/navegacao/hidratacao.ts`, com `useSyncExternalStore`, no padrão das lojas da barra e da gaveta) guarda quais regiões da página já hidrataram. Cada região avisa no seu próprio efeito (`components/tabela/sinal-de-hidratacao.tsx`), e o painel só abre quando todas avisaram: **o topo** (`TopoDoSistema`), **a barra de consulta** (a fronteira `Ligada`) e **a lista** (a tabela com dados, a lista vazia, o esqueleto e o erro emitem o sinal).
+  - **Clicar para abrir continua imediato** e não depende do sinal (só a placa que já vem na URL na primeira renderização espera).
+- **Por que o atraso falhava:** o Drawer modal do base-ui põe `aria-hidden` nos irmãos do painel no cliente. O React hidrata cada fronteira de Suspense separadamente, e a barra de consulta e o topo hidratam **depois** da fronteira onde o painel mora. Se o painel abre antes, o HTML do servidor não tem esse `aria-hidden` e o React acusa "A tree hydrated but some attributes of the server rendered HTML didn't match". Com CPU lenta ou arquivos .js atrasados, 150 ms não bastam; o sinal da lista sozinho também não (por isso as três regiões).
+- **Como está protegido:** unitário da loja; e2e com CPU reduzida em 6x e atraso de 150 a 1.030 ms em cada .js (`e2e/espiar.hidratacao*.spec.ts`), nos quatro estados (lista com dados, lista vazia, esqueleto, erro), em desenvolvimento e em produção, no 1366 e no celular. **Prova do teste:** com o atraso de 150 ms recolocado de propósito, o e2e falha com o erro de hidratação; com o sinal real, passa.
+- **Limite conhecido (sem teste):** se alguém clicar numa linha antes de a barra de consulta hidratar (janela de milissegundos em máquina lenta), o painel abre sem esperar e o React pode registrar o aviso. Não há falha visível; fica anotado.
+- **Quem decidiu:** Alexandre.
+
+---
+
 ## 30/10/2026 — v1 encerrada: backup oficial e workflows desligados
 
 - **Decisão:**
