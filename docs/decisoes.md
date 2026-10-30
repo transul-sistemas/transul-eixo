@@ -8,6 +8,26 @@ Modelo de entrada:
 
 ---
 
+## 31/10/2026 — Dados do Sankhya: acesso só leitura, trava do Eixo, campos e chaves
+
+- **Decisão:** a planilha `docs/sankhya/Eixo_Dados_do_Sankhya.xlsx` (dicionário de campos, respostas do responsável pelo Sankhya e SQL das 14 views) entra no repositório, com o resumo por assunto em `docs/sankhya/mapa.md`. Conferida antes de commitar: só nomes de campos, respostas e SQL, sem senha, chave nem credencial. O que ela estabelece:
+  - **Acesso.** Autenticação por `POST https://api.sankhya.com.br/authenticate` (OAuth2 `client_credentials` mais o cabeçalho `X-Token`) e consulta por `POST /gateway/v1/mge/service.sbr?serviceName=DbExplorerSP.executeQuery`. O "GET" do Sankhya significa **somente leitura** (`SELECT`), não o verbo HTTP.
+  - **O usuário da API é somente leitura "por enquanto".** A garantia não é o usuário: é a **trava do Eixo**, que vale sempre. Só o serviço `DbExplorerSP.executeQuery`; só SQL que começa com `SELECT` ou `WITH`; só consultas de **arquivos versionados** (nunca SQL montado na hora); filtros **por parâmetro** (nunca concatenação); **lista de campos permitidos** (nunca `SELECT *`); e **teste que barra `INSERT`, `UPDATE`, `DELETE` e DDL**. Pedir ao Sankhya um **usuário exclusivo do Eixo**, mantido somente leitura.
+  - **Credenciais** só no cofre e nas variáveis do worker; nunca em arquivo, commit, log nem conversa. Pedir ao Sankhya credenciais novas, exclusivas do Eixo.
+  - **Campos proibidos** (nunca lidos, nunca guardados): senhas (de site, de conexão, do ponto), chave PIX e tipo da chave, dados bancários (banco, agência, conta), RG, filiação, estado civil, raça e sexo. Também ficam fora, até decisão específica, outros dados pessoais sensíveis da planilha (identidade de gênero, deficiência, título eleitoral, certidão civil). CPF, CNH e folha estão autorizados pela empresa (LGPD).
+  - **RENAVAM é a chave permanente do ativo.** O Sankhya não guarda a placa antiga no padrão Mercosul; **o Eixo guarda o histórico de placas**.
+  - **Composição e gestor.** `CODVEI1`, `CODVEI2` e `CODVEI3` (carretas) são mantidos no dia a dia: a composição atual pode vir do Sankhya. `CODPARCGESTOR` **não** é mantido: **o gestor da carteira é do Eixo**.
+  - **Centro de resultado.** Ao mudar, o centro antigo é bloqueado; o **vigente é o não bloqueado**; mais de um não bloqueado vira **alerta**. **O bloqueio não guarda data.** As datas de início e fim de cada centro na vigência têm **origem registrada** junto da data: **derivada** (primeiro e último lançamento do veículo naquele centro, no financeiro), **observada** (data em que a sincronização viu a mudança de bloqueio) ou **informada** (assistente de transferência).
+  - **Sincronização.** Cadastros por **leitura completa**; financeiro por **janela móvel** (`DTNEG`, `DTENTSAI`, `DHBAIXA`). O campo de data de alteração existe, mas o Sankhya disse que não é necessário.
+  - **Motorista no CT-e** vem por **CPF e por nome**; a ligação com a pessoa usa o CPF.
+  - **Competência gerencial** confirmada pelo Sankhya (`DTNEG` e `DTENTSAI`, corte no dia 10). A conferência fica para a ponte: comparar a regra do Eixo com a coluna de competência calculada (`DT_COMPETENCIA_CALC`, exposta como `DT_COMPETENCIA`) das views `PAGAR_PAGAS` e `RECEBER_RECEBIDAS`.
+  - **O dicionário diz o que existe, não o que vem preenchido.** A descoberta mede o preenchimento na ponte (depois da Fase 3).
+- **Motivo:** o Eixo nunca grava no Sankhya e não pode depender só de a conta ser somente leitura; a trava do lado do Eixo e os campos proibidos protegem o ERP e as pessoas mesmo se a permissão do usuário mudar.
+- **Ainda aberto:** pedir ao Sankhya o usuário exclusivo do Eixo; medir o preenchimento dos campos na descoberta; confirmar o que cada view entrega (a leitura do mapa é pelo nome e pelas tabelas).
+- **Quem decidiu:** Alexandre.
+
+---
+
 ## 30/10/2026 — Painel de espiar (2C-2): desenho aprovado e o que fica para a Fase 3
 
 - **Decisão:**
