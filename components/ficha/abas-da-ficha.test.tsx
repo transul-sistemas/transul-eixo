@@ -85,4 +85,19 @@ describe("<AbasDaFicha>: o padrão ARIA de abas", () => {
   it("as abas rolam dentro da própria faixa, sem rolagem lateral da página (390 px)", () => {
     expect(com("resumo")).toMatch(/role="tablist"[^>]*class="[^"]*overflow-x-auto/);
   });
+
+  it("cada painel abre com um título de segundo nível só para leitor de tela (a ficha tem o h1)", () => {
+    const html = com("resumo");
+    const titulos = [...html.matchAll(/<h2[^>]*class="[^"]*sr-only[^"]*"[^>]*>([^<]*)<\/h2>/g)].map(
+      (m) => m[1],
+    );
+    expect(titulos).toEqual([
+      "Resumo",
+      "Linha do tempo",
+      "Documentos",
+      "Resultado",
+      "Mapa",
+      "Mapa mental",
+    ]);
+  });
 });

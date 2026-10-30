@@ -45,7 +45,9 @@ function cabecalho() {
   return { titulo: tela?.nome ?? "Placas", descricao: tela?.descricao };
 }
 
-function paraParametros(bruto: Record<string, string | string[] | undefined>): URLSearchParams {
+export function paraParametros(
+  bruto: Record<string, string | string[] | undefined>,
+): URLSearchParams {
   const parametros = new URLSearchParams();
   for (const [chave, valor] of Object.entries(bruto)) {
     for (const item of Array.isArray(valor) ? valor : valor === undefined ? [] : [valor]) {
@@ -56,7 +58,7 @@ function paraParametros(bruto: Record<string, string | string[] | undefined>): U
 }
 
 /** `?lento=ms` e `?falha=1` deixam testar os estados da tela; só a fonte de exemplo os obedece. */
-function simulacaoDe(parametros: URLSearchParams) {
+export function simulacaoDe(parametros: URLSearchParams) {
   const lento = Number(parametros.get("lento"));
   return {
     lentoMs: Number.isFinite(lento) && lento > 0 ? Math.min(lento, 5000) : undefined,

@@ -21,8 +21,10 @@ export function AbasDaFicha({
   aoMudar: (aba: AbaId) => void;
   conteudos: Record<AbaId, ReactNode>;
 }) {
-  function aoTeclar(evento: KeyboardEvent<HTMLButtonElement>) {
-    const proxima = abaPorTecla(ativa, evento.key);
+  // A tecla vale para a aba que tem o foco (a que recebeu o evento), não para a `ativa`: a ativa vem
+  // da URL e atrasa em relação ao foco quando as setas são apertadas em sequência rápida.
+  function aoTeclar(evento: KeyboardEvent<HTMLButtonElement>, atual: AbaId) {
+    const proxima = abaPorTecla(atual, evento.key);
     if (proxima === null) return;
     evento.preventDefault();
     aoMudar(proxima);
@@ -48,7 +50,7 @@ export function AbasDaFicha({
               aria-controls={`painel-${aba.id}`}
               tabIndex={selecionada ? 0 : -1}
               onClick={() => aoMudar(aba.id)}
-              onKeyDown={aoTeclar}
+              onKeyDown={(evento) => aoTeclar(evento, aba.id)}
               className={cn(
                 "focus-visible:ring-ring/50 -mb-px inline-flex min-h-10 shrink-0 cursor-pointer items-center border-b-2 px-3 text-sm whitespace-nowrap outline-none focus-visible:ring-3",
                 selecionada
@@ -71,6 +73,8 @@ export function AbasDaFicha({
           hidden={aba.id !== ativa}
           className="focus-visible:ring-ring/50 rounded-lg outline-none focus-visible:ring-3"
         >
+          {/* A ficha tem o h1; cada painel abre com um h2 só para o leitor de tela. */}
+          <h2 className="sr-only">{aba.nome}</h2>
           {conteudos[aba.id]}
         </div>
       ))}

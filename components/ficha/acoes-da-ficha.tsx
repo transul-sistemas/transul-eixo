@@ -18,7 +18,6 @@ export function AcoesDaFicha({ acoes }: { acoes: readonly { id: string; nome: st
               variant="outline"
               aria-disabled="true"
               aria-describedby={dica}
-              onClick={(evento) => evento.preventDefault()}
               className="min-h-8 cursor-not-allowed opacity-60"
             >
               {acao.nome}

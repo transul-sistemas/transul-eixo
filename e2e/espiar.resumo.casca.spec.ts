@@ -15,11 +15,11 @@ test.describe("resumo da placa em tablet e celular", () => {
     const painel = painelDe(page, "AAA0A04");
     await expect(painel.getByRole("heading", { name: "Situação" })).toBeVisible();
     await expect(painel.getByRole("button", { name: "Fechar painel" })).toBeInViewport();
-    await expect(painel.getByRole("button", { name: "Abrir ficha completa" })).toBeInViewport();
+    await expect(painel.getByRole("link", { name: "Abrir ficha completa" })).toBeInViewport();
     const corpo = painel.locator("[data-painel-corpo]");
     await corpo.evaluate((e) => e.scrollTo(0, e.scrollHeight));
     await expect(painel.getByRole("heading", { name: "Dados" })).toBeInViewport();
-    await expect(painel.getByRole("button", { name: "Abrir ficha completa" })).toBeInViewport();
+    await expect(painel.getByRole("link", { name: "Abrir ficha completa" })).toBeInViewport();
     await expect(painel).toBeVisible(); // rolar o conteúdo não fecha
     const m = await page.evaluate(() => ({
       pagina: document.documentElement.scrollWidth,

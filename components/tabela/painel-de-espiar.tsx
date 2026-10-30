@@ -203,7 +203,7 @@ export function PainelDeEspiar({
                 />
               )}
             </div>
-            {doPainel?.situacao === "ok" ? <BotaoDaFicha /> : null}
+            {doPainel?.situacao === "ok" ? <BotaoDaFicha placa={doPainel.placa} /> : null}
           </Drawer.Popup>
         </Drawer.Viewport>
       </Drawer.Portal>

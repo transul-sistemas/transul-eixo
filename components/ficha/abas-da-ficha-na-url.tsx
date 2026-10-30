@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname, useSearchParams } from "next/navigation";
-import type { ReactNode } from "react";
+import { type ReactNode, useState } from "react";
 import { ABAS_DA_FICHA, type AbaId, comAba, lerAba } from "@/lib/navegacao/ficha";
 import { AbasDaFicha } from "./abas-da-ficha";
 
@@ -13,9 +13,19 @@ import { AbasDaFicha } from "./abas-da-ficha";
 export function AbasDaFichaNaUrl({ conteudos }: { conteudos: Record<AbaId, ReactNode> }) {
   const caminho = usePathname();
   const parametros = useSearchParams();
-  const ativa = lerAba(new URLSearchParams(parametros.toString()));
+  const daUrl = lerAba(new URLSearchParams(parametros.toString()));
+  // A troca aparece na hora; a URL (replaceState) chega logo depois e volta a mandar se mudar por
+  // fora (link, Voltar, outra aba na barra de endereço).
+  const [escolhida, setEscolhida] = useState(daUrl);
+  const [urlAnterior, setUrlAnterior] = useState(daUrl);
+  if (daUrl !== urlAnterior) {
+    setUrlAnterior(daUrl);
+    setEscolhida(daUrl);
+  }
+  const ativa = escolhida;
 
   function mudar(aba: AbaId) {
+    setEscolhida(aba);
     const texto = comAba(new URLSearchParams(parametros.toString()), aba).toString();
     window.history.replaceState(null, "", texto ? `${caminho}?${texto}` : caminho);
   }

@@ -6,3 +6,9 @@ export function diasEntre(deData: string, ateData: string): number {
   const b = Date.parse(`${ateData.slice(0, 10)}T00:00:00Z`);
   return Math.round((b - a) / DIA_EM_MS);
 }
+
+/** Soma dias a um dia `aaaa-mm-dd` (só a parte da data conta; em UTC, sem fuso nem horário de verão). */
+export function somarDias(dia: string, dias: number): string {
+  const instante = Date.parse(`${dia.slice(0, 10)}T00:00:00Z`) + dias * DIA_EM_MS;
+  return new Date(instante).toISOString().slice(0, 10);
+}

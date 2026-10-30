@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatarData, formatarDataEHora, hojeEmSaoPaulo } from "./data";
+import { agoraEmSaoPaulo, formatarData, formatarDataEHora, hojeEmSaoPaulo } from "./data";
 
 describe("formatarData", () => {
   it("texto aaaa-mm-dd vira dd/mm/aaaa sem passar por fuso", () => {
@@ -69,5 +69,18 @@ describe("formatarDataEHora", () => {
     expect(formatarDataEHora("")).toBe("—");
     expect(formatarDataEHora("lixo")).toBe("—");
     expect(formatarDataEHora("2026-02-30T10:00")).toBe("—");
+  });
+});
+
+describe("agoraEmSaoPaulo", () => {
+  it("devolve o dia e a hora de São Paulo em aaaa-mm-ddThh:mm", () => {
+    expect(agoraEmSaoPaulo(new Date("2026-10-29T15:07:42Z"))).toBe("2026-10-29T12:07");
+  });
+  it("de madrugada em UTC ainda é o dia anterior, com a hora certa", () => {
+    expect(agoraEmSaoPaulo(new Date("2026-03-01T01:00:00Z"))).toBe("2026-02-28T22:00");
+    expect(agoraEmSaoPaulo(new Date("2027-01-01T02:30:00Z"))).toBe("2026-12-31T23:30");
+  });
+  it("meia-noite é 00:00, nunca 24:00", () => {
+    expect(agoraEmSaoPaulo(new Date("2026-10-29T03:00:00Z"))).toBe("2026-10-29T00:00");
   });
 });

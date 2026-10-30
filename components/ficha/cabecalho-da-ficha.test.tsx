@@ -5,7 +5,7 @@ import { CabecalhoDaFicha } from "./cabecalho-da-ficha";
 const com = (extra: Partial<Parameters<typeof CabecalhoDaFicha>[0]> = {}) =>
   renderToStaticMarkup(
     <CabecalhoDaFicha
-      voltar={<a href="/frota/placas">Voltar à lista</a>}
+      voltar={<span>Voltar à lista</span>}
       titulo="AAA0A00"
       subtitulo="FH 540, cavalo, ano 2020"
       situacao={<span data-teste="situacao">DOp Disponível no Operacional</span>}
