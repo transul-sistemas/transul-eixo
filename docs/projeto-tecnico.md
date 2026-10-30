@@ -4,7 +4,7 @@ Oct 29, 2026 · @Ivanira Dias
 
 ## Visão geral
 
-A TranSul 2.0 é um sistema único de gestão, complementar ao Sankhya, construído do zero em contas novas e com dados importados da v1 já saneados. A v1 sai do ar em 01/11/2026; a cópia completa está em `C:\Backups\transul_v1_completo.dump` (218 tabelas conferidas) e o código está marcado como `v1-final`.
+A TranSul 2.0 é um sistema único de gestão, complementar ao Sankhya, construído do zero em contas novas e com dados importados da v1 já saneados. A v1 sai do ar em 01/11/2026; a cópia completa está em `C:\Backups\transul_v1_completo.dump` (218 tabelas conferidas; 42.870.361 bytes; SHA256 `B86D4A82…`, ver `docs/decisoes.md`) e o código está marcado como `v1-final`.
 
 **Regras invioláveis**
 
@@ -349,4 +349,8 @@ Nenhuma destas trava as fases 0 a 3; cada uma tem uma premissa até ser decidida
 - [ ] **Logotipo e cores oficiais da TranSul**. Azul oficial da TranSul `#151F6D` e azul de ação do Eixo `#3355FF` definidos em 29/10/2026. Falta o arquivo vetorial oficial do símbolo; até lá, o logo em PNG provisório (`public/marca/`) fica isolado em `components/marca/assinatura-transul.tsx` e em `app/icon.svg`; o SVG oficial deve ser pedido à agência.
 - [ ] **Regras do Porto** (contratos, abatimentos e acréscimos): detalhar na fase 10 a partir do código da v1.
 
-**Pendências da v1, fora do projeto:** segunda cópia do backup no Drive, desligar os 12 workflows restantes no GitHub e avisar a equipe e a diretoria sobre a saída do ar em 01/11.
+**Pendências da v1, fora do projeto:**
+
+- [x] **Desligar os workflows no GitHub:** concluída em 30/10/2026. Os 12 workflows de sincronização, alerta e sentinela estão desativados (11 desativados nesse dia e a reconciliação, que já estava), e só o `ci.yml` segue ativo. A v1 não recebe mais dados do Sankhya.
+- [x] **Segunda cópia do backup no Drive da empresa:** concluída, conferida por hash (informado por Alexandre; ver `docs/decisoes.md`).
+- [ ] **Avisar a equipe e a diretoria** sobre a saída do ar em 01/11.
