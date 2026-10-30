@@ -49,3 +49,16 @@ A régua única de situação da placa. A sigla é exata e aparece na linha e no
 | VEN | Disponível para venda | Fora |
 | SUC | Sucata | Fora |
 | VND | Vendido | Fora |
+
+## Tipos de ativo
+
+O que é a placa. São cinco, e cada placa tem um só. O tipo é o segundo grupo de chips da lista de placas (o primeiro é a situação, que diz como a placa está agora).
+
+| Tipo | O que é |
+| --- | --- |
+| Cavalo | Cavalo mecânico: puxa os implementos e é o mestre da composição |
+| Implemento | Carroceria ou reboque (graneleiro, sider, baú, prancha, tanque): é o servo da composição e herda a operação do cavalo |
+| Equipamento | Máquina que não anda na estrada, como empilhadeira, carregadeira e guindaste |
+| Caminhão | Veículo de carga com carroceria própria, sem cavalo |
+| Apoio | Veículo de apoio à operação: van, camionete e utilitários. "Veículo pequeno" e "apoio" eram a mesma coisa e foram unificados em Apoio (30/10/2026) |
+

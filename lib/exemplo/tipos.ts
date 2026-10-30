@@ -1,7 +1,6 @@
 import type { Sigla } from "@/lib/dominio/status";
 
-export type TipoDeAtivo =
-  "cavalo" | "implemento" | "equipamento" | "caminhao" | "veiculo-pequeno" | "apoio";
+export type TipoDeAtivo = "cavalo" | "implemento" | "equipamento" | "caminhao" | "apoio";
 
 /** A forma do modelo futuro: placa única, CRs com vigência `[início, fim)`, composição vigente. */
 export interface PlacaDeExemplo {

@@ -45,16 +45,15 @@ describe("placas de exemplo: forma", () => {
     }
     expect(maior).toBeLessThanOrEqual(3);
   });
-  it("as quantidades por tipo continuam as mesmas (60, 100, 20, 30, 20 e 10)", () => {
+  it("as quantidades por tipo: 60 cavalos, 100 implementos, 20 equipamentos, 30 caminhões e 30 apoios (veículo pequeno é apoio)", () => {
     const quantos = (t: string) => placas.filter((p) => p.tipo === t).length;
     expect([
       quantos("cavalo"),
       quantos("implemento"),
       quantos("equipamento"),
       quantos("caminhao"),
-      quantos("veiculo-pequeno"),
       quantos("apoio"),
-    ]).toEqual([60, 100, 20, 30, 20, 10]);
+    ]).toEqual([60, 100, 20, 30, 30]);
   });
   it("são as mesmas a cada chamada com o mesmo dia (sem sorteio)", () => {
     expect(placasDeExemplo(HOJE)).toEqual(placas);
@@ -65,9 +64,12 @@ describe("placas de exemplo: forma", () => {
     const depois = placasDeExemplo(outro).map((p) => codigosDe(p, outro));
     expect(depois).toEqual(antes);
   });
-  it("as 26 siglas aparecem ao menos uma vez e os 6 tipos de ativo também", () => {
+  it("as 26 siglas aparecem ao menos uma vez e os 5 tipos de ativo também", () => {
     expect(new Set(placas.map((p) => p.sigla))).toEqual(new Set(SIGLAS));
-    expect(new Set(placas.map((p) => p.tipo)).size).toBe(6);
+    expect(new Set(placas.map((p) => p.tipo)).size).toBe(5);
+    expect([...new Set(placas.map((p) => p.tipo))].sort()).toEqual(
+      ["apoio", "caminhao", "cavalo", "equipamento", "implemento"].sort(),
+    );
   });
   it("a composição é coerente: cada implemento ligado a um cavalo que o lista, e herda a operação", () => {
     const porId = new Map(placas.map((p) => [p.id, p]));
@@ -142,5 +144,11 @@ describe("placas de exemplo: casos feios, de propósito", () => {
         expect(Number.isInteger(p.valorFipeCentavos), p.placa).toBe(true);
       }
     }
+  });
+
+  it("o ciclo de 24 placas tem 3 apoios e nenhum veículo pequeno", () => {
+    const primeiras = placas.slice(0, 24);
+    expect(primeiras.filter((p) => p.tipo === "apoio")).toHaveLength(3);
+    expect(primeiras.map((p) => p.tipo as string)).not.toContain("veiculo-pequeno");
   });
 });

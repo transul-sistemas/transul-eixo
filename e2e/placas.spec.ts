@@ -579,7 +579,7 @@ test.describe("lista de placas: colunas escolhíveis e reordenáveis", () => {
 });
 
 test.describe("lista de placas: chips por tipo de ativo", () => {
-  const TIPOS = ["cavalo", "implemento", "equipamento", "caminhao", "veiculo-pequeno", "apoio"];
+  const TIPOS = ["cavalo", "implemento", "equipamento", "caminhao", "apoio"];
   const contagens = async (page: Page, ids: string[]) => {
     const resultado: Record<string, number> = {};
     for (const id of ids) {
@@ -590,18 +590,14 @@ test.describe("lista de placas: chips por tipo de ativo", () => {
   };
   const STATUS = ["em-atividade", "atencao", "impedida", "patio", "fora"];
 
-  test("há seis chips de tipo, e a soma deles é o total", async ({ page }) => {
+  test("há cinco chips de tipo (veículo pequeno é apoio), e a soma deles é o total", async ({
+    page,
+  }) => {
     await abrirHidratada(page, ROTA);
-    for (const nome of [
-      "Cavalo",
-      "Implemento",
-      "Equipamento",
-      "Caminhão",
-      "Veículo pequeno",
-      "Apoio",
-    ]) {
+    for (const nome of ["Cavalo", "Implemento", "Equipamento", "Caminhão", "Apoio"]) {
       await expect(chip(page, nome)).toBeVisible();
     }
+    await expect(chip(page, "Veículo pequeno")).toHaveCount(0);
     const porTipo = await contagens(page, TIPOS);
     const soma = Object.values(porTipo).reduce((a, b) => a + b, 0);
     expect(soma).toBe(await totalDoResumo(page));

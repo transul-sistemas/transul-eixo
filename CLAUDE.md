@@ -78,7 +78,7 @@ Cada regra tem teste automático. "Ativo" já roda em `lib/qualidade/armadilhas.
 ## Modelo de domínio (resumo)
 
 - **Raízes:** Pessoas (chave CPF), Frota (placa + RENAVAM; placa convertida para Mercosul é a mesma), Operações (operação e CR), Parceiros (CPF/CNPJ + CODPARC).
-- **Ativo:** cavalo, implemento, equipamento, caminhão, veículo pequeno, apoio. Cada placa tem um CR por período (vários ao longo do tempo, um vigente). O Eixo é a fonte da verdade da posse.
+- **Ativo:** cavalo, implemento, equipamento, caminhão e apoio (o que antes se chamava veículo pequeno é apoio). Cada placa tem um CR por período (vários ao longo do tempo, um vigente). O Eixo é a fonte da verdade da posse.
 - **Composição:** cavalo (mestre) + implementos (servos). Só cavalo é mestre, só implemento é servo. Implementos herdam a operação do cavalo. Conjunto misto de carrocerias é bloqueado. O nome do conjunto é calculado pela tabela de nomenclatura (carroceria × configuração), nunca gravado na placa.
 - **Status:** uma régua única com siglas (ETc, ETv, CAr, DEs, DOp, ACe, ADe, CAn, MAc, MAt, MAv, MAN, REF, SIN, VAz, FOg, FEr, SMo, SDo, PÁT, DOC, ALU, EMP, VEN, SUC, VND), cada uma marcada como válida para conjunto, solo ou ambos. Eventos com hora; vários por dia.
 - **Operacional:** custódia da placa do gestor de frota ao Operacional da filial (DOp → ACe → CAr → CAn → ETc, e volta ao gestor). Fila por ordem de chegada no totem.

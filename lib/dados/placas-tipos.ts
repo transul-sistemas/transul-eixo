@@ -5,14 +5,7 @@ import type { Sigla } from "@/lib/dominio/status";
 import type { Status } from "@/lib/visual/tons";
 
 /** Tipos de ativo: o segundo grupo de chips da lista de placas. */
-export const TIPOS_DE_ATIVO = [
-  "cavalo",
-  "implemento",
-  "equipamento",
-  "caminhao",
-  "veiculo-pequeno",
-  "apoio",
-] as const;
+export const TIPOS_DE_ATIVO = ["cavalo", "implemento", "equipamento", "caminhao", "apoio"] as const;
 export type TipoDeAtivo = (typeof TIPOS_DE_ATIVO)[number];
 
 /** Campos pelos quais a lista pode ser ordenada (parâmetro `ordem` da URL). */
@@ -146,7 +139,6 @@ export const NOMES_DOS_TIPOS: Record<TipoDeAtivo, string> = {
   implemento: "Implemento",
   equipamento: "Equipamento",
   caminhao: "Caminhão",
-  "veiculo-pequeno": "Veículo pequeno",
   apoio: "Apoio",
 };
 
