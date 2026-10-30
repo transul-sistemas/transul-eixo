@@ -22,6 +22,22 @@ interface Props {
 
 const GRUPOS = gruposDeSiglas();
 
+/** As classes do botão Mais filtros: o botão reservado usa as mesmas, para nada se mexer. */
+export const CLASSE_DO_BOTAO_MAIS_FILTROS = cn(buttonVariants({ variant: "outline" }));
+
+/**
+ * O lugar do botão enquanto a lista carrega: mesmo tamanho, mesmo ícone, desligado. Quando o botão
+ * de verdade chega, ele assume o mesmo espaço e a barra não pisca.
+ */
+export function MaisFiltrosReservado() {
+  return (
+    <button type="button" disabled aria-busy="true" className={CLASSE_DO_BOTAO_MAIS_FILTROS}>
+      <IconFilter aria-hidden className="size-3.5" />
+      Mais filtros
+    </button>
+  );
+}
+
 /**
  * Mais filtros da lista de placas: a sigla exata (o chip é só o agrupamento) e o "inclui baixadas"
  * (VND e SUC). Tudo na URL (`sigla`, `baixadas`); mudar qualquer um volta à página 1. Enquanto uma
@@ -59,7 +75,7 @@ export function MaisFiltrosDePlacas({ padrao, campos }: Props) {
 
   return (
     <Popover.Root>
-      <Popover.Trigger className={cn(buttonVariants({ variant: "outline" }))}>
+      <Popover.Trigger className={CLASSE_DO_BOTAO_MAIS_FILTROS}>
         <IconFilter aria-hidden className="size-3.5" />
         Mais filtros
         {quantos > 0 ? (

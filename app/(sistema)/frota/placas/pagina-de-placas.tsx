@@ -5,7 +5,7 @@ import { BarraDeConsultaDaPagina } from "@/components/layout/barra-de-consulta";
 import { PaginaDeLeitura } from "@/components/layout/pagina-de-leitura";
 import { EsqueletoDaTabela, ListaVazia } from "@/components/tabela/estados";
 import { DensidadeDaTabela } from "@/components/tabela/densidade";
-import { MaisFiltrosDePlacas } from "@/components/tabela/mais-filtros";
+import { MaisFiltrosDePlacas, MaisFiltrosReservado } from "@/components/tabela/mais-filtros";
 import { ModoFoco } from "@/components/tabela/modo-foco";
 import { Paginador } from "@/components/tabela/paginador";
 import { SeletorDeColunas } from "@/components/tabela/seletor-de-colunas";
@@ -106,7 +106,14 @@ export function PaginaDePlacasCarregando() {
       lista
       titulo={titulo}
       descricao={descricao}
-      consulta={<BarraDeConsultaDaPagina rotulo="Buscar placa" chips={chipsDaLista()} />}
+      consulta={
+        <BarraDeConsultaDaPagina
+          rotulo="Buscar placa"
+          chips={chipsDaLista()}
+          filtrosExtras={["sigla", "baixadas"]}
+          maisFiltros={<MaisFiltrosReservado />}
+        />
+      }
     >
       <EsqueletoDaTabela rotulo="Carregando placas" />
     </PaginaDeLeitura>

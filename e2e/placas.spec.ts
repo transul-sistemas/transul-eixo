@@ -1243,3 +1243,42 @@ test.describe("lista de placas: Mais filtros (sigla exata e inclui baixadas)", (
     await expect(caixaSigla(page, "DOp Disponível no Operacional")).toBeEnabled();
   });
 });
+
+test.describe("lista de placas: o botão Mais filtros não pisca ao carregar", () => {
+  const caixaDe = (l: ReturnType<Page["locator"]>) => l.boundingBox();
+
+  test("o botão ocupa o mesmo lugar e o mesmo tamanho enquanto carrega e depois de carregar", async ({
+    page,
+  }) => {
+    await page.goto(`${ROTA}?lento=2500`, { waitUntil: "commit" });
+    await expect(page.getByRole("status", { name: "Carregando placas" })).toBeVisible();
+    const botao = consulta(page).getByRole("button", { name: /^Mais filtros/ });
+    const visoes = consulta(page).getByRole("button", { name: "Visões salvas" });
+    await expect(botao).toBeVisible();
+    const antes = await caixaDe(botao);
+    const visoesAntes = await caixaDe(visoes);
+    expect(antes).not.toBeNull();
+    await expect(tabela(page)).toBeVisible({ timeout: 15_000 });
+    const depois = await caixaDe(botao);
+    const visoesDepois = await caixaDe(visoes);
+    for (const campo of ["x", "y", "width", "height"] as const) {
+      expect(
+        Math.abs((depois?.[campo] ?? -1) - (antes?.[campo] ?? -9)),
+        `Mais filtros ${campo}`,
+      ).toBeLessThanOrEqual(1);
+      expect(
+        Math.abs((visoesDepois?.[campo] ?? -1) - (visoesAntes?.[campo] ?? -9)),
+        `Visões salvas ${campo}`,
+      ).toBeLessThanOrEqual(1);
+    }
+  });
+
+  test("enquanto carrega o botão está desligado, e depois fica ligado", async ({ page }) => {
+    await page.goto(`${ROTA}?lento=2500`, { waitUntil: "commit" });
+    await expect(page.getByRole("status", { name: "Carregando placas" })).toBeVisible();
+    const botao = consulta(page).getByRole("button", { name: /^Mais filtros/ });
+    await expect(botao).toBeDisabled();
+    await expect(tabela(page)).toBeVisible({ timeout: 15_000 });
+    await expect(botao).toBeEnabled();
+  });
+});
