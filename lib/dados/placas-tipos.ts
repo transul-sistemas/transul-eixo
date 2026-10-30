@@ -1,5 +1,6 @@
 import type { DefinicaoDeColuna } from "@/lib/navegacao/colunas-da-tabela";
 import type { Alerta } from "@/lib/dominio/alertas";
+import type { EventoDeStatus } from "@/lib/dominio/linha-do-tempo";
 import type { Sigla } from "@/lib/dominio/status";
 import type { Status } from "@/lib/visual/tons";
 
@@ -109,6 +110,13 @@ export interface DetalheDaPlaca extends LinhaDePlaca {
   /** Os CRs vigentes hoje (mais de um é o alerta de CR sobreposto), do mais antigo ao mais novo. */
   crsVigentes: { codigo: string; nome: string; inicio: string; fim: string | null }[];
 }
+
+/** A ficha da placa: o detalhe do painel mais a história de situações (do mais antigo ao atual). */
+export interface FichaDaPlaca extends DetalheDaPlaca {
+  eventos: EventoDeStatus[];
+}
+
+export type { EventoDeStatus };
 
 /** O que a página entrega ao painel: o detalhe, ou o motivo de não haver. */
 export type DadosDoPainel =
