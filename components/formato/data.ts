@@ -34,6 +34,22 @@ export function formatarData(valor: string | Date | null | undefined): string {
   return Number.isNaN(instante.getTime()) ? "—" : diaDeSaoPaulo.format(instante);
 }
 
+const horaDeSaoPaulo = new Intl.DateTimeFormat("pt-BR", {
+  timeZone: "America/Sao_Paulo",
+  hour: "2-digit",
+  minute: "2-digit",
+  hourCycle: "h23",
+});
+
+/** `dd/mm/aaaa hh:mm`. Texto sem fuso é hora de parede; instante com fuso vale em São Paulo. */
+export function formatarDataEHora(valor: string | Date | null | undefined): string {
+  const dia = formatarData(valor);
+  if (dia === "—" || (typeof valor === "string" && /^\d{4}-\d{2}-\d{2}$/.test(valor))) return dia;
+  if (typeof valor === "string" && SEM_FUSO.test(valor)) return `${dia} ${valor.slice(11, 16)}`;
+  const instante = typeof valor === "string" ? new Date(valor) : valor;
+  return instante ? `${dia} ${horaDeSaoPaulo.format(instante)}` : "—";
+}
+
 const partesDeSaoPaulo = new Intl.DateTimeFormat("en-CA", {
   timeZone: "America/Sao_Paulo",
   year: "numeric",

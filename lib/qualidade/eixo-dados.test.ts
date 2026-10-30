@@ -12,6 +12,7 @@ const LIBERADOS = [
   "lib/qualidade/eixo-dados.test.ts",
   "docs/decisoes.md",
   "docs/superpowers/plans/2026-10-29-fase-2c-1-lista-de-placas.md",
+  "docs/superpowers/plans/2026-10-30-fase-2c-2-painel-de-espiar.md",
 ];
 const SEM_VARREDURA =
   /^(node_modules|\.next|\.git|test-results|playwright-report|supabase\/\.temp)/;

@@ -1,5 +1,6 @@
 import { connection } from "next/server";
 import { hojeEmSaoPaulo } from "@/components/formato/data";
+import { SinalDeHidratacao } from "@/components/tabela/sinal-de-hidratacao";
 import { perfilAtual } from "@/lib/navegacao/perfis";
 import { TopoLigado } from "./topo";
 
@@ -9,7 +10,12 @@ import { TopoLigado } from "./topo";
  */
 export async function TopoDoSistema() {
   await connection();
-  return <TopoLigado hoje={hojeEmSaoPaulo(new Date())} perfil={perfilAtual()} />;
+  return (
+    <>
+      <TopoLigado hoje={hojeEmSaoPaulo(new Date())} perfil={perfilAtual()} />
+      <SinalDeHidratacao regiao="topo" />
+    </>
+  );
 }
 
 /** Reserva o lugar do topo enquanto ele é calculado, para a página não pular. */

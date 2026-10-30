@@ -8,6 +8,7 @@ import { STATUS } from "@/lib/visual/tons";
 import { type FonteDePlacas, MENSAGEM_SO_COM_EXEMPLO } from "./fonte";
 import {
   CAMPOS_ORDENAVEIS_DE_PLACAS,
+  type DetalheDaPlaca,
   type LinhaDePlaca,
   type OpcoesDaConsulta,
   type PaginaDePlacas,
@@ -206,5 +207,27 @@ export const fonteDeExemplo: FonteDePlacas = {
     if (lentoMs && lentoMs > 0) await new Promise((r) => setTimeout(r, Math.min(lentoMs, 10_000)));
     if (falha) throw new Error("Falha simulada pela fonte de exemplo.");
     return consultar(consulta, hoje);
+  },
+  async obter(placa, hoje, opcoes: OpcoesDaConsulta): Promise<DetalheDaPlaca | null> {
+    if (process.env.EIXO_DADOS !== "exemplo") throw new Error(MENSAGEM_SO_COM_EXEMPLO);
+    const { lentoMs, falhaNoPainel } = opcoes.simulacao ?? {};
+    if (lentoMs && lentoMs > 0) await new Promise((r) => setTimeout(r, Math.min(lentoMs, 10_000)));
+    if (falhaNoPainel) throw new Error("Falha simulada pela fonte de exemplo, no painel.");
+    const todas = placasDeExemplo(hoje);
+    const achada = todas.find((p) => p.placa === placa);
+    if (!achada) return null;
+    const [linha] = paraLinhas(todas, hoje).filter((l) => l.id === achada.id);
+    if (!linha) return null;
+    return {
+      ...linha,
+      ano: achada.ano,
+      renavam: achada.renavam,
+      desde: achada.desde,
+      crs: achada.crs.map((cr) => ({ ...cr })),
+      crsVigentes: achada.crs
+        .filter((cr) => cr.inicio <= hoje && (cr.fim === null || hoje < cr.fim))
+        .sort((a, b) => (a.inicio < b.inicio ? -1 : a.inicio > b.inicio ? 1 : 0))
+        .map((cr) => ({ ...cr })),
+    };
   },
 };
