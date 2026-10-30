@@ -188,6 +188,10 @@ describe("contador de filtros ativos, ao lado da busca", () => {
     expect(com()).not.toContain("data-filtros-ativos");
   });
 
+  it("a região de status fica sempre montada (vazia sem filtros), para o primeiro filtro ser anunciado", () => {
+    expect(com()).toMatch(/<p[^>]*role="status"[^>]*><\/p>/);
+  });
+
   it("um filtro: '1 filtro ativo' (singular)", () => {
     const c = contador(com("chip=cavalo"));
     expect((c?.[1] ?? c?.[2] ?? "").trim()).toBe("1 filtro ativo");

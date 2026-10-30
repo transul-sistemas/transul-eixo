@@ -178,6 +178,7 @@ export function BarraDeConsulta({
         />
       </div>
 
+      {/* Sempre montada: uma região viva que já entra com texto não é anunciada. */}
       {filtrosAtivos > 0 ? (
         <p
           role="status"
@@ -188,7 +189,9 @@ export function BarraDeConsulta({
             ? "1 filtro ativo"
             : `${formatarInteiro(filtrosAtivos)} filtros ativos`}
         </p>
-      ) : null}
+      ) : (
+        <p role="status" className="sr-only" />
+      )}
 
       <div className="ml-auto flex flex-wrap items-center gap-2">
         {ativa ? (
