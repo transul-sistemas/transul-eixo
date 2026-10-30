@@ -99,7 +99,7 @@ test.describe("resumo da placa: o conjunto", () => {
       'section:has(h3:text-is("Conjunto")) button[aria-label^="Espiar "]',
     );
     const total = await vizinhas.count();
-    test.skip(total === 0, "a AAA0A00 do exemplo não tem conjunto");
+    expect(total, "a AAA0A00 do exemplo tem conjunto").toBeGreaterThan(0);
     const nome = (await vizinhas.first().getAttribute("aria-label"))!;
     const outra = nome.replace("Espiar ", "");
 
@@ -114,8 +114,8 @@ test.describe("resumo da placa: o conjunto", () => {
     await page.keyboard.press("Escape");
     await expect(qualquerPainel(page)).toBeHidden();
     const destino = botaoEspiar(page, outra);
-    if ((await destino.count()) > 0) await expect(destino).toBeFocused();
-    else await expect(page.locator('[role="region"][aria-label*="rolável"]')).toBeFocused();
+    // A primeira placa do conjunto da AAA0A00 está na página 1: o foco volta ao botão dela.
+    await expect(destino).toBeFocused();
   });
 });
 
