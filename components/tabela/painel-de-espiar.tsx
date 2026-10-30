@@ -51,7 +51,7 @@ function trazerLinhaParaAVista(botao: HTMLElement) {
   else if (l.bottom > c.bottom) caixa.scrollTop += l.bottom - c.bottom;
 }
 
-/** Devolve o foco: ao botão Espiar da última placa vista (trazendo a linha à vista); senão, à caixa da tabela. */
+/** Devolve o foco: ao botão Espiar da última placa vista (trazendo a linha à vista); senão, à caixa da tabela, ao campo de busca ou ao conteúdo. */
 function devolverFoco(placa: string | null) {
   const botao = placa
     ? document.querySelector<HTMLElement>(`[data-espiar-placa="${placa}"]`)
@@ -62,9 +62,13 @@ function devolverFoco(placa: string | null) {
     trazerLinhaParaAVista(botao);
     return;
   }
-  document
-    .querySelector<HTMLElement>('[role="region"][aria-label*="rolável"]')
-    ?.focus({ preventScroll: true });
+  // Sem linha nem caixa (lista vazia): o campo de busca, onde a pessoa corrige a consulta; por fim
+  // o conteúdo da página. O foco nunca fica no body.
+  const destino =
+    document.querySelector<HTMLElement>('[role="region"][aria-label*="rolável"]') ??
+    document.querySelector<HTMLElement>('[role="search"] input') ??
+    document.querySelector<HTMLElement>("#conteudo");
+  destino?.focus({ preventScroll: true });
 }
 
 /**
