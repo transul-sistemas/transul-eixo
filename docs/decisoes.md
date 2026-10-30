@@ -24,6 +24,20 @@ Modelo de entrada:
 
 ---
 
+## 30/10/2026 — Painel de espiar (2C-2): revisão independente e o que ela corrigiu
+
+- **Decisão:** a 2C-2 passou por revisão independente (só leitura) antes do PR. Cada achado virou teste que falhava antes da correção e passa depois (`e2e/espiar.historico.spec.ts`, `e2e/espiar.corrida.spec.ts`, `lib/dados/obter-placa.test.ts`).
+  - **Fechar desfaz o passo (importante):** o efeito do provedor zerava a marca "aberto pela lista" logo depois do clique, porque a URL ainda era nula. Fechar virava `replace` e o Voltar seguinte não chegava à página de antes. Agora a marca só é zerada quando a URL sai de "com placa" para "sem placa".
+  - **Clique na própria placa do link direto (importante):** antes de o painel liberar, o clique marcava "aberto pela lista" (o `push` para a mesma URL vira `replaceState`) e o Esc fazia `back()`, saindo da lista. Agora só marca quando a placa é diferente da que já está na URL.
+  - **Foco ao trocar pelo conjunto (importante):** o botão da placa do conjunto sumia com o corpo (`key`) e o foco caía no `body`, dentro de um diálogo modal. Agora o foco vai ao título.
+  - **Anúncio e dado velho (menores):** o anúncio da troca não vaza para a próxima abertura quando o painel fecha por fora (Voltar); reabrir uma placa que deu erro mostra o carregando, não o erro da abertura anterior; a falha do painel passa a ser registrada com `console.error` (sem Sentry ainda); outra navegação da lista desarma a pendência de uma abertura cancelada.
+  - **Testes frágeis:** o `test.skip` dentro do teste, o `if/else` que aceitava dois resultados e o título que prometia "desfaz um passo" sem conferir foram trocados por afirmações diretas.
+- **Hipóteses do revisor que os testes não reproduziram:** o painel não pisca aberto ao fechar (sequência só de aberto para fechado, observada a cada quadro) e fechar logo depois de trocar de placa, com a resposta lenta, não reabre o painel.
+- **Fica para depois:** (1) `clienteImportaAFonte` só enxerga arquivos com `"use client"`; `resumo-da-placa.tsx` e `navegacao-do-painel.tsx` entram no bundle do navegador sem a diretiva e hoje só importam `placas-tipos`; o teste de barramento deve passar a seguir as importações (2C-3). (2) Há três regiões `role="status"` possíveis no mesmo diálogo (carregando, não encontrada, anúncio); hoje nunca têm texto ao mesmo tempo. (3) Foco ao fechar quando a lista está em erro ou vazia (sem caixa da tabela): o painel nem é montado nesses estados, mas vale um teste na 2C-3.
+- **Quem decidiu:** Alexandre.
+
+---
+
 ## 30/10/2026 — Painel de espiar (2C-2): sinal real de hidratação no lugar do atraso fixo
 
 - **Decisão:**
