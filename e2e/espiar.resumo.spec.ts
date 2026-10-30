@@ -202,7 +202,9 @@ test.describe("resumo da placa: não encontrada, baixada, erro e carregando", ()
       .getAttribute("data-espiar-placa"))!;
     await botaoEspiar(page, placa).click();
     const painel = painelDe(page, placa);
-    await expect(painel.getByRole("status")).toContainText("Carregando o resumo");
+    await expect(painel.getByRole("status", { name: "Carregando o resumo" })).toContainText(
+      "Carregando o resumo",
+    );
     const antes = await painel.boundingBox();
     await expect(painel.getByRole("heading", { name: "Situação" })).toBeVisible({
       timeout: 15_000,

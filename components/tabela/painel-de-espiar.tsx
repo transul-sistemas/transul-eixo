@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 import { useRef, useState, useSyncExternalStore, useTransition } from "react";
 import { Placa } from "@/components/placa";
 import type { DadosDoPainel } from "@/lib/dados/placas-tipos";
+import { anuncioDaTroca, vizinhas } from "@/lib/navegacao/espiar";
+import { NavegacaoDoPainel } from "./navegacao-do-painel";
 import { useLista } from "./pendencia-da-lista";
 import {
   BotaoDaFicha,
@@ -34,12 +36,35 @@ function useCelular(): boolean {
   );
 }
 
-/** Para onde o foco volta ao fechar: o botão Espiar da placa; senão, a caixa rolável da tabela. */
-function destinoDoFoco(placa: string | null): HTMLElement | null {
+/**
+ * Traz a linha para a área visível da tabela, só na vertical e sem tapar a linha com o cabeçalho
+ * fixo. A rolagem lateral não é mexida (a coluna Placa é fixa e o foco nela não pede rolar).
+ */
+function trazerLinhaParaAVista(botao: HTMLElement) {
+  const caixa = botao.closest<HTMLElement>('[role="region"]');
+  const linha = botao.closest("tr");
+  if (!caixa || !linha) return;
+  const cabecalho = caixa.querySelector("thead")?.getBoundingClientRect().height ?? 0;
+  const c = caixa.getBoundingClientRect();
+  const l = linha.getBoundingClientRect();
+  if (l.top < c.top + cabecalho) caixa.scrollTop -= c.top + cabecalho - l.top;
+  else if (l.bottom > c.bottom) caixa.scrollTop += l.bottom - c.bottom;
+}
+
+/** Devolve o foco: ao botão Espiar da última placa vista (trazendo a linha à vista); senão, à caixa da tabela. */
+function devolverFoco(placa: string | null) {
   const botao = placa
     ? document.querySelector<HTMLElement>(`[data-espiar-placa="${placa}"]`)
     : null;
-  return botao ?? document.querySelector<HTMLElement>('[role="region"][aria-label*="rolável"]');
+  if (botao) {
+    // Sem rolar: o foco voltando ao botão da coluna fixa levaria a tabela de volta à esquerda.
+    botao.focus({ preventScroll: true });
+    trazerLinhaParaAVista(botao);
+    return;
+  }
+  document
+    .querySelector<HTMLElement>('[role="region"][aria-label*="rolável"]')
+    ?.focus({ preventScroll: true });
 }
 
 /**
@@ -47,7 +72,14 @@ function destinoDoFoco(placa: string | null): HTMLElement | null {
  * rolagem da página travada). A placa vem da URL (`?espiar=`), com abertura otimista. Esc, o botão,
  * o clique no fundo e o gesto de arrastar fecham, e o foco volta à linha de origem.
  */
-export function PainelDeEspiar({ dados }: { dados: DadosDoPainel | null }) {
+export function PainelDeEspiar({
+  dados,
+  placasDaPagina,
+}: {
+  dados: DadosDoPainel | null;
+  /** As placas da página atual da lista, na ordem das linhas (anterior e próxima andam por elas). */
+  placasDaPagina: readonly string[];
+}) {
   const lista = useLista();
   const router = useRouter();
   const [tentando, tentarDeNovo] = useTransition();
@@ -67,10 +99,17 @@ export function PainelDeEspiar({ dados }: { dados: DadosDoPainel | null }) {
   const placa = lista?.placaEspiada ?? null;
   const [mostrada, setMostrada] = useState<string | null>(placa);
   if (placa !== null && placa !== mostrada) setMostrada(placa);
+  const [anuncio, setAnuncio] = useState("");
   const [ultimos, setUltimos] = useState(dados);
   if (dados !== null && dados !== ultimos) setUltimos(dados);
   if (!lista) return null;
   const placaDoPainel = placa ?? mostrada;
+
+  // Troca dentro do painel (anterior, próxima, conjunto): replace, e o leitor de tela é avisado.
+  const trocar = (nova: string) => {
+    setAnuncio(anuncioDaTroca(nova, vizinhas(placasDaPagina, nova)));
+    lista.trocarPlaca(nova);
+  };
 
   // Os dados são da placa da URL, que chega depois do clique: enquanto a placa do painel e a dos
   // dados não coincidem, o painel mostra o esqueleto. Na saída guarda os últimos dados.
@@ -80,7 +119,10 @@ export function PainelDeEspiar({ dados }: { dados: DadosDoPainel | null }) {
     <Drawer.Root
       open={placa !== null && (liberado || placa !== placaDoLink)}
       onOpenChange={(aberto) => {
-        if (!aberto) lista.fecharPainel();
+        if (!aberto) {
+          setAnuncio("");
+          lista.fecharPainel();
+        }
       }}
       swipeDirection={celular ? "down" : "right"}
     >
@@ -91,8 +133,7 @@ export function PainelDeEspiar({ dados }: { dados: DadosDoPainel | null }) {
             aria-label={`Resumo da placa ${placaDoPainel ?? ""}`}
             initialFocus={titulo}
             finalFocus={() => {
-              // Sem rolar: o foco voltando ao botão da coluna fixa levaria a tabela de volta à esquerda.
-              destinoDoFoco(placaDoPainel)?.focus({ preventScroll: true });
+              devolverFoco(placaDoPainel);
               return false;
             }}
             className="border-border bg-popover text-popover-foreground flex h-full w-[420px] max-w-full [transform:translateX(var(--drawer-swipe-movement-x,0px))] flex-col border-l shadow-xl transition-transform duration-200 outline-none data-ending-style:translate-x-full data-starting-style:translate-x-full motion-reduce:transition-none max-sm:h-[85dvh] max-sm:w-full max-sm:[transform:translateY(var(--drawer-swipe-movement-y,0px))] max-sm:rounded-t-2xl max-sm:border-t max-sm:border-l-0 max-sm:data-ending-style:translate-x-0 max-sm:data-ending-style:translate-y-full max-sm:data-starting-style:translate-x-0 max-sm:data-starting-style:translate-y-full"
@@ -121,6 +162,11 @@ export function PainelDeEspiar({ dados }: { dados: DadosDoPainel | null }) {
                 <IconX aria-hidden className="size-5" />
               </Drawer.Close>
             </div>
+            <NavegacaoDoPainel
+              vizinhas={vizinhas(placasDaPagina, placaDoPainel ?? "")}
+              anuncio={anuncio}
+              aoIr={trocar}
+            />
             <div
               key={placaDoPainel}
               data-painel-corpo
@@ -129,7 +175,7 @@ export function PainelDeEspiar({ dados }: { dados: DadosDoPainel | null }) {
               {doPainel === null ? (
                 <ResumoCarregando />
               ) : doPainel.situacao === "ok" ? (
-                <ResumoDaPlaca detalhe={doPainel.detalhe} aoEspiar={lista.trocarPlaca} />
+                <ResumoDaPlaca detalhe={doPainel.detalhe} aoEspiar={trocar} />
               ) : doPainel.situacao === "nao-encontrada" ? (
                 <PlacaNaoEncontrada placa={doPainel.placa} />
               ) : (

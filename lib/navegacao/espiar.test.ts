@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { comEspiar, lerEspiar, PARAMETRO_DE_ESPIAR, vizinhas } from "./espiar";
+import {
+  anuncioDaTroca,
+  comEspiar,
+  lerEspiar,
+  PARAMETRO_DE_ESPIAR,
+  textoDaPosicao,
+  vizinhas,
+} from "./espiar";
 
 const ler = (consulta: string) => lerEspiar(new URLSearchParams(consulta));
 
@@ -137,5 +144,29 @@ describe("vizinhas: andar pelas linhas da página atual", () => {
     const copia = [...placas];
     vizinhas(placas, "AAA0A04");
     expect(placas).toEqual(copia);
+  });
+});
+
+describe("textoDaPosicao: '3 de 25'", () => {
+  const placas = ["AAA0A00", "AAA0A04", "AAA0A10"];
+  it("mostra a posição e o total da página", () => {
+    expect(textoDaPosicao(vizinhas(placas, "AAA0A04"))).toBe("2 de 3");
+    expect(textoDaPosicao(vizinhas(placas, "AAA0A00"))).toBe("1 de 3");
+  });
+  it("placa fora da página diz que está fora, sem inventar posição", () => {
+    expect(textoDaPosicao(vizinhas(placas, "ZZZ9Z99"))).toBe("Fora desta página");
+  });
+  it("página vazia também está fora", () => {
+    expect(textoDaPosicao(vizinhas([], "AAA0A00"))).toBe("Fora desta página");
+  });
+});
+
+describe("anuncioDaTroca: o que o leitor de tela ouve quando o painel muda de placa", () => {
+  const placas = ["AAA0A00", "AAA0A04", "AAA0A10"];
+  it("a placa e a posição", () => {
+    expect(anuncioDaTroca("AAA0A04", vizinhas(placas, "AAA0A04"))).toBe("Placa AAA0A04, 2 de 3");
+  });
+  it("sem posição (placa do conjunto fora da página), só a placa", () => {
+    expect(anuncioDaTroca("ZZZ9Z99", vizinhas(placas, "ZZZ9Z99"))).toBe("Placa ZZZ9Z99");
   });
 });

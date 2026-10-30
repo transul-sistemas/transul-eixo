@@ -43,3 +43,13 @@ export function vizinhas(placas: readonly string[], atual: string): Vizinhas {
     total: placas.length,
   };
 }
+
+/** "3 de 25", ou "Fora desta página" quando a placa aberta não está na lista da página atual. */
+export function textoDaPosicao(v: Vizinhas): string {
+  return v.posicao === null ? "Fora desta página" : `${v.posicao} de ${v.total}`;
+}
+
+/** O que o leitor de tela ouve quando o painel muda de placa: "Placa AAA0A01, 2 de 25". */
+export function anuncioDaTroca(placa: string, v: Vizinhas): string {
+  return v.posicao === null ? `Placa ${placa}` : `Placa ${placa}, ${v.posicao} de ${v.total}`;
+}

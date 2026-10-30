@@ -199,7 +199,10 @@ export async function PaginaDePlacas({ searchParams }: { searchParams: Parametro
           }
         />
       </PaginaDeLeitura>
-      <PainelDeEspiar dados={dadosDoPainelDaUrl} />
+      <PainelDeEspiar
+        dados={dadosDoPainelDaUrl}
+        placasDaPagina={pagina.linhas.map((linha) => linha.placa)}
+      />
     </ProvedorDaLista>
   );
 }
