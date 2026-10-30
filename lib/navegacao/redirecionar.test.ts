@@ -21,7 +21,10 @@ describe("destinoDoModulo (para onde /frota, /pessoas etc. redirecionam)", () =>
     );
   });
   it("sem tela aberta para o perfil, não há destino", () => {
-    expect(destinoDoModulo("Gestor de frota", "frota", parametros(""))).toBeUndefined();
-    expect(destinoDoModulo("Operacional", "pessoas", parametros(""))).toBeUndefined();
+    expect(destinoDoModulo("Gestor de frota", "pessoas", parametros(""))).toBeUndefined();
+    expect(destinoDoModulo("Operacional", "frota", parametros(""))).toBeUndefined();
+  });
+  it("com as Placas prontas, o Gestor de frota é levado a elas", () => {
+    expect(destinoDoModulo("Gestor de frota", "frota", parametros(""))).toBe("/frota/placas");
   });
 });

@@ -12,7 +12,10 @@ export function AreaPrincipal({ children }: { children: ReactNode }) {
   const aberta = useSyncExternalStore(gaveta.assinar, gaveta.estaAberta, () => false);
   const telaGrande = useTelaGrande();
   return (
-    <div inert={aberta && !telaGrande ? true : undefined} className="flex min-w-0 flex-1 flex-col">
+    <div
+      inert={aberta && !telaGrande ? true : undefined}
+      className="flex min-h-0 min-w-0 flex-1 flex-col"
+    >
       {children}
     </div>
   );

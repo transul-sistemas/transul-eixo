@@ -119,6 +119,7 @@ export const CATALOGO: readonly ModuloDoCatalogo[] = [
       icone: "IconLicense",
       dispositivos: DESKTOP_E_TABLET,
       descricao: "Lista todas as placas e abre a ficha de cada uma.",
+      estado: "pronto",
     },
     {
       slug: "abastecimento",

@@ -95,7 +95,11 @@ describe("buscarTelas: modos do Acompanhamento da Frota (Ctrl+K)", () => {
 describe("buscarTelas: perfil", () => {
   it("quem não pode abrir a tela não a encontra", () => {
     expect(buscarTelas("mapa", "Operacional")).toEqual([]);
-    expect(buscarTelas("placas", "Gestor de frota")).toEqual([]);
+    expect(buscarTelas("placas", "Operacional")).toEqual([]);
+    expect(buscarTelas("abastecimento", "Gestor de frota")).toEqual([]);
+    expect(buscarTelas("placas", "Gestor de frota").map((i) => i.rotulo)).toEqual([
+      "Frota › Placas",
+    ]);
   });
 
   function tela(id: string, estado: Tela["estado"]): Tela {

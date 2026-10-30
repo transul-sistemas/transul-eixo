@@ -40,6 +40,9 @@ export default defineConfig({
     command: process.env.CI ? `pnpm start -p ${PORTA}` : `pnpm dev -p ${PORTA}`,
     url: ENDERECO,
     reuseExistingServer: !process.env.CI,
+    // Os testes de tela usam os dados de exemplo (lib/exemplo/).
+    // E sem o indicador "N" do Next em desenvolvimento, que cobre botões no celular emulado.
+    env: { EIXO_DADOS: "exemplo", EIXO_TESTES: "1" },
     timeout: 180_000,
   },
 });

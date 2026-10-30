@@ -19,6 +19,7 @@ export function escreverConsulta(parametros: URLSearchParams, consulta: Consulta
   const novos = new URLSearchParams(parametros);
   novos.delete("q");
   novos.delete("chip");
+  novos.delete("pagina"); // outra consulta, outra lista: volta à primeira página
   const busca = consulta.busca.trim();
   if (busca !== "") novos.set("q", busca);
   for (const chip of unicos(consulta.chips)) novos.append("chip", chip);

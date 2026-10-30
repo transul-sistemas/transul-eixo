@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { cn } from "@/lib/utils";
 
 interface Props {
   titulo: string;
@@ -10,6 +11,13 @@ interface Props {
   /** A faixa de indicadores. */
   kpis?: ReactNode;
   children: ReactNode;
+  /**
+   * Tela de lista: a partir de 1024 px a página tem a altura da janela e só a tabela rola
+   * (cabeçalho e primeira coluna fixos). Abaixo disso a página rola como as outras.
+   */
+  lista?: boolean;
+  /** Modo foco: esconde a barra lateral e o topo para a tabela ocupar a tela. */
+  emFoco?: boolean;
 }
 
 /**
@@ -17,13 +25,34 @@ interface Props {
  * sistema) → título e ações → barra de consulta → KPIs → conteúdo. Largura total; só o texto
  * corrido da descrição é limitado.
  */
-export function PaginaDeLeitura({ titulo, descricao, acoes, consulta, kpis, children }: Props) {
+export function PaginaDeLeitura({
+  titulo,
+  descricao,
+  acoes,
+  consulta,
+  kpis,
+  children,
+  lista = false,
+  emFoco = false,
+}: Props) {
   return (
-    <div className="flex flex-1 flex-col gap-5 px-4 py-6 sm:px-8">
+    <div
+      data-tela-de-lista={lista ? "" : undefined}
+      data-modo-foco={lista && emFoco ? "" : undefined}
+      className={cn(
+        "flex flex-1 flex-col gap-5 px-4 py-6 sm:px-8",
+        lista && "min-h-0 lg:gap-4 lg:py-4",
+      )}
+    >
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex flex-col gap-1">
           <h1 className="text-3xl font-semibold tracking-tight">{titulo}</h1>
-          {descricao ? <p className="text-muted-foreground max-w-[62ch]">{descricao}</p> : null}
+          {descricao ? (
+            // Na lista a altura é preciosa: a descrição sai da vista, mas fica para o leitor de tela.
+            <p className={cn("text-muted-foreground max-w-[62ch]", lista && "sr-only")}>
+              {descricao}
+            </p>
+          ) : null}
         </div>
         {acoes ? (
           <div role="group" aria-label="Ações" className="flex flex-wrap items-center gap-2">
@@ -33,7 +62,9 @@ export function PaginaDeLeitura({ titulo, descricao, acoes, consulta, kpis, chil
       </div>
       {consulta}
       {kpis}
-      <div className="flex min-w-0 flex-1 flex-col gap-8">{children}</div>
+      <div className={cn("flex min-w-0 flex-1 flex-col gap-8", lista && "min-h-0 lg:gap-3")}>
+        {children}
+      </div>
     </div>
   );
 }

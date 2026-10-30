@@ -132,3 +132,25 @@ describe("<PaginaDeLeitura>", () => {
     expect(simples).toContain("Só título");
   });
 });
+
+describe("<PaginaDeLeitura> como tela de lista", () => {
+  const html = (lista: boolean) =>
+    renderToStaticMarkup(
+      <PaginaDeLeitura titulo="Placas" descricao="Lista todas as placas." lista={lista}>
+        <p>conteúdo</p>
+      </PaginaDeLeitura>,
+    );
+  it("a descrição some da vista na lista, mas fica para o leitor de tela", () => {
+    expect(html(true)).toMatch(
+      /<p[^>]*class="[^"]*sr-only[^"]*"[^>]*>Lista todas as placas\.<\/p>/,
+    );
+  });
+  it("fora de lista a descrição continua visível", () => {
+    expect(html(false)).not.toMatch(/<p[^>]*class="[^"]*sr-only[^"]*"[^>]*>Lista todas/);
+    expect(html(false)).toContain("Lista todas as placas.");
+  });
+  it("marca a página como lista, e só quando é lista", () => {
+    expect(html(true)).toContain("data-tela-de-lista");
+    expect(html(false)).not.toContain("data-tela-de-lista");
+  });
+});

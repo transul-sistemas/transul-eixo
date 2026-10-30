@@ -310,7 +310,7 @@ export function BarraLateral({
           "border-border bg-sidebar text-sidebar-foreground flex shrink-0 flex-col text-sm",
           incorporada
             ? "h-[34rem] rounded-xl border"
-            : "max-lg:fixed max-lg:inset-y-0 max-lg:left-0 max-lg:z-40 max-lg:w-72 max-lg:max-w-[85vw] max-lg:border-r lg:sticky lg:top-0 lg:h-screen lg:border-r",
+            : "group-has-[[data-modo-foco]]/casca:hidden max-lg:fixed max-lg:inset-y-0 max-lg:left-0 max-lg:z-40 max-lg:w-72 max-lg:max-w-[85vw] max-lg:border-r lg:sticky lg:top-0 lg:h-screen lg:border-r",
           !incorporada && !emGaveta && "max-lg:invisible",
           incorporada ? (compacta ? "w-20" : "w-72") : compacta ? "lg:w-20" : "lg:w-72",
         )}
