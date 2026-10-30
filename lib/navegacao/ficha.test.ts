@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { abaPorTecla, ABAS_DA_FICHA, comAba, lerAba, PARAMETRO_DE_ABA } from "./ficha";
+import {
+  abaDoEndereco,
+  abaPorTecla,
+  ABAS_DA_FICHA,
+  comAba,
+  lerAba,
+  PARAMETRO_DE_ABA,
+} from "./ficha";
 
 const ler = (consulta: string) => lerAba(new URLSearchParams(consulta));
 
@@ -114,5 +121,19 @@ describe("abaPorTecla: a navegação por setas das abas", () => {
     for (const tecla of ["ArrowUp", "ArrowDown", "Enter", " ", "Tab", "a", "Escape"]) {
       expect(abaPorTecla("mapa", tecla), tecla).toBeNull();
     }
+  });
+});
+
+describe("abaDoEndereco: o Voltar de outra página não mexe na aba desta ficha", () => {
+  it("no mesmo caminho, lê a aba do endereço", () => {
+    expect(abaDoEndereco("/frota/placas/AAA0A00", "/frota/placas/AAA0A00", "?aba=documentos")).toBe(
+      "documentos",
+    );
+  });
+  it("em outro caminho (lista, outra ficha), devolve null: a ficha escondida fica como está", () => {
+    expect(abaDoEndereco("/frota/placas/AAA0A00", "/frota/placas", "?aba=documentos")).toBeNull();
+    expect(
+      abaDoEndereco("/frota/placas/AAA0A00", "/frota/placas/BBB1B11", "?aba=documentos"),
+    ).toBeNull();
   });
 });

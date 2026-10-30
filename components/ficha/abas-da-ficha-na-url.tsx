@@ -1,7 +1,7 @@
 "use client";
 
 import { type ReactNode, useEffect, useState } from "react";
-import { ABAS_DA_FICHA, type AbaId, comAba, lerAba } from "@/lib/navegacao/ficha";
+import { ABAS_DA_FICHA, type AbaId, abaDoEndereco, comAba } from "@/lib/navegacao/ficha";
 import { AbasDaFicha } from "./abas-da-ficha";
 
 /**
@@ -29,8 +29,10 @@ export function AbasDaFichaNaUrl({
 
   // Voltar e Avançar mudam o endereço sem recarregar: a aba é a do endereço.
   useEffect(() => {
+    const caminhoDaFicha = window.location.pathname;
     function aoMudarOEndereco() {
-      setAtiva(lerAba(new URLSearchParams(window.location.search)));
+      const aba = abaDoEndereco(caminhoDaFicha, window.location.pathname, window.location.search);
+      if (aba) setAtiva(aba);
     }
     window.addEventListener("popstate", aoMudarOEndereco);
     return () => window.removeEventListener("popstate", aoMudarOEndereco);

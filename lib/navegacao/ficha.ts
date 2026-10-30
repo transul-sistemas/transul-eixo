@@ -59,3 +59,15 @@ export function abaPorTecla(atual: AbaId, tecla: string): AbaId | null {
       return null;
   }
 }
+
+/**
+ * A aba que o endereço atual pede, só se ele ainda é o da ficha (`caminhoDaFicha`). O Next mantém
+ * a ficha anterior escondida no documento: um Voltar ou Avançar em outra página não pode mexer nela.
+ */
+export function abaDoEndereco(
+  caminhoDaFicha: string,
+  caminhoAtual: string,
+  busca: string,
+): AbaId | null {
+  return caminhoAtual === caminhoDaFicha ? lerAba(new URLSearchParams(busca)) : null;
+}
