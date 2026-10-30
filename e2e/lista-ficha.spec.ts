@@ -362,3 +362,53 @@ test.describe("só Voltar, Avançar e os links de voltar restauram; visita nova 
     expect(await caixa(page).evaluate((c) => c.scrollTop)).toBe(0);
   });
 });
+
+test.describe("os olhos de espiar alinham de forma exata, por densidade", () => {
+  async function posicoes(page: Page) {
+    return page.evaluate(() =>
+      [...document.querySelectorAll('table[aria-label="Placas"] tbody tr')].map((linha) => {
+        const link = linha.querySelector("[data-ficha-placa]")!.getBoundingClientRect();
+        const olho = linha.querySelector("[data-espiar-placa]")!.getBoundingClientRect();
+        return { olhoX: olho.x, larguraDoLink: link.width, linkX: link.x };
+      }),
+    );
+  }
+
+  for (const densidade of ["Compacta", "Confortável"]) {
+    test(`densidade ${densidade}: o olho e o link ficam na mesma posição em todas as linhas`, async ({
+      page,
+    }) => {
+      await abrirHidratada(page, LISTA);
+      await page.getByRole("button", { name: densidade, exact: true }).click();
+      await expect(page.getByRole("button", { name: densidade, exact: true })).toHaveAttribute(
+        "aria-pressed",
+        "true",
+      );
+      const todas = await posicoes(page);
+      expect(todas.length).toBeGreaterThanOrEqual(20);
+      expect(new Set(todas.map((p) => p.olhoX)).size, "x do olho").toBe(1);
+      expect(new Set(todas.map((p) => p.linkX)).size, "x do link").toBe(1);
+      expect(new Set(todas.map((p) => p.larguraDoLink)).size, "largura do link").toBe(1);
+    });
+  }
+
+  test("com placas largas (letras largas e algarismos largos) a mini placa cabe no link, sem empurrar o olho", async ({
+    page,
+  }) => {
+    await abrirHidratada(page, LISTA);
+    const larguraDaMaior = await page.evaluate(() => {
+      const modelo = document.querySelector('[data-ficha-placa] [role="img"]') as HTMLElement;
+      const clone = modelo.cloneNode(true) as HTMLElement;
+      const texto = clone.querySelector("[aria-hidden]:last-child") as HTMLElement;
+      texto.textContent = "WWW0M00";
+      modelo.parentElement!.appendChild(clone);
+      const w = clone.getBoundingClientRect().width;
+      clone.remove();
+      return w;
+    });
+    const link = await page.evaluate(
+      () => document.querySelector("[data-ficha-placa]")!.getBoundingClientRect().width,
+    );
+    expect(larguraDaMaior).toBeLessThanOrEqual(link);
+  });
+});

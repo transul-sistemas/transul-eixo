@@ -43,6 +43,12 @@ describe("<CelulaDaPlaca>: a placa leva à ficha e o olho espia", () => {
     expect(com("confortavel")).toContain("text-sm");
   });
 
+  it("o link da mini placa tem largura fixa por densidade, para os olhos de espiar alinharem", () => {
+    expect(com("compacta")).toMatch(/<a[^>]*class="[^"]*w-20/);
+    expect(com("confortavel")).toMatch(/<a[^>]*class="[^"]*w-24/);
+    expect(com("compacta")).not.toMatch(/<a[^>]*class="[^"]*min-w-/);
+  });
+
   it("o link e o botão têm alvo de pelo menos 24 px", () => {
     const html = com("compacta");
     expect(html).toMatch(/<a[^>]*class="[^"]*min-h-6/);
