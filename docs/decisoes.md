@@ -8,6 +8,22 @@ Modelo de entrada:
 
 ---
 
+## 30/10/2026 — Painel de espiar (2C-2): desenho aprovado e o que fica para a Fase 3
+
+- **Decisão:**
+  - **Painel sobreposto em todas as larguras** (Drawer modal do base-ui): lateral de 420 px em desktop e tablet, folha de baixo no celular; `?espiar=PLACA` na URL. A célula da Placa vira o botão "Espiar AAA0A00"; o clique na linha é só atalho de mouse e de toque. O painel acoplado e a rota interceptada do Next foram descartados.
+  - **Histórico:** abrir usa `push` (o Voltar do navegador fecha o painel); trocar de placa dentro do painel usa `replace`.
+  - **Modal de verdade:** foco preso, lista inerte, rolagem da página travada sem pulo de largura.
+  - **Acessibilidade:** o painel se chama "Resumo da placa AAA0A00"; a troca por "Placa anterior" e "Próxima placa" é anunciada ao leitor de tela.
+  - **`?espiar=` só aceita a placa já normalizada** (`/^[A-Z]{3}[0-9][A-Z0-9][0-9]{2}$/`); o resto é ignorado, sem erro e sem abrir o painel.
+  - **Ordem das entregas:** (1) abrir e fechar, (2) conteúdo do resumo, (3) anterior e próxima, com capturas em cada checkpoint (1366 e 1920, claro e escuro, tablet 820 e celular 390).
+- **Para a Fase 3:**
+  - **`obterPlaca()` passa a conferir a permissão e o escopo da carteira** (a placa que a pessoa pode ver). Hoje a fonte de exemplo devolve qualquer placa, inclusive as baixadas.
+  - **Ponto de atenção do custo:** cada abertura do painel refaz a consulta da lista no servidor (a página inteira recarrega quando um parâmetro muda), ou seja, **uma consulta a mais por abertura**. No exemplo é instantâneo; com banco real é preciso separar o painel da lista ou guardar a consulta da lista (cache por parâmetros sem `espiar`).
+- **Quem decidiu:** Alexandre.
+
+---
+
 ## 30/10/2026 — Revisão independente da 2C-1 e o que a lista de placas ativou
 
 - **Corrigido, cada item com teste (visto falhar antes):**

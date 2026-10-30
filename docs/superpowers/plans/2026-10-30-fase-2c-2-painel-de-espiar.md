@@ -18,7 +18,15 @@
 4. **Ordem das entregas:** (1) painel abrindo e fechando, (2) conteúdo do resumo, (3) "Placa anterior" e "Próxima placa" como checkpoint à parte, andando só pelas linhas da página atual.
 5. **Capturas em cada checkpoint:** 1366 e 1920, claro e escuro, mais tablet (820) e celular (390), também em claro e escuro.
 
-## Propostas minhas (Alexandre revisa ao aprovar o plano)
+## Ajustes aprovados por Alexandre junto com o plano (30/10/2026)
+
+1. **Abrir usa `push`** (o Voltar do navegador fecha o painel); **trocar de placa dentro do painel usa `replace`**.
+2. **Modal de verdade:** foco preso no painel, lista inerte, rolagem da página travada, **sem pulo de largura** (a tabela e o topo não mudam de lugar ao abrir).
+3. **Nome acessível:** o painel se chama "Resumo da placa AAA0A00". A troca de placa por anterior/próxima é **anunciada ao leitor de tela** (região `status`: "Placa AAA0A01, 2 de 25").
+4. **`?espiar=` só aceita o formato de placa normalizado** (três letras, um algarismo, uma letra ou algarismo e dois algarismos, tudo em maiúscula e sem hífen nem espaço). Qualquer outra coisa é ignorada, sem erro e sem abrir o painel.
+5. **Fase 3:** `obterPlaca()` passa a conferir permissão e escopo da carteira; e cada abertura custa uma consulta a mais (ponto de atenção). Registrado em `docs/decisoes.md`.
+
+## Propostas minhas (aprovadas com os ajustes acima)
 
 - **Fechar:** se o painel foi aberto pela lista, fechar é `history.back()` (desfaz um passo, o Voltar do navegador faz o mesmo); se veio de link direto, fechar troca a URL sem `espiar` (`replace`). Trocar de placa dentro do painel usa `replace`, para não encher o histórico.
 - **Foco ao fechar:** volta ao botão "Espiar" da placa que estava aberta no momento de fechar (se o painel andou com anterior/próxima, é a última); se essa linha não está na página, vai para a caixa da tabela.
@@ -62,9 +70,9 @@ Entradas que o desenho implica e nenhuma tarefa de regra cobre por si; cada uma 
 
 ## Tarefa 1: as regras do parâmetro (`lib/navegacao/espiar.ts`)
 
-**Interfaces — Produces:** `PARAMETRO_DE_ESPIAR = "espiar"`; `lerEspiar(params: URLSearchParams): string | null` (normaliza com `normalizarPlaca`, aceita só 7 letras ou números, senão `null`); `comEspiar(params: URLSearchParams, placa: string | null): URLSearchParams` (põe ou tira `espiar`, sem mexer em mais nada); `vizinhas(placas: readonly string[], atual: string): { anterior: string | null; proxima: string | null; posicao: number | null; total: number }`.
+**Interfaces — Produces:** `PARAMETRO_DE_ESPIAR = "espiar"`; `lerEspiar(params: URLSearchParams): string | null` (aceita só a placa já normalizada, `/^[A-Z]{3}[0-9][A-Z0-9][0-9]{2}$/`, senão `null`; não corrige minúscula nem hífen); `comEspiar(params: URLSearchParams, placa: string | null): URLSearchParams` (põe ou tira `espiar`, sem mexer em mais nada); `vizinhas(placas: readonly string[], atual: string): { anterior: string | null; proxima: string | null; posicao: number | null; total: number }`.
 
-- [ ] **Passo 1 (testes primeiro, `espiar.test.ts`):** `lerEspiar`: `AAA0A00`, `aaa0a00`, `aaa-0a00`, `" AAA0A00 "` dão `AAA0A00`; `AAA0A0`, `AAA0A000`, `""`, `"<script>"`, `"%00"`, 500 caracteres e `espiar` repetido (vale o primeiro) dão `null` ou o primeiro válido, nunca erro; `comEspiar` preserva `q`, `chip`, `sigla`, `baixadas`, `ordem`, `pagina`, `tam`, `foco` e o contexto global, e `comEspiar(p, null)` tira só o `espiar`; ida e volta. `vizinhas`: meio, primeira (`anterior` nulo), última (`proxima` nula), placa fora da lista (`posicao` nulo, os dois nulos), lista vazia, lista de uma placa.
+- [ ] **Passo 1 (testes primeiro, `espiar.test.ts`):** `lerEspiar`: `AAA0A00` (Mercosul), `ABC1234` (antiga) e `BRA2E19` dão a própria placa; `aaa0a00`, `aaa-0a00`, `" AAA0A00 "`, `AAA0A0`, `AAA0A000`, `AAAAAAA`, `1234567`, `""`, `"<script>"`, `"%00"`, 500 caracteres e o `espiar` repetido com o primeiro inválido dão `null`, nunca erro (vale o primeiro valor do parâmetro); `comEspiar` preserva `q`, `chip`, `sigla`, `baixadas`, `ordem`, `pagina`, `tam`, `foco` e o contexto global, e `comEspiar(p, null)` tira só o `espiar`; ida e volta. `vizinhas`: meio, primeira (`anterior` nulo), última (`proxima` nula), placa fora da lista (`posicao` nulo, os dois nulos), lista vazia, lista de uma placa.
 - [ ] **Passo 2:** ver falhar; implementar; ver passar. Commit `feat: regras do parâmetro espiar e das placas vizinhas`.
 
 ## Tarefa 2: o botão "Espiar" na célula da Placa e o atalho na linha
@@ -89,7 +97,10 @@ Entradas que o desenho implica e nenhuma tarefa de regra cobre por si; cada uma 
   - **histórico:** abrir → Esc → URL de antes (uma entrada só a menos); abrir → Voltar do navegador fecha e o foco volta à linha; Voltar de novo não sai do sistema (continua em `/frota/placas`); abrir → Voltar → Avançar reabre; link direto `?espiar=AAA0A00` abre, e fechar tira o `espiar` sem sair da lista; recarregar com o painel aberto mantém o painel;
   - **foco quando a linha sumiu:** abrir por link direto de uma placa que não está na página e fechar leva o foco à caixa da tabela, nunca ao `body`;
   - **convivência:** Esc com o menu Colunas aberto fecha só o menu; com o painel aberto no modo foco, Esc fecha o painel e continua em foco; o `?lento=2500` mostra o painel na hora (otimista) e, se se fecha antes de chegar, nada reabre depois;
-  - `?espiar=` inválido (`aaa`, `<script>`) não abre painel e não quebra; `?espiar=` válido que não existe abre o painel (o conteúdo "não encontrada" vem na Tarefa 4/5).
+  - **modal de verdade:** com o painel aberto, Tab e Shift+Tab ficam dentro dele (o foco não escapa para a lista nem para o topo); a lista, o topo e a barra lateral ficam inertes; rodar a roda do mouse sobre a lista não rola a tabela; em janela baixa (1100×500), onde a página rola, a página não rola; e **a largura não pula** (a posição e a largura da caixa da tabela e do topo são as mesmas antes e depois de abrir);
+  - **nome acessível:** o diálogo se chama "Resumo da placa AAA0A00" (`getByRole("dialog", { name: "Resumo da placa AAA0A00" })`);
+  - abrir usa `push` e trocar de placa dentro do painel usa `replace` (contar `history.length` antes e depois);
+  - `?espiar=` fora do formato (`aaa0a00`, `aaa-0a00`, `AAA0A`, `<script>`) é ignorado: não abre painel, não quebra e a lista aparece normal; `?espiar=` válido que não existe abre o painel (o conteúdo "não encontrada" vem nas Tarefas 4 e 5).
   - tablet 820 e celular 390 (`espiar.casca.spec.ts`): o painel abre por toque na linha; no tablet fica à direita com 420 px; no celular é folha de baixo (altura ≤ 85% da janela), o botão Fechar tem 40 px ou mais, arrastar o puxador para baixo fecha, rolar o conteúdo não fecha, e em 390×500 e em paisagem o corpo rola por dentro com o cabeçalho à vista; a página não rola na horizontal.
 - [ ] **Passo 2:** ver falhar; implementar (`PainelDeEspiar`, provedor, página lendo `lerEspiar`); ver passar.
 - [ ] **Passo 3:** `pnpm lint && pnpm typecheck && pnpm test`, e2e do painel verdes. Commit `feat: painel de espiar (abrir, fechar, foco, histórico e layouts)`.
@@ -123,9 +134,9 @@ Capturas de 1366 e 1920, tablet e celular (claro e escuro) do resumo de `AAA0A00
 
 **Files:** `painel-de-espiar.tsx`, `lib/navegacao/espiar.ts` (já tem `vizinhas`), `pagina-de-placas.tsx` (passa `placasDaPagina`)
 
-**Interfaces:** no cabeçalho do painel, os botões "Placa anterior" e "Próxima placa" (com o texto "3 de 25") andam pelas linhas da página atual, na ordem em que aparecem; trocar usa `router.replace`; `aria-disabled` (o foco fica no botão) na primeira e na última, e nas duas se a placa aberta não está nesta página (dica "Esta placa não está nesta página"). Não atravessam páginas. A linha da placa aberta rola para a vista atrás do painel (`scrollIntoView({ block: "nearest" })`).
+**Interfaces:** no cabeçalho do painel, os botões "Placa anterior" e "Próxima placa" (com o texto "3 de 25") andam pelas linhas da página atual, na ordem em que aparecem; trocar usa `router.replace`; `aria-disabled` (o foco fica no botão) na primeira e na última, e nas duas se a placa aberta não está nesta página (dica "Esta placa não está nesta página"). Não atravessam páginas. A linha da placa aberta rola para a vista atrás do painel (`scrollIntoView({ block: "nearest" })`). **A troca é anunciada ao leitor de tela** numa região `role="status"` dentro do painel: "Placa AAA0A01, 2 de 25".
 
-- [ ] **Passo 1 (testes primeiro):** e2e: de `AAA0A00` o "Próxima placa" abre a segunda linha da página (a ordem da tabela, inclusive com `?ordem=-gestor`), o resumo troca, a URL troca com `replace` (uma entrada só no histórico: Voltar depois de andar três placas fecha o painel), o foco fica no botão, o texto mostra "2 de 25"; na primeira, "Placa anterior" é `aria-disabled` e não faz nada; na última, o mesmo com "Próxima placa"; com `tam=25` não passa da linha 25; link direto de placa fora da página desliga os dois; ao fechar, o foco vai para a linha da última placa vista e essa linha está à vista; o `scrollTop` da tabela só muda o necessário para mostrar a linha. tablet e celular: os botões têm 40 px ou mais e cabem no cabeçalho sem rolar.
+- [ ] **Passo 1 (testes primeiro):** e2e: de `AAA0A00` o "Próxima placa" abre a segunda linha da página (a ordem da tabela, inclusive com `?ordem=-gestor`), o resumo troca, a URL troca com `replace` (uma entrada só no histórico: Voltar depois de andar três placas fecha o painel), o foco fica no botão, o texto mostra "2 de 25" e a região `status` do painel passa a dizer "Placa AAA0A01, 2 de 25" (e só muda quando a placa muda); na primeira, "Placa anterior" é `aria-disabled` e não faz nada; na última, o mesmo com "Próxima placa"; com `tam=25` não passa da linha 25; link direto de placa fora da página desliga os dois; ao fechar, o foco vai para a linha da última placa vista e essa linha está à vista; o `scrollTop` da tabela só muda o necessário para mostrar a linha. tablet e celular: os botões têm 40 px ou mais e cabem no cabeçalho sem rolar.
 - [ ] **Passo 2:** ver falhar; implementar; ver passar. Commit `feat: placa anterior e próxima no painel de espiar`.
 
 ### CHECKPOINT 3 — anterior e próxima
