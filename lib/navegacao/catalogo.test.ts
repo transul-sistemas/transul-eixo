@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { MODULOS } from "@/lib/visual/tons";
-import { acharTela, CATALOGO, todasAsTelas } from "./catalogo";
+import { acharFicha, acharTela, CATALOGO, todasAsTelas } from "./catalogo";
 import { PERFIS, PERFIS_QUE_VEEM_EM_BREVE, perfilAtual, USUARIO_PROVISORIO } from "./perfis";
 
 const ultimoSegmento = (rota: string) => rota.split("/").at(-1);
@@ -170,5 +170,48 @@ describe("perfis", () => {
   });
   it("o perfil atual (provisório até a Fase 3) é um dos perfis", () => {
     expect(PERFIS).toContain(perfilAtual());
+  });
+});
+
+describe("telas com ficha e acharFicha (a rota filha /<tela>/<identificador>)", () => {
+  it("só as quatro listas que abrem a ficha de cada item levam a marca", () => {
+    const comFicha = CATALOGO.flatMap((m) => m.telas.filter((t) => t.ficha)).map((t) => t.rota);
+    expect([...comFicha].sort()).toEqual([
+      "/frota/placas",
+      "/operacoes/lista",
+      "/parceiros/lista",
+      "/pessoas/lista",
+    ]);
+  });
+  it("acha a ficha pela rota filha e devolve o módulo, a tela e o identificador", () => {
+    const achada = acharFicha("/frota/placas/AAA0A00");
+    expect(achada?.tela.id).toBe("frota.placas");
+    expect(achada?.modulo.id).toBe("frota");
+    expect(achada?.identificador).toBe("AAA0A00");
+  });
+  it("ignora ?aba=, # e a barra final", () => {
+    expect(acharFicha("/frota/placas/AAA0A00?aba=mapa")?.identificador).toBe("AAA0A00");
+    expect(acharFicha("/frota/placas/AAA0A00#x")?.identificador).toBe("AAA0A00");
+    expect(acharFicha("/frota/placas/AAA0A00/")?.identificador).toBe("AAA0A00");
+  });
+  it("decodifica o identificador, sem lançar com escape quebrado", () => {
+    expect(acharFicha("/frota/placas/%41AA0A00")?.identificador).toBe("AAA0A00");
+    expect(() => acharFicha("/frota/placas/%E0%A4%A")).not.toThrow();
+    expect(acharFicha("/frota/placas/%E0%A4%A")).toBeUndefined();
+  });
+  it.each([
+    ["a própria lista", "/frota/placas"],
+    ["tela sem ficha", "/frota/acompanhamento/AAA0A00"],
+    ["dois níveis", "/frota/placas/AAA0A00/extra"],
+    ["HTML", "/frota/placas/%3Cscript%3E"],
+    ["espaço", "/frota/placas/AAA%200A00"],
+    ["identificador enorme", `/frota/placas/${"A".repeat(41)}`],
+    ["módulo que não existe", "/nada/placas/AAA0A00"],
+    ["vazia", ""],
+  ])("não é ficha: %s", (_nome, rota) => {
+    expect(acharFicha(rota)).toBeUndefined();
+  });
+  it("acharTela continua sem achar a rota filha (a ficha tem a sua função)", () => {
+    expect(acharTela("/frota/placas/AAA0A00")).toBeUndefined();
   });
 });

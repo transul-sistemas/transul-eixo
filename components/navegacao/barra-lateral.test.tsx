@@ -35,6 +35,15 @@ describe("<BarraLateral>: grupos", () => {
     expect(html).toContain('href="/frota/placas"');
     expect(html).toContain("Acompanhamento");
   });
+  it("na ficha da placa, o grupo Frota abre e 'Placas' fica marcada como a seção atual", () => {
+    const html = barra({ rotaAtual: "/frota/placas/AAA0A00" });
+    expect(contar(html, 'aria-expanded="true"')).toBe(1);
+    expect(html).toContain('href="/frota/placas"');
+    expect(contar(html, 'aria-current="page"')).toBe(0); // a página é a ficha; Placas é a seção
+    expect(html).toMatch(
+      /aria-current="true"[^>]*href="\/frota\/placas"|href="\/frota\/placas"[^>]*aria-current="true"/,
+    );
+  });
   it("grupo fechado não mostra as telas", () => {
     const html = barra({ rotaAtual: "/frota/placas" });
     expect(html).not.toContain('href="/pessoas/escala"');

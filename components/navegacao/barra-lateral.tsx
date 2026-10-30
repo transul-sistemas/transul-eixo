@@ -20,7 +20,7 @@ import {
   useState,
   useSyncExternalStore,
 } from "react";
-import { acharTela, type ModuloDoCatalogo, type Tela } from "@/lib/navegacao/catalogo";
+import { acharFicha, acharTela, type ModuloDoCatalogo, type Tela } from "@/lib/navegacao/catalogo";
 import { buscarTelas } from "@/lib/navegacao/busca";
 import { ehAtalho, ehCampoDeTexto } from "@/lib/navegacao/atalhos";
 import {
@@ -85,13 +85,24 @@ interface ItemProps {
   modulo: ModuloDoCatalogo;
   tela: Tela;
   ativa: boolean;
+  /** A página atual é a ficha de um item desta tela: a tela é a seção, não a página. */
+  secao?: boolean;
   fixada: boolean;
   quantidade: number | undefined;
   aoFixar: () => void;
   aoNavegar?: () => void;
 }
 
-function ItemDaTela({ modulo, tela, ativa, fixada, quantidade, aoFixar, aoNavegar }: ItemProps) {
+function ItemDaTela({
+  modulo,
+  tela,
+  ativa,
+  secao = false,
+  fixada,
+  quantidade,
+  aoFixar,
+  aoNavegar,
+}: ItemProps) {
   const conteudo = (
     <>
       <IconeDoCatalogo nome={tela.icone} className="size-4 shrink-0" />
@@ -115,7 +126,7 @@ function ItemDaTela({ modulo, tela, ativa, fixada, quantidade, aoFixar, aoNavega
       ) : (
         <LinkComContexto
           href={tela.rota}
-          aria-current={ativa ? "page" : undefined}
+          aria-current={ativa ? (secao ? "true" : "page") : undefined}
           onClick={aoNavegar}
           className={classes}
         >
@@ -168,7 +179,9 @@ export function BarraLateral({
 }: PropsDaBarra) {
   const caminhoDaPagina = usePathname();
   const caminho = (rotaAtual ?? caminhoDaPagina ?? "").split(/[?#]/)[0] ?? "";
-  const moduloAtual = acharTela(caminho)?.modulo.id;
+  const telaDaPagina = acharTela(caminho);
+  const fichaDaPagina = telaDaPagina ? undefined : acharFicha(caminho);
+  const moduloAtual = (telaDaPagina ?? fichaDaPagina)?.modulo.id;
 
   const [loja] = useState(() =>
     criarLoja({
@@ -263,7 +276,8 @@ export function BarraLateral({
         key={tela.id}
         modulo={modulo}
         tela={tela}
-        ativa={tela.rota === caminho}
+        ativa={tela.rota === (telaDaPagina ?? fichaDaPagina)?.tela.rota}
+        secao={fichaDaPagina !== undefined}
         fixada={estado.fixados.includes(tela.id)}
         quantidade={contadores[tela.id]}
         aoFixar={() => fixar(tela.id)}
