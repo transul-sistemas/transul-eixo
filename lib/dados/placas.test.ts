@@ -2,7 +2,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { grupoDaSigla, SIGLAS_DE_BAIXA } from "@/lib/dominio/status";
 import { placasDeExemplo } from "@/lib/exemplo/placas";
 import type { ConsultaDeTabela } from "@/lib/navegacao/tabela";
-import { CAMPOS_ORDENAVEIS_DE_PLACAS, listarPlacas, type PaginaDePlacas } from "./placas";
+import { comparar } from "./fonte-de-exemplo";
+import {
+  CAMPOS_ORDENAVEIS_DE_PLACAS,
+  type LinhaDePlaca,
+  listarPlacas,
+  type PaginaDePlacas,
+} from "./placas";
 
 const HOJE = "2026-10-29";
 const TODAS = placasDeExemplo(HOJE);
@@ -271,5 +277,35 @@ describe("listarPlacas: fonte", () => {
     expect(Object.keys(pagina).sort()).toEqual(
       ["contagens", "linhas", "pagina", "paginas", "tam", "total"].sort(),
     );
+  });
+});
+
+describe("comparar: o desempate pela chave vale mesmo com a entrada fora de ordem", () => {
+  // `placasDeExemplo` já sai ordenada por placa (e o id acompanha), então o teste acima não prova o
+  // desempate sozinho: aqui as linhas chegam embaralhadas e com a mesma chave de ordem.
+  const linha = (id: string, tipo: string, motorista: string | null) =>
+    ({ id, tipo, motorista, placa: id }) as unknown as LinhaDePlaca;
+  const embaralhadas = [
+    linha("pl-009", "cavalo", "Ana"),
+    linha("pl-002", "cavalo", "Ana"),
+    linha("pl-007", "cavalo", "Ana"),
+    linha("pl-001", "implemento", null),
+    linha("pl-005", "cavalo", "Ana"),
+    linha("pl-003", "implemento", null),
+  ];
+  it("empate em ordem crescente: o id decide, crescente", () => {
+    const ids = [...embaralhadas].sort(comparar("tipo", "asc")).map((l) => l.id);
+    expect(ids).toEqual(["pl-002", "pl-005", "pl-007", "pl-009", "pl-001", "pl-003"]);
+  });
+  it("empate em ordem decrescente: o id continua crescente", () => {
+    const ids = [...embaralhadas].sort(comparar("tipo", "desc")).map((l) => l.id);
+    expect(ids).toEqual(["pl-001", "pl-003", "pl-002", "pl-005", "pl-007", "pl-009"]);
+  });
+  it("valores vazios no fim nas duas direções, e entre eles o id decide", () => {
+    for (const sentido of ["asc", "desc"] as const) {
+      const ids = [...embaralhadas].sort(comparar("motorista", sentido)).map((l) => l.id);
+      expect(ids.slice(-2), sentido).toEqual(["pl-001", "pl-003"]);
+      expect(ids.slice(0, 4), sentido).toEqual(["pl-002", "pl-005", "pl-007", "pl-009"]);
+    }
   });
 });

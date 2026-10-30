@@ -59,6 +59,7 @@ export function MaisFiltrosDePlacas({ padrao, campos }: Props) {
   const quantos = contarFiltrosAvancados(atual);
 
   function mudar(parcial: { siglas?: Sigla[]; baixadas?: boolean }) {
+    if (ocupado) return; // aria-disabled não bloqueia o clique: a guarda é aqui
     const novos = mudarConsulta(
       new URLSearchParams(parametros.toString()),
       parcial,
@@ -99,7 +100,7 @@ export function MaisFiltrosDePlacas({ padrao, campos }: Props) {
                 <input
                   type="checkbox"
                   checked={atual.baixadas}
-                  disabled={ocupado}
+                  aria-disabled={ocupado ? true : undefined}
                   onChange={() => mudar({ baixadas: !atual.baixadas })}
                   className="mt-0.5 size-4"
                 />
@@ -128,7 +129,7 @@ export function MaisFiltrosDePlacas({ padrao, campos }: Props) {
                       <input
                         type="checkbox"
                         checked={atual.siglas.includes(item.sigla)}
-                        disabled={ocupado}
+                        aria-disabled={ocupado ? true : undefined}
                         onChange={() => mudar({ siglas: alternarSigla(atual.siglas, item.sigla) })}
                         className="size-4"
                       />
@@ -143,9 +144,9 @@ export function MaisFiltrosDePlacas({ padrao, campos }: Props) {
             <div className="border-border bg-popover shrink-0 border-t p-3">
               <button
                 type="button"
-                disabled={ocupado || quantos === 0}
+                aria-disabled={ocupado || quantos === 0 ? true : undefined}
                 onClick={() => mudar({ siglas: [], baixadas: false })}
-                className="border-input hover:bg-muted focus-visible:ring-ring/50 h-9 w-full rounded-lg border px-3 text-sm outline-none focus-visible:ring-3 disabled:pointer-events-none disabled:opacity-50"
+                className="border-input hover:bg-muted focus-visible:ring-ring/50 h-9 w-full rounded-lg border px-3 text-sm outline-none focus-visible:ring-3 aria-disabled:opacity-50"
               >
                 Limpar seleção
               </button>

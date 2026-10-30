@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { lerTexto, listarArquivos } from "./armadilhas";
-import { barramentoDoExemplo } from "./barramento-do-exemplo";
+import {
+  barramentoDoExemplo,
+  clienteImportaAFonte,
+  fonteDeExemploImportadaFora,
+} from "./barramento-do-exemplo";
 
 const IMPORTA = 'import { placasDeExemplo } from "@/lib/exemplo/placas";';
 
@@ -68,5 +72,74 @@ describe("no repositório de verdade", () => {
       .flatMap((pasta) => listarArquivos(pasta, /\.(ts|tsx|mjs|js)$/))
       .map((caminho) => ({ caminho, texto: lerTexto(caminho) }));
     expect(barramentoDoExemplo(arquivos)).toEqual([]);
+  });
+});
+
+describe("barramento: o navegador nunca importa a fonte de dados", () => {
+  const CLIENTE = '"use client";\n';
+  it("acusa componente client que importa a fonte, a fonte de exemplo ou listarPlacas", () => {
+    const acusados = clienteImportaAFonte([
+      {
+        caminho: "components/a.tsx",
+        texto: `${CLIENTE}import { listarPlacas } from "@/lib/dados/placas";`,
+      },
+      { caminho: "components/b.tsx", texto: `${CLIENTE}import { f } from "@/lib/dados/fonte";` },
+      {
+        caminho: "components/c.tsx",
+        texto: `${CLIENTE}import { f } from "@/lib/dados/fonte-de-exemplo";`,
+      },
+      {
+        caminho: "components/d.tsx",
+        texto: `${CLIENTE}const m = await import("@/lib/dados/placas");`,
+      },
+    ]);
+    expect([...acusados].sort()).toEqual([
+      "components/a.tsx",
+      "components/b.tsx",
+      "components/c.tsx",
+      "components/d.tsx",
+    ]);
+  });
+  it("deixa o client usar os tipos (placas-tipos) e o servidor usar a fonte", () => {
+    expect(
+      clienteImportaAFonte([
+        {
+          caminho: "components/a.tsx",
+          texto: `${CLIENTE}import { T } from "@/lib/dados/placas-tipos";`,
+        },
+        { caminho: "app/x/page.tsx", texto: 'import { listarPlacas } from "@/lib/dados/placas";' },
+      ]),
+    ).toEqual([]);
+  });
+  it("no repositório de verdade, nenhum client importa a fonte", () => {
+    const arquivos = ["app", "components", "lib"]
+      .flatMap((pasta) => listarArquivos(pasta, /\.(ts|tsx)$/))
+      .map((caminho) => ({ caminho, texto: lerTexto(caminho) }));
+    expect(clienteImportaAFonte(arquivos)).toEqual([]);
+  });
+});
+
+describe("barramento: a fonte de exemplo só entra por lib/dados/fonte.ts", () => {
+  it("acusa quem importa a fonte de exemplo fora de fonte.ts e dos testes", () => {
+    expect(
+      fonteDeExemploImportadaFora([
+        { caminho: "lib/dados/placas.ts", texto: 'import { f } from "./fonte-de-exemplo";' },
+        {
+          caminho: "app/x/page.tsx",
+          texto: 'const m = await import("@/lib/dados/fonte-de-exemplo");',
+        },
+        { caminho: "lib/dados/fonte.ts", texto: 'await import("./fonte-de-exemplo");' },
+        {
+          caminho: "lib/dados/placas.test.ts",
+          texto: 'import { comparar } from "./fonte-de-exemplo";',
+        },
+      ]).sort(),
+    ).toEqual(["app/x/page.tsx", "lib/dados/placas.ts"]);
+  });
+  it("no repositório de verdade, só fonte.ts", () => {
+    const arquivos = ["app", "components", "lib", "e2e"]
+      .flatMap((pasta) => listarArquivos(pasta, /\.(ts|tsx)$/))
+      .map((caminho) => ({ caminho, texto: lerTexto(caminho) }));
+    expect(fonteDeExemploImportadaFora(arquivos)).toEqual([]);
   });
 });

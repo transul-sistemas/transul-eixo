@@ -79,7 +79,8 @@ export function TabelaDeDados<T extends object>({
       // Focável para rolar com o teclado. `min-h-0` deixa a caixa encolher dentro de uma tela de
       // lista de altura fixa; com poucas linhas ela acompanha o conteúdo.
       tabIndex={0}
-      className="border-border bg-card focus-visible:ring-ring/50 relative min-h-0 overflow-auto rounded-xl border outline-none focus-visible:ring-3"
+      // O padding de rolagem evita que o foco do teclado pare atrás da coluna Placa e do cabeçalho fixos.
+      className="border-border bg-card focus-visible:ring-ring/50 relative min-h-0 scroll-pt-12 scroll-pl-36 overflow-auto rounded-xl border outline-none focus-visible:ring-3"
     >
       <table
         aria-label={rotulo}
@@ -121,9 +122,11 @@ export function TabelaDeDados<T extends object>({
                     ) : (
                       <button
                         type="button"
-                        disabled={pendente}
-                        onClick={() => aoOrdenar(campo)}
-                        className="hover:text-foreground focus-visible:ring-ring/50 -mx-1 inline-flex items-center gap-1 rounded px-1 outline-none focus-visible:ring-3"
+                        aria-disabled={pendente ? true : undefined}
+                        onClick={() => {
+                          if (!pendente) aoOrdenar(campo);
+                        }}
+                        className="hover:text-foreground focus-visible:ring-ring/50 -mx-1 inline-flex min-h-6 items-center gap-1 rounded px-1 outline-none focus-visible:ring-3 aria-disabled:cursor-wait aria-disabled:opacity-60"
                       >
                         {coluna?.titulo}
                         {ativa ? (

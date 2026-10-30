@@ -10,6 +10,7 @@ export function EsqueletoDaTabela({ linhas = 10, rotulo }: { linhas?: number; ro
       aria-label={rotulo}
       className="border-border bg-card overflow-hidden rounded-xl border"
     >
+      <span className="sr-only">{rotulo}</span>
       <div className="border-border bg-muted/40 h-9 border-b" />
       {Array.from({ length: linhas }, (_, i) => (
         <div
@@ -41,6 +42,7 @@ export function ListaVazia({
   return (
     <div
       data-testid="lista-vazia"
+      role="status"
       className="border-border bg-card flex flex-col items-center gap-3 rounded-xl border px-6 py-12 text-center"
     >
       <IconSearchOff aria-hidden className="text-muted-foreground size-8" />

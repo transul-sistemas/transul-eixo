@@ -81,13 +81,17 @@ export function BarraDeConsulta({
         type="button"
         title={chip.dica}
         aria-pressed={ligado}
-        disabled={ocupada}
+        aria-disabled={ocupada ? true : undefined}
         // Zerado e desligado fica apagado, mas clicável; ligado continua normal para poder desligar.
         data-zerado={chip.contagem === 0 && !ligado ? "true" : undefined}
-        onClick={() => ir({ ...consulta, chips: alternarChip(consulta.chips, chip.id) }, false)}
+        onClick={() => {
+          if (ocupada) return; // aria-disabled não bloqueia o clique: a guarda é aqui
+          ir({ ...consulta, chips: alternarChip(consulta.chips, chip.id) }, false);
+        }}
         className={cn(
           "focus-visible:ring-ring/50 flex h-8 items-center gap-1.5 rounded-full border px-3 text-sm outline-none focus-visible:ring-3",
           chip.contagem === 0 && !ligado && "opacity-50",
+          "aria-disabled:cursor-wait aria-disabled:opacity-60",
           ligado
             ? "bg-primary text-primary-foreground border-transparent"
             : "border-border bg-card hover:bg-muted",
@@ -130,8 +134,12 @@ export function BarraDeConsulta({
         {ativa ? (
           <Button
             variant="ghost"
-            disabled={ocupada}
-            onClick={() => ir({ busca: "", chips: [] }, false, true)}
+            aria-disabled={ocupada ? true : undefined}
+            className="aria-disabled:opacity-60"
+            onClick={() => {
+              if (ocupada) return;
+              ir({ busca: "", chips: [] }, false, true);
+            }}
           >
             Limpar filtros
           </Button>

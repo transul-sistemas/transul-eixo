@@ -79,7 +79,8 @@ describe("chips com contagem zero", () => {
       "<button[^>]*>(?:(?!</button>)[\\s\\S])*Sem itens[\\s\\S]*?</button>",
     ).exec(htmlSemSelecao)?.[0];
     expect(zerado).toContain('data-zerado="true"');
-    expect(zerado).not.toContain("disabled");
+    expect(comDisabledNativo(zerado)).toBe(false);
+    expect(zerado).not.toContain('aria-disabled="true"');
   });
   it("o chip zerado que está ligado continua normal, para dar para desligar", () => {
     expect(chip("Sem itens")).toContain('aria-pressed="true"');
@@ -91,8 +92,11 @@ describe("chips com contagem zero", () => {
   });
 });
 
-// O atributo `disabled`, não a palavra: as classes do botão têm "disabled:" (variantes do Tailwind).
-const desligado = (trecho: string | undefined) => /\sdisabled(?:=""|[\s>])/.test(trecho ?? "");
+// Durante o carregamento o controle fica `aria-disabled` (e não `disabled`): `disabled` tira o foco do
+// teclado do botão que a pessoa acabou de acionar. O clique é ignorado pelo código.
+const desligado = (trecho: string | undefined) => /aria-disabled="true"/.test(trecho ?? "");
+const comDisabledNativo = (trecho: string | undefined) =>
+  /\sdisabled(?:=""|[\s>])/.test(trecho ?? "");
 const botaoDe = (html: string, texto: string) =>
   new RegExp(`<button[^>]*>(?:(?!</button>)[\\s\\S])*${texto}[\\s\\S]*?</button>`).exec(html)?.[0];
 
@@ -109,6 +113,18 @@ describe("barra de consulta ocupada (carregando)", () => {
     );
     expect(desligado(botaoDe(html, "Primeiro"))).toBe(true);
     expect(desligado(botaoDe(html, "Limpar filtros"))).toBe(true);
+  });
+  it("mas sem o atributo disabled, para o foco do teclado não sair do botão", () => {
+    const html = renderToStaticMarkup(
+      <BarraDeConsulta
+        rotulo="Buscar"
+        chips={chips}
+        parametros={new URLSearchParams("chip=a")}
+        ocupada
+      />,
+    );
+    expect(comDisabledNativo(botaoDe(html, "Primeiro"))).toBe(false);
+    expect(comDisabledNativo(botaoDe(html, "Limpar filtros"))).toBe(false);
   });
   it("a busca continua aceitando digitação (a última resposta é a que vale)", () => {
     const html = renderToStaticMarkup(
@@ -295,5 +311,20 @@ describe("barra de consulta: Mais filtros, filtros extras e dica dos chips", () 
       <BarraDeConsulta rotulo="Buscar" chips={chips} parametros={new URLSearchParams()} />,
     );
     expect(html).toMatch(/<button[^>]*title="Primeiro: A Alfa, B Beta\."/);
+  });
+});
+
+describe("regiões vivas: o leitor de tela ouve o vazio e o carregando", () => {
+  it("a lista vazia é um status", () => {
+    const html = renderToStaticMarkup(
+      <ListaVazia titulo="Nenhuma placa" descricao="Tire um filtro." />,
+    );
+    expect(html).toMatch(
+      /data-testid="lista-vazia"[^>]*role="status"|role="status"[^>]*data-testid="lista-vazia"/,
+    );
+  });
+  it("o esqueleto tem texto lido pelo leitor de tela, não só o nome", () => {
+    const html = renderToStaticMarkup(<EsqueletoDaTabela rotulo="Carregando placas" linhas={2} />);
+    expect(html).toMatch(/<span[^>]*class="[^"]*sr-only[^"]*"[^>]*>Carregando placas<\/span>/);
   });
 });

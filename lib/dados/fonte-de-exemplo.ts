@@ -41,7 +41,7 @@ function paraLinhas(placas: PlacaDeExemplo[], hoje: string): LinhaDePlaca[] {
   return placas.map((p) => {
     const vigentes = p.crs
       .filter((cr) => cr.inicio <= hoje && (cr.fim === null || hoje < cr.fim))
-      .sort((a, b) => (a.inicio < b.inicio ? -1 : 1));
+      .sort((a, b) => (a.inicio < b.inicio ? -1 : a.inicio > b.inicio ? 1 : 0));
     return {
       id: p.id,
       placa: p.placa,
@@ -130,7 +130,7 @@ function chaveDe(linha: LinhaDePlaca, campo: string): Chave {
 }
 
 /** Vazio sempre no fim, nas duas direções; empate resolvido pelo id, sempre crescente. */
-function comparar(campo: string, sentido: "asc" | "desc") {
+export function comparar(campo: string, sentido: "asc" | "desc") {
   const sinal = sentido === "desc" ? -1 : 1;
   return (a: LinhaDePlaca, b: LinhaDePlaca): number => {
     const x = chaveDe(a, campo);

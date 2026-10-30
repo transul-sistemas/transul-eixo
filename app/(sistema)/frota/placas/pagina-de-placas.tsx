@@ -138,7 +138,7 @@ export async function PaginaDePlacas({ searchParams }: { searchParams: Parametro
   const emFoco = parametros.get("foco") === "1";
 
   return (
-    <ProvedorDaLista preferenciasIniciais={preferencias}>
+    <ProvedorDaLista preferenciasIniciais={preferencias} nomeDoCookie={NOME_DO_COOKIE_DE_PLACAS}>
       <PaginaDeLeitura
         lista
         emFoco={emFoco}

@@ -123,3 +123,14 @@ describe("mudarConsulta: filtro novo volta para a página 1", () => {
     expect(url.get("tam")).toBe("50");
   });
 });
+
+describe("lerTabela: limites da busca e dos chips", () => {
+  it("a busca é cortada em 200 caracteres", () => {
+    expect(ler(`q=${"a".repeat(500)}`).busca).toHaveLength(200);
+  });
+  it("no máximo 20 chips, sem repetir", () => {
+    const muitos = Array.from({ length: 50 }, (_, i) => `chip=c${i}`).join("&");
+    expect(ler(muitos).chips).toHaveLength(20);
+    expect(ler("chip=a&chip=a&chip=b").chips).toEqual(["a", "b"]);
+  });
+});

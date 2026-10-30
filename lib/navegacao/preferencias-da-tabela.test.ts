@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   lerPreferencias,
+  montarCookie,
   NOME_DO_COOKIE_DE_PLACAS,
   PREFERENCIAS_PADRAO,
   serializarPreferencias,
@@ -131,5 +132,24 @@ describe("preferências da tabela (cookie validado na leitura)", () => {
   });
   it("percent-encoding quebrado não lança erro", () => {
     expect(ler("%E0%A4%A")).toEqual(PREFERENCIAS_PADRAO);
+  });
+});
+
+describe("montarCookie", () => {
+  const prefs = { ...PREFERENCIAS_PADRAO, tam: 50 as const };
+  it("grava em toda a aplicação, por um ano, com SameSite=Lax", () => {
+    const cookie = montarCookie(prefs, "eixo-tabela-placas", "http:");
+    expect(cookie).toContain("eixo-tabela-placas=");
+    expect(cookie).toContain("path=/");
+    expect(cookie).toContain("max-age=31536000");
+    expect(cookie).toContain("SameSite=Lax");
+  });
+  it("em http (desenvolvimento) não leva Secure; em https leva", () => {
+    expect(montarCookie(prefs, "x", "http:")).not.toContain("Secure");
+    expect(montarCookie(prefs, "x", "https:")).toContain("; Secure");
+  });
+  it("o valor gravado é o que a leitura entende", () => {
+    const valor = montarCookie(prefs, "x", "https:").split(";")[0]!.slice("x=".length);
+    expect(lerPreferencias(valor, []).tam).toBe(50);
   });
 });

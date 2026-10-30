@@ -85,3 +85,21 @@ export function lerPreferencias(
 export function serializarPreferencias(preferencias: PreferenciasDaTabela): string {
   return encodeURIComponent(JSON.stringify(preferencias));
 }
+
+const UM_ANO_EM_SEGUNDOS = 60 * 60 * 24 * 365;
+
+/** O texto para `document.cookie`. Em https leva `Secure`; em http (desenvolvimento) não. */
+export function montarCookie(
+  preferencias: PreferenciasDaTabela,
+  nome: string,
+  protocolo: string,
+): string {
+  const partes = [
+    `${nome}=${serializarPreferencias(preferencias)}`,
+    "path=/",
+    `max-age=${UM_ANO_EM_SEGUNDOS}`,
+    "SameSite=Lax",
+  ];
+  if (protocolo === "https:") partes.push("Secure");
+  return partes.join("; ");
+}

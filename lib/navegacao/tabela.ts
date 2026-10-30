@@ -12,6 +12,10 @@ import { escreverConsulta, lerConsulta } from "./consulta";
 /** Maior tamanho de página que o servidor entrega, mesmo que a URL peça mais. */
 export const TETO_DE_TAM = 100;
 
+/** Limites do que a URL pode pedir: busca até 200 caracteres e até 20 chips. */
+export const TAMANHO_MAXIMO_DA_BUSCA = 200;
+export const QUANTIDADE_MAXIMA_DE_CHIPS = 20;
+
 export interface ConsultaDeTabela {
   busca: string;
   chips: string[];
@@ -54,8 +58,8 @@ export function lerTabela(
   );
   const tam = inteiroPositivo.catch(padrao.tam).parse(parametros.get("tam"));
   return {
-    busca,
-    chips: [...chips],
+    busca: busca.slice(0, TAMANHO_MAXIMO_DA_BUSCA),
+    chips: chips.slice(0, QUANTIDADE_MAXIMA_DE_CHIPS),
     siglas,
     baixadas: parametros.get("baixadas") === "1",
     ordem: lerOrdem(parametros.get("ordem"), camposOrdenaveis, padrao.ordem),

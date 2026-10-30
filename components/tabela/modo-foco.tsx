@@ -10,7 +10,7 @@ import { useLista } from "./pendencia-da-lista";
 // recarregar e compartilhar devolvem a mesma visão, e Voltar sai do modo foco. Esc também sai.
 
 const botao =
-  "border-input bg-card hover:bg-muted focus-visible:ring-ring/50 inline-flex h-9 items-center gap-2 rounded-lg border px-3 text-sm outline-none focus-visible:ring-3 disabled:opacity-50";
+  "border-input bg-card hover:bg-muted focus-visible:ring-ring/50 inline-flex h-9 items-center gap-2 rounded-lg border px-3 text-sm outline-none focus-visible:ring-3 aria-disabled:opacity-60";
 
 export function ModoFoco() {
   const rota = usePathname();
@@ -20,6 +20,7 @@ export function ModoFoco() {
   const emFoco = parametros.get("foco") === "1";
 
   function alternar(ligar: boolean) {
+    if (lista?.pendente) return; // aria-disabled não bloqueia o clique: a guarda é aqui
     const novos = new URLSearchParams(parametros.toString());
     if (ligar) novos.set("foco", "1");
     else novos.delete("foco");
@@ -46,7 +47,7 @@ export function ModoFoco() {
     <button
       type="button"
       aria-pressed={emFoco}
-      disabled={lista?.pendente ?? false}
+      aria-disabled={lista?.pendente ? true : undefined}
       onClick={() => alternar(!emFoco)}
       className={cn(botao, emFoco && "bg-primary text-primary-foreground hover:bg-primary/90")}
     >

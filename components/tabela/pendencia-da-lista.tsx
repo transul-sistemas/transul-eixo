@@ -10,11 +10,7 @@ import {
   useState,
   useTransition,
 } from "react";
-import {
-  NOME_DO_COOKIE_DE_PLACAS,
-  type PreferenciasDaTabela,
-  serializarPreferencias,
-} from "@/lib/navegacao/preferencias-da-tabela";
+import { montarCookie, type PreferenciasDaTabela } from "@/lib/navegacao/preferencias-da-tabela";
 
 // Estado compartilhado de uma lista na tela: se uma nova página, filtro ou ordem está a caminho
 // (a tabela fica esmaecida e chips, páginas e cabeçalhos não aceitam novo clique) e as preferências
@@ -37,16 +33,14 @@ export function useLista(): ContextoDaLista | null {
   return useContext(Contexto);
 }
 
-function gravarCookie(preferencias: PreferenciasDaTabela) {
-  const umAno = 60 * 60 * 24 * 365;
-  document.cookie = `${NOME_DO_COOKIE_DE_PLACAS}=${serializarPreferencias(preferencias)}; path=/; max-age=${umAno}; SameSite=Lax`;
-}
-
 export function ProvedorDaLista({
   preferenciasIniciais,
+  nomeDoCookie,
   children,
 }: {
   preferenciasIniciais: PreferenciasDaTabela;
+  /** Cada lista tem o seu cookie, para uma não sobrescrever as preferências da outra. */
+  nomeDoCookie: string;
   children: ReactNode;
 }) {
   const [pendente, comecar] = useTransition();
@@ -54,12 +48,15 @@ export function ProvedorDaLista({
   const ultimas = useRef(preferenciasIniciais);
 
   const iniciar = useCallback((navegar: () => void) => comecar(navegar), []);
-  const atualizarPreferencias = useCallback((parcial: Partial<PreferenciasDaTabela>) => {
-    const novas = { ...ultimas.current, ...parcial };
-    ultimas.current = novas;
-    setPreferencias(novas);
-    gravarCookie(novas);
-  }, []);
+  const atualizarPreferencias = useCallback(
+    (parcial: Partial<PreferenciasDaTabela>) => {
+      const novas = { ...ultimas.current, ...parcial };
+      ultimas.current = novas;
+      setPreferencias(novas);
+      document.cookie = montarCookie(novas, nomeDoCookie, window.location.protocol);
+    },
+    [nomeDoCookie],
+  );
 
   const valor = useMemo(
     () => ({ pendente, iniciar, preferencias, atualizarPreferencias }),

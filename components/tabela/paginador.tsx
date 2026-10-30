@@ -115,7 +115,12 @@ export function Paginador({
 
   return (
     <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 text-sm">
-      <p data-testid="resumo-da-pagina" className="text-muted-foreground tabular-nums">
+      <p
+        data-testid="resumo-da-pagina"
+        role="status"
+        aria-live="polite"
+        className="text-muted-foreground tabular-nums"
+      >
         Mostrando {formatarInteiro(primeiro)}–{formatarInteiro(ultimo)} de {formatarInteiro(total)}{" "}
         {itens}
       </p>
@@ -126,8 +131,10 @@ export function Paginador({
           <select
             aria-label="Linhas por página"
             value={tam}
-            disabled={ocupado || !lista}
-            onChange={(evento) => aoMudarTamanho(Number(evento.target.value))}
+            aria-disabled={ocupado || !lista ? true : undefined}
+            onChange={(evento) => {
+              if (!ocupado) aoMudarTamanho(Number(evento.target.value));
+            }}
             className="border-input bg-card text-foreground focus-visible:ring-ring/50 h-9 rounded-lg border px-2 tabular-nums outline-none focus-visible:ring-3"
           >
             {opcoes.map((opcao) => (

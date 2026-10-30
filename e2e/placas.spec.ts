@@ -1282,3 +1282,171 @@ test.describe("lista de placas: o botão Mais filtros não pisca ao carregar", (
     await expect(botao).toBeEnabled();
   });
 });
+
+test.describe("lista de placas: acessibilidade apontada na revisão", () => {
+  const TODAS = [
+    "placa",
+    "tipo",
+    "modelo",
+    "conjunto",
+    "gestor",
+    "operacao",
+    "situacao",
+    "alertas",
+    "motorista",
+    "filial",
+    "dias",
+    "km",
+    "cr",
+    "fipe",
+  ];
+  const assentou = (page: Page) =>
+    expect(tabela(page)).toHaveAttribute("aria-busy", "false", { timeout: 15_000 });
+
+  test("o foco do teclado fica no chip depois de acionar com Enter", async ({ page }) => {
+    await abrirHidratada(page, `${ROTA}?lento=1200`);
+    await chip(page, "Pátio").focus();
+    await page.keyboard.press("Enter");
+    await expect(tabela(page)).toHaveAttribute("aria-busy", "true");
+    await assentou(page);
+    await expect(page).toHaveURL(/chip=patio/);
+    await expect(chip(page, "Pátio")).toBeFocused();
+  });
+
+  test("o foco fica no botão de ordenar depois de ordenar com o teclado", async ({ page }) => {
+    await abrirHidratada(page, `${ROTA}?lento=1200`);
+    const botao = tabela(page).getByRole("columnheader", { name: /^Tipo/ }).getByRole("button");
+    await botao.focus();
+    await page.keyboard.press("Enter");
+    await assentou(page);
+    await expect(page).toHaveURL(/ordem=tipo/);
+    await expect(botao).toBeFocused();
+  });
+
+  test("o foco fica na seta da página depois de trocar de página com o teclado", async ({
+    page,
+  }) => {
+    await abrirHidratada(page, `${ROTA}?lento=1200`);
+    const proxima = page.getByRole("link", { name: "Próxima página" });
+    await proxima.focus();
+    await page.keyboard.press("Enter");
+    await assentou(page);
+    await expect(page).toHaveURL(/pagina=2/);
+    await expect(proxima).toBeFocused();
+  });
+
+  test("o Modo foco com o teclado mantém o foco no botão, entrando e saindo", async ({ page }) => {
+    await abrirHidratada(page, `${ROTA}?lento=1200`);
+    const botao = page.getByRole("button", { name: /modo foco/i });
+    await botao.focus();
+    await page.keyboard.press("Enter");
+    await expect(page).toHaveURL(/foco=1/);
+    await assentou(page);
+    await expect(botao).toBeFocused();
+    await page.keyboard.press("Enter");
+    await expect(page).not.toHaveURL(/foco=1/);
+    await assentou(page);
+    await expect(botao).toBeFocused();
+  });
+
+  test("Mais filtros: marcar duas siglas só com o teclado, sem perder o foco nem fechar o painel", async ({
+    page,
+  }) => {
+    await abrirHidratada(page, `${ROTA}?lento=1200`);
+    const botao = consulta(page).getByRole("button", { name: /^Mais filtros/ });
+    await botao.focus();
+    await page.keyboard.press("Enter");
+    const painel = page.getByRole("dialog", { name: "Mais filtros" });
+    await expect(painel).toBeVisible();
+    const dop = painel.getByRole("checkbox", {
+      name: "DOp Disponível no Operacional",
+      exact: true,
+    });
+    await dop.focus();
+    await page.keyboard.press("Space");
+    await assentou(page);
+    await expect(dop).toBeFocused();
+    await expect(painel).toBeVisible();
+    await page.keyboard.press("Tab");
+    await page.keyboard.press("Space");
+    await assentou(page);
+    await expect(painel).toBeVisible();
+    await expect(page).toHaveURL(/sigla=DOp/);
+    expect(new URL(page.url()).searchParams.getAll("sigla")).toHaveLength(2);
+  });
+
+  test("o foco não fica escondido atrás da coluna Placa nem do cabeçalho fixos", async ({
+    page,
+    baseURL,
+  }) => {
+    await page.context().addCookies([
+      {
+        name: "eixo-tabela-placas",
+        value: encodeURIComponent(JSON.stringify({ colunas: TODAS })),
+        url: baseURL ?? "http://localhost:3000",
+      },
+    ]);
+    await abrirHidratada(page, ROTA);
+    const caixa = tabela(page).locator("xpath=..");
+    const botaoModelo = tabela(page)
+      .getByRole("columnheader", { name: /^Modelo/ })
+      .getByRole("button");
+    // rola para que a coluna Modelo fique parcialmente sob a coluna Placa, e foca nela
+    await caixa.evaluate((c) => {
+      const modelo = [...c.querySelectorAll("th")].find((t) =>
+        t.textContent?.trim().startsWith("Modelo"),
+      ) as HTMLElement;
+      const placa = c.querySelector("th") as HTMLElement;
+      c.scrollLeft = modelo.offsetLeft - placa.offsetWidth / 2;
+    });
+    await botaoModelo.focus();
+    await page.waitForTimeout(200);
+    const coberto = await botaoModelo.evaluate((b) => {
+      const r = b.getBoundingClientRect();
+      const alvo = document.elementFromPoint(r.x + 4, r.y + r.height / 2);
+      return !(alvo === b || b.contains(alvo));
+    });
+    expect(coberto, "o botão focado ficou coberto pela coluna fixa").toBe(false);
+  });
+
+  test("a mudança de resultado e o vazio são anunciados ao leitor de tela", async ({ page }) => {
+    await abrirHidratada(page, ROTA);
+    const aviso = page.getByRole("status").filter({ hasText: /Mostrando/ });
+    await expect(aviso).toHaveCount(1);
+    await expect(aviso).toHaveAttribute("aria-live", "polite");
+    await abrirHidratada(page, `${ROTA}?q=zzzzzzzz`);
+    await expect(page.getByTestId("lista-vazia")).toHaveAttribute("role", "status");
+  });
+
+  test("os botões de ordenar têm pelo menos 24×24 px (alvo de toque)", async ({ page }) => {
+    await abrirHidratada(page, ROTA);
+    const botoes = tabela(page).locator("thead").getByRole("button");
+    const medidas = await botoes.evaluateAll((bs) =>
+      bs.map((b) => {
+        const r = b.getBoundingClientRect();
+        return { w: Math.round(r.width), h: Math.round(r.height) };
+      }),
+    );
+    expect(medidas.length).toBeGreaterThan(5);
+    for (const m of medidas) {
+      expect(m.h).toBeGreaterThanOrEqual(24);
+      expect(m.w).toBeGreaterThanOrEqual(24);
+    }
+  });
+
+  test("em janela baixa (1100×500) a página rola em vez de esconder a tabela", async ({ page }) => {
+    await page.setViewportSize({ width: 1100, height: 500 });
+    await abrirHidratada(page, ROTA);
+    const m = await page.evaluate(() => ({
+      altura: document.documentElement.scrollHeight,
+      janela: window.innerHeight,
+    }));
+    expect(m.altura).toBeGreaterThan(m.janela);
+    const alturaDaTabela = await tabela(page)
+      .locator("xpath=..")
+      .evaluate((c) => c.clientHeight);
+    expect(alturaDaTabela).toBeGreaterThanOrEqual(200);
+    await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+    await expect(resumo(page)).toBeInViewport();
+  });
+});
