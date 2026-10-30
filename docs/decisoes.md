@@ -8,7 +8,7 @@ Modelo de entrada:
 
 ---
 
-## 31/10/2026 — Dados do Sankhya: acesso só leitura, trava do Eixo, campos e chaves
+## 30/10/2026 — Dados do Sankhya: acesso só leitura, trava do Eixo, campos e chaves
 
 - **Decisão:** a planilha `docs/sankhya/Eixo_Dados_do_Sankhya.xlsx` (dicionário de campos, respostas do responsável pelo Sankhya e SQL das 14 views) entra no repositório, com o resumo por assunto em `docs/sankhya/mapa.md`. Conferida antes de commitar: só nomes de campos, respostas e SQL, sem senha, chave nem credencial. O que ela estabelece:
   - **Acesso.** Autenticação por `POST https://api.sankhya.com.br/authenticate` (OAuth2 `client_credentials` mais o cabeçalho `X-Token`) e consulta por `POST /gateway/v1/mge/service.sbr?serviceName=DbExplorerSP.executeQuery`. O "GET" do Sankhya significa **somente leitura** (`SELECT`), não o verbo HTTP.
