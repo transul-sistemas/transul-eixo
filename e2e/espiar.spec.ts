@@ -247,6 +247,7 @@ test.describe("painel de espiar: abrir e fechar sem perder nada", () => {
     await page.goBack();
     await expect(qualquerPainel(page)).toHaveCount(0);
     await expect(page).not.toHaveURL(/espiar=/);
+    await expect(page).toHaveURL(/\/inicio\/tarefas/); // o Esc desfez o passo: um Voltar chega à página de antes
   });
 
   test("abrir, voltar e avançar reabre o painel", async ({ page }) => {

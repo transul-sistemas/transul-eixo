@@ -94,13 +94,20 @@ export function ProvedorDaLista({
     endereco.current = enderecoCom;
   }, [enderecoCom]);
 
+  // A placa que está na URL agora, para `espiar` (que não muda de identidade) saber se o clique
+  // é na própria placa do link direto: aí o `push` vira `replaceState` e não nasce entrada.
+  const urlAtual = useRef(daUrl);
+  useEffect(() => {
+    urlAtual.current = daUrl;
+  }, [daUrl]);
+
   const espiar = useCallback(
     (placa: string) => {
       fecharAoChegar.current = false;
       setCancelada(null);
       navegarPainel(() => {
         definirOtimista(placa);
-        abertoPelaLista.current = true;
+        if (placa !== urlAtual.current) abertoPelaLista.current = true;
         router.push(endereco.current(placa), { scroll: false });
       });
     },
@@ -134,15 +141,34 @@ export function ProvedorDaLista({
     });
   }, [daUrl, otimista, enderecoCom, router, definirOtimista]);
 
+  // Só zera "aberto pela lista" quando a URL de fato saiu de "com placa" para "sem placa". Zerar a
+  // cada execução apagava a marca logo depois do clique (a URL ainda era nula) e o fechar virava
+  // `replace` em vez de Voltar.
+  const daUrlAnterior = useRef(daUrl);
   useEffect(() => {
-    if (daUrl === null) abertoPelaLista.current = false;
-    else if (fecharAoChegar.current) {
+    if (daUrl === null && daUrlAnterior.current !== null) abertoPelaLista.current = false;
+    daUrlAnterior.current = daUrl;
+  }, [daUrl]);
+
+  useEffect(() => {
+    if (daUrl !== null && fecharAoChegar.current) {
       fecharAoChegar.current = false;
       fecharPainel();
       // O fechamento já roda numa transição (fica fechado até a URL voltar); solta a placa cancelada.
       setTimeout(() => setCancelada(null), 0);
     }
   }, [daUrl, fecharPainel]);
+
+  // Outra navegação da lista (chip, busca, ordem) substitui a abertura que ficou esperando: some a
+  // pendência, para uma placa cancelada não fechar sozinha um painel aberto mais tarde.
+  const chaveDaLista = comEspiar(new URLSearchParams(parametros.toString()), null).toString();
+  const chaveAnterior = useRef(chaveDaLista);
+  useEffect(() => {
+    if (chaveAnterior.current === chaveDaLista) return;
+    chaveAnterior.current = chaveDaLista;
+    fecharAoChegar.current = false;
+    setTimeout(() => setCancelada(null), 0);
+  }, [chaveDaLista]);
   const atualizarPreferencias = useCallback(
     (parcial: Partial<PreferenciasDaTabela>) => {
       const novas = { ...ultimas.current, ...parcial };
