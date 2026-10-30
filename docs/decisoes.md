@@ -8,6 +8,19 @@ Modelo de entrada:
 
 ---
 
+## 30/10/2026 — v1 encerrada: backup oficial e workflows desligados
+
+- **Decisão:**
+  - **O dump de 28/10/2026 é o backup oficial da v1:** `C:\Backups\transul_v1_completo.dump`, **42.870.361 bytes**, **SHA256 `B86D4A82D9E79B7154455BBAF8040B65D739EF77953FFFFF56F1383B2DAB9A4D`** (tamanho e hash conferidos em 30/10/2026). Há uma cópia no Drive da empresa, **conferida por hash** (informado por Alexandre).
+  - **Os dias posteriores a 28/10/2026 não estão no dump e serão refeitos** na 2.0; a forma (sincronização a partir do Sankhya, importação ou as duas) fica para a análise da v1 e a importação, que só começam depois do Acompanhamento da Frota.
+  - **Workflows da v1 desligados em 30/10/2026:** dos 13 do repositório `alexandre652/gestao_de_frota_-_operacional`, 12 estão desativados (11 desativados nesse dia, com autorização de Alexandre, mais a reconciliação, que já estava) e **só o `ci.yml` segue ativo**. A v1 não recebe mais dados do Sankhya.
+  - **O código da v1 segue marcado como `v1-final`** (commit `bdfabd43980ec77b9f1fc7dd722466aaff4f1591`, o mesmo topo da branch `master`).
+- **Motivo:** a v1 sai do ar em 01/11/2026; sem os workflows, nada mais escreve nela, e o dump fixa o que ela tinha em 28/10.
+- **Ainda aberto:** avisar a equipe e a diretoria sobre a saída do ar em 01/11 (`docs/projeto-tecnico.md`, pendências da v1).
+- **Quem decidiu:** Alexandre.
+
+---
+
 ## 29/10/2026 — Backlog da 2.0, ritmo de validação visual e GitHub Team
 
 - **Decisão:**
