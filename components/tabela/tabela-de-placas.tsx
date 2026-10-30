@@ -7,6 +7,7 @@ import { Etiqueta } from "@/components/etiqueta";
 import { Moeda } from "@/components/formato/moeda";
 import { formatarInteiro, formatarKm } from "@/components/formato/numero";
 import { Placa } from "@/components/placa";
+import { CelulaDaPlaca } from "./celula-da-placa";
 import {
   CAMPOS_ORDENAVEIS_DE_PLACAS,
   DEFINICOES_DAS_COLUNAS_DE_PLACAS,
@@ -66,9 +67,9 @@ const CELULAS: Record<
 > = {
   placa: {
     campoDeOrdem: "placa",
-    // Na densidade compacta a mini placa é a menor: a linha cabe em ~34 px em vez de ~45.
-    celula: (linha, { densidade }) => (
-      <Placa placa={linha.placa} tamanho={densidade === "compacta" ? "p" : "m"} />
+    // O botão "Espiar" é o controle; na compacta a mini placa é a menor (a linha cabe em ~34 px).
+    celula: (linha, { densidade, aoAbrir }) => (
+      <CelulaDaPlaca placa={linha.placa} densidade={densidade} aoAbrir={aoAbrir} />
     ),
   },
   tipo: { campoDeOrdem: "tipo", celula: (linha) => NOMES_DOS_TIPOS[linha.tipo] },
@@ -144,6 +145,12 @@ export function TabelaDePlacas({
     [colunasEscolhidas, ordemEscolhida],
   );
 
+  const espiar = lista?.espiar;
+  const aoClicarNaLinha = useMemo(
+    () => (espiar ? (linha: LinhaDePlaca) => espiar(linha.placa) : undefined),
+    [espiar],
+  );
+
   function ordenarPor(campo: string) {
     const atual = lerTabela(
       new URLSearchParams(parametros.toString()),
@@ -172,6 +179,7 @@ export function TabelaDePlacas({
       aoOrdenar={ordenarPor}
       pendente={lista?.pendente ?? false}
       densidade={lista?.preferencias.densidade ?? "compacta"}
+      aoClicarNaLinha={aoClicarNaLinha}
     />
   );
 }

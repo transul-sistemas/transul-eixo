@@ -4,6 +4,7 @@ import { IconArrowDown, IconArrowUp, IconArrowsSort } from "@tabler/icons-react"
 import { createColumnHelper, tableFeatures, useTable } from "@tanstack/react-table";
 import { type ReactNode, useMemo } from "react";
 import { cn } from "@/lib/utils";
+import { cliqueAbreAPlaca } from "./clique-na-linha";
 
 /** Uma coluna da tabela: o título, o que ela mostra e (se houver) o campo de ordem no servidor. */
 export interface ColunaDeTabela<T extends object> {
@@ -12,7 +13,14 @@ export interface ColunaDeTabela<T extends object> {
   /** Campo do parâmetro `ordem`; sem ele, o cabeçalho não ordena. */
   campoDeOrdem?: string;
   /** `densidade` deixa a célula se ajustar (a Placa usa a mini placa menor na compacta). */
-  celula: (linha: T, contexto: { densidade: "compacta" | "confortavel" }) => ReactNode;
+  celula: (
+    linha: T,
+    contexto: {
+      densidade: "compacta" | "confortavel";
+      /** Abre o detalhe desta linha (existe só quando a tabela recebe `aoClicarNaLinha`). */
+      aoAbrir?: () => void;
+    },
+  ) => ReactNode;
   /** Classes da coluna (alinhamento, largura). */
   classe?: string;
 }
@@ -33,6 +41,8 @@ interface Props<T extends object> {
   /** Uma nova página ou ordem está a caminho: a tabela atual fica um pouco apagada. */
   pendente?: boolean;
   densidade?: "compacta" | "confortavel";
+  /** Atalho de mouse e de toque: clicar na linha abre o detalhe. O controle de verdade é a célula. */
+  aoClicarNaLinha?: (linha: T) => void;
 }
 
 // Só o núcleo: a ordem, o filtro e a página são do servidor (manual); o TanStack entra para
@@ -48,6 +58,7 @@ export function TabelaDeDados<T extends object>({
   aoOrdenar,
   pendente = false,
   densidade = "compacta",
+  aoClicarNaLinha,
 }: Props<T>) {
   const definicoes = useMemo(() => {
     const ajudante = createColumnHelper<typeof funcoes, T>();
@@ -56,11 +67,15 @@ export function TabelaDeDados<T extends object>({
         ajudante.display({
           id: coluna.id,
           header: coluna.titulo,
-          cell: ({ row }) => coluna.celula(row.original, { densidade }),
+          cell: ({ row }) =>
+            coluna.celula(row.original, {
+              densidade,
+              aoAbrir: aoClicarNaLinha ? () => aoClicarNaLinha(row.original) : undefined,
+            }),
         }),
       ),
     );
-  }, [colunas, densidade]);
+  }, [colunas, densidade, aoClicarNaLinha]);
 
   const tabela = useTable({
     features: funcoes,
@@ -148,7 +163,22 @@ export function TabelaDeDados<T extends object>({
         </thead>
         <tbody>
           {tabela.getRowModel().rows.map((linha) => (
-            <tr key={linha.id} className="group/linha hover:bg-muted/50">
+            <tr
+              key={linha.id}
+              onClick={
+                aoClicarNaLinha
+                  ? (evento) => {
+                      const abre = cliqueAbreAPlaca(
+                        evento.target instanceof Element ? evento.target : null,
+                        evento,
+                        window.getSelection()?.toString() ?? "",
+                      );
+                      if (abre) aoClicarNaLinha(linha.original);
+                    }
+                  : undefined
+              }
+              className={cn("group/linha hover:bg-muted/50", aoClicarNaLinha && "cursor-pointer")}
+            >
               {linha.getAllCells().map((celula, posicao) => (
                 <td
                   key={celula.id}
