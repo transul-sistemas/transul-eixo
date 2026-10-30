@@ -7,6 +7,7 @@ import { EsqueletoDaTabela, ListaVazia } from "@/components/tabela/estados";
 import { DensidadeDaTabela } from "@/components/tabela/densidade";
 import { MaisFiltrosDePlacas, MaisFiltrosReservado } from "@/components/tabela/mais-filtros";
 import { ModoFoco } from "@/components/tabela/modo-foco";
+import { PainelDeEspiar } from "@/components/tabela/painel-de-espiar";
 import { Paginador } from "@/components/tabela/paginador";
 import { SeletorDeColunas } from "@/components/tabela/seletor-de-colunas";
 import { ProvedorDaLista } from "@/components/tabela/pendencia-da-lista";
@@ -191,6 +192,7 @@ export async function PaginaDePlacas({ searchParams }: { searchParams: Parametro
           }
         />
       </PaginaDeLeitura>
+      <PainelDeEspiar />
     </ProvedorDaLista>
   );
 }
