@@ -1,7 +1,10 @@
 import { cookies } from "next/headers";
 import { connection } from "next/server";
 import { hojeEmSaoPaulo } from "@/components/formato/data";
-import { BarraDeConsultaDaPagina } from "@/components/layout/barra-de-consulta";
+import {
+  type ApresentacaoDoGrupo,
+  BarraDeConsultaDaPagina,
+} from "@/components/layout/barra-de-consulta";
 import { PaginaDeLeitura } from "@/components/layout/pagina-de-leitura";
 import { EsqueletoDaTabela, ListaVazia } from "@/components/tabela/estados";
 import { DensidadeDaTabela } from "@/components/tabela/densidade";
@@ -86,20 +89,37 @@ function enderecoSemFiltros(
   return limpa ? `${ROTA}?${limpa}` : ROTA;
 }
 
-/** Os dois grupos de chips: situação (cinco chips) e tipo de ativo (seis). */
+/** Como cada grupo aparece: Situação (como a placa está agora) e Tipo de ativo (o que é a placa). */
+const GRUPOS_DA_LISTA: Readonly<Record<string, ApresentacaoDoGrupo>> = {
+  situacao: {
+    titulo: "Situação",
+    subtitulo: "como a placa está agora",
+    forma: "pilula",
+    destaque: "acao",
+  },
+  tipo: {
+    titulo: "Tipo de ativo",
+    subtitulo: "o que é a placa",
+    forma: "retangulo",
+    destaque: "escuro",
+  },
+};
+
+/** Os dois grupos de chips: situação (cinco chips) e tipo de ativo (cinco). */
 function chipsDaLista(contagens?: Record<string, number>) {
   return [
     ...STATUS.map((id) => ({
       id,
       nome: NOMES_DOS_CHIPS[id],
-      grupo: "Situação",
+      grupo: "situacao",
+      tom: id,
       dica: dicaDoChipDeSituacao(id),
       ...(contagens ? { contagem: contagens[id] ?? 0 } : {}),
     })),
     ...TIPOS_DE_ATIVO.map((id) => ({
       id,
       nome: NOMES_DOS_TIPOS[id],
-      grupo: "Tipo",
+      grupo: "tipo",
       ...(contagens ? { contagem: contagens[id] ?? 0 } : {}),
     })),
   ];
@@ -117,6 +137,7 @@ export function PaginaDePlacasCarregando() {
         <BarraDeConsultaDaPagina
           rotulo="Buscar placa"
           chips={chipsDaLista()}
+          apresentacaoDosGrupos={GRUPOS_DA_LISTA}
           filtrosExtras={["sigla", "baixadas"]}
           maisFiltros={<MaisFiltrosReservado />}
         />
@@ -159,6 +180,7 @@ export async function PaginaDePlacas({ searchParams }: { searchParams: Parametro
           <BarraDeConsultaDaPagina
             rotulo="Buscar placa"
             chips={chipsDaLista(pagina.contagens)}
+            apresentacaoDosGrupos={GRUPOS_DA_LISTA}
             filtrosExtras={["sigla", "baixadas"]}
             maisFiltros={
               <MaisFiltrosDePlacas padrao={padrao} campos={CAMPOS_ORDENAVEIS_DE_PLACAS} />
