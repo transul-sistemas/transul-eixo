@@ -2,8 +2,18 @@
 
 import { Drawer } from "@base-ui/react/drawer";
 import { IconX } from "@tabler/icons-react";
-import { useRef, useState, useSyncExternalStore } from "react";
+import { useRouter } from "next/navigation";
+import { useRef, useState, useSyncExternalStore, useTransition } from "react";
+import { Placa } from "@/components/placa";
+import type { DadosDoPainel } from "@/lib/dados/placas-tipos";
 import { useLista } from "./pendencia-da-lista";
+import {
+  BotaoDaFicha,
+  ErroDoResumo,
+  PlacaNaoEncontrada,
+  ResumoCarregando,
+  ResumoDaPlaca,
+} from "./resumo-da-placa";
 import { useHidratacaoPronta } from "./sinal-de-hidratacao";
 
 // Abaixo de 640 px o painel é a folha de baixo (arrasta-se para baixo para fechar); a partir daí é
@@ -37,8 +47,10 @@ function destinoDoFoco(placa: string | null): HTMLElement | null {
  * rolagem da página travada). A placa vem da URL (`?espiar=`), com abertura otimista. Esc, o botão,
  * o clique no fundo e o gesto de arrastar fecham, e o foco volta à linha de origem.
  */
-export function PainelDeEspiar() {
+export function PainelDeEspiar({ dados }: { dados: DadosDoPainel | null }) {
   const lista = useLista();
+  const router = useRouter();
+  const [tentando, tentarDeNovo] = useTransition();
   const celular = useCelular();
   const titulo = useRef<HTMLHeadingElement>(null);
 
@@ -55,8 +67,14 @@ export function PainelDeEspiar() {
   const placa = lista?.placaEspiada ?? null;
   const [mostrada, setMostrada] = useState<string | null>(placa);
   if (placa !== null && placa !== mostrada) setMostrada(placa);
+  const [ultimos, setUltimos] = useState(dados);
+  if (dados !== null && dados !== ultimos) setUltimos(dados);
   if (!lista) return null;
   const placaDoPainel = placa ?? mostrada;
+
+  // Os dados são da placa da URL, que chega depois do clique: enquanto a placa do painel e a dos
+  // dados não coincidem, o painel mostra o esqueleto. Na saída guarda os últimos dados.
+  const doPainel = (dados ?? ultimos)?.placa === placaDoPainel ? (dados ?? ultimos) : null;
 
   return (
     <Drawer.Root
@@ -77,7 +95,7 @@ export function PainelDeEspiar() {
               destinoDoFoco(placaDoPainel)?.focus({ preventScroll: true });
               return false;
             }}
-            className="border-border bg-popover text-popover-foreground flex h-full w-[420px] max-w-full [transform:translateX(var(--drawer-swipe-movement-x,0px))] flex-col border-l shadow-xl transition-transform duration-200 outline-none data-ending-style:translate-x-full data-starting-style:translate-x-full motion-reduce:transition-none max-sm:h-auto max-sm:max-h-[85dvh] max-sm:w-full max-sm:[transform:translateY(var(--drawer-swipe-movement-y,0px))] max-sm:rounded-t-2xl max-sm:border-t max-sm:border-l-0 max-sm:data-ending-style:translate-x-0 max-sm:data-ending-style:translate-y-full max-sm:data-starting-style:translate-x-0 max-sm:data-starting-style:translate-y-full"
+            className="border-border bg-popover text-popover-foreground flex h-full w-[420px] max-w-full [transform:translateX(var(--drawer-swipe-movement-x,0px))] flex-col border-l shadow-xl transition-transform duration-200 outline-none data-ending-style:translate-x-full data-starting-style:translate-x-full motion-reduce:transition-none max-sm:h-[85dvh] max-sm:w-full max-sm:[transform:translateY(var(--drawer-swipe-movement-y,0px))] max-sm:rounded-t-2xl max-sm:border-t max-sm:border-l-0 max-sm:data-ending-style:translate-x-0 max-sm:data-ending-style:translate-y-full max-sm:data-starting-style:translate-x-0 max-sm:data-starting-style:translate-y-full"
           >
             <div
               aria-hidden
@@ -89,7 +107,12 @@ export function PainelDeEspiar() {
                 tabIndex={-1}
                 className="text-lg font-semibold tracking-tight outline-none"
               >
-                {placaDoPainel}
+                <span className="sr-only">{placaDoPainel}</span>
+                {placaDoPainel ? (
+                  <span aria-hidden>
+                    <Placa placa={placaDoPainel} tamanho="g" />
+                  </span>
+                ) : null}
               </h2>
               <Drawer.Close
                 aria-label="Fechar painel"
@@ -99,13 +122,24 @@ export function PainelDeEspiar() {
               </Drawer.Close>
             </div>
             <div
+              key={placaDoPainel}
               data-painel-corpo
               className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4"
             >
-              <p role="status" className="text-muted-foreground text-sm">
-                Carregando o resumo…
-              </p>
+              {doPainel === null ? (
+                <ResumoCarregando />
+              ) : doPainel.situacao === "ok" ? (
+                <ResumoDaPlaca detalhe={doPainel.detalhe} aoEspiar={lista.trocarPlaca} />
+              ) : doPainel.situacao === "nao-encontrada" ? (
+                <PlacaNaoEncontrada placa={doPainel.placa} />
+              ) : (
+                <ErroDoResumo
+                  pendente={tentando}
+                  aoTentar={() => tentarDeNovo(() => router.refresh())}
+                />
+              )}
             </div>
+            {doPainel?.situacao === "ok" ? <BotaoDaFicha /> : null}
           </Drawer.Popup>
         </Drawer.Viewport>
       </Drawer.Portal>
