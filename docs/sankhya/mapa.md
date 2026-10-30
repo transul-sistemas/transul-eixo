@@ -2,7 +2,7 @@
 
 Resumo, por assunto, da planilha `docs/sankhya/Eixo_Dados_do_Sankhya.xlsx` (dicionário de campos, respostas do responsável pelo Sankhya e o SQL das 14 views). A planilha só tem nomes de campos, respostas e SQL; **não tem senha, chave nem credencial** (conferido em 30/10/2026; as duas ocorrências de "Senha" são rótulos de campo, sem valor).
 
-**O dicionário diz o que existe, não o que vem preenchido.** Medir o preenchimento é trabalho da descoberta na ponte (depois da Fase 3). As decisões que saem daqui estão em `docs/decisoes.md` (entrada de 31/10/2026).
+**O dicionário diz o que existe, não o que vem preenchido.** Medir o preenchimento é trabalho da descoberta na ponte (depois da Fase 3). As decisões que saem daqui estão em `docs/decisoes.md` (entrada de 30/10/2026).
 
 ## Como o Eixo fala com o Sankhya
 
