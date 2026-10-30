@@ -24,6 +24,22 @@ Modelo de entrada:
 
 ---
 
+## 31/10/2026 — Ficha da placa (2C-3): a aba na URL, o 404 de verdade e o que foi aceito
+
+- **Relato:** a aba da ficha (`?aba=linha-do-tempo`) não ficava ao recarregar.
+- **O que se verificou:** abrir direto com `?aba=`, clicar na aba e dar F5, e Voltar e Avançar, em desenvolvimento (Chromium do Playwright e Chrome real) e em produção (Playwright, e o HTML do servidor lido com `curl`): **a aba persistiu em todos os casos; a falha relatada não foi reproduzida.** Se voltar a acontecer, são necessários o navegador, a versão e os passos exatos.
+- **O que se achou e corrigiu, com teste que falhava antes:**
+  - **A aba agora é decidida no servidor:** a página lê `?aba=` dos `searchParams` (valor inválido vira Resumo), e o HTML já traz a aba certa, inclusive com o JavaScript desligado. Antes a aba inicial dependia de `useSearchParams` no navegador. Voltar e Avançar são lidos do endereço de verdade (`popstate`).
+  - **Ids de abas e painéis repetidos no documento:** o Next 16 mantém a página anterior escondida depois de uma navegação interna, então duas fichas tinham dois `aba-resumo`. Os ids agora são únicos por instância (`useId`) e o foco do teclado vai por referência, não por `getElementById`.
+  - **404 que contaminava:** o `generateStaticParams` com a placa de amostra fazia a `AAA0A00` responder 404 depois de uma placa mal escrita (em produção, conforme a ordem das requisições). Foi removido. Sem ele, a placa mal escrita voltava a dar 200 (a rota usa Partial Prerender e o casco sai antes de a página poder chamar `notFound()`). **A solução é um `proxy.ts` que confere só o formato da placa** (`lib/navegacao/proxy-da-ficha.ts`, com teste) e responde 404 antes de a rota renderizar. A página mantém o `notFound()` por segurança.
+- **Alinhamento:** em listas de rótulo e valor (o resumo: Valor FIPE e os demais) o valor fica à esquerda; à direita só em coluna de tabela (regra da moeda na tabela, inalterada).
+- **Aceitos por Alexandre:**
+  - **Janela fixa de 30 dias** na faixa colorida (a aba "Linha do tempo" mostra o histórico inteiro).
+  - **`export const instant = false`** na rota da ficha: a rota é dinâmica de ponta a ponta porque valida a placa antes de transmitir. É só um aviso de desenvolvimento do Next (nunca bloqueia o build).
+- **Quem decidiu:** Alexandre.
+
+---
+
 ## 30/10/2026 — Painel de espiar (2C-2): revisão independente e o que ela corrigiu
 
 - **Decisão:** a 2C-2 passou por revisão independente (só leitura) antes do PR. Cada achado virou teste que falhava antes da correção e passa depois (`e2e/espiar.historico.spec.ts`, `e2e/espiar.corrida.spec.ts`, `lib/dados/obter-placa.test.ts`).

@@ -160,6 +160,22 @@ describe("<ResumoDaPlaca>: formatos e valores", () => {
     expect(c["RENAVAM"]).toBe(d.renavam);
   });
 
+  it("em lista de rótulo e valor o dinheiro fica à esquerda, como os outros valores (à direita só em coluna de tabela)", async () => {
+    const comValores = TODAS.find((p) => p.km !== null && p.valorFipeCentavos !== null)!;
+    const marcacao = html(await detalhe(comValores.placa));
+    const dd = /<dt[^>]*>Valor FIPE<\/dt>\s*<dd[^>]*>([\s\S]*?)<\/dd>/.exec(marcacao)?.[1] ?? "";
+    expect(dd).toContain("R$");
+    expect(dd).toMatch(/class="[^"]*text-left/);
+    expect(dd).not.toMatch(/class="[^"]*text-right/);
+    // Mesmo vazio, o traço do valor fica à esquerda.
+    const vazio = TODAS.find((p) => p.valorFipeCentavos === null);
+    if (vazio) {
+      const m = html(await detalhe(vazio.placa));
+      const v = /<dt[^>]*>Valor FIPE<\/dt>\s*<dd[^>]*>([\s\S]*?)<\/dd>/.exec(m)?.[1] ?? "";
+      expect(v).not.toMatch(/class="[^"]*text-right/);
+    }
+  });
+
   it("valores vazios viram traço, nunca 'null' nem 'undefined'", async () => {
     for (const p of TODAS) {
       const t = texto(html(await detalhe(p.placa)));

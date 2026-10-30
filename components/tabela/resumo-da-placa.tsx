@@ -219,7 +219,7 @@ export function SecoesDoResumo({
             <span className="tabular-nums">{formatarKm(detalhe.km)}</span>
           </Campo>
           <Campo rotulo="Valor FIPE">
-            <Moeda valor={detalhe.valorFipeCentavos} />
+            <Moeda valor={detalhe.valorFipeCentavos} className="text-left" />
           </Campo>
           <Campo rotulo="RENAVAM">
             <span className="tabular-nums">{detalhe.renavam}</span>

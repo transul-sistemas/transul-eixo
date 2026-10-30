@@ -45,14 +45,10 @@ describe("<AbasDaFicha>: o padrão ARIA de abas", () => {
     const html = com("resumo");
     for (const aba of ABAS_DA_FICHA) {
       expect(html).toMatch(
-        new RegExp(
-          `id="aba-${aba.id}"[^>]*aria-controls="painel-${aba.id}"|aria-controls="painel-${aba.id}"[^>]*id="aba-${aba.id}"`,
-        ),
+        new RegExp(`id="([^"]+)-aba-${aba.id}"[^>]*aria-controls="\\1-painel-${aba.id}"`),
       );
       expect(html).toMatch(
-        new RegExp(
-          `id="painel-${aba.id}"[^>]*aria-labelledby="aba-${aba.id}"|aria-labelledby="aba-${aba.id}"[^>]*id="painel-${aba.id}"`,
-        ),
+        new RegExp(`id="([^"]+)-painel-${aba.id}"[^>]*aria-labelledby="\\1-aba-${aba.id}"`),
       );
     }
     expect([...html.matchAll(/role="tabpanel"/g)]).toHaveLength(6);
@@ -61,7 +57,7 @@ describe("<AbasDaFicha>: o padrão ARIA de abas", () => {
   it("só o painel ativo aparece; os outros ficam ocultos (o conteúdo existe, a troca é instantânea)", () => {
     const html = com("linha-do-tempo");
     const painel = (id: string) =>
-      new RegExp(`<div[^>]*id="painel-${id}"[^>]*>`).exec(html)?.[0] ?? "";
+      new RegExp(`<div[^>]*id="[^"]*-painel-${id}"[^>]*>`).exec(html)?.[0] ?? "";
     expect(painel("linha-do-tempo")).not.toContain("hidden");
     for (const id of ["resumo", "documentos", "resultado", "mapa", "mapa-mental"]) {
       expect(painel(id), id).toContain("hidden");
@@ -70,7 +66,7 @@ describe("<AbasDaFicha>: o padrão ARIA de abas", () => {
   });
 
   it("o painel é focável quando não tem nada focável dentro (tabindex 0)", () => {
-    expect(com("resumo")).toMatch(/<div[^>]*id="painel-resumo"[^>]*tabindex="0"/);
+    expect(com("resumo")).toMatch(/<div[^>]*id="[^"]*-painel-resumo"[^>]*tabindex="0"/);
   });
 
   it("os botões são type=button, com alvo de pelo menos 24 px e foco visível", () => {
@@ -99,5 +95,17 @@ describe("<AbasDaFicha>: o padrão ARIA de abas", () => {
       "Mapa",
       "Mapa mental",
     ]);
+  });
+
+  it("duas fichas no mesmo documento (o Next mantém a página anterior escondida) não repetem ids", () => {
+    const duas = renderToStaticMarkup(
+      <div>
+        <AbasDaFicha abas={ABAS_DA_FICHA} ativa="resumo" aoMudar={() => {}} conteudos={conteudos} />
+        <AbasDaFicha abas={ABAS_DA_FICHA} ativa="mapa" aoMudar={() => {}} conteudos={conteudos} />
+      </div>,
+    );
+    const ids = [...duas.matchAll(/\sid="([^"]+)"/g)].map((m) => m[1]!);
+    expect(ids.length).toBeGreaterThanOrEqual(12);
+    expect(new Set(ids).size).toBe(ids.length);
   });
 });

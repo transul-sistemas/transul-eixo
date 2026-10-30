@@ -17,7 +17,7 @@ import { somarDias } from "@/lib/dominio/dias";
 import { segmentosDaLinhaDoTempo } from "@/lib/dominio/linha-do-tempo";
 import { SIGLAS_DE_BAIXA } from "@/lib/dominio/status";
 import { ACOES, podeVerAcao } from "@/lib/navegacao/acoes";
-import type { AbaId } from "@/lib/navegacao/ficha";
+import { type AbaId, lerAba } from "@/lib/navegacao/ficha";
 import { perfilAtual } from "@/lib/navegacao/perfis";
 import { connection } from "next/server";
 import { type ParametrosDaBusca, paraParametros, simulacaoDe } from "../pagina-de-placas";
@@ -142,7 +142,7 @@ export async function FichaDaPlaca({
         <LinhaDoTempo segmentos={faixas} de={janela.de} ate={janela.ate} nome={ficha.placa} />
       }
     >
-      <AbasDaFichaNaUrl conteudos={conteudos} />
+      <AbasDaFichaNaUrl abaInicial={lerAba(parametros)} conteudos={conteudos} />
     </FichaDaRaiz>
   );
 }

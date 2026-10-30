@@ -1,6 +1,6 @@
 "use client";
 
-import type { KeyboardEvent, ReactNode } from "react";
+import { type KeyboardEvent, type ReactNode, useId, useRef } from "react";
 import { type AbaId, abaPorTecla } from "@/lib/navegacao/ficha";
 import { cn } from "@/lib/utils";
 
@@ -23,12 +23,19 @@ export function AbasDaFicha({
 }) {
   // A tecla vale para a aba que tem o foco (a que recebeu o evento), não para a `ativa`: a ativa vem
   // da URL e atrasa em relação ao foco quando as setas são apertadas em sequência rápida.
+  // Ids únicos por instância: o Next mantém a página anterior escondida no documento depois de uma
+  // navegação interna, e dois `aba-resumo` iguais quebram `aria-controls` e o foco por id.
+  const base = useId();
+  const botoes = useRef(new Map<AbaId, HTMLButtonElement>());
+  const idDaAba = (id: AbaId) => `${base}-aba-${id}`;
+  const idDoPainel = (id: AbaId) => `${base}-painel-${id}`;
+
   function aoTeclar(evento: KeyboardEvent<HTMLButtonElement>, atual: AbaId) {
     const proxima = abaPorTecla(atual, evento.key);
     if (proxima === null) return;
     evento.preventDefault();
     aoMudar(proxima);
-    document.getElementById(`aba-${proxima}`)?.focus();
+    botoes.current.get(proxima)?.focus();
   }
 
   return (
@@ -45,9 +52,13 @@ export function AbasDaFicha({
               key={aba.id}
               type="button"
               role="tab"
-              id={`aba-${aba.id}`}
+              id={idDaAba(aba.id)}
+              ref={(el) => {
+                if (el) botoes.current.set(aba.id, el);
+                else botoes.current.delete(aba.id);
+              }}
               aria-selected={selecionada}
-              aria-controls={`painel-${aba.id}`}
+              aria-controls={idDoPainel(aba.id)}
               tabIndex={selecionada ? 0 : -1}
               onClick={() => aoMudar(aba.id)}
               onKeyDown={(evento) => aoTeclar(evento, aba.id)}
@@ -67,8 +78,8 @@ export function AbasDaFicha({
         <div
           key={aba.id}
           role="tabpanel"
-          id={`painel-${aba.id}`}
-          aria-labelledby={`aba-${aba.id}`}
+          id={idDoPainel(aba.id)}
+          aria-labelledby={idDaAba(aba.id)}
           tabIndex={0}
           hidden={aba.id !== ativa}
           className="focus-visible:ring-ring/50 rounded-lg outline-none focus-visible:ring-3"

@@ -339,3 +339,122 @@ test.describe("ficha da placa: abrir pelo painel de espiar", () => {
     await expect(page.getByRole("dialog", { name: "Resumo da placa AAA0A00" })).toBeVisible();
   });
 });
+
+test.describe("ficha da placa: a aba sobrevive a recarregar, a Voltar e Avançar e à navegação interna", () => {
+  test("abrir direto com ?aba= e recarregar: a aba, o painel e a URL ficam, e continuam depois de um tempo", async ({
+    page,
+  }) => {
+    await abrirFicha(page, "AAA0A04", "?aba=linha-do-tempo");
+    for (const passo of ["carga", "F5"]) {
+      if (passo === "F5") await page.reload();
+      await expect(aba(page, "Linha do tempo"), passo).toHaveAttribute("aria-selected", "true");
+      await expect(painelAtivo(page).locator("table"), passo).toBeVisible();
+      await expect(page, passo).toHaveURL(/aba=linha-do-tempo/);
+      await page.waitForTimeout(1500); // a aba não pode voltar ao Resumo depois da hidratação
+      await expect(aba(page, "Linha do tempo"), `${passo} depois de 1,5 s`).toHaveAttribute(
+        "aria-selected",
+        "true",
+      );
+    }
+  });
+
+  test("clicar na aba e recarregar (F5): continua na mesma aba", async ({ page }) => {
+    await abrirFicha(page, "AAA0A04");
+    await aba(page, "Linha do tempo").click();
+    await expect(page).toHaveURL(/aba=linha-do-tempo/);
+    await page.reload();
+    await expect(aba(page, "Linha do tempo")).toHaveAttribute("aria-selected", "true");
+    await expect(painelAtivo(page).locator("table")).toBeVisible();
+    await page.waitForTimeout(1500);
+    await expect(aba(page, "Linha do tempo")).toHaveAttribute("aria-selected", "true");
+  });
+
+  test("Voltar e Avançar entre duas cargas devolvem a aba de cada entrada", async ({ page }) => {
+    await abrirFicha(page, "AAA0A04", "?aba=documentos");
+    await page.goto(FICHA("AAA0A04", "?aba=mapa"));
+    await expect(aba(page, "Mapa")).toHaveAttribute("aria-selected", "true");
+    await page.goBack();
+    await expect(aba(page, "Documentos")).toHaveAttribute("aria-selected", "true");
+    await expect(page).toHaveURL(/aba=documentos/);
+    await page.goForward();
+    await expect(aba(page, "Mapa")).toHaveAttribute("aria-selected", "true");
+    await expect(page).toHaveURL(/aba=mapa/);
+  });
+
+  test("a aba é decidida no servidor: com o JavaScript desligado o HTML já traz a aba do endereço", async ({
+    browser,
+    baseURL,
+  }) => {
+    const contexto = await browser.newContext({ javaScriptEnabled: false, baseURL });
+    const pagina = await contexto.newPage();
+    await pagina.goto(FICHA("AAA0A04", "?aba=linha-do-tempo"));
+    await expect(pagina.locator('[role="tab"][aria-selected="true"]')).toHaveText("Linha do tempo");
+    await expect(pagina.locator('[role="tabpanel"]:not([hidden])')).toHaveAttribute(
+      "id",
+      /linha-do-tempo/,
+    );
+    await pagina.goto(FICHA("AAA0A04", "?aba=lixo"));
+    await expect(pagina.locator('[role="tab"][aria-selected="true"]')).toHaveText("Resumo");
+    await contexto.close();
+  });
+
+  test("depois de navegar de uma ficha para outra (interna), os ids das abas continuam únicos", async ({
+    page,
+  }) => {
+    await abrirFicha(page, "AAA0A00");
+    await painelAtivo(page)
+      .getByRole("link", { name: /^Abrir ficha de / })
+      .first()
+      .click();
+    await expect(page).toHaveURL(/\/frota\/placas\/AAA0A0[1-9A-Z]/);
+    await page.waitForTimeout(800);
+    const repetidos = await page.evaluate(() => {
+      const ids = [...document.querySelectorAll('[role="tab"], [role="tabpanel"]')].map(
+        (e) => e.id,
+      );
+      return ids.filter((id, i) => ids.indexOf(id) !== i);
+    });
+    expect(repetidos, "ids de abas e painéis repetidos no documento").toEqual([]);
+  });
+
+  test("depois de navegar entre fichas, a seta leva o foco à aba da ficha que se vê", async ({
+    page,
+  }) => {
+    await abrirFicha(page, "AAA0A00");
+    await painelAtivo(page)
+      .getByRole("link", { name: /^Abrir ficha de / })
+      .first()
+      .click();
+    await expect(page).toHaveURL(/\/frota\/placas\/AAA0A0[1-9A-Z]/);
+    await page.waitForTimeout(800);
+    await aba(page, "Resumo").focus();
+    await page.keyboard.press("ArrowRight");
+    await expect(aba(page, "Linha do tempo")).toBeFocused();
+    await expect(aba(page, "Linha do tempo")).toHaveAttribute("aria-selected", "true");
+  });
+});
+
+test.describe("ficha da placa: o 404 de uma placa não contamina as outras", () => {
+  test("depois de placas mal escritas, as placas boas (inclusive AAA0A00) continuam 200, em qualquer ordem", async ({
+    request,
+  }) => {
+    const status = async (placa: string) => (await request.get(FICHA(placa))).status();
+    const esperado: [string, number][] = [
+      ["AAA0A00", 200],
+      ["aaa-0a00", 404],
+      ["AAA0A00", 200],
+      ["AAA0A04", 200],
+      ["AAA0A0", 404],
+      ["AAA0A04", 200],
+      ["ZZZ9Z99", 200],
+      ["%3Cscript%3E", 404],
+      ["AAA0A00", 200],
+      ["ZZZ9Z99", 200],
+      ["aaa0a00", 404],
+      ["AAA0A00", 200],
+    ];
+    for (const [placa, codigo] of esperado) {
+      expect(await status(placa), `${placa} -> ${codigo}`).toBe(codigo);
+    }
+  });
+});
