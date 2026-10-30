@@ -110,7 +110,7 @@ describe("montarGrupos: sem termo (fixados e recentes)", () => {
     expect(achatar(montarGrupos("", "Administrador", contexto)).map((i) => i.rotulo)).toEqual([
       "Frota › Placas",
     ]);
-    expect(montarGrupos("", "Gestor de frota", contexto)).toEqual([]);
+    expect(montarGrupos("", "Operacional", contexto)).toEqual([]);
   });
 });
 

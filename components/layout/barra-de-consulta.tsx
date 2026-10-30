@@ -2,8 +2,9 @@
 
 import { IconSearch } from "@tabler/icons-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useRef, useState } from "react";
+import { Fragment, type ReactNode, Suspense, useEffect, useRef, useState } from "react";
 import { formatarInteiro } from "@/components/formato/numero";
+import { useLista } from "@/components/tabela/pendencia-da-lista";
 import { Button } from "@/components/ui/button";
 import {
   alternarChip,
@@ -18,6 +19,10 @@ export interface ChipDeConsulta {
   readonly nome: string;
   /** Quantos itens o chip alcança. Vem pronta do banco; a tela não soma linhas. */
   readonly contagem?: number;
+  /** Chips de grupos diferentes aparecem separados (cada grupo conta ignorando a própria seleção). */
+  readonly grupo?: string;
+  /** Tooltip do chip (por exemplo, as siglas que ele agrupa). */
+  readonly dica?: string;
 }
 
 interface PropsVisuais {
@@ -31,6 +36,12 @@ interface PropsVisuais {
   /** Texto do campo enquanto a pessoa digita (antes de ir para a URL). */
   buscaDigitada?: string;
   aoDigitar?: (texto: string) => void;
+  /** Uma navegação está a caminho: chips e Limpar filtros não aceitam novo clique. */
+  ocupada?: boolean;
+  /** O painel de Mais filtros da tela; sem ele, o botão aparece desligado. */
+  maisFiltros?: ReactNode;
+  /** Parâmetros da URL que são filtros da tela (Mais filtros): contam como consulta ativa e saem no Limpar filtros. */
+  filtrosExtras?: readonly string[];
 }
 
 /**
@@ -45,13 +56,61 @@ export function BarraDeConsulta({
   aoNavegar,
   buscaDigitada,
   aoDigitar,
+  ocupada = false,
+  maisFiltros,
+  filtrosExtras = [],
 }: PropsVisuais) {
   const consulta = lerConsulta(parametros);
-  const ativa = consultaAtiva(consulta);
+  const ativa = consultaAtiva(consulta) || filtrosExtras.some((chave) => parametros.has(chave));
 
-  function ir(proxima: typeof consulta, substituir: boolean) {
-    const texto = escreverConsulta(parametros, proxima).toString();
+  function ir(proxima: typeof consulta, substituir: boolean, limpandoTudo = false) {
+    const novos = escreverConsulta(parametros, proxima);
+    if (limpandoTudo) for (const chave of filtrosExtras) novos.delete(chave);
+    const texto = novos.toString();
     aoNavegar?.(texto ? `${rota}?${texto}` : rota, substituir);
+  }
+
+  const temGrupos = chips.some((chip) => chip.grupo);
+  const grupos = agruparChips(chips);
+
+  function renderizarChip(chip: ChipDeConsulta) {
+    const ligado = consulta.chips.includes(chip.id);
+    return (
+      <button
+        key={chip.id}
+        type="button"
+        title={chip.dica}
+        aria-pressed={ligado}
+        aria-disabled={ocupada ? true : undefined}
+        // Zerado e desligado fica apagado, mas clicável; ligado continua normal para poder desligar.
+        data-zerado={chip.contagem === 0 && !ligado ? "true" : undefined}
+        onClick={() => {
+          if (ocupada) return; // aria-disabled não bloqueia o clique: a guarda é aqui
+          ir({ ...consulta, chips: alternarChip(consulta.chips, chip.id) }, false);
+        }}
+        className={cn(
+          "focus-visible:ring-ring/50 flex h-8 items-center gap-1.5 rounded-full border px-3 text-sm outline-none focus-visible:ring-3",
+          chip.contagem === 0 && !ligado && "opacity-50",
+          "aria-disabled:cursor-wait aria-disabled:opacity-60",
+          ligado
+            ? "bg-primary text-primary-foreground border-transparent"
+            : "border-border bg-card hover:bg-muted",
+        )}
+      >
+        <span>{chip.nome}</span>
+        {chip.contagem !== undefined ? (
+          <span
+            data-contagem={chip.id}
+            className={cn(
+              "rounded-full px-1.5 text-xs leading-5 tabular-nums",
+              ligado ? "bg-primary-foreground/20" : "bg-muted text-muted-foreground",
+            )}
+          >
+            {formatarInteiro(chip.contagem)}
+          </span>
+        ) : null}
+      </button>
+    );
   }
 
   return (
@@ -71,68 +130,80 @@ export function BarraDeConsulta({
         />
       </div>
 
-      <div
-        role="group"
-        aria-label="Filtros rápidos"
-        className="flex flex-wrap items-center gap-1.5"
-      >
-        {chips.map((chip) => {
-          const ligado = consulta.chips.includes(chip.id);
-          return (
-            <button
-              key={chip.id}
-              type="button"
-              aria-pressed={ligado}
-              onClick={() =>
-                ir({ ...consulta, chips: alternarChip(consulta.chips, chip.id) }, false)
-              }
-              className={cn(
-                "focus-visible:ring-ring/50 flex h-8 items-center gap-1.5 rounded-full border px-3 text-sm outline-none focus-visible:ring-3",
-                ligado
-                  ? "bg-primary text-primary-foreground border-transparent"
-                  : "border-border bg-card hover:bg-muted",
-              )}
-            >
-              <span>{chip.nome}</span>
-              {chip.contagem !== undefined ? (
-                <span
-                  data-contagem={chip.id}
-                  className={cn(
-                    "rounded-full px-1.5 text-xs leading-5 tabular-nums",
-                    ligado ? "bg-primary-foreground/20" : "bg-muted text-muted-foreground",
-                  )}
-                >
-                  {formatarInteiro(chip.contagem)}
-                </span>
-              ) : null}
-            </button>
-          );
-        })}
-      </div>
-
       <div className="ml-auto flex flex-wrap items-center gap-2">
         {ativa ? (
-          <Button variant="ghost" onClick={() => ir({ busca: "", chips: [] }, false)}>
+          <Button
+            variant="ghost"
+            aria-disabled={ocupada ? true : undefined}
+            className="aria-disabled:opacity-60"
+            onClick={() => {
+              if (ocupada) return;
+              ir({ busca: "", chips: [] }, false, true);
+            }}
+          >
             Limpar filtros
           </Button>
         ) : null}
-        <Button variant="outline" disabled title="Entra com a tabela (entrega 2C)">
-          Mais filtros
-        </Button>
-        <Button variant="outline" disabled title="Entra com a tabela (entrega 2C)">
+        {maisFiltros ?? (
+          <Button variant="outline" disabled title="Entra com a tabela (entrega 2C)">
+            Mais filtros
+          </Button>
+        )}
+        <Button variant="outline" disabled title="Entra na próxima entrega">
           Visões salvas
         </Button>
+      </div>
+
+      <div
+        role="group"
+        aria-label="Filtros rápidos"
+        className={cn(
+          // Ocupa a linha toda, embaixo da busca e das ações (a ordem do HTML é a da tela).
+          "flex w-full flex-wrap items-center",
+          // Com grupos rotulados, a linha quebra entre os grupos; sem grupos, entre os chips.
+          temGrupos ? "gap-x-5 gap-y-2" : "gap-1.5",
+        )}
+      >
+        {grupos.map((grupo) => {
+          const botoes = grupo.chips.map((chip) => renderizarChip(chip));
+          return grupo.rotulo ? (
+            <div
+              key={grupo.rotulo}
+              role="group"
+              aria-label={grupo.rotulo}
+              // Um grupo nunca quebra por dentro (no celular, onde não cabe, ele pode).
+              className="flex flex-wrap items-center gap-1.5 sm:flex-nowrap"
+            >
+              <span className="text-muted-foreground mr-0.5 text-xs">{grupo.rotulo}</span>
+              {botoes}
+            </div>
+          ) : (
+            <Fragment key="sem-grupo">{botoes}</Fragment>
+          );
+        })}
       </div>
     </div>
   );
 }
 
+/** Agrupa chips vizinhos do mesmo grupo, mantendo a ordem. Chips sem grupo ficam soltos. */
+function agruparChips(chips: readonly ChipDeConsulta[]) {
+  const grupos: { rotulo?: string; chips: ChipDeConsulta[] }[] = [];
+  for (const chip of chips) {
+    const ultimo = grupos.at(-1);
+    if (ultimo && ultimo.rotulo === chip.grupo) ultimo.chips.push(chip);
+    else grupos.push({ rotulo: chip.grupo, chips: [chip] });
+  }
+  return grupos;
+}
+
 const ESPERA_DA_BUSCA_MS = 250;
 
-function Ligada(props: Pick<PropsVisuais, "rotulo" | "chips">) {
+function Ligada(props: Pick<PropsVisuais, "rotulo" | "chips" | "maisFiltros" | "filtrosExtras">) {
   const rota = usePathname();
   const lidos = useSearchParams();
   const router = useRouter();
+  const lista = useLista();
   const parametros = new URLSearchParams(lidos.toString());
   const buscaDaUrl = lerConsulta(parametros).busca;
 
@@ -154,9 +225,11 @@ function Ligada(props: Pick<PropsVisuais, "rotulo" | "chips">) {
   });
   useEffect(() => () => clearTimeout(espera.current), []);
 
+  // Dentro de uma lista, a navegação roda na transição compartilhada: a tabela fica esmaecida.
   function navegar(url: string, substituir: boolean) {
-    if (substituir) router.replace(url);
-    else router.push(url);
+    const ir = () => (substituir ? router.replace(url) : router.push(url));
+    if (lista) lista.iniciar(ir);
+    else ir();
   }
 
   // Ação da barra (chip, limpar filtros): vale o que a pessoa acabou de escolher, e o que ainda
@@ -187,6 +260,7 @@ function Ligada(props: Pick<PropsVisuais, "rotulo" | "chips">) {
       parametros={parametros}
       rota={rota}
       aoNavegar={aoNavegar}
+      ocupada={lista?.pendente ?? false}
       buscaDigitada={rascunho}
       aoDigitar={aoDigitar}
     />
@@ -194,7 +268,9 @@ function Ligada(props: Pick<PropsVisuais, "rotulo" | "chips">) {
 }
 
 /** A barra de consulta ligada à URL da página: use esta nas telas. */
-export function BarraDeConsultaDaPagina(props: Pick<PropsVisuais, "rotulo" | "chips">) {
+export function BarraDeConsultaDaPagina(
+  props: Pick<PropsVisuais, "rotulo" | "chips" | "maisFiltros" | "filtrosExtras">,
+) {
   return (
     <Suspense fallback={<BarraDeConsulta {...props} />}>
       <Ligada {...props} />

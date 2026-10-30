@@ -54,6 +54,15 @@ describe("escreverConsulta", () => {
   });
 });
 
+describe("escreverConsulta e a página", () => {
+  it("mudar a busca ou os chips volta para a primeira página (tira o parâmetro pagina)", () => {
+    const params = new URLSearchParams("q=a&pagina=4&tam=50");
+    const novos = escreverConsulta(params, { busca: "ab", chips: [] });
+    expect(novos.has("pagina")).toBe(false);
+    expect(novos.get("tam")).toBe("50");
+  });
+});
+
 describe("alternarChip e consultaAtiva", () => {
   it("liga e desliga um chip", () => {
     expect(alternarChip([], "a")).toEqual(["a"]);

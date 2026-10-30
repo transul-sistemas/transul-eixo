@@ -9,7 +9,7 @@ import {
   proximoValorDoCampo,
 } from "./moeda-valor";
 
-/** Valor em reais na tela: com centavos, à direita, algarismos de largura fixa, negativo em vermelho. */
+/** Valor na tela (recebe centavos): com centavos, à direita, algarismos de largura fixa, negativo em vermelho. */
 export function Moeda({
   valor,
   className,

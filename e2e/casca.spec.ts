@@ -48,6 +48,39 @@ test.describe("casca pequena: sem rolagem horizontal", () => {
   });
 });
 
+test.describe("casca pequena: ambiente de teste", () => {
+  test("nada do Next em desenvolvimento cobre o botão Contexto, fechado ou aberto", async ({
+    page,
+  }) => {
+    await abrirHidratada(page, "/frota/placas");
+    await page.waitForTimeout(1500); // o indicador do Next monta depois da primeira pintura
+    const indicadorDoNext = await page.evaluate(
+      () =>
+        document
+          .querySelector("nextjs-portal")
+          ?.shadowRoot?.querySelector("[data-nextjs-dev-tools-button]") !== null &&
+        document.querySelector("nextjs-portal")?.shadowRoot !== undefined,
+    );
+    expect(indicadorDoNext, "o botão N do Next não pode existir nos testes").toBe(false);
+    const quemRecebeOToque = () =>
+      page.evaluate(() => {
+        const botao = document.querySelector('[aria-controls="contexto-global"]') as HTMLElement;
+        const caixa = botao.getBoundingClientRect();
+        const alvo = document.elementFromPoint(
+          caixa.x + caixa.width / 2,
+          caixa.y + caixa.height / 2,
+        );
+        return alvo?.closest('[aria-controls="contexto-global"]') ? "o botão" : alvo?.tagName;
+      });
+    expect(await quemRecebeOToque()).toBe("o botão");
+    await botaoContexto(page).click();
+    await expect(botaoContexto(page)).toHaveAttribute("aria-expanded", "true");
+    expect(await quemRecebeOToque()).toBe("o botão");
+    await botaoContexto(page).click();
+    await expect(botaoContexto(page)).toHaveAttribute("aria-expanded", "false");
+  });
+});
+
 test.describe("casca pequena: gaveta do menu", () => {
   test("a barra começa fechada, e o botão Abrir menu é fácil de tocar", async ({ page }) => {
     await abrirHidratada(page, "/inicio/tarefas");
