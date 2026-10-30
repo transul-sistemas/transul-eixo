@@ -1,6 +1,7 @@
 import { IconAlertCircle, IconSearchOff } from "@tabler/icons-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { SinalDeHidratacao } from "./sinal-de-hidratacao";
 
 /** Enquanto a página chega: linhas cinza do tamanho da tabela, para a tela não pular. */
 export function EsqueletoDaTabela({ linhas = 10, rotulo }: { linhas?: number; rotulo: string }) {
@@ -11,6 +12,7 @@ export function EsqueletoDaTabela({ linhas = 10, rotulo }: { linhas?: number; ro
       className="border-border bg-card overflow-hidden rounded-xl border"
     >
       <span className="sr-only">{rotulo}</span>
+      <SinalDeHidratacao regiao="lista" />
       <div className="border-border bg-muted/40 h-9 border-b" />
       {Array.from({ length: linhas }, (_, i) => (
         <div
@@ -45,6 +47,7 @@ export function ListaVazia({
       role="status"
       className="border-border bg-card flex flex-col items-center gap-3 rounded-xl border px-6 py-12 text-center"
     >
+      <SinalDeHidratacao regiao="lista" />
       <IconSearchOff aria-hidden className="text-muted-foreground size-8" />
       <h2 className="text-lg font-semibold">{titulo}</h2>
       <p className="text-muted-foreground max-w-[56ch] text-sm">{descricao}</p>
@@ -80,6 +83,7 @@ export function ErroDeCarregamento({
       role="alert"
       className="border-border bg-card flex flex-col items-center gap-3 rounded-xl border px-6 py-12 text-center"
     >
+      <SinalDeHidratacao regiao="lista" />
       <IconAlertCircle aria-hidden className="text-texto-negativo size-8" />
       <h2 className="text-lg font-semibold">{titulo}</h2>
       <p className="text-muted-foreground max-w-[56ch] text-sm">{descricao}</p>

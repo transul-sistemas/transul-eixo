@@ -5,6 +5,7 @@ import { createColumnHelper, tableFeatures, useTable } from "@tanstack/react-tab
 import { type ReactNode, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { cliqueAbreAPlaca } from "./clique-na-linha";
+import { SinalDeHidratacao } from "./sinal-de-hidratacao";
 
 /** Uma coluna da tabela: o título, o que ela mostra e (se houver) o campo de ordem no servidor. */
 export interface ColunaDeTabela<T extends object> {
@@ -97,6 +98,7 @@ export function TabelaDeDados<T extends object>({
       // O padding de rolagem evita que o foco do teclado pare atrás da coluna Placa e do cabeçalho fixos.
       className="border-border bg-card focus-visible:ring-ring/50 relative min-h-0 scroll-pt-12 scroll-pl-36 overflow-auto rounded-xl border outline-none focus-visible:ring-3"
     >
+      <SinalDeHidratacao regiao="lista" />
       <table
         aria-label={rotulo}
         aria-busy={pendente}

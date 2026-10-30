@@ -2,8 +2,9 @@
 
 import { Drawer } from "@base-ui/react/drawer";
 import { IconX } from "@tabler/icons-react";
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useRef, useState, useSyncExternalStore } from "react";
 import { useLista } from "./pendencia-da-lista";
+import { useHidratacaoPronta } from "./sinal-de-hidratacao";
 
 // Abaixo de 640 px o painel é a folha de baixo (arrasta-se para baixo para fechar); a partir daí é
 // o painel lateral de 420 px, à direita (arrasta-se para a direita).
@@ -42,13 +43,13 @@ export function PainelDeEspiar() {
   const titulo = useRef<HTMLHeadingElement>(null);
 
   // Aberto desde a primeira renderização (link direto), o base-ui marcaria `aria-hidden` nos irmãos
-  // antes de os trechos em Suspense hidratarem, e o React acusaria diferença no HTML. Então o painel
-  // de link direto espera a hidratação; depois disso, abrir por clique é imediato.
-  const [hidratado, setHidratado] = useState(false);
-  useEffect(() => {
-    const espera = setTimeout(() => setHidratado(true), 150);
-    return () => clearTimeout(espera);
-  }, []);
+  // antes de os trechos em Suspense (topo, barra de consulta, lista) hidratarem, e o React acusaria
+  // diferença no HTML. O painel de link direto espera cada região avisar que hidratou. Abrir por
+  // clique (outra placa que não a do link) é imediato e não espera.
+  const pronta = useHidratacaoPronta();
+  const [liberado, setLiberado] = useState(false);
+  if (pronta && !liberado) setLiberado(true);
+  const [placaDoLink] = useState(lista?.placaEspiada ?? null);
 
   // Durante a animação de saída a placa já é nula; guarda a última para o painel não se esvaziar.
   const placa = lista?.placaEspiada ?? null;
@@ -59,7 +60,7 @@ export function PainelDeEspiar() {
 
   return (
     <Drawer.Root
-      open={hidratado && placa !== null}
+      open={placa !== null && (liberado || placa !== placaDoLink)}
       onOpenChange={(aberto) => {
         if (!aberto) lista.fecharPainel();
       }}

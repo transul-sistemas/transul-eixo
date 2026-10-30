@@ -5,6 +5,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Fragment, type ReactNode, Suspense, useEffect, useRef, useState } from "react";
 import { formatarInteiro } from "@/components/formato/numero";
 import { useLista } from "@/components/tabela/pendencia-da-lista";
+import { useMarcarHidratacao } from "@/components/tabela/sinal-de-hidratacao";
 import { Button } from "@/components/ui/button";
 import {
   alternarChip,
@@ -204,6 +205,7 @@ function Ligada(props: Pick<PropsVisuais, "rotulo" | "chips" | "maisFiltros" | "
   const lidos = useSearchParams();
   const router = useRouter();
   const lista = useLista();
+  useMarcarHidratacao("consulta");
   const parametros = new URLSearchParams(lidos.toString());
   const buscaDaUrl = lerConsulta(parametros).busca;
 
