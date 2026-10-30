@@ -8,6 +8,30 @@ Modelo de entrada:
 
 ---
 
+## 30/10/2026 — Revisão independente da 2C-1 e o que a lista de placas ativou
+
+- **Corrigido, cada item com teste (visto falhar antes):**
+  - **Foco do teclado:** durante o carregamento, chips, Limpar filtros, cabeçalhos de ordenação, Modo foco, tamanho de página e Mais filtros ficam `aria-disabled` (com guarda no clique) em vez de `disabled`, que tirava o foco do botão acionado.
+  - **Foco coberto:** a caixa da tabela ganhou `scroll-padding` (topo e esquerda), para o foco não parar atrás do cabeçalho e da coluna Placa fixos.
+  - **Regiões vivas:** o resumo ("Mostrando X–Y de N") é `role="status"` e `aria-live="polite"`; a lista vazia é `status`; o esqueleto traz o texto "Carregando placas".
+  - **Desempate:** o teste agora usa entrada fora da ordem do id (antes, a lista de exemplo já saía ordenada e o teste não provava o desempate).
+  - **Barramento:** um componente do navegador (`"use client"`) não pode importar a camada de dados do servidor, e `fonte-de-exemplo` só entra por `lib/dados/fonte.ts` (e testes).
+  - **Cookie:** `Secure` em https (`montarCookie`), e cada lista tem o seu nome de cookie (o provedor deixou de gravar sempre o das placas).
+  - **Limites da URL:** busca até 200 caracteres e até 20 chips.
+  - **Janela baixa:** a altura fixa da tela de lista só vale com pelo menos 1024 × 640 px; abaixo disso a página rola (a 500 px de altura a tabela sumia).
+  - **Menores:** alvo mínimo de 24 px nos botões de ordenar, comparador de vigência com empate, comentário do componente de moeda.
+- **Aceito por ora, com o porquê:**
+  - **Placas está "pronta" no menu do Gestor de frota, mas só funciona com `EIXO_DADOS=exemplo`.** Em produção abriria a tela de erro. Nada vai à produção antes da Fase 3 (Vercel Pro e GitHub Team ainda são pendência); a Fase 3 troca a fonte.
+  - **Telas em `app/**/desenvolvimento/` são liberadas pelo barramento** e entram no build: se existirem, precisam conferir `EIXO_DADOS` como a fonte faz. Hoje não existe nenhuma.
+  - **O dado de exemplo viaja nos chunks de servidor** (o `import()` dinâmico os inclui), mas inerte: a fonte recusa rodar sem a variável.
+  - **Texto digitado antes de a barra de consulta hidratar se perde** (o fallback remonta), e o esqueleto de `?foco=1` mostra a barra lateral por um instante. Aceito.
+  - **`tam=1` é aceito** (sem piso além de 1).
+- **Vai para a 2C-2 e a 2C-3:** o texto dos alertas só aparece no tooltip e no leitor de tela, então o painel de espiar (2C-2) mostra cada alerta por extenso; a primeira coluna é `td`, não `th scope="row"`, e a linha ainda não é um link, então a ficha (2C-3) dá nome à linha e leva à placa.
+- **Regras de "Qualidade de interação" que a lista de placas ativou:** (2) estado na URL, com testes de ida e volta e e2e de recarregar; (3) paginação no servidor, tamanho lembrado, rolagem só na tabela, total que respeita o filtro; (4) esqueleto, vazio, erro com "Tentar de novo", chip zerado, clique duplo bloqueado, busca que cancela (guarda); (5) largura total, densidade e colunas por usuário, modo foco, mais colunas em 1920; (6) Esc e foco de volta nos menus. **Faltam** a regra 1 (fechar painel e diálogo, a partir da 2C-2), a 4 em gravação e edição concorrente e a 6 em "não salvo" e destrutivo (a partir da 2D).
+- **Quem decidiu:** Alexandre (autorizou a correção do que fosse importante e a abertura do PR).
+
+---
+
 ## 29/10/2026 — Lista de placas (2C-1, Tarefa 11): siglas por extenso e Mais filtros
 
 - **Decisão:**
