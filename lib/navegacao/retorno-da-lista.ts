@@ -1,11 +1,16 @@
 import { placaNormalizadaValida } from "@/lib/dominio/placa";
 
 // Voltar da ficha devolve a lista no mesmo ponto: a URL (página, ordem, filtros), a rolagem da
-// tabela e a linha. O registro é guardado ao sair da lista para a ficha e lido uma vez só quando a
-// lista volta. Vale por pouco tempo e só para a mesma URL; qualquer dúvida é "não restaurar".
+// tabela e a linha. O ponto é guardado ao sair da lista para a ficha e fica guardado (sem prazo)
+// enquanto a sessão da aba durar. Quem decide se ele é usado é a **volta armada**: só o Voltar e o
+// Avançar do navegador e os links de voltar da ficha (Voltar à lista e a trilha) armam a volta;
+// visita nova à lista (menu, link direto, recarregar) nunca é armada e começa no topo. O ponto só
+// vale para a mesma URL; qualquer dúvida é "não restaurar".
 
 export const CHAVE_DO_RETORNO = "eixo-retorno-da-lista";
-export const VALIDADE_DO_RETORNO_MS = 30 * 60 * 1000;
+export const CHAVE_DA_VOLTA_ARMADA = "eixo-retorno-armado";
+/** A volta chega em instantes depois de armada; passado isso, ela já não conta. */
+export const JANELA_DO_ARMADO_MS = 1_500;
 
 export interface Retorno {
   /** Caminho e parâmetros da lista (`/frota/placas?pagina=2`). */
@@ -19,7 +24,6 @@ export interface Retorno {
 }
 
 type Escrita = Pick<Storage, "setItem">;
-type Leitura = Pick<Storage, "getItem" | "removeItem">;
 
 export function guardarRetorno(armazenamento: Escrita, retorno: Retorno): void {
   try {
@@ -54,52 +58,59 @@ function lerFormato(bruto: string): Retorno | null {
   };
 }
 
-function dentroDoPrazo(retorno: Retorno, agora: number): boolean {
-  return retorno.guardadoEm <= agora && agora - retorno.guardadoEm <= VALIDADE_DO_RETORNO_MS;
+/** O ponto guardado, se é para esta URL. Não é gasto: Voltar, Avançar e Voltar de novo restauram sempre. */
+export function lerRetorno(
+  armazenamento: Pick<Storage, "getItem">,
+  urlAtual: string,
+): Retorno | null {
+  const retorno = espiarRetorno(armazenamento);
+  return retorno !== null && retorno.url === urlAtual ? retorno : null;
+}
+
+/** O ponto guardado, qualquer que seja a URL (o Voltar à lista da ficha só precisa saber para onde ir). */
+export function espiarRetorno(armazenamento: Pick<Storage, "getItem">): Retorno | null {
+  let bruto: string | null;
+  try {
+    bruto = armazenamento.getItem(CHAVE_DO_RETORNO);
+  } catch {
+    return null;
+  }
+  return bruto === null ? null : lerFormato(bruto);
+}
+
+/** Arma a volta: a próxima lista que abrir agora é uma volta e pode restaurar o ponto. */
+export function armarRetorno(armazenamento: Pick<Storage, "setItem">, agora: number): void {
+  try {
+    armazenamento.setItem(CHAVE_DA_VOLTA_ARMADA, String(agora));
+  } catch {
+    // Sem armazenamento: nada é armado e a lista abre no topo.
+  }
+}
+
+/** Desarma a volta: quem agiu sobre ela (o restaurador) apaga a marca, para um recarregar logo depois não restaurar. */
+export function desarmarRetorno(armazenamento: Pick<Storage, "removeItem">): void {
+  try {
+    armazenamento.removeItem(CHAVE_DA_VOLTA_ARMADA);
+  } catch {
+    // Sem como apagar: a janela curta ainda protege.
+  }
 }
 
 /**
- * O registro de retorno, se vale para esta URL agora. É de uma leitura só: o registro é apagado
- * sempre que existe, valendo ou não, para nunca restaurar a coisa errada mais tarde.
+ * A volta foi armada há pouco? Não gasta a marca: o Next reativa os efeitos da lista escondida mais
+ * de uma vez ao mostrá-la de novo, e todas as rodadas de uma mesma volta têm de enxergar a mesma
+ * resposta. A janela curta é o que impede uma visita nova de herdar uma volta antiga.
  */
-export function lerRetorno(
-  armazenamento: Leitura,
-  urlAtual: string,
-  agora: number,
-): Retorno | null {
+export function voltaArmada(armazenamento: Pick<Storage, "getItem">, agora: number): boolean {
   let bruto: string | null;
   try {
-    bruto = armazenamento.getItem(CHAVE_DO_RETORNO);
+    bruto = armazenamento.getItem(CHAVE_DA_VOLTA_ARMADA);
   } catch {
-    return null;
+    return false;
   }
-  if (bruto === null) return null;
-  try {
-    armazenamento.removeItem(CHAVE_DO_RETORNO);
-  } catch {
-    // Sem como apagar: segue, a validade e a conferência da URL ainda protegem.
-  }
-  const retorno = lerFormato(bruto);
-  if (retorno === null) return null;
-  if (retorno.url !== urlAtual) return null;
-  if (!dentroDoPrazo(retorno, agora)) return null;
-  return retorno;
-}
-
-/** O registro de retorno, se ainda vale, sem apagá-lo: o Voltar à lista da ficha só precisa saber para onde ir. */
-export function espiarRetorno(
-  armazenamento: Pick<Storage, "getItem">,
-  agora: number,
-): Retorno | null {
-  let bruto: string | null;
-  try {
-    bruto = armazenamento.getItem(CHAVE_DO_RETORNO);
-  } catch {
-    return null;
-  }
-  if (bruto === null) return null;
-  const retorno = lerFormato(bruto);
-  return retorno !== null && dentroDoPrazo(retorno, agora) ? retorno : null;
+  if (bruto === null || !/^\d+$/.test(bruto)) return false;
+  const armadoEm = Number(bruto);
+  return armadoEm <= agora && agora - armadoEm <= JANELA_DO_ARMADO_MS;
 }
 
 export type DestinoDoRetorno = { tipo: "linha"; placa: string } | { tipo: "tabela" };

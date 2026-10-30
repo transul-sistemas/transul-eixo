@@ -1,12 +1,15 @@
 import { describe, expect, it } from "vitest";
 import {
+  armarRetorno,
+  desarmarRetorno,
+  voltaArmada,
   destinoDoRetorno,
   espiarRetorno,
   guardarRetorno,
+  JANELA_DO_ARMADO_MS,
   lerRetorno,
   type Retorno,
   urlDeVolta,
-  VALIDADE_DO_RETORNO_MS,
 } from "./retorno-da-lista";
 
 function armazenamentoFalso(inicial: Record<string, string> = {}) {
@@ -29,68 +32,48 @@ const retorno = (parcial: Partial<Retorno> = {}): Retorno => ({
   guardadoEm: AGORA,
   ...parcial,
 });
+const CHAVE = "eixo-retorno-da-lista";
 
-describe("retorno da lista: voltar da ficha devolve ao mesmo ponto", () => {
+describe("retorno da lista: o ponto guardado ao sair para a ficha", () => {
   it("o que se guarda se lê na mesma URL, com a rolagem e a placa", () => {
     const a = armazenamentoFalso();
     guardarRetorno(a, retorno());
-    expect(lerRetorno(a, URL_DA_LISTA, AGORA + 5_000)).toEqual(retorno());
+    expect(lerRetorno(a, URL_DA_LISTA)).toEqual(retorno());
   });
 
-  it("é de uma leitura só: depois de lido, some", () => {
+  it("ler não gasta o registro: Voltar, Avançar e Voltar de novo restauram as duas vezes", () => {
     const a = armazenamentoFalso();
     guardarRetorno(a, retorno());
-    expect(lerRetorno(a, URL_DA_LISTA, AGORA)).not.toBeNull();
-    expect(lerRetorno(a, URL_DA_LISTA, AGORA)).toBeNull();
-    expect(a.dados.size).toBe(0);
+    expect(lerRetorno(a, URL_DA_LISTA)).not.toBeNull();
+    expect(lerRetorno(a, URL_DA_LISTA)).not.toBeNull();
+    expect(a.dados.size).toBe(1);
+  });
+
+  it("não tem prazo: o ponto vale enquanto a sessão da aba durar (quem decide é a volta armada)", () => {
+    const a = armazenamentoFalso();
+    guardarRetorno(a, retorno({ guardadoEm: AGORA - 24 * 60 * 60 * 1000 }));
+    expect(lerRetorno(a, URL_DA_LISTA)).not.toBeNull();
   });
 
   it("sem registro devolve nulo", () => {
-    expect(lerRetorno(armazenamentoFalso(), URL_DA_LISTA, AGORA)).toBeNull();
+    expect(lerRetorno(armazenamentoFalso(), URL_DA_LISTA)).toBeNull();
   });
 
-  it("não vale para outra URL (outra página, outro filtro) e o registro é descartado", () => {
+  it("não vale para outra URL (outra página, outro filtro), e o registro fica para a URL certa", () => {
     const a = armazenamentoFalso();
     guardarRetorno(a, retorno());
-    expect(
-      lerRetorno(a, "/frota/placas?pagina=3&ordem=-gestor&chip=em-atividade", AGORA),
-    ).toBeNull();
-    expect(a.dados.size).toBe(0);
+    expect(lerRetorno(a, "/frota/placas?pagina=3&ordem=-gestor&chip=em-atividade")).toBeNull();
+    expect(a.dados.size).toBe(1);
+    expect(lerRetorno(a, URL_DA_LISTA)).not.toBeNull();
   });
 
   it("a URL é comparada inteira, não só o caminho", () => {
     const a = armazenamentoFalso();
     guardarRetorno(a, retorno());
-    expect(lerRetorno(a, "/frota/placas", AGORA)).toBeNull();
-  });
-
-  it("expira: passada a validade não restaura", () => {
-    const a = armazenamentoFalso();
-    guardarRetorno(a, retorno());
-    expect(lerRetorno(a, URL_DA_LISTA, AGORA + VALIDADE_DO_RETORNO_MS + 1)).toBeNull();
-    expect(a.dados.size).toBe(0);
-  });
-
-  it("limite da validade: exatamente no prazo ainda vale", () => {
-    const a = armazenamentoFalso();
-    guardarRetorno(a, retorno());
-    expect(lerRetorno(a, URL_DA_LISTA, AGORA + VALIDADE_DO_RETORNO_MS)).not.toBeNull();
-  });
-
-  it("relógio que andou para trás (guardado no futuro) não vale", () => {
-    const a = armazenamentoFalso();
-    guardarRetorno(a, retorno({ guardadoEm: AGORA + 60_000 }));
-    expect(lerRetorno(a, URL_DA_LISTA, AGORA)).toBeNull();
+    expect(lerRetorno(a, "/frota/placas")).toBeNull();
   });
 
   it("registro estragado nunca quebra: texto que não é JSON, JSON de outro formato, campos errados", () => {
-    const chave = Object.keys(
-      (() => {
-        const a = armazenamentoFalso();
-        guardarRetorno(a, retorno());
-        return Object.fromEntries(a.dados);
-      })(),
-    )[0] as string;
     const estragados = [
       "isto não é json",
       "null",
@@ -104,11 +87,13 @@ describe("retorno da lista: voltar da ficha devolve ao mesmo ponto", () => {
       JSON.stringify({ ...retorno(), rolagemEsquerda: null }),
       JSON.stringify({ ...retorno(), url: 42 }),
       JSON.stringify({ ...retorno(), url: "https://outro-site.com/frota/placas" }),
+      JSON.stringify({ ...retorno(), url: "//outro-site.com/frota/placas" }),
       JSON.stringify({ ...retorno(), guardadoEm: "ontem" }),
     ];
     for (const texto of estragados) {
-      const a = armazenamentoFalso({ [chave]: texto });
-      expect(lerRetorno(a, URL_DA_LISTA, AGORA), texto).toBeNull();
+      const a = armazenamentoFalso({ [CHAVE]: texto });
+      expect(lerRetorno(a, URL_DA_LISTA), texto).toBeNull();
+      expect(espiarRetorno(a), texto).toBeNull();
     }
   });
 
@@ -125,50 +110,104 @@ describe("retorno da lista: voltar da ficha devolve ao mesmo ponto", () => {
       },
     };
     expect(() => guardarRetorno(quebrado, retorno())).not.toThrow();
-    expect(lerRetorno(quebrado, URL_DA_LISTA, AGORA)).toBeNull();
+    expect(lerRetorno(quebrado, URL_DA_LISTA)).toBeNull();
+    expect(espiarRetorno(quebrado)).toBeNull();
+    expect(() => armarRetorno(quebrado, AGORA)).not.toThrow();
+    expect(voltaArmada(quebrado, AGORA)).toBe(false);
   });
 
   it("guardar de novo substitui o registro anterior", () => {
     const a = armazenamentoFalso();
     guardarRetorno(a, retorno({ placa: "AAA0A04" }));
     guardarRetorno(a, retorno({ placa: "AAA0A10" }));
-    expect(lerRetorno(a, URL_DA_LISTA, AGORA)?.placa).toBe("AAA0A10");
+    expect(lerRetorno(a, URL_DA_LISTA)?.placa).toBe("AAA0A10");
   });
 
   it("a rolagem fracionada (zoom, tela de alta densidade) é aceita", () => {
     const a = armazenamentoFalso();
     guardarRetorno(a, retorno({ rolagemTopo: 150.5, rolagemEsquerda: 0 }));
-    expect(lerRetorno(a, URL_DA_LISTA, AGORA)).toMatchObject({
-      rolagemTopo: 150.5,
-      rolagemEsquerda: 0,
-    });
+    expect(lerRetorno(a, URL_DA_LISTA)).toMatchObject({ rolagemTopo: 150.5, rolagemEsquerda: 0 });
   });
 });
 
-describe("espiarRetorno: olhar o registro sem gastá-lo (o Voltar à lista da ficha)", () => {
-  it("devolve o registro válido e o deixa onde está para a lista ler depois", () => {
+describe("espiarRetorno: olhar o registro (o Voltar à lista da ficha)", () => {
+  it("devolve o registro, qualquer que seja a URL, e o deixa onde está", () => {
     const a = armazenamentoFalso();
     guardarRetorno(a, retorno());
-    expect(espiarRetorno(a, AGORA + 1_000)).toEqual(retorno());
+    expect(espiarRetorno(a)).toEqual(retorno());
     expect(a.dados.size).toBe(1);
-    expect(lerRetorno(a, URL_DA_LISTA, AGORA + 2_000)).not.toBeNull();
   });
-  it("não devolve o que expirou, está estragado ou não existe", () => {
+  it("sem registro, nulo", () => {
+    expect(espiarRetorno(armazenamentoFalso())).toBeNull();
+  });
+});
+
+describe("a volta armada: só Voltar, Avançar e os links de voltar restauram; visita nova começa no topo", () => {
+  it("sem armar, não há volta (visita nova pelo menu ou por link direto)", () => {
+    expect(voltaArmada(armazenamentoFalso(), AGORA)).toBe(false);
+  });
+
+  it("armada, vale para todas as rodadas da mesma volta (o Next reativa os efeitos da lista escondida)", () => {
     const a = armazenamentoFalso();
-    expect(espiarRetorno(a, AGORA)).toBeNull();
-    guardarRetorno(a, retorno());
-    expect(espiarRetorno(a, AGORA + VALIDADE_DO_RETORNO_MS + 1)).toBeNull();
-    expect(
-      espiarRetorno(armazenamentoFalso({ "eixo-retorno-da-lista": "lixo" }), AGORA),
-    ).toBeNull();
+    armarRetorno(a, AGORA);
+    expect(voltaArmada(a, AGORA + 100)).toBe(true);
+    expect(voltaArmada(a, AGORA + 300)).toBe(true);
   });
-  it("armazenamento que lança não derruba nada", () => {
-    const quebrado = {
-      getItem: () => {
-        throw new Error("bloqueado");
-      },
-    };
-    expect(espiarRetorno(quebrado, AGORA)).toBeNull();
+
+  it("a marca é curta: a volta chega em instantes; passada a janela, uma visita nova não restaura", () => {
+    const a = armazenamentoFalso();
+    armarRetorno(a, AGORA);
+    expect(voltaArmada(a, AGORA + JANELA_DO_ARMADO_MS + 1)).toBe(false);
+  });
+
+  it("no limite da janela ainda vale", () => {
+    const a = armazenamentoFalso();
+    armarRetorno(a, AGORA);
+    expect(voltaArmada(a, AGORA + JANELA_DO_ARMADO_MS)).toBe(true);
+  });
+
+  it("a janela é de poucos segundos, bem menos do que levaria uma visita nova", () => {
+    expect(JANELA_DO_ARMADO_MS).toBeLessThanOrEqual(3_000);
+  });
+
+  it("relógio que andou para trás não vale", () => {
+    const a = armazenamentoFalso();
+    armarRetorno(a, AGORA + 60_000);
+    expect(voltaArmada(a, AGORA)).toBe(false);
+  });
+
+  it("marca estragada nunca vale", () => {
+    for (const texto of ["", "abc", "null", "-5", "NaN", "{}"]) {
+      const a = armazenamentoFalso({ "eixo-retorno-armado": texto });
+      expect(voltaArmada(a, AGORA), texto).toBe(false);
+    }
+  });
+
+  it("desarmar apaga a marca (o restaurador desarma ao agir, e um recarregar logo depois não restaura)", () => {
+    const a = armazenamentoFalso();
+    armarRetorno(a, AGORA);
+    expect(voltaArmada(a, AGORA + 10)).toBe(true);
+    desarmarRetorno(a);
+    expect(voltaArmada(a, AGORA + 20)).toBe(false);
+    expect(a.dados.size).toBe(0);
+  });
+
+  it("desarmar sem marca, ou com armazenamento que lança, não faz nada", () => {
+    expect(() => desarmarRetorno(armazenamentoFalso())).not.toThrow();
+    expect(() =>
+      desarmarRetorno({
+        removeItem: () => {
+          throw new Error("bloqueado");
+        },
+      }),
+    ).not.toThrow();
+  });
+
+  it("armar não mexe no ponto guardado", () => {
+    const a = armazenamentoFalso();
+    guardarRetorno(a, retorno());
+    armarRetorno(a, AGORA);
+    expect(lerRetorno(a, URL_DA_LISTA)).not.toBeNull();
   });
 });
 

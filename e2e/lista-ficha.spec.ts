@@ -212,6 +212,10 @@ test.describe("voltar da ficha devolve a lista ao mesmo ponto", () => {
     await page.goBack();
     await expect(painel(page, placa)).toBeVisible();
     await expect(page).toHaveURL(new RegExp(`pagina=2.*espiar=${placa}|espiar=${placa}.*pagina=2`));
+    // A lista devolve a rolagem logo depois de reaparecer: espera isso antes de fechar o painel.
+    await expect
+      .poll(async () => caixa(page).evaluate((c) => Math.round(c.scrollTop)), { timeout: 10_000 })
+      .toBeGreaterThanOrEqual(Math.round(rolagem.topo) - 2);
     await page.keyboard.press("Escape");
     await expect(painel(page, placa)).toBeHidden();
     const depois = await caixa(page).evaluate((c) => ({
@@ -280,5 +284,81 @@ test.describe("voltar da ficha devolve a lista ao mesmo ponto", () => {
     await page.goBack();
     await expect(page.getByTestId("resumo-da-pagina")).toContainText("Mostrando 26–");
     await expect(caixa(page)).toBeFocused({ timeout: 10_000 });
+  });
+});
+
+test.describe("só Voltar, Avançar e os links de voltar restauram; visita nova à lista começa no topo", () => {
+  async function listaBaseRolada(page: Page) {
+    await abrirHidratada(page, LISTA);
+    await caixa(page).evaluate((c) => (c.scrollTop = 150));
+    expect(await caixa(page).evaluate((c) => c.scrollTop)).toBeGreaterThan(0);
+    const placa = (await linhas(page)
+      .nth(4)
+      .locator("[data-espiar-placa]")
+      .getAttribute("data-espiar-placa"))!;
+    await clicarComOMouse(page, linkDaFicha(page, placa));
+    await expect(page.getByRole("heading", { level: 1, name: placa })).toBeVisible();
+    return placa;
+  }
+
+  test("visita nova pelo menu (a mesma URL da lista guardada) começa no topo, sem foco na placa", async ({
+    page,
+  }) => {
+    const placa = await listaBaseRolada(page);
+    await page
+      .getByRole("navigation", { name: /principal|menu/i })
+      .first()
+      .getByRole("link", { name: /^Placas/ })
+      .first()
+      .click();
+    await expect(page).toHaveURL(/\/frota\/placas$/);
+    await expect(page.getByTestId("resumo-da-pagina")).toBeVisible();
+    await page.waitForTimeout(800);
+    expect(await caixa(page).evaluate((c) => c.scrollTop)).toBe(0);
+    const focada = await page.evaluate(() =>
+      document.activeElement?.getAttribute("data-ficha-placa"),
+    );
+    expect(focada).not.toBe(placa);
+  });
+
+  test("visita nova por link direto (a mesma URL da lista guardada) começa no topo", async ({
+    page,
+  }) => {
+    await listaBaseRolada(page);
+    await page.goto(LISTA);
+    await expect(page.getByTestId("resumo-da-pagina")).toBeVisible();
+    await page.waitForTimeout(800);
+    expect(await caixa(page).evaluate((c) => c.scrollTop)).toBe(0);
+  });
+
+  test("Voltar, Avançar e Voltar de novo restauram as duas vezes", async ({ page }) => {
+    const placa = await listaBaseRolada(page);
+    await page.goBack();
+    await expect(linkDaFicha(page, placa)).toBeFocused({ timeout: 10_000 });
+    expect(await caixa(page).evaluate((c) => Math.round(c.scrollTop))).toBeGreaterThan(100);
+    await page.goForward();
+    await expect(page.getByRole("heading", { level: 1, name: placa })).toBeVisible();
+    await page.goBack();
+    await expect(linkDaFicha(page, placa)).toBeFocused({ timeout: 10_000 });
+    expect(await caixa(page).evaluate((c) => Math.round(c.scrollTop))).toBeGreaterThan(100);
+  });
+
+  test("a trilha restaura mesmo na mesma URL da lista", async ({ page }) => {
+    const placa = await listaBaseRolada(page);
+    await page
+      .getByRole("navigation", { name: "Trilha" })
+      .getByRole("link", { name: "Placas" })
+      .click();
+    await expect(linkDaFicha(page, placa)).toBeFocused({ timeout: 10_000 });
+    expect(await caixa(page).evaluate((c) => Math.round(c.scrollTop))).toBeGreaterThan(100);
+  });
+
+  test("recarregar a lista (F5) nunca restaura", async ({ page }) => {
+    await listaBaseRolada(page);
+    await page.goBack();
+    await expect(page.getByTestId("resumo-da-pagina")).toBeVisible();
+    await page.reload();
+    await page.waitForTimeout(800);
+    expect(await caixa(page).evaluate((c) => c.scrollTop)).toBe(0);
   });
 });

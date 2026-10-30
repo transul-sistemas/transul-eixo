@@ -3,6 +3,7 @@
 import { type ComponentProps, useSyncExternalStore } from "react";
 import { LinkComContexto } from "@/components/navegacao/link-com-contexto";
 import { espiarRetorno, urlDeVolta } from "@/lib/navegacao/retorno-da-lista";
+import { armarVoltaDaLista } from "./retorno-da-lista-no-navegador";
 
 type Props = Omit<ComponentProps<typeof LinkComContexto>, "href"> & {
   /** A lista para onde o link leva (`/frota/placas`). */
@@ -25,12 +26,22 @@ export function LinkComRetorno({ href, rota, ...resto }: Props) {
     semAssinatura,
     () => {
       try {
-        return urlDeVolta(rota, href, espiarRetorno(window.sessionStorage, Date.now()));
+        return urlDeVolta(rota, href, espiarRetorno(window.sessionStorage));
       } catch {
         return null; // sessionStorage bloqueado: link comum
       }
     },
     () => null,
   );
-  return <LinkComContexto href={destino ?? href} {...resto} />;
+  return (
+    <LinkComContexto
+      href={destino ?? href}
+      {...resto}
+      onClick={(evento) => {
+        resto.onClick?.(evento);
+        // Leva ao ponto guardado: a lista que abrir é uma volta e restaura a rolagem e o foco.
+        if (destino) armarVoltaDaLista();
+      }}
+    />
+  );
 }

@@ -3,6 +3,7 @@ import { AreaPrincipal } from "@/components/navegacao/area-principal";
 import { AvisoDeDispositivo } from "@/components/navegacao/aviso-de-dispositivo";
 import { BarraLateral } from "@/components/navegacao/barra-lateral";
 import { TopoDoSistema, TopoReservado } from "@/components/navegacao/topo-do-sistema";
+import { ArmadorDaVolta } from "@/components/tabela/retorno-da-lista-no-navegador";
 import { perfilAtual, USUARIO_PROVISORIO } from "@/lib/navegacao/perfis";
 
 // Telas de lista: a partir de 1024 px de largura e 640 px de altura a página tem a altura da janela e
@@ -16,6 +17,7 @@ export default function LayoutDoSistema({ children }: { children: ReactNode }) {
       >
         Pular para o conteúdo
       </a>
+      <ArmadorDaVolta />
       <BarraLateral perfil={perfilAtual()} usuario={USUARIO_PROVISORIO} />
       <AreaPrincipal>
         <Suspense fallback={<TopoReservado />}>
