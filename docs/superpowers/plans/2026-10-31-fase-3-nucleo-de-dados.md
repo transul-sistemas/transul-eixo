@@ -2,7 +2,7 @@
 
 > **Para quem for executar:** use a skill `executing-plans` (ou `subagent-driven-development`) fatia por fatia. Cada fatia tem teste antes, checkpoint e pull request próprio. **Este documento é só plano: nenhum código, nenhuma migration e nenhum comando de banco foram escritos ou rodados.**
 
-**Status:** versão 2, 31/10/2026. Plano **aprovado por Alexandre** com as respostas registradas na seção "Decisões de Alexandre". Restam as perguntas da seção "Perguntas em aberto". **O código só começa depois do merge do PR #21 (assistentes da Frota); Alexandre avisa.**
+**Status:** versão 3, 31/10/2026. Plano **aprovado por Alexandre**, com as respostas registradas na seção "Decisões de Alexandre". Duas coisas continuam abertas e travam fatias: a **conferência do Apêndice A** (trava a 3.1 e a 3.5) e a **regra de reconhecimento de bitrem, bitrezão e rodotrem**, que é da equipe (a **fatia 3.4 só começa depois que Alexandre responder**). **O código só começa depois do merge dos PRs #21 (assistentes da Frota) e #22 (este plano); Alexandre avisa, e a primeira fatia é a 3.0.**
 **Base:** `main` em `a476641`. O PR #21 ainda está aberto: `FonteDeEscrita`, `lib/dados/escrita.ts`, as Server Actions de `app/(sistema)/frota/placas/acoes.ts` e `lib/dominio/conjunto.ts` só existem nele.
 **Modelo:** o mais forte nesta fase (constraints, `EXCLUDE`, triggers de regra e RLS no banco; a tela só espelha).
 
@@ -28,12 +28,22 @@
 | --- | --- | --- |
 | 1 | Login real (Supabase Auth) em fatia própria, perto do fim. Segundo fator **depois** (fora da Fase 3). Até lá, perfis provisórios no app e RLS testado por perfil no banco | Fatia 3.8; seção 6 |
 | 2 | Equipamento: **número de série** como chave, único por tipo; guardar também o identificador interno do Sankhya, se houver | Seção 1 |
+| 3 | Pessoa e Parceiro: **uma identidade** (CPF/CNPJ), papéis à parte, duas fichas | Seção 1 |
 | 4 | Operação vem do **CR vigente** (no Sankhya, `AD_OPERACAO` do centro). Exceção: implemento **engatado** herda a operação do cavalo (calculada, nunca gravada) e o custo fica no CR da própria placa; implemento **solto** mantém a última operação; centro sem operação gera alerta | Seção 2 |
 | 5 | CR: guardar o `CODCENCUS` numérico (único, chave do Sankhya) **e** o código de exibição; a tela deixa de impor `CR-0000` | Seções 2 e 7 |
-| 7 | Régua por camadas de prioridade: baixada, fora da frota, impedida, sem motorista, atividade. Implemento engatado usa a atividade do cavalo. Manutenção de implemento engatado deixa o conjunto impedido ou o gestor desengata. Apêndice A corrigido contra o catálogo de siglas | Seção 4; Apêndice A |
-| 8 | Nomenclatura de conjuntos configurável e renomeável, com os nomes abaixo. Conjunto misto é bloqueado. Bitrem e bitrezão se distinguem por eixos (em geral 7 e 9; **confirmar com a equipe**) | Seção 3 |
+| 6 | Vigência em `timestamptz`. **Proibir buraco** em posse e em gestor da carteira (placa sem dono ou sem responsável); nos demais vínculos, só alerta | Seção 2 |
+| 7 | Régua por camadas de prioridade: baixada, fora da frota, impedida, sem motorista, atividade. Implemento engatado usa a atividade do cavalo. Manutenção de implemento engatado deixa o conjunto impedido ou o gestor desengata | Seção 4 |
+| 8 | Nomenclatura de conjuntos configurável e renomeável, com os nomes da seção 3. Conjunto misto é bloqueado. Bitrem e bitrezão se distinguem por eixos (em geral 7 e 9; **confirmar com a equipe**) | Seção 3 |
+| 9 | Correção local de campo vale na hora, com motivo; a alçada entra depois | Seção 5 |
 | 10 | Usuário criado no Studio; o Eixo só vincula à Pessoa. O wizard "Novo usuário" fica para depois | Seção 6 |
-| 12 | CPF mascarado por padrão e completo só com permissão específica, aplicado **no banco**, não só na tela | Seções 1 e 6 |
+| 11 | O Operacional tem **escopo por filial** já agora | Seção 6 |
+| 12 | CPF mascarado por padrão e completo só com permissão específica, aplicado **no banco** | Seções 1 e 6 |
+| 13 | e2e em modo banco **noturno e sob demanda**, não a cada pull request | Seção 9 |
+| 14 | Apêndice A: Alexandre confere linha a linha. **Já fixo:** as siglas de operação (DOp, ACe, CAr, CAn, ETc, ADe, DEs, ETv) valem só para composição e caminhão; VAz e PÁT ficam em atividade | Seção 4; Apêndice A |
+| 15 | Aceito o rascunho: FOg e FEr em "sem motorista"; PÁT e VAz em atividade; **cavalo impedido deixa o conjunto impedido**; implemento engatado herda **só** a atividade do cavalo | Seção 4 |
+| 16 | Eixos do implemento no **modelo**, com correção local. A regra de rodotrem e bitrezão é da equipe: **não será inventada**, e a fatia 3.4 só começa depois da resposta de Alexandre | Seção 3 |
+
+**Interpretações aceitas:** a operação do implemento solto é a do cavalo no desengate, gravada **uma vez**, no fechamento da composição; o custo fica no CR da própria placa; só a atividade é herdada; o CPF fica em duas tabelas mais uma visão mascarada.
 
 ## O que existe hoje (ponto de partida)
 
@@ -64,7 +74,7 @@
 - O documento (CPF com 11 dígitos, CNPJ com 14) é guardado só com dígitos, com dígito verificador conferido por `nucleo.documento_valido(text)` (imutável) dentro de um `CHECK`; `unique` sem filtro. `tipo_de_documento` é coluna gerada.
 - **CPF mascarado no banco (decisão 12).** O documento completo mora em `nucleo.pessoa_documento` (1 para 1 com `pessoa`), com RLS que só abre com a permissão específica `pessoas.ver_documento`. `nucleo.pessoa` carrega `documento_mascarado` (coluna gerada, por exemplo `***.456.789-**`), visível a quem vê pessoas. Uma visão `nucleo.pessoa_para_leitura` (`security_invoker`) traz sempre a versão mascarada; nenhuma tela lê `pessoa_documento` sem a permissão. Escolhi duas tabelas, e não uma visão que esconde coluna, porque visão que roda com o dono ignora a RLS e visão que roda com o usuário não consegue esconder uma coluna que ele já pode ler.
 - Campos mínimos: `nome`, `codparc` do Sankhya (opcional, único quando existe), `e-mail` (opcional). Dados sensíveis (CNH, folha, saúde) ficam em `pessoas` e `rh_clinico`, fora desta fase. O documento não aceita correção local: um `BEFORE UPDATE` barra a mudança.
-- Pessoa e Parceiro: uma tabela de identidade, com o papel (motorista, gestor, acionista, agregado, usuário) em outras tabelas (`parceiros.parceiro` guarda o `CODPARC`). Está na pergunta 3.
+- Pessoa e Parceiro (decisão 3): uma única identidade (CPF/CNPJ), com o papel (motorista, gestor, acionista, agregado, usuário) em outras tabelas (`parceiros.parceiro` guarda o `CODPARC`) e **duas fichas** na tela.
 
 **Ativo (`nucleo.ativo`)**
 - `renavam` é a chave permanente dos quatro tipos emplacados (Cavalo, Implemento, Caminhão e Apoio): 11 dígitos com dígito verificador (a regra de `validarRenavam`), `unique`, imutável por trigger.
@@ -97,7 +107,7 @@ Todas em `nucleo`, todas com a `EXCLUDE` da convenção 2, origem da data e excl
 - **Alerta:** CR vigente sem operação gera o alerta `cr_sem_operacao` (a visão de alertas é a mesma que a lista usa). Sem CR vigente, a placa fica sem operação e também alerta.
 - Cavalo, caminhão, apoio e equipamento: sempre o degrau 3.
 
-**Lacunas:** a restrição só proíbe sobreposição; buraco é permitido no banco e vira alerta. Para posse e gestor da carteira a proposta é impedir o buraco depois da primeira vigência (pergunta 6).
+**Lacunas (decisão 6):** a `EXCLUDE` só proíbe sobreposição. Para **posse** e **gestor da carteira** o banco também **proíbe o buraco** (placa sem dono ou sem responsável): entre vigências consecutivas não há intervalo e, enquanto o ativo não for baixado, existe sempre uma vigência em aberto. Só se fecha sem sucessora junto de um evento de baixa (VND ou SUC) na mesma transação. É um trigger de restrição adiado, e a função que cadastra o ativo cria posse e gestor na mesma transação. Nos demais vínculos (placa, CR, composição, meta e custódia) o buraco é permitido e vira **alerta**. Testes: buraco em posse e em gestor falha; fechar com a baixa passa; buraco em CR passa e gera o alerta.
 
 **Origem da data:** `derivada` (primeiro e último lançamento do veículo naquele centro, só a ponte calcula), `observada` (a sincronização viu a mudança de bloqueio) ou `informada` (assistente). Na Fase 3 só nasce `informada`; as outras existem no tipo e têm teste de aceitação porque a ponte as usará.
 
@@ -113,7 +123,7 @@ Todas em `nucleo`, todas com a `EXCLUDE` da convenção 2, origem da data e excl
 - **Conjunto misto bloqueado:** trigger de restrição adiado (`initially deferred`) em `composicao`: ao fim da transação, todos os implementos vigentes de um cavalo têm a mesma `carroceria_id`. O assistente pode trocar vários de uma vez.
 - **"Meta do conjunto" só no cavalo:** `meta_do_conjunto.cavalo_id` referencia `(id, tipo)` fixando `'cavalo'`. Os implementos herdam a meta pela composição (função, não coluna copiada).
 - **Nomenclatura (decisão 8):** duas tabelas configuráveis e renomeáveis pelo Cadastros.
-  - `config.configuracao_de_conjunto`: `simples`, `bi`, `bitrezao` e `rodo`, cada uma com a regra que a reconhece (quantidade de implementos e faixa de eixos, **editáveis**). Bitrem e bitrezão se distinguem pelos eixos (em geral 7 e 9): **confirmar com a equipe**; a regra do rodotrem também (pergunta 16).
+  - `config.configuracao_de_conjunto`: `simples`, `bi`, `bitrezao` e `rodo`. **A regra que reconhece cada uma (quantidade de implementos, eixos, tipo de engate) é da equipe e não está definida; nada disso é inventado neste plano.** A tabela guarda a regra como dado editável, com as colunas vazias até a equipe responder. Bitrem e bitrezão se distinguem por eixos (em geral 7 e 9, **a confirmar com a equipe**); a regra do rodotrem também. **A fatia 3.4 só começa depois da resposta de Alexandre.** Os **eixos de cada implemento** vêm do **modelo** (`config.modelo.eixos`), com correção local (o `eixos` do ativo é campo corrigível, seção 5).
   - `config.nomenclatura_de_conjunto (carroceria_id, configuracao_id, nome)`, com estes nomes de partida:
 
 | Carroceria | simples | bi | bitrezão | rodo |
@@ -124,7 +134,7 @@ Todas em `nucleo`, todas com a `EXCLUDE` da convenção 2, origem da data e excl
 
   - `nucleo.nome_do_conjunto(cavalo_id)` calcula o nome na hora, **nunca gravado na placa**. Renomear uma linha muda o nome em todo lugar. Conjunto misto não tem nome (é bloqueado).
 
-**Testes antes:** carroceria em não-implemento falha; implemento sem carroceria falha; composição com cavalo que é implemento falha; Sider e Graneleira no mesmo cavalo falha **no fim da transação**, e trocar dois Sider por dois Graneleira na mesma transação passa; quarto implemento falha; meta em implemento falha; o nome do conjunto muda ao renomear a nomenclatura sem tocar na placa; cada um dos 12 nomes aparece para a sua carroceria e configuração; implemento herda a meta do cavalo pela composição e a perde ao sair.
+**Testes antes:** carroceria em não-implemento falha; implemento sem carroceria falha; composição com cavalo que é implemento falha; Sider e Graneleira no mesmo cavalo falha **no fim da transação**, e trocar dois Sider por dois Graneleira na mesma transação passa; quarto implemento falha; meta em implemento falha; o nome do conjunto muda ao renomear a nomenclatura sem tocar na placa; os 12 nomes existem no catálogo, por carroceria e configuração (3.1), e o cálculo de qual configuração vale para cada conjunto só é testado na 3.4, com a regra da equipe; implemento herda a meta do cavalo pela composição e a perde ao sair.
 
 ## 4. Régua de status
 
@@ -135,8 +145,10 @@ Todas em `nucleo`, todas com a `EXCLUDE` da convenção 2, origem da data e excl
 1. **Baixada:** VND, SUC.
 2. **Fora da frota:** ALU, EMP, VEN.
 3. **Impedida:** SIN, MAt, MAc, MAv, MAN, REF, SDo, DOC.
-4. **Sem motorista:** SMo, FOg, FEr (pergunta 15).
-5. **Atividade:** DOp, ACe, CAr, CAn, ETc, ADe, DEs, ETv, VAz e PÁT (PÁT e VAz, pergunta 15).
+4. **Sem motorista:** SMo, FOg, FEr.
+5. **Atividade:** DOp, ACe, CAr, CAn, ETc, ADe, DEs, ETv, VAz e PÁT.
+
+**Siglas de operação** (DOp, ACe, CAr, CAn, ETc, ADe, DEs, ETv) valem **só para composição e caminhão** (`config.status.tipos_validos`): apoio, equipamento e implemento solto nunca as recebem. O implemento engatado as vê pela herança do cavalo. VAz e PÁT são de atividade e valem para todos os tipos.
 
 **Eventos com hora:** `nucleo.evento_de_status (ativo_id, camada, sigla, em timestamptz, origem, registrado_por, registrado_em, justificativa)`. Cada camada tem **um estado por vez**; um evento novo troca o da sua camada, e `sigla` nula **encerra** a camada (saiu da manutenção). Chave estrangeira composta `(sigla, camada)` garante que a sigla é da camada. Só inserção (correção é um evento novo com justificativa, nunca `UPDATE`), vários por dia, único por `(ativo_id, camada, em)` para a reentrada ser inofensiva. `origem`: `operacional`, `sankhya`, `manual` ou `derivado`.
 
@@ -146,7 +158,7 @@ Todas em `nucleo`, todas com a `EXCLUDE` da convenção 2, origem da data e excl
 - **Atividade:** usa a atividade do cavalo (camada 5), calculada, nunca gravada no implemento.
 - **Baixada, fora da frota, impedida e sem motorista** são do próprio implemento.
 - **Manutenção ou impedimento de implemento engatado:** o conjunto fica **impedido** (a situação do cavalo mostra impedida, com a placa do implemento como causa) **ou** o gestor desengata. O banco nunca desengata sozinho: o assistente "Registrar manutenção do implemento" pergunta, e "desengatar" fecha a composição e grava a `operacao_na_saida_id` na mesma transação.
-- Cavalo impedido com implementos engatados: pergunta 15.
+- **Cavalo impedido** com implementos engatados deixa o **conjunto impedido** (decisão 15), simétrico ao caso do implemento.
 
 **Custódia e status andam juntos:** disponibilizar grava a custódia `operacional` **e** o evento `DOp` na mesma função, com a mesma hora.
 
@@ -157,7 +169,7 @@ Todas em `nucleo`, todas com a `EXCLUDE` da convenção 2, origem da data e excl
 - **O fato importado nunca é editado.** Quando a ponte existir, o Sankhya grava em `sync.*` (instantâneo tipado, só as colunas usadas). Na Fase 3 só nasce o desenho do lado do Eixo; `sync` continua vazio.
 - **Correção local:** `nucleo.correcao_de_campo (entidade, registro_id, campo, valor_local jsonb, valor_importado jsonb, por, em, motivo, revogada_em)`, com motivo obrigatório e `unique` parcial por `(entidade, registro_id, campo)` enquanto não revogada. O **valor efetivo** é o local quando existe, senão o do Sankhya (visão `nucleo.ativo_efetivo`, e equivalente para pessoa). A tela mostra os três: valor do Sankhya, correção local (quem, quando, por quê) e efetivo.
 - **Chaves não aceitam correção local:** documento da pessoa, RENAVAM, número de série, `codcencus` e a própria placa (mudar a placa é nova vigência de placa). A lista de campos corrigíveis vive em `config.campo_corrigivel`; um teste tenta corrigir cada chave.
-- **Alçada:** a correção vale na hora, com motivo, e a tabela já tem `aprovada_por` e `aprovada_em` nulos para a alçada (pergunta 9).
+- **Alçada:** a correção vale na hora, com motivo, e a tabela já tem `aprovada_por` e `aprovada_em` nulos para a alçada (decisão 9).
 - **Origem no resto:** gestor, CR, composição e posse são do Eixo; cada vigência carrega a origem das datas (seção 2).
 
 **Testes antes:** correção sem motivo falha; correção em chave falha; o efetivo prefere o local; revogar volta ao do Sankhya; segunda correção ativa do mesmo campo falha; a correção entra em `auditoria.evento`.
@@ -165,9 +177,9 @@ Todas em `nucleo`, todas com a `EXCLUDE` da convenção 2, origem da data e excl
 ## 6. Permissões por RLS e sessão
 
 **Modelo (módulo × ação × escopo):**
-- `config.modulo` (os 9 do catálogo de navegação), `config.acao` (`ver`, `criar`, `editar`, `excluir` e `ver_documento`), `config.escopo` (`tudo`, `minha_carteira`, `operacao`; o escopo por filial está na pergunta 11), `config.perfil` e `config.permissao_do_perfil (perfil_id, modulo, acao, escopo)`.
-- **Usuário é Pessoa com login (decisão 10):** `nucleo.usuario (pessoa_id pk → pessoa, auth_user_id uuid unique → auth.users, perfil_id, ativo)` e `nucleo.usuario_operacao (usuario_id, operacao_id)`. O usuário é **criado no Studio** (local agora, nuvem depois, por Alexandre); o Eixo só **vincula**, por uma função `nucleo.vincular_usuario(email, pessoa, perfil)` chamada no Studio. O wizard "Novo usuário" fica para depois.
-- **Escopos:** `minha_carteira` = ativos cujo `gestor_da_carteira` vigente é a pessoa do usuário; `operacao` = ativos cuja operação (seção 2) está entre as do usuário; `tudo` = sem filtro.
+- `config.modulo` (os 9 do catálogo de navegação), `config.acao` (`ver`, `criar`, `editar`, `excluir` e `ver_documento`), `config.escopo` (`tudo`, `minha_carteira`, `operacao` e `filial`), `config.perfil` e `config.permissao_do_perfil (perfil_id, modulo, acao, escopo)`.
+- **Usuário é Pessoa com login (decisão 10):** `nucleo.usuario (pessoa_id pk → pessoa, auth_user_id uuid unique → auth.users, perfil_id, ativo)` e as tabelas de escopo `nucleo.usuario_operacao (usuario_id, operacao_id)` e `nucleo.usuario_filial (usuario_id, filial_id)`. O usuário é **criado no Studio** (local agora, nuvem depois, por Alexandre); o Eixo só **vincula**, por uma função `nucleo.vincular_usuario(email, pessoa, perfil)` chamada no Studio. O wizard "Novo usuário" fica para depois.
+- **Escopos:** `minha_carteira` = ativos cujo `gestor_da_carteira` vigente é a pessoa do usuário; `operacao` = ativos cuja operação (seção 2) está entre as do usuário; `filial` (decisão 11) = ativos cuja **custódia vigente** é do Operacional de uma das filiais do usuário (o pátio da filial); `tudo` = sem filtro.
 - **Helpers** em `config` (não exposto): `config.pode(modulo, acao)` e `config.escopo_de(modulo, acao)`, `stable`, com `(select auth.uid())` e índices nas colunas de escopo. Se algum for `SECURITY DEFINER`, vai com `-- justificativa:` e `auth.uid()` conferido. Nunca `user_metadata` para decidir acesso: o perfil vem da tabela, não do JWT.
 - **Política padrão:** negar tudo; uma política por tabela e por ação, `TO authenticated`, `USING` com escopo e `WITH CHECK` nas gravações; `anon` sem grant. `rh_clinico` fica fechado a todos nesta fase.
 - **CPF (decisão 12):** `ver_documento` é a ação que abre `pessoa_documento` (seção 1).
@@ -176,7 +188,7 @@ Todas em `nucleo`, todas com a `EXCLUDE` da convenção 2, origem da data e excl
 
 **Login real (fatia 3.8, perto do fim):** Auth local (e-mail e senha), login e logout, `lib/seguranca/sessao.ts` com `@supabase/ssr` e `getClaims` no servidor, sessão no `proxy.ts`. `perfilAtual()` e `gestorAtual()` saem; `exigirPermissao()` passa a ser assíncrona e consulta `config.pode(...)` (o app confere cedo para dar mensagem boa; **o banco decide**). Menu, Ctrl+K e ações passam a ler a tabela de permissão, e um teste compara o catálogo de navegação com o seed de permissões. **Segundo fator (TOTP) fica fora da Fase 3**, para depois do login.
 
-**Testes pgTAP, sempre com a chave do usuário:** para cada tabela e cada perfil, o que lê, o que escreve e o que **não** vê (matriz). `anon` não lê nada. Gestor de frota A não vê a placa do gestor B em `minha_carteira`; operação X não vê a operação Y; Administrador e Diretoria veem tudo; quem não tem `ver_documento` não lê o CPF completo. Política sem teste continua falhando (armadilha 9).
+**Testes pgTAP, sempre com a chave do usuário:** para cada tabela e cada perfil, o que lê, o que escreve e o que **não** vê (matriz). `anon` não lê nada. Gestor de frota A não vê a placa do gestor B em `minha_carteira`; operação X não vê a operação Y; o Operacional da filial A não vê a placa que está com o Operacional da filial B; Administrador e Diretoria veem tudo; quem não tem `ver_documento` não lê o CPF completo. Política sem teste continua falhando (armadilha 9).
 
 ## 7. Áreas, migrações e padrões
 
@@ -204,27 +216,65 @@ Todas em `nucleo`, todas com a `EXCLUDE` da convenção 2, origem da data e excl
 
 ## 9. Fatias, em ordem (cada uma: teste antes, checkpoint, PR próprio)
 
-Tamanhos: P (cerca de um dia), M (dois a três), G (quatro ou mais). Cada fatia termina com lint, tipos, unitários, pgTAP e `supabase db lint` sem alertas; capturas só nas fatias que mexem em tela (3.8 e 3.9); **parar para aprovação no checkpoint**. Nenhuma começa antes do merge do #21.
+Tamanhos: P (cerca de um dia), M (dois a três), G (quatro ou mais). Cada fatia termina com lint, tipos, unitários, pgTAP e `supabase db lint` sem alertas; capturas só nas fatias que mexem em tela (3.8 e 3.9); **parar para aprovação no checkpoint**. Nenhuma começa antes do merge dos PRs #21 e #22.
 
 | # | Fatia | Entrega | Pronto quando | Tam. |
 | --- | --- | --- | --- | --- |
-| 3.0 | Alicerce do banco | `btree_gist`; auxiliares de teste (`como_usuario`); `[api] schemas`, grants padrão e `supabase/exemplo/` na configuração; geração de tipos; `.env.example`; funções reutilizáveis de versão, exclusão lógica, auditoria e idempotência | `supabase test db` roda com os auxiliares; teste "tabela nova sem RLS falha" | M |
-| 3.1 | Catálogos e régua | `config.*`: tipo, carroceria, marca, modelo, filial, garagem, `status` (26 siglas, camadas, `aplica_a`), configuração e nomenclatura de conjuntos | As 26 siglas conferidas contra o glossário; os 12 nomes de conjunto; seed de produção | M |
+| 3.0 | Alicerce do banco | Ver a seção "Fatia 3.0 em detalhes" | `supabase test db` roda com os auxiliares; toda tabela sem RLS falha | M |
+| 3.1 | Catálogos e régua | `config.*`: tipo, carroceria, marca, modelo (com `eixos`), filial, garagem, `status` (26 siglas, camadas, `aplica_a`, `tipos_validos`), configurações e nomes de conjunto (sem regra de reconhecimento). **Usa o Apêndice A conferido por Alexandre** | As 26 siglas conferidas contra o glossário e contra o Apêndice A aprovado; os 12 nomes de conjunto; seed de produção | M |
 | 3.2 | Chaves: pessoa e ativo | `pessoa` e `pessoa_documento` (CPF/CNPJ), `ativo` (RENAVAM e série), `placa_do_ativo`, validações e imutabilidade | Duplicata, dígito errado, placa em dois ativos e chave editada recusados; CPF mascarado provado | M |
-| 3.3 | Vigências, CR e operação | posse, gestor, `cr` (com `codcencus`), `cr_do_ativo`, custódia, transferência; visão `operacao_do_ativo` e alerta de CR sem operação; `lib/dominio/vigencia.ts`; fim do `CR-0000` no Zod | Sobreposição recusada em cada tabela; limites `[)`; operação engatada, solta e sem operação | G |
-| 3.4 | Conjuntos | composição, `operacao_na_saida_id`, meta, `nome_do_conjunto`, conjunto misto | Misto, quarto implemento, meta fora do cavalo e os 12 nomes testados | M |
-| 3.5 | Eventos e situação | `evento_de_status` por camada, `situacao_em`, `situacao_atual`, impedimento do implemento engatado, linha do tempo | Camadas, atividade do cavalo e só-inserção provados | M |
-| 3.6 | Acesso no banco | usuário, perfil, permissão, escopo, RLS em todas as tabelas; pgTAP da matriz por perfil | Cada perfil vê só o que deve; `anon` não vê nada; política sem teste falha | G |
+| 3.3 | Vigências, CR e operação | posse, gestor (sem buraco), `cr` (com `codcencus`), `cr_do_ativo`, custódia, transferência; visão `operacao_do_ativo` e alerta de CR sem operação; `lib/dominio/vigencia.ts`; fim do `CR-0000` no Zod | Sobreposição recusada em cada tabela; buraco recusado em posse e gestor e alertado nos demais; limites `[)`; operação engatada, solta e sem operação | G |
+| 3.4 | Conjuntos | composição, `operacao_na_saida_id`, meta, `nome_do_conjunto`, conjunto misto. **Só começa depois que Alexandre responder a regra de bitrem, bitrezão e rodotrem** | Misto, quarto implemento, meta fora do cavalo e os nomes testados com a regra da equipe | M |
+| 3.5 | Eventos e situação | `evento_de_status` por camada, `situacao_em`, `situacao_atual`, impedimento do implemento engatado e do cavalo, linha do tempo. **Usa o Apêndice A conferido** | Camadas, atividade do cavalo e só-inserção provados | M |
+| 3.6 | Acesso no banco | usuário, perfil, permissão, escopos (`tudo`, `minha_carteira`, `operacao`, `filial`), RLS em todas as tabelas; pgTAP da matriz por perfil | Cada perfil vê só o que deve; `anon` não vê nada; política sem teste falha | G |
 | 3.7 | Cadastro com origem e escritas | correção de campo, auditoria, idempotência, versão e as funções atômicas (cadastrar ativo, disponibilizar, receber, desengatar, criar item) | Conflito de versão, chave de envio repetida e atomicidade provados | G |
 | 3.8 | Login real (Supabase Auth) e vínculo | Auth local, login e logout, `sessao.ts`, `exigirPermissao()` assíncrono, menu pela tabela, `vincular_usuario` | Um usuário de cada perfil entra e vê só o que deve (e2e); Server Actions sem perfil fixo | G |
-| 3.9 | Fonte do banco | `fonte-do-banco`, teste de contrato, lista por função SQL, seed de exemplo, modo `EIXO_DADOS=banco` | Contrato igual nas duas fontes; e2e de lista, ficha e assistentes passando em modo banco | G |
+| 3.9 | Fonte do banco | `fonte-do-banco`, teste de contrato, lista por função SQL, seed de exemplo, modo `EIXO_DADOS=banco`, workflow de e2e em modo banco (agendado à noite e manual) | Contrato igual nas duas fontes; e2e de lista, ficha e assistentes passando em modo banco | G |
 | 3.10 | Fechamento | Revisão independente, e2e completo, advisors, `docs/decisoes.md`, glossário, PR final | Critério de pronto da fase | M |
 
-Ordem: o acesso no banco (3.6) vem antes das escritas (3.7), que precisam da RLS; o login (3.8) só depois de as funções existirem; a troca da fonte (3.9) fica por último, para as telas só mudarem quando tudo embaixo estiver provado.
+Ordem: o acesso no banco (3.6) vem antes das escritas (3.7), que precisam da RLS; o login (3.8) só depois de as funções existirem; a troca da fonte (3.9) fica por último, para as telas só mudarem quando tudo embaixo estiver provado. As fatias 3.4 e (3.1, 3.5) esperam respostas de Alexandre; as demais não dependem delas.
+
+**e2e em modo banco (decisão 13):** não roda a cada pull request. O pull request roda lint, tipos, unitários, **teste de contrato e pgTAP**, e o e2e segue com o exemplo. O e2e em modo banco roda **à noite** (workflow agendado) e **sob demanda** (disparo manual).
 
 **Critério de pronto da fase:** banco recusa duplicata e sobreposição; um usuário de cada perfil vê só o que deve, provado por pgTAP com a chave do usuário; as telas da Frota rodam em modo banco com os mesmos testes; nada de `service_role` fora de `workers/`; verificador do Supabase sem alertas.
 
 **Fora desta fase:** segundo fator (TOTP); wizard "Novo usuário" e worker de convites; ponte com o Sankhya (workers, `sync.*`, descoberta de preenchimento, competência gerencial e conferência de `DT_COMPETENCIA`); importação da v1 e a lista de saneamento (5 placas com 2 CRs, 156 cavalos "A DEFINIR", AGEU, CPF do FRANCINALDO); Resultados e `financeiro`; Pessoas/RH e `rh_clinico`; Operacional (pátio, fila, totem); alçada de aprovação; motor de casos e tarefas; Realtime; Storage e GED; e-mail (Resend); qualquer `link`, `db push` ou nuvem. O **Supabase Pro e o backup são condição antes de importar dados reais**, não para esta fase.
+
+## Fatia 3.0 em detalhes
+
+**Branch:** `fase-3-0-alicerce-do-banco`, a partir da `main` atualizada (depois dos merges do #21 e do #22). Tudo no Docker local; nenhum comando de nuvem.
+
+**O que a fatia cria (e nada além):**
+- `supabase/migrations/<timestamp>_alicerce_do_banco.sql` (por `supabase migration new alicerce_do_banco`):
+  - extensão `btree_gist` no schema `extensions`;
+  - tipo `config.origem_da_data` (`derivada`, `observada`, `informada`);
+  - `auditoria.evento` e `auditoria.envio`, com RLS ligado, sem política e sem grant;
+  - funções de gatilho reutilizáveis: `nucleo.incrementar_versao()` (sobe `versao` a cada `UPDATE`), `nucleo.bloquear_exclusao_fisica()` (barra `DELETE` em tabela com `excluido_em`) e `auditoria.registrar_mudanca()` (insere antes, depois, quem e quando em `auditoria.evento`);
+  - `auditoria.consumir_envio(chave uuid, ...)`: a chave de envio entra na mesma transação da gravação, então só sucesso a consome e uma segunda chamada igual avisa que é repetida;
+  - `alter default privileges` nos nove schemas: tabela e função novas **não** nascem com acesso para `anon` nem `authenticated` (grant é sempre explícito, e função não é chamável por RPC por padrão).
+- `supabase/tests/apoio/como_usuario.sql`: auxiliares de teste que criam um usuário no `auth.users` local e passam a agir como ele (`set local role authenticated` e claims com o `sub` dele), **nunca como `service_role`**. A conferir na 3.0: se o `pg_prove` do `supabase test db` aceita `\ir`; plano B, o auxiliar entrar num schema `tests` só do ambiente de teste.
+- `supabase/config.toml`: `[api] schemas` com `public`, `graphql_public`, `nucleo` e `config` (nunca `auditoria`, `sync`, `financeiro`, `rh_clinico`, `pessoas`, `parceiros` nem `operacional`); `[db.seed] sql_paths` apontando para `supabase/seed.sql` (vazio, com comentário); `supabase/exemplo/LEIA-ME.md` dizendo que dado de exemplo fica fora do seed de produção.
+- `package.json`: script `db:tipos` (`supabase gen types typescript --local`) e o arquivo gerado `lib/dados/tipos-do-banco.ts`, com aviso de arquivo gerado.
+- `.env.example`: só os **nomes** das variáveis do Supabase (conferir o que já existe), nunca valores.
+- `.github/workflows/pull-request.yml`: passo no job `banco` que regenera os tipos e falha se o arquivo estiver defasado (com o teste do workflow atualizado).
+
+**Testes antes (vendo falhar):**
+- pgTAP `supabase/tests/00-alicerce.test.sql`:
+  1. `btree_gist` instalada;
+  2. `origem_da_data` tem exatamente os três valores;
+  3. `incrementar_versao` sobe a versão a cada `UPDATE` (tabela temporária);
+  4. `bloquear_exclusao_fisica` faz o `DELETE` falhar;
+  5. `registrar_mudanca` grava inserção, alteração e exclusão com antes, depois, quem e quando;
+  6. `consumir_envio` com a mesma chave duas vezes avisa repetida, e desfazer a transação libera a chave;
+  7. como o usuário de teste: `auth.uid()` devolve o dele; `anon` e `authenticated` não leem `auditoria.*` (`42501`) e não executam as funções do alicerce;
+  8. nenhuma tabela dos nove schemas fica sem RLS ligado.
+- Vitest em `lib/qualidade/`: o `config.toml` não expõe os schemas proibidos; o `.env.example` não tem valor; o arquivo de tipos existe e tem o aviso de gerado.
+
+**Verificação do checkpoint:** `pnpm exec supabase start`, `supabase db reset`, `supabase test db` e `supabase db lint --fail-on warning`, todos no Docker local; mais lint, tipos e Vitest do projeto. Registro em `docs/decisoes.md`.
+
+**Fora da 3.0:** qualquer tabela de negócio; perfis reais no auxiliar de teste (3.6).
+
+**Checkpoint:** parar e mostrar a lista dos objetos criados, o resultado do pgTAP (quantidade de testes), o lint do banco e o diff do `config.toml`. Sem aprovação, a 3.1 não começa.
 
 ## Armadilhas que nascem aqui
 
@@ -240,66 +290,51 @@ Ordem: o acesso no banco (3.6) vem antes das escritas (3.7), que precisam da RLS
 
 ## Revisão do plano (riscos)
 
-1. **Regra de camadas:** é a mais abstrata do plano; errar a atividade herdada do cavalo ou o impedimento do conjunto muda o número que a diretoria vê. A 3.5 só começa com as perguntas 14 e 15 respondidas.
-2. **Eixos dos implementos:** a nomenclatura depende de saber os eixos de cada implemento (pergunta 16). Sem isso, o nome do conjunto não calcula.
+1. **Regra de camadas:** é a mais abstrata do plano; errar a atividade herdada do cavalo ou o impedimento do conjunto muda o número que a diretoria vê. A 3.1 e a 3.5 só começam com o Apêndice A conferido por Alexandre.
+2. **Regra de bitrem, bitrezão e rodotrem:** é da equipe e não está definida; sem ela, o nome do conjunto não calcula. A 3.4 só começa depois da resposta de Alexandre; as demais fatias não dependem dela.
 3. **Performance da RLS:** política que calcula carteira e operação por linha pode custar caro numa lista de 1.000 bens; medir com `EXPLAIN` na 3.6 e, se preciso, materializar o escopo por usuário.
 4. **Acesso do app ao banco:** o PostgREST só enxerga os schemas de `[api] schemas`. Expor `nucleo` e `config` (com grant e RLS) é a proposta; a alternativa (visões num schema `api`) dobra o trabalho. Na nuvem, "não expor tabelas novas" está ligado: cada grant é decisão explícita.
 5. **Operação gravada na saída do conjunto:** é o único dado derivado que vira fato; o trigger que o torna imutável precisa de teste de borda (desengatar e reengatar no mesmo instante).
 6. **Sem login até a 3.8:** o app só pode ser exercitado contra o banco depois dela; até lá o banco é provado só por pgTAP.
 
-## Perguntas em aberto
+## Pendências em aberto
 
-| # | Pergunta | Minha recomendação |
-| --- | --- | --- |
-| 3 | Pessoa e Parceiro: uma única tabela de identidade (CPF/CNPJ), com os papéis em tabelas à parte e duas fichas? | Sim. Identidade num lugar só; `parceiros.parceiro` guarda o `CODPARC` |
-| 6 | Vigência em `timestamptz` (CR informado só com data começa às 00:00 de São Paulo)? Para posse e gestor da carteira, proibir buraco depois da primeira vigência ou só alertar? | `timestamptz`, e proibir buraco nesses dois (nos demais, só alerta) |
-| 9 | Correção local de campo do Sankhya vale na hora, com motivo, e a aprovação por alçada entra depois (as colunas já existem)? | Sim, na hora; a alçada depois |
-| 11 | O Operacional precisa de escopo por **filial** (pátio da filial), além de `tudo`, `minha_carteira` e `operacao`? | Sim, já agora: "Disponibilizar" grava a filial |
-| 13 | e2e em modo banco a cada pull request ou só à noite e sob demanda? | Noturno e sob demanda; o pull request roda contrato e pgTAP, e o e2e segue com o exemplo |
-| 14 | A marca `aplica_a` (conjunto, solo ou ambos) de cada uma das 26 siglas: o rascunho do Apêndice A está certo? | Conferir linha a linha; o rascunho é leitura minha |
-| 15 | Em que camada ficam FOg, FEr, PÁT e VAz (rascunho: FOg e FEr em "sem motorista"; PÁT e VAz em "atividade")? E quando o **cavalo** fica impedido, o conjunto todo fica impedido (simétrico ao caso do implemento)? | Aceitar o rascunho e o caso simétrico |
-| 16 | De onde vêm os eixos de cada implemento (modelo, ou `TIPOROD` do Sankhya)? Qual regra separa o rodotrem do bitrezão? E confirmar com a equipe os 7 e 9 eixos | Eixos no modelo, com correção local; regra do rodotrem a definir com a equipe antes da 3.4 |
+| # | Pendência | Quem resolve | O que trava |
+| --- | --- | --- | --- |
+| 14 | Conferir o Apêndice A linha a linha (camada e `aplica_a` das 26 siglas) | Alexandre | Fatias 3.1 e 3.5 |
+| 16 | Regra que reconhece bitrem, bitrezão e rodotrem (eixos, quantidade de implementos e tipo de engate; em geral 7 e 9 eixos, a confirmar). **Sem recomendação: não será inventada** | Equipe, por Alexandre | Fatia 3.4 |
 
-**Interpretações minhas das suas respostas, para você conferir:**
+## Apêndice A: as 26 siglas, para Alexandre conferir
 
-| Resposta | Como entendi |
-| --- | --- |
-| 4: "implemento solto mantém a última operação" | A operação do cavalo no momento do desengate é gravada **uma vez**, no fechamento da composição; é o único dado derivado que vira fato |
-| 4: "o custo fica no CR da própria placa" | A operação mostrada e filtrada é a do cavalo, mas o custo continua no CR do implemento; o `cr_do_ativo` dele não muda ao engatar |
-| 7: "implemento engatado usa a atividade do cavalo" | Só a camada de **atividade** é herdada; baixada, fora da frota, impedida e sem motorista são do próprio implemento |
-| 12: "aplicado no banco por view" | Duas tabelas (completo com permissão, mascarado para todos) e uma visão `security_invoker` que entrega o mascarado; a visão sozinha não esconde coluna que o usuário já pode ler |
+Os nomes são os do `docs/glossario.md`, e as 26 siglas do `CLAUDE.md` estão todas aqui, sem sobra nem falta. A **camada** é a decisão 7 aplicada. **Aplica a** é o campo que o `CLAUDE.md` pede ("válida para conjunto, solo ou ambos"); o que está **fixo** por Alexandre é a linha das oito siglas de operação e a de VAz e PÁT; o resto é rascunho meu.
 
-## Apêndice A: as 26 siglas, conferidas contra o `CLAUDE.md` e o `docs/glossario.md`
+| Sigla | Nome | Camada | Aplica a |
+| --- | --- | --- | --- |
+| VND | Vendido | 1 Baixada | solo |
+| SUC | Sucata | 1 Baixada | solo |
+| ALU | Alugado a terceiro | 2 Fora da frota | solo |
+| EMP | Emprestado | 2 Fora da frota | solo |
+| VEN | Disponível para venda | 2 Fora da frota | solo |
+| SIN | Sinistro | 3 Impedida | ambos |
+| MAc | Manutenção / carregado | 3 Impedida | ambos |
+| MAt | Manutenção / tombado | 3 Impedida | ambos |
+| MAv | Manutenção / vazio | 3 Impedida | ambos |
+| MAN | Em manutenção | 3 Impedida | ambos |
+| REF | Em reforma | 3 Impedida | ambos |
+| SDo | Sem documento | 3 Impedida | solo |
+| DOC | Problema documental | 3 Impedida | solo |
+| SMo | Sem motorista | 4 Sem motorista | conjunto |
+| FOg | Folga | 4 Sem motorista | conjunto |
+| FEr | Férias | 4 Sem motorista | conjunto |
+| DOp | Disponível no Operacional | 5 Atividade | **fixo:** só composição e caminhão |
+| ACe | Aguardando carregamento | 5 Atividade | **fixo:** só composição e caminhão |
+| CAr | Carregando | 5 Atividade | **fixo:** só composição e caminhão |
+| CAn | Carregado aguardando nota | 5 Atividade | **fixo:** só composição e caminhão |
+| ETc | Em trânsito carregado | 5 Atividade | **fixo:** só composição e caminhão |
+| ADe | Aguardando descarga | 5 Atividade | **fixo:** só composição e caminhão |
+| DEs | Descarregando | 5 Atividade | **fixo:** só composição e caminhão |
+| ETv | Em trânsito vazio | 5 Atividade | **fixo:** só composição e caminhão |
+| VAz | Vazio | 5 Atividade (**fixo**) | ambos |
+| PÁT | Pátio | 5 Atividade (**fixo**) | ambos |
 
-Os nomes e os chips (coluna "Chip") são os do glossário; as 26 siglas do `CLAUDE.md` estão todas aqui, sem sobra nem falta. A coluna "Camada" é a decisão 7 aplicada. "Aplica a" é **rascunho meu** (pergunta 14): "ambos" quando a sigla faz sentido para um conjunto engatado e para uma placa sozinha; "solo" quando é só da placa; "conjunto" quando só existe com cavalo mais implemento.
-
-| Sigla | Nome | Chip (glossário) | Camada | Aplica a (rascunho) |
-| --- | --- | --- | --- | --- |
-| VND | Vendido | Fora | 1 Baixada | solo |
-| SUC | Sucata | Fora | 1 Baixada | solo |
-| ALU | Alugado a terceiro | Fora | 2 Fora da frota | solo |
-| EMP | Emprestado | Fora | 2 Fora da frota | solo |
-| VEN | Disponível para venda | Fora | 2 Fora da frota | solo |
-| SIN | Sinistro | Impedida | 3 Impedida | ambos |
-| MAc | Manutenção / carregado | Impedida | 3 Impedida | ambos |
-| MAt | Manutenção / tombado | Impedida | 3 Impedida | ambos |
-| MAv | Manutenção / vazio | Impedida | 3 Impedida | ambos |
-| MAN | Em manutenção | Impedida | 3 Impedida | ambos |
-| REF | Em reforma | Impedida | 3 Impedida | ambos |
-| SDo | Sem documento | Impedida | 3 Impedida | solo |
-| DOC | Problema documental | Impedida | 3 Impedida | solo |
-| SMo | Sem motorista | Atenção | 4 Sem motorista | conjunto |
-| FOg | Folga | Atenção | 4 Sem motorista | conjunto |
-| FEr | Férias | Atenção | 4 Sem motorista | conjunto |
-| DOp | Disponível no Operacional | Em atividade | 5 Atividade | ambos |
-| ACe | Aguardando carregamento | Em atividade | 5 Atividade | ambos |
-| CAr | Carregando | Em atividade | 5 Atividade | ambos |
-| CAn | Carregado aguardando nota | Em atividade | 5 Atividade | ambos |
-| ETc | Em trânsito carregado | Em atividade | 5 Atividade | ambos |
-| ADe | Aguardando descarga | Em atividade | 5 Atividade | ambos |
-| DEs | Descarregando | Em atividade | 5 Atividade | ambos |
-| ETv | Em trânsito vazio | Em atividade | 5 Atividade | ambos |
-| VAz | Vazio | Atenção | 5 Atividade | ambos |
-| PÁT | Pátio | Pátio | 5 Atividade | ambos |
-
-**O que mudou em relação à versão 1 do apêndice:** a prioridade deixou de ser uma fila de 1 a 26 e passou a ser as cinco camadas da decisão 7; SUC e VND saíram do grupo "Fora" para a camada própria de baixada (o chip do glossário continua "Fora", porque o chip é só o agrupamento de filtro); FOg e FEr saíram de "solo" e foram para "sem motorista"; as siglas de manutenção deixaram de ser separadas em "conjunto" e "solo", porque agora o que importa é a camada.
+**Como o fixo vira regra:** "só composição e caminhão" é a coluna `config.status.tipos_validos` (cavalo com seu conjunto, e caminhão). Apoio, equipamento e implemento solto nunca recebem essas oito siglas; o implemento engatado as vê pela herança do cavalo (decisão 15).
