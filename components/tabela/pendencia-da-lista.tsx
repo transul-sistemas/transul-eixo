@@ -13,7 +13,8 @@ import {
   useState,
   useTransition,
 } from "react";
-import { comEspiar, lerEspiar } from "@/lib/navegacao/espiar";
+import { urlDaEntradaAnterior } from "@/components/navegacao/historico-do-navegador";
+import { comEspiar, entradaAnteriorEhALista, lerEspiar } from "@/lib/navegacao/espiar";
 import { montarCookie, type PreferenciasDaTabela } from "@/lib/navegacao/preferencias-da-tabela";
 
 // Estado compartilhado de uma lista na tela: se uma nova página, filtro ou ordem está a caminho
@@ -132,14 +133,21 @@ export function ProvedorDaLista({
         setCancelada(otimista);
         return;
       }
-      if (abertoPelaLista.current) {
+      if (
+        abertoPelaLista.current &&
+        entradaAnteriorEhALista(urlDaEntradaAnterior(), {
+          origem: window.location.origin,
+          caminho: rota,
+        })
+      ) {
         abertoPelaLista.current = false;
         router.back();
       } else {
+        abertoPelaLista.current = false;
         router.replace(enderecoCom(null), { scroll: false });
       }
     });
-  }, [daUrl, otimista, enderecoCom, router, definirOtimista]);
+  }, [daUrl, otimista, enderecoCom, router, definirOtimista, rota]);
 
   // Só zera "aberto pela lista" quando a URL de fato saiu de "com placa" para "sem placa". Zerar a
   // cada execução apagava a marca logo depois do clique (a URL ainda era nula) e o fechar virava

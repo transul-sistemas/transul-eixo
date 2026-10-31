@@ -1,36 +1,69 @@
 import { describe, expect, it } from "vitest";
 import { ACOES } from "@/lib/navegacao/acoes";
-import { SIGLAS } from "./status";
+import { SIGLAS, SIGLAS_DE_BAIXA } from "./status";
 import { idsDasAcoesDoMomento } from "./acoes-do-momento";
 
-describe("idsDasAcoesDoMomento: quais ações de ACOES combinam com a situação (regra provisória)", () => {
-  it("DOp (disponível no Operacional): receber placa", () => {
-    expect(idsDasAcoesDoMomento({ sigla: "DOp" })).toEqual(["operacional.receber-placa"]);
+const DISPONIBILIZAR = "frota.disponibilizar-ao-operacional";
+const RECEBER = "frota.receber-placa";
+
+describe("idsDasAcoesDoMomento: quais ações de ACOES combinam com a placa (regra provisória)", () => {
+  it("Disponibilizar ao Operacional só em PÁT, VAz e ETv", () => {
+    const comDisponibilizar = SIGLAS.filter((sigla) =>
+      idsDasAcoesDoMomento({ sigla }).includes(DISPONIBILIZAR),
+    );
+    expect([...comDisponibilizar].sort()).toEqual(["ETv", "PÁT", "VAz"].sort());
   });
-  it("PÁT (no pátio): disponibilizar ao Operacional", () => {
-    expect(idsDasAcoesDoMomento({ sigla: "PÁT" })).toEqual(["frota.disponibilizar-ao-operacional"]);
+
+  it("DOp (já disponível no Operacional) não tem ação: DOp para ACe é do módulo Operacional", () => {
+    expect(idsDasAcoesDoMomento({ sigla: "DOp" })).toEqual([]);
+    expect(idsDasAcoesDoMomento({ sigla: "DOp", pedidoPendente: false })).toEqual([]);
   });
-  it("baixada (VND e SUC): nenhuma ação", () => {
-    expect(idsDasAcoesDoMomento({ sigla: "VND" })).toEqual([]);
-    expect(idsDasAcoesDoMomento({ sigla: "SUC" })).toEqual([]);
+
+  it("sem pedido de transferência pendente, Receber placa nunca aparece, em nenhuma situação", () => {
+    for (const sigla of SIGLAS) {
+      expect(idsDasAcoesDoMomento({ sigla }), sigla).not.toContain(RECEBER);
+      expect(idsDasAcoesDoMomento({ sigla, pedidoPendente: false }), sigla).not.toContain(RECEBER);
+    }
   });
-  it("todo id devolvido, para qualquer sigla, existe em ACOES", () => {
+
+  it("com pedido pendente, Receber placa aparece em qualquer situação que não seja baixa, qualquer que seja ela", () => {
+    for (const sigla of SIGLAS.filter((s) => !SIGLAS_DE_BAIXA.includes(s))) {
+      expect(idsDasAcoesDoMomento({ sigla, pedidoPendente: true }), sigla).toContain(RECEBER);
+    }
+  });
+
+  it("PÁT com pedido pendente: as duas ações, Receber primeiro (a pendência vem antes)", () => {
+    expect(idsDasAcoesDoMomento({ sigla: "PÁT", pedidoPendente: true })).toEqual([
+      RECEBER,
+      DISPONIBILIZAR,
+    ]);
+  });
+
+  it("baixada (VND e SUC): nenhuma ação, nem com pedido pendente", () => {
+    for (const sigla of SIGLAS_DE_BAIXA) {
+      expect(idsDasAcoesDoMomento({ sigla }), sigla).toEqual([]);
+      expect(idsDasAcoesDoMomento({ sigla, pedidoPendente: true }), sigla).toEqual([]);
+    }
+  });
+
+  it("todo id devolvido, para qualquer sigla, com ou sem pedido, existe em ACOES", () => {
     const existentes = new Set(ACOES.map((a) => a.id));
     for (const sigla of SIGLAS) {
-      for (const id of idsDasAcoesDoMomento({ sigla })) {
-        expect(existentes.has(id), `${sigla}: ${id}`).toBe(true);
+      for (const pedidoPendente of [false, true]) {
+        for (const id of idsDasAcoesDoMomento({ sigla, pedidoPendente })) {
+          expect(existentes.has(id), `${sigla}: ${id}`).toBe(true);
+        }
       }
     }
   });
+
   it("nunca repete um id e a ordem é estável", () => {
     for (const sigla of SIGLAS) {
-      const ids = idsDasAcoesDoMomento({ sigla });
-      expect(new Set(ids).size).toBe(ids.length);
-      expect(idsDasAcoesDoMomento({ sigla })).toEqual(ids);
+      for (const pedidoPendente of [false, true]) {
+        const ids = idsDasAcoesDoMomento({ sigla, pedidoPendente });
+        expect(new Set(ids).size).toBe(ids.length);
+        expect(idsDasAcoesDoMomento({ sigla, pedidoPendente })).toEqual(ids);
+      }
     }
-  });
-  it("só DOp e PÁT têm ação por ora", () => {
-    const comAcao = SIGLAS.filter((sigla) => idsDasAcoesDoMomento({ sigla }).length > 0);
-    expect([...comAcao].sort()).toEqual(["DOp", "PÁT"].sort());
   });
 });

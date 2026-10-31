@@ -1,15 +1,26 @@
-import type { Sigla } from "./status";
+import { podeDisponibilizar } from "./custodia";
+import { SIGLAS_DE_BAIXA, type Sigla } from "./status";
 
-// Quais ações do catálogo (`ACOES` em lib/navegacao/acoes.ts) combinam com a situação da placa.
-// Regra provisória, até o módulo Operacional e os assistentes (2D) existirem: a custódia da placa
-// vai do gestor de frota ao Operacional da filial, então a placa disponível no Operacional pede
-// "Receber placa", e a placa no pátio pede "Disponibilizar ao Operacional". Baixada e as demais
-// situações não têm ação por ora. Devolve só ids; quem mostra cruza com `ACOES` e com o perfil.
-const POR_SIGLA: Partial<Record<Sigla, readonly string[]>> = {
-  DOp: ["operacional.receber-placa"],
-  PÁT: ["frota.disponibilizar-ao-operacional"],
-};
-
-export function idsDasAcoesDoMomento({ sigla }: { sigla: Sigla }): string[] {
-  return [...(POR_SIGLA[sigla] ?? [])];
+// Quais ações do catálogo (`ACOES` em lib/navegacao/acoes.ts) combinam com a placa. Regra provisória,
+// até os assistentes (2D) e o banco existirem. Devolve só ids; quem mostra cruza com `ACOES` e com o
+// perfil.
+//
+// - "Disponibilizar ao Operacional" (módulo Frota): leva a placa de PÁT, VAz ou ETv para DOp, com a
+//   filial escolhida. DOp para ACe (alocar a um lote) é do módulo Operacional e não entra aqui.
+// - "Receber placa" (módulo Frota): é a transferência entre gestores de frota; não depende da
+//   situação, e sim de haver um pedido de transferência pendente para a placa.
+// - Placa baixada (VND e SUC): nenhuma ação.
+export function idsDasAcoesDoMomento({
+  sigla,
+  pedidoPendente = false,
+}: {
+  sigla: Sigla;
+  /** Há um pedido de transferência pendente para esta placa (Receber placa). */
+  pedidoPendente?: boolean;
+}): string[] {
+  if (SIGLAS_DE_BAIXA.includes(sigla)) return [];
+  const ids: string[] = [];
+  if (pedidoPendente) ids.push("frota.receber-placa");
+  if (podeDisponibilizar(sigla)) ids.push("frota.disponibilizar-ao-operacional");
+  return ids;
 }

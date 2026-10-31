@@ -62,3 +62,11 @@ O que é a placa. São cinco, e cada placa tem um só. O tipo é o segundo grupo
 | Caminhão | Veículo de carga com carroceria própria, sem cavalo |
 | Apoio | Veículo de apoio à operação: van, camionete e utilitários. "Veículo pequeno" e "apoio" eram a mesma coisa e foram unificados em Apoio (30/10/2026) |
 
+## Meta do conjunto
+
+Quanto o conjunto (o cavalo e os implementos que ele puxa) deve render, em reais por mês. É uma meta **da composição, não da placa**: só o **cavalo**, que é o mestre do conjunto, a recebe, e os implementos (servos) herdam a meta do cavalo a que estão ligados. Implemento, equipamento, caminhão e apoio nunca têm meta do conjunto. Quando o conjunto muda (um implemento sai ou entra), a meta continua sendo a do cavalo.
+
+**Não confundir** com a meta de campanha do motorista (módulo Pessoas, "Diárias e premiação" e "Campanhas"), que premia a pessoa e não tem relação com a composição da frota.
+
+No código: `metaDoConjuntoCentavos` (dinheiro em centavos, positivo, ou vazio), definida no assistente Receber placa e aceita só quando a placa é um cavalo.
+

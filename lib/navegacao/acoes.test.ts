@@ -5,7 +5,7 @@ import { CATALOGO } from "./catalogo";
 describe("ações reservadas para a entrega 2D (assistentes)", () => {
   it("são Receber placa e Disponibilizar ao Operacional, ainda em breve", () => {
     expect(ACOES.map((a) => a.id)).toEqual([
-      "operacional.receber-placa",
+      "frota.receber-placa",
       "frota.disponibilizar-ao-operacional",
     ]);
     expect(ACOES.map((a) => a.nome)).toEqual(["Receber placa", "Disponibilizar ao Operacional"]);
@@ -18,6 +18,14 @@ describe("ações reservadas para a entrega 2D (assistentes)", () => {
       expect(acao.permissao).toEqual({ modulo: acao.modulo, acao: "criar" });
       expect(acao.id.startsWith(`${acao.modulo}.`), acao.id).toBe(true);
     }
+  });
+  it("Receber placa é a transferência entre gestores de frota: pertence ao módulo Frota, não ao Operacional", () => {
+    const receber = ACOES.find((a) => a.nome === "Receber placa");
+    expect(receber?.id).toBe("frota.receber-placa");
+    expect(receber?.modulo).toBe("frota");
+    expect(receber?.permissao).toEqual({ modulo: "frota", acao: "criar" });
+    expect(receber?.descricao).toMatch(/gestor/i);
+    expect(ACOES.some((a) => a.id.startsWith("operacional."))).toBe(false);
   });
   it("o nome é verbo mais objeto, com o verbo no infinitivo", () => {
     for (const acao of ACOES) {
@@ -39,7 +47,7 @@ describe("ações reservadas para a entrega 2D (assistentes)", () => {
 describe("buscarAcoes", () => {
   it("acha pelo nome, sem acento nem maiúscula", () => {
     expect(buscarAcoes("receber placa", "Administrador").map((a) => a.id)).toEqual([
-      "operacional.receber-placa",
+      "frota.receber-placa",
     ]);
     expect(buscarAcoes("RECEBER", "Administrador")).toHaveLength(1);
     expect(buscarAcoes("disponibilizar", "Diretoria")[0]?.nome).toBe(
@@ -48,9 +56,9 @@ describe("buscarAcoes", () => {
   });
   it("acha por uma palavra só, com o nome que contém o termo antes do que só combina pelo módulo", () => {
     expect(buscarAcoes("placa", "Administrador").map((a) => a.nome)).toEqual(["Receber placa"]);
+    // "Receber placa" saiu do módulo Operacional: só o nome de "Disponibilizar ao Operacional" combina.
     expect(buscarAcoes("operacional", "Administrador").map((a) => a.nome)).toEqual([
       "Disponibilizar ao Operacional",
-      "Receber placa",
     ]);
   });
   it("termo vazio ou sem resultado devolve lista vazia", () => {
@@ -72,6 +80,16 @@ describe("buscarAcoes", () => {
     permissao: { modulo, acao: "criar" },
     estado: "pronto",
     descricao: "Faz algo.",
+  });
+
+  it("pronta, Receber placa e Disponibilizar são do Gestor de frota e não do Operacional", () => {
+    const prontas = ACOES.map((a) => ({ ...a, estado: "pronto" as const }));
+    expect(buscarAcoes("receber placa", "Gestor de frota", prontas).map((a) => a.id)).toEqual([
+      "frota.receber-placa",
+    ]);
+    expect(buscarAcoes("receber placa", "Operacional", prontas)).toEqual([]);
+    expect(buscarAcoes("disponibilizar", "Operacional", prontas)).toEqual([]);
+    expect(buscarAcoes("disponibilizar", "Gestor de frota", prontas)).toHaveLength(1);
   });
 
   it("ação pronta aparece para quem tem o módulo, e só para ele", () => {

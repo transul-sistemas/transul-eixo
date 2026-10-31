@@ -1,5 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import { abrirHidratada } from "./apoio";
+import { deixarLento } from "./apoio-lentidao";
 
 const ROTA = "/frota/placas";
 const tabela = (page: Page) => page.getByRole("table", { name: "Placas" });
@@ -1244,31 +1245,75 @@ test.describe("lista de placas: Mais filtros (sigla exata e inclui baixadas)", (
 });
 
 test.describe("lista de placas: o botão Mais filtros não pisca ao carregar", () => {
-  const caixaDe = (l: ReturnType<Page["locator"]>) => l.boundingBox();
+  type Caixa = { x: number; y: number; width: number; height: number };
+  type Amostra = { mais: Caixa | null; visoes: Caixa | null; carregada: boolean };
 
   test("o botão ocupa o mesmo lugar e o mesmo tamanho enquanto carrega e depois de carregar", async ({
     page,
   }) => {
+    // CPU e rede lentas: o HTML chega em pedaços e o topo chega depois da casca, como no CI. Sem
+    // isso o teste só veria o problema numa máquina lenta.
+    await deixarLento(page, {
+      cpu: Number(process.env.CPU_LENTA ?? "4"),
+      redeMs: Number(process.env.REDE_MS ?? "300"),
+    });
+    // Amostra a caixa de cada botão (só do que está visível e tem tamanho) a cada quadro, desde o
+    // primeiro desenho. Instalado antes da navegação, para não perder o começo.
+    await page.addInitScript(() => {
+      const amostras: unknown[] = [];
+      (window as unknown as { __amostras: unknown[] }).__amostras = amostras;
+      const caixa = (padrao: RegExp) => {
+        for (const botao of document.querySelectorAll("button")) {
+          const nome = (botao.getAttribute("aria-label") ?? botao.textContent ?? "").trim();
+          if (!padrao.test(nome) || botao.checkVisibility?.() === false) continue;
+          const r = botao.getBoundingClientRect();
+          if (r.width > 0 && r.height > 0)
+            return { x: r.x, y: r.y, width: r.width, height: r.height };
+        }
+        return null;
+      };
+      const medir = () => {
+        amostras.push({
+          mais: caixa(/^Mais filtros/),
+          visoes: caixa(/^Visões salvas/),
+          carregada: document.querySelector('table[aria-label="Placas"]') !== null,
+        });
+        requestAnimationFrame(medir);
+      };
+      requestAnimationFrame(medir);
+    });
+    const amostras = () =>
+      page.evaluate(() => (window as unknown as { __amostras: Amostra[] }).__amostras);
+
     await page.goto(`${ROTA}?lento=2500`, { waitUntil: "commit" });
-    await expect(page.getByRole("status", { name: "Carregando placas" })).toBeVisible();
-    const botao = consulta(page).getByRole("button", { name: /^Mais filtros/ });
-    const visoes = consulta(page).getByRole("button", { name: "Visões salvas" });
-    await expect(botao).toBeVisible();
-    const antes = await caixaDe(botao);
-    const visoesAntes = await caixaDe(visoes);
-    expect(antes).not.toBeNull();
-    await expect(tabela(page)).toBeVisible({ timeout: 15_000 });
-    const depois = await caixaDe(botao);
-    const visoesDepois = await caixaDe(visoes);
-    for (const campo of ["x", "y", "width", "height"] as const) {
-      expect(
-        Math.abs((depois?.[campo] ?? -1) - (antes?.[campo] ?? -9)),
-        `Mais filtros ${campo}`,
-      ).toBeLessThanOrEqual(1);
-      expect(
-        Math.abs((visoesDepois?.[campo] ?? -1) - (visoesAntes?.[campo] ?? -9)),
-        `Visões salvas ${campo}`,
-      ).toBeLessThanOrEqual(1);
+    // Primeiro desenho: os dois botões (ou o esqueleto deles) existem e têm caixa. Só daqui em diante
+    // se mede; antes disso não há o que comparar.
+    await expect
+      .poll(async () => (await amostras()).some((a) => a.mais !== null && a.visoes !== null), {
+        message: "o botão e o Visões salvas ganham caixa no primeiro desenho",
+        timeout: 30_000,
+      })
+      .toBe(true);
+    // E vai até a tabela carregar (e um pouco além): é nesse trecho que o botão não pode se mexer.
+    await expect
+      .poll(async () => (await amostras()).some((a) => a.carregada), { timeout: 45_000 })
+      .toBe(true);
+    await page.waitForTimeout(500);
+
+    const todas = await amostras();
+    for (const [nome, chave] of [
+      ["Mais filtros", "mais"],
+      ["Visões salvas", "visoes"],
+    ] as const) {
+      const caixas = todas.map((a) => a[chave]).filter((c): c is Caixa => c !== null);
+      const primeira = caixas[0] as Caixa;
+      for (const campo of ["x", "y", "width", "height"] as const) {
+        const desvio = Math.max(...caixas.map((c) => Math.abs(c[campo] - primeira[campo])));
+        expect(
+          desvio,
+          `${nome} ${campo} mudou ${Math.round(desvio * 10) / 10} px depois do primeiro desenho`,
+        ).toBeLessThanOrEqual(1);
+      }
     }
   });
 

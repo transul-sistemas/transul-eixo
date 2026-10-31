@@ -22,13 +22,14 @@ export interface AcaoDoCatalogo {
 
 export const ACOES: readonly AcaoDoCatalogo[] = [
   {
-    id: "operacional.receber-placa",
+    id: "frota.receber-placa",
     nome: "Receber placa",
     icone: "IconCirclePlus",
-    modulo: "operacional",
-    permissao: { modulo: "operacional", acao: "criar" },
+    modulo: "frota",
+    permissao: { modulo: "frota", acao: "criar" },
     estado: "em-breve",
-    descricao: "Registra o recebimento da placa pelo Operacional da filial.",
+    descricao:
+      "Recebe a placa transferida por outro gestor de frota e conclui a conferência do que chegou.",
   },
   {
     id: "frota.disponibilizar-ao-operacional",

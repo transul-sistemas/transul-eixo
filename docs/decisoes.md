@@ -8,6 +8,19 @@ Modelo de entrada:
 
 ---
 
+## 31/10/2026 — Robustez da 2C: medição limpa, fechar o painel sem sair do sistema e backlog do topo
+
+- **Medição pós-#15 (produção da `main`, 1 worker, um projeto por vez):** 1366: **442 passaram, 1 pulada, 0 falhas, 0 instáveis** (6,6 min); 1920: **434 passaram, 9 puladas, 0 falhas, 0 instáveis** (6,3 min). As puladas são testes de um só projeto (o aceite de 9 linhas só no 1366, o de 14 só no 1920).
+- **Falhas da medição anterior (3 no 1366 e 1 no 1920):** os **nomes não foram guardados** (o relatório `dot` não lista e a saída foi descartada). Pelo que se corrigiu depois no PR #15 (marca de retorno por sinais e larguras reservadas do "Mais filtros"), eram desses dois assuntos, mas isso é inferência, não registro. Regra daqui em diante: toda medição de instabilidade guarda o relatório em arquivo antes de resumir.
+- **Foco ao fechar o painel de espiar (`espiar.vizinhas`), 30 execuções em produção sob carga (1366, 4 workers):** falhava 2 em 30. **Causa achada** (rodada 2, com o estado da tela impresso no momento da falha): a página estava em `about:blank`. Com o servidor lento, a URL de abrir o painel ainda estava a caminho quando a pessoa trocava de placa e fechava; o Next junta as navegações e **a entrada de histórico de abrir nunca nascia**, mas a marca "aberto pela lista" continuava verdadeira. O Esc fazia `router.back()` e o navegador **saía do sistema**, contra a regra "Voltar nunca joga para fora do sistema".
+- **Correção:** fechar só usa o Voltar do navegador se a **entrada anterior do histórico é a própria lista** (Navigation API; `entradaAnteriorEhALista`, regra pura testada); senão tira `?espiar=` da URL com `replace`. Sem a Navigation API (outros navegadores) o painel sempre fecha por `replace`: nunca sai do sistema, ao custo de um passo de Voltar sem efeito visível. Testes: `e2e/espiar.fechar-lento.spec.ts` (servidor lento com `?lento=1500`: abrir, trocar e fechar; falhava indo para `about:blank` nos dois cenários) e unitários em `lib/navegacao/espiar.test.ts`.
+- **Resultado:** os dois testes novos passam; o painel (45 testes de histórico, atalhos e corrida no 1366) passa; o celular passa uma vez. O foco 30× no 1366 passou de 2 falhas para **1 falha em 30**.
+- **Resíduo, causa não encontrada (teto de 2 rodadas):** 1 em 30 sob carga, com mensagem diferente: ao trocar de placa várias vezes seguidas (passo 13 de 14), o painel da placa esperada some por mais de 5 s (a tela mostra a lista sem painel). Suspeita, não provada: disputa entre o estado otimista do painel e a URL que chega atrasada. Não se investigou mais. Se reaparecer fora de carga extrema, vira tarefa própria com teste antes.
+- **Backlog (ideia, fora de qualquer fase):** **calcular "hoje" no navegador** para o topo do sistema entrar no primeiro desenho. Hoje o topo depende de `hoje` calculado no servidor e chega em streaming, depois da casca, e por isso o espaço reservado (`TopoReservado`) precisa acompanhar a altura real por faixa de largura (válido só para a lista de placas). Com `hoje` no navegador, o topo sairia no primeiro desenho com a mesma estrutura do real e a reserva por faixas deixaria de existir (e a ficha e a barra lateral compacta deixariam de ter pulo do topo).
+- **Quem decidiu:** Alexandre (fechamento da robustez em 31/10/2026).
+
+---
+
 ## 30/10/2026 — Dados do Sankhya: acesso só leitura, trava do Eixo, campos e chaves
 
 - **Decisão:** a planilha `docs/sankhya/Eixo_Dados_do_Sankhya.xlsx` (dicionário de campos, respostas do responsável pelo Sankhya e SQL das 14 views) entra no repositório, com o resumo por assunto em `docs/sankhya/mapa.md`. Conferida antes de commitar: só nomes de campos, respostas e SQL, sem senha, chave nem credencial. O que ela estabelece:
@@ -28,6 +41,35 @@ Modelo de entrada:
 
 ---
 
+## 31/10/2026 — Fase 2D, Checkpoint 1 aprovado: escolhas do motor e da custódia
+
+- **Situação inicial por tipo (aprovada):** para todo tipo, **PÁT** (padrão), MAN, REF, SIN, DOC, SDo, ALU, EMP e VEN; **SMo só para cavalo, caminhão e apoio**. Ficam fora as situações de operação (DOp, ACe, CAr, CAn, ETc, ADe, DEs, ETv, VAz, MAc, MAt, MAv), folga e férias (FOg, FEr) e a baixa (SUC, VND). A tabela é provisória até a régua ter a marca "válida para conjunto, solo ou ambos".
+- **Meta do conjunto (definida em `docs/glossario.md`):** pertence à **composição, não à placa**; só o **cavalo**, mestre do conjunto, a recebe (no esquema e no armazém, outro tipo com meta é recusado); não se confunde com a meta de campanha do motorista. O campo se chama `metaDoConjuntoCentavos` (antes `metaCentavos`).
+- **Versões (edição concorrente):** **Receber placa** confere a versão do pedido de transferência **e** a da placa (`versaoDoPedido` e `versaoDaPlaca`); se qualquer uma mudou, devolve `conflito` com o registro como está agora e não grava. **Disponibilizar** confere a versão da placa (`versaoDaPlaca`).
+- **Sem Navigation API, o painel de espiar fecha por `replace`:** só se sabe com certeza que existe uma entrada anterior do histórico (a própria lista) com a Navigation API; nos navegadores sem ela, o painel fecha tirando `?espiar=` da URL, o caminho que nunca sai do sistema, ao custo de um passo de Voltar sem efeito visível. Aprovado por Alexandre.
+- **Quem decidiu:** Alexandre (31/10/2026).
+
+---
+
+## 31/10/2026 — Fase 2D, Checkpoint 2: o motor de interface dos assistentes
+
+- **Onde mora:** modal de tela quase cheia sobre a tela de origem, aberto por `?assistente=<id>` na URL, com a mesma disciplina do painel de espiar: abre na hora (otimista) e a URL confirma; abrir é um passo novo no histórico; fechar só usa o Voltar do navegador se a entrada anterior é a própria tela (`entradaAnteriorEhALista`, agora com parâmetros configuráveis), senão tira o parâmetro; fechar antes de a URL chegar fecha quando ela chegar. Teste de abrir e fechar depressa com o servidor lento (`?lento=1500`).
+- **Passos:** stepper horizontal (a linha do tempo dos passos) com barra de progresso embaixo, a partir de 1024 px; abaixo disso (tablet e celular) vira "Passo N de M · título" com a mesma barra. Passos já visitados são botões; os não alcançados ficam `aria-disabled`. O passo "Conferir" (sem campos) mostra o resumo.
+- **Resumo ao vivo:** à direita a partir de 1024 px; abaixo disso, uma gaveta "Ver resumo" / "Esconder resumo".
+- **Formulário:** React Hook Form 7.91.0 e `@hookform/resolvers` 6.0.2 com o mesmo esquema Zod da Server Action (Checkpoint 1). Avançar valida só os campos do passo e leva o foco ao primeiro com erro; Concluir valida tudo e volta ao primeiro passo com erro. Enter avança (menos em área de texto, seleção e botão).
+- **Fechar é fechar:** com mudanças, Esc, o botão de fechar e o clique no fundo perguntam ("Continuar editando" tem o foco; "Salvar rascunho e sair"; "Descartar"). Sem mudanças, fecha na hora e **não apaga** um rascunho que já existia. O Voltar do navegador fecha sem perguntar (não há como impedi-lo), mas o que estava na tela já fica no rascunho (salvo a cada 400 ms de pausa e ao desmontar). Enquanto envia, não fecha.
+- **Rascunho:** `localStorage`, por pessoa e navegador, lido na montagem do assistente (por isso o assistente só monta no navegador, depois da hidratação), validado só por tipo (um campo digitado pela metade não pode derrubar o rascunho por regra de negócio), versão do esquema conferida, aviso quando descartado ou quando não dá para salvar. "Começar de novo" apaga e volta ao passo 1.
+- **Envio:** uma chave de envio por abertura; clique duplo e Enter repetido enviam uma vez (guarda síncrona no início); botão `aria-disabled` com "Enviando…"; falha mostra "Tentar de novo" com a mesma chave; conflito mostra o registro atual e "Revisar com os dados atuais" (gera nova chave, mantém o que foi digitado); erro de campo do servidor volta ao passo do campo.
+- **"+" e mini-wizard:** campo de seleção com o botão "+" abre o mini-wizard num painel lateral (folha de baixo no celular), com os mesmos passos e rascunho desligado (nunca vira rascunho do assistente de baixo); ao gravar, fecha sozinho, devolve o campo preenchido e o foco volta ao "+". Esc fecha só o mini; as teclas do mini não sobem ao assistente de baixo.
+- **Dois achados no caminho, ambos corrigidos:** (1) a mensagem de erro que aparece ao sair de um campo vazio empurrava para baixo o botão que a pessoa estava clicando (o clique se perdia entre apertar e soltar); agora a linha do erro tem altura reservada; (2) passar a propriedade `initialFocus` ao Dialog do base-ui faz o assistente de baixo reaplicar o foco e fechar o mini-wizard; o foco inicial é feito por um efeito próprio.
+- **Alvos de toque** de 44 px no celular (fechar, voltar, avançar, concluir, campos e "+").
+- **Assistente de teste:** seção "Assistente" da página `/admin/demonstracao`, que cadastra um "item" de brinquedo sem tocar em dados; `?simular=falha|conflito|campo|lento` faz o "servidor" de mentira responder assim; `?lento=ms` atrasa as navegações da página.
+- **Verificação (produção, 31/10/2026):** e2e completo, 1115 passaram, 19 puladas, 0 falhas; abrir e fechar o assistente depressa com o servidor lento, 60 de 60 (2 cenários × 30, 1366, 4 workers); fluxo no tablet (820) e no celular (390) passando.
+- **Reteste do resíduo "trocar de placa muitas vezes seguidas" (painel de espiar):** 1 falha em 30 (1366, 4 workers), com a mesma mensagem de antes (o painel da placa esperada some no passo 13 de 14). Continua **sem causa encontrada**: o teto de 2 rodadas já foi usado e não houve nova investigação. Segue como pendência registrada.
+- **Quem decidiu:** Alexandre (plano da 2D aprovado em 31/10/2026); o desenho acima é a execução do Checkpoint 2.
+
+---
+
 ## 30/10/2026 — Painel de espiar (2C-2): desenho aprovado e o que fica para a Fase 3
 
 - **Decisão:**
@@ -41,6 +83,17 @@ Modelo de entrada:
   - **`obterPlaca()` passa a conferir a permissão e o escopo da carteira** (a placa que a pessoa pode ver). Hoje a fonte de exemplo devolve qualquer placa, inclusive as baixadas.
   - **Ponto de atenção do custo:** cada abertura do painel refaz a consulta da lista no servidor (a página inteira recarrega quando um parâmetro muda), ou seja, **uma consulta a mais por abertura**. No exemplo é instantâneo; com banco real é preciso separar o painel da lista ou guardar a consulta da lista (cache por parâmetros sem `espiar`).
 - **Quem decidiu:** Alexandre.
+
+---
+
+## 31/10/2026 — Teste do Mais filtros: media antes de o botão existir, agora espera o primeiro desenho
+
+- **A falha:** `e2e/placas.spec.ts:1249` ("o botão ocupa o mesmo lugar e o mesmo tamanho enquanto carrega e depois de carregar") derrubou o check `app` do CI dos PRs #16 (1366 e 1920) e #17 (1366), nas duas tentativas, sempre em `expect(antes).not.toBeNull()` (linha 1259): a caixa do botão vinha `null`.
+- **Causa:** o teste media **antes de o botão existir**. Ele esperava `toBeVisible()` e, em seguida, pedia `boundingBox()` ao localizador; entre os dois o botão (ou o esqueleto dele) pode ser trocado (a casca pelo conteúdo real, as cópias escondidas do streaming), e a caixa vinha `null`. Num runner lento isso acontecia sempre. Não era regressão do produto: o deslocamento real do botão foi corrigido no #15 (topo reservado por faixa e larguras reservadas dos botões).
+- **Correção, sem afrouxar o que o teste vigia:** o teste instala um amostrador que registra, a cada quadro, a caixa de "Mais filtros" e de "Visões salvas" (só do que está visível e tem tamanho). Primeiro **espera o primeiro desenho** (os dois botões com caixa); depois deixa a lista carregar (e meio segundo além) e compara cada quadro com a **primeira caixa**: continua falhando se o botão se deslocar mais de 1 px ou mudar de tamanho depois do primeiro desenho. O teste liga CPU 4x e rede de 300 ms por conta própria (`CPU_LENTA` e `REDE_MS` mudam os valores), para vigiar o mesmo em qualquer máquina.
+- **Prova por mutação:** desfeita a reserva do topo (volta aos 52 px fixos), o teste falha no 1366 com `Mais filtros y mudou 29 px depois do primeiro desenho` (os mesmos 29 px do CI). No 1920 a diferença é de 1 px (52 contra 53) e o teste passa, como se espera. Restaurado, passa.
+- **Verificação em ambiente de CI:** produção, 1 worker, rede de 300 ms, CPU 4x e 6x, 1366 e 1920, 30 repetições seguidas em cada combinação: 120 de 120.
+- **Quem decidiu:** Alexandre (31/10/2026).
 
 ---
 
