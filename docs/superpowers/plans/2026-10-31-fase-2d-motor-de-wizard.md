@@ -114,3 +114,21 @@ Banco, RLS e sessão real (Fase 3); editar e excluir por wizard (mesmo motor, de
 3. Situação inicial: padrão PÁT; aceita as do tipo (MAN, DOC, ALU, EMP, VEN etc.); baixa (SUC, VND) fora; sem conjunto no cadastro.
 4. Custódia corrigida (ver Global Constraints e Tarefa 0): Receber placa é transferência entre gestores, módulo Frota; Disponibilizar de PÁT/VAz/ETv para DOp com filial; DOp → ACe fica no Operacional.
 5. Rascunho em **`localStorage`** por pessoa e navegador, **validado na leitura**, **sem dados sensíveis**, até a Fase 3.
+
+## Checkpoint 1 — feito (regras puras, sem tela)
+
+Entregue na branch `fase-2d-motor-de-wizard`: Tarefa 0 (catálogo de ações e regra do momento), Tarefa 1 (`lib/dominio/esquemas/placa.ts`, `lib/dominio/custodia.ts`), Tarefa 2 (`lib/wizard/`: passos, rascunho, resultado, chave de envio) e Tarefa 3 (`lib/seguranca/exigir-permissao.ts`, `lib/exemplo/armazem.ts` e `catalogos.ts`). Nenhuma tela, nenhuma Server Action, nenhuma dependência nova.
+
+**Escolhas minhas neste checkpoint (a confirmar por Alexandre):**
+- **Situação inicial por tipo** (`siglasIniciaisDoTipo`): para todos, PÁT (padrão), MAN, REF, SIN, DOC, SDo, ALU, EMP e VEN; **SMo só para cavalo, caminhão e apoio**. Ficam de fora as situações de operação (DOp, ACe, CAr, CAn, ETc, ADe, DEs, ETv, VAz, MAc, MAt, MAv), folga e férias (FOg, FEr) e a baixa (SUC, VND). O código ainda não tem a marca "válida para conjunto, solo ou ambos" da régua; esta tabela é provisória até ela existir.
+- **RENAVAM:** 11 dígitos com dígito verificador (módulo 11); 9 e 10 dígitos completam com zeros à esquerda.
+- **Ano do ativo:** de 1980 até o ano atual mais um.
+- **Código FIPE:** formato `000000-0`.
+- **Meta no Receber placa:** `metaCentavos` (dinheiro, positivo, ou vazio). Não há definição de "meta" no glossário; é uma suposição.
+- **Conjunto no Receber placa:** só cavalo leva implementos (`implementoIds`), só implemento tem cavalo (`cavaloId`), sem repetir; os outros tipos não têm conjunto.
+- **Versão:** `Disponibilizar` confere a versão da placa; `Receber` confere a versão do pedido de transferência.
+- **Chave de envio:** UUID gerado na abertura do assistente; só o envio que deu certo guarda a chave (falha não a gasta, para "Tentar de novo" funcionar).
+- **Rascunho:** `localStorage`, chave `eixo-rascunho:<pessoa>:<assistente>:<registro|novo>`, limite de 20 mil caracteres, campos sensíveis omitidos (lista por assistente), versão do esquema conferida e valores validados na leitura.
+- **`exigirPermissao`:** `exigirPermissao({ modulo, acao }, perfil = perfilAtual())` lança `ErroDePermissao`; Administrador e Diretoria criam em todo módulo, os demais só nos módulos do seu perfil.
+- **Escrita de exemplo:** em memória do processo (some ao reiniciar). Fica fora do Checkpoint 1 ligar o armazém à lista e à ficha, e as Server Actions (`acoes.ts`); isso entra nos próximos checkpoints.
+

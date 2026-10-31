@@ -14,6 +14,7 @@ const LIBERADOS = [
   "docs/superpowers/plans/2026-10-29-fase-2c-1-lista-de-placas.md",
   "docs/superpowers/plans/2026-10-30-fase-2c-2-painel-de-espiar.md",
   "docs/superpowers/plans/2026-10-30-fase-2c-3-ficha-da-placa.md",
+  "docs/superpowers/plans/2026-10-31-fase-2d-motor-de-wizard.md",
 ];
 const SEM_VARREDURA =
   /^(node_modules|\.next|\.git|test-results|playwright-report|supabase\/\.temp)/;
