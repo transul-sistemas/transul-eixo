@@ -655,3 +655,12 @@ Modelo de entrada:
 - **Decisão:** ao rodar e2e na máquina de desenvolvimento, o `timeout` do comando precisa ser maior que (testes × tempo do teste); em teste que deve falhar (vermelho do TDD), usar `--timeout=6000`. Um e2e que sai com `code=143` sem resultado foi encerrado de fora, não falhou.
 - **Motivo:** o 143 veio do `timeout` do próprio comando (250 s) encerrando o Playwright enquanto 23 testes esperavam, cada um, o tempo inteiro por um botão que ainda não existia. Com o build de produção, um projeto por vez e `--timeout=6000`, os 23 terminam em ~5 min e falham pelo motivo certo. Havia também um `vitest` órfão de uma rodada anterior, encerrado à mão.
 - **Quem decidiu:** Alexandre (limite de duas rodadas de investigação).
+
+## 31/10/2026 — Interface dos assistentes da Frota (Checkpoint 3 da 2D)
+
+- **Decisão:** um hospedeiro único (`assistentes-da-frota.tsx`) abre Cadastrar placa, Receber placa e Disponibilizar ao Operacional pela URL (`?assistente=`), na lista, na ficha e pelo Ctrl+K. Sem `?placa=`, Receber e Disponibilizar perguntam a placa ("Escolher a placa") e, sem placa possível, dizem por quê. O hospedeiro fica sempre montado na ficha e guarda o que o assistente aberto recebeu: depois de gravar, a tela atualiza por baixo (o pedido some, a placa muda de situação) e a mensagem "concluído" não pode desaparecer junto.
+- **Decisão:** o "+" (marca, modelo, gestor, operação, CR, filial, garagem) usa o mesmo `Assistente` em variante lateral, com o esquema `esquemaItemDeCatalogo` do servidor. O "+" do filho (modelo, CR, garagem) fica desligado, com o motivo, até o pai ser escolhido; trocar o pai limpa o filho.
+- **Decisão:** nos dois lados a validação é o mesmo esquema Zod; o resolvedor traduz os problemas para o formato do React Hook Form (`errosDoResolvedor`). Sem tipo escolhido, o resto do cadastro é conferido como um tipo qualquer, para os erros de placa e RENAVAM aparecerem junto com o do tipo.
+- **Decisão:** o Zod só roda as regras cruzadas (pendências resolvidas, posse) depois que os campos básicos passam; por isso "Confira o que chegou" aparece antes de "Resolva todas as pendências".
+- **Decisão:** alvos de toque seguem o motor: 44 px abaixo de 640 px (celular, mini como folha de baixo) e 32 a 36 px no tablet (mini como painel à direita).
+- **Quem decidiu:** plano da 2D aprovado por Alexandre; detalhes de tela, desta entrega (aguarda aprovação do visual).
