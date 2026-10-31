@@ -154,6 +154,24 @@ test.describe("foco, anúncio e dado velho", () => {
   });
 });
 
+test.describe("foco ao fechar quando a lista não tem linha para devolver", () => {
+  test("lista vazia: Esc leva o foco ao campo de busca, nunca ao body", async ({ page }) => {
+    await abrirHidratada(page, `${ROTA}?q=zzzzzzzz&espiar=AAA0A00`);
+    await expect(painelDe(page, "AAA0A00")).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(qualquerPainel(page)).toBeHidden();
+    await expect(page.locator('[role="search"] input')).toBeFocused();
+  });
+
+  test("lista com erro: mostra o erro e nenhum painel (não há o que devolver)", async ({
+    page,
+  }) => {
+    await page.goto(`${ROTA}?falha=1&espiar=AAA0A00`);
+    await expect(page.getByText("Não foi possível carregar as placas")).toBeVisible();
+    await expect(qualquerPainel(page)).toHaveCount(0);
+  });
+});
+
 test.describe("link direto: clicar na própria placa antes de o painel liberar", () => {
   test("Esc depois fecha o painel sem sair da lista", async ({ page }) => {
     test.setTimeout(180_000);

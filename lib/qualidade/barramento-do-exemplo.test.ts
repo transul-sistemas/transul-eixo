@@ -111,6 +111,87 @@ describe("barramento: o navegador nunca importa a fonte de dados", () => {
       ]),
     ).toEqual([]);
   });
+  it("acusa o arquivo SEM a diretiva que um client importa e que importa a fonte (cadeia de um nível)", () => {
+    expect(
+      clienteImportaAFonte([
+        { caminho: "components/painel.tsx", texto: `${CLIENTE}import { R } from "./resumo";` },
+        {
+          caminho: "components/resumo.tsx",
+          texto: 'import { listarPlacas } from "@/lib/dados/placas";',
+        },
+      ]),
+    ).toEqual(["components/resumo.tsx"]);
+  });
+  it("segue cadeias de vários níveis, com alias, caminho relativo, extensão e index", () => {
+    const acusados = clienteImportaAFonte([
+      { caminho: "components/a.tsx", texto: `${CLIENTE}import { B } from "@/components/ficha/b";` },
+      {
+        caminho: "components/ficha/b.tsx",
+        texto: 'import { C } from "../comum/c";\nimport { D } from "./d";',
+      },
+      { caminho: "components/comum/c.ts", texto: 'import { E } from "@/lib/uteis";' },
+      { caminho: "components/ficha/d/index.tsx", texto: 'import { f } from "@/lib/dados/fonte";' },
+      { caminho: "lib/uteis/index.ts", texto: "export const E = 1;" },
+    ]);
+    expect(acusados).toEqual(["components/ficha/d/index.tsx"]);
+  });
+  it("não acusa o arquivo de servidor que importa a fonte mas nenhum client alcança", () => {
+    expect(
+      clienteImportaAFonte([
+        { caminho: "components/a.tsx", texto: `${CLIENTE}import { T } from "./tipos";` },
+        {
+          caminho: "components/tipos.ts",
+          texto: 'import type { X } from "@/lib/dados/placas-tipos";',
+        },
+        { caminho: "app/x/page.tsx", texto: 'import { listarPlacas } from "@/lib/dados/placas";' },
+        { caminho: "app/x/outro.tsx", texto: 'import { listarPlacas } from "@/lib/dados/placas";' },
+      ]),
+    ).toEqual([]);
+  });
+  it("importação circular termina e ainda acusa quem importa a fonte", () => {
+    expect(
+      clienteImportaAFonte([
+        { caminho: "components/a.tsx", texto: `${CLIENTE}import { B } from "./b";` },
+        {
+          caminho: "components/b.tsx",
+          texto: 'import { A } from "./a";\nimport { C } from "./c";',
+        },
+        {
+          caminho: "components/c.tsx",
+          texto: 'import { B } from "./b";\nimport { f } from "@/lib/dados/fonte";',
+        },
+      ]),
+    ).toEqual(["components/c.tsx"]);
+  });
+  it("pacotes de fora e caminhos que não existem são ignorados, sem erro", () => {
+    expect(
+      clienteImportaAFonte([
+        {
+          caminho: "components/a.tsx",
+          texto: `${CLIENTE}import React from "react";
+import { x } from "./nao-existe";
+import y from "@/lib/nao/existe";`,
+        },
+      ]),
+    ).toEqual([]);
+  });
+  it("não conta duas vezes o mesmo arquivo alcançado por dois clients", () => {
+    expect(
+      clienteImportaAFonte([
+        { caminho: "components/a.tsx", texto: `${CLIENTE}import { C } from "./c";` },
+        { caminho: "components/b.tsx", texto: `${CLIENTE}import { C } from "./c";` },
+        { caminho: "components/c.tsx", texto: 'import { f } from "@/lib/dados/fonte";' },
+      ]),
+    ).toEqual(["components/c.tsx"]);
+  });
+  it("aceita caminhos com barra invertida (Windows) e devolve o caminho como veio", () => {
+    expect(
+      clienteImportaAFonte([
+        { caminho: "components\\a.tsx", texto: `${CLIENTE}import { B } from "./b";` },
+        { caminho: "components\\b.tsx", texto: 'import { f } from "@/lib/dados/fonte";' },
+      ]),
+    ).toEqual(["components\\b.tsx"]);
+  });
   it("no repositório de verdade, nenhum client importa a fonte", () => {
     const arquivos = ["app", "components", "lib"]
       .flatMap((pasta) => listarArquivos(pasta, /\.(ts|tsx)$/))

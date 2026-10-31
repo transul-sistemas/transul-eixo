@@ -1,5 +1,10 @@
 import type { ConsultaDeTabela } from "@/lib/navegacao/tabela";
-import type { DetalheDaPlaca, OpcoesDaConsulta, PaginaDePlacas } from "./placas-tipos";
+import type {
+  DetalheDaPlaca,
+  FichaDaPlaca,
+  OpcoesDaConsulta,
+  PaginaDePlacas,
+} from "./placas-tipos";
 
 export const MENSAGEM_SO_COM_EXEMPLO = "A fonte de exemplo só roda com EIXO_DADOS=exemplo";
 
@@ -11,6 +16,8 @@ export interface FonteDePlacas {
   ): Promise<PaginaDePlacas>;
   /** A placa já normalizada (maiúscula, só letras e números), ou `null` se não existe. */
   obter(placa: string, hoje: string, opcoes: OpcoesDaConsulta): Promise<DetalheDaPlaca | null>;
+  /** A ficha: o detalhe e a história. A placa já normalizada; `null` se não existe. */
+  obterFicha(placa: string, hoje: string, opcoes: OpcoesDaConsulta): Promise<FichaDaPlaca | null>;
 }
 
 /**

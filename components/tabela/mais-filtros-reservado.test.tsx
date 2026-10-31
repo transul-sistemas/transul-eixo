@@ -21,6 +21,9 @@ describe("<MaisFiltrosReservado> (o lugar do botão enquanto a lista carrega)", 
     expect(html).toMatch(/\sdisabled(?:=""|[\s>])/);
     expect(html).toContain('aria-busy="true"');
   });
+  it("reserva a largura do texto (109 px): o botão não anda enquanto o HTML chega em pedaços", () => {
+    expect(CLASSE_DO_BOTAO_MAIS_FILTROS).toContain("min-w-[6.8125rem]");
+  });
   it("não repete a dica antiga de que o botão ainda não existe", () => {
     expect(html).not.toContain("Entra com a tabela");
   });

@@ -24,6 +24,8 @@ export interface Tela {
   readonly descricao: string;
   readonly dispositivos: readonly Dispositivo[];
   readonly modos?: readonly ModoDaTela[];
+  /** A lista abre a ficha de cada item em `<rota>/<identificador>` (placa, pessoa, operação, parceiro). */
+  readonly ficha?: true;
 }
 
 export interface ModuloDoCatalogo {
@@ -50,6 +52,7 @@ interface DadosDaTela {
   descricao: string;
   estado?: EstadoDaTela;
   modos?: readonly ModoDaTela[];
+  ficha?: true;
 }
 
 function modulo(
@@ -119,6 +122,7 @@ export const CATALOGO: readonly ModuloDoCatalogo[] = [
       icone: "IconLicense",
       dispositivos: DESKTOP_E_TABLET,
       descricao: "Lista todas as placas e abre a ficha de cada uma.",
+      ficha: true,
       estado: "pronto",
     },
     {
@@ -180,6 +184,7 @@ export const CATALOGO: readonly ModuloDoCatalogo[] = [
       icone: "IconRoute2",
       dispositivos: DESKTOP,
       descricao: "Lista as operações e abre a ficha de cada uma.",
+      ficha: true,
     },
     {
       slug: "comparativo",
@@ -203,6 +208,7 @@ export const CATALOGO: readonly ModuloDoCatalogo[] = [
       icone: "IconUser",
       dispositivos: DESKTOP_E_TABLET,
       descricao: "Lista as pessoas e abre a ficha de cada uma.",
+      ficha: true,
     },
     {
       slug: "escala",
@@ -254,6 +260,7 @@ export const CATALOGO: readonly ModuloDoCatalogo[] = [
       icone: "IconBuildingStore",
       dispositivos: DESKTOP,
       descricao: "Lista os parceiros e abre a ficha de cada um.",
+      ficha: true,
     },
     {
       slug: "conciliacao",
@@ -359,6 +366,33 @@ export function acharTela(rota: string): { modulo: ModuloDoCatalogo; tela: Tela 
   for (const m of CATALOGO) {
     const tela = m.telas.find((t) => t.rota === caminho);
     if (tela) return { modulo: m, tela };
+  }
+  return undefined;
+}
+
+/**
+ * Acha a ficha pela rota filha `/<tela>/<identificador>` de uma tela marcada com `ficha`, e devolve
+ * o módulo, a tela e o identificador (a placa, por exemplo). Ignora `?aba=`, `#` e a barra final.
+ * Identificador com escape quebrado, vazio, de mais de 40 caracteres ou com algo além de letras,
+ * números, hífen e sublinhado não é ficha.
+ */
+export function acharFicha(
+  rota: string,
+): { modulo: ModuloDoCatalogo; tela: Tela; identificador: string } | undefined {
+  const caminho = (rota.split(/[?#]/)[0] ?? "").replace(/\/+$/, "");
+  const barra = caminho.lastIndexOf("/");
+  if (barra <= 0) return undefined;
+  let identificador: string;
+  try {
+    identificador = decodeURIComponent(caminho.slice(barra + 1));
+  } catch {
+    return undefined;
+  }
+  if (!/^[A-Za-z0-9_-]{1,40}$/.test(identificador)) return undefined;
+  const pai = caminho.slice(0, barra);
+  for (const m of CATALOGO) {
+    const tela = m.telas.find((t) => t.rota === pai && t.ficha);
+    if (tela) return { modulo: m, tela, identificador };
   }
   return undefined;
 }

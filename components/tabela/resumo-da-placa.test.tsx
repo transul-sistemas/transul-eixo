@@ -10,6 +10,7 @@ import {
   PlacaNaoEncontrada,
   ResumoCarregando,
   ResumoDaPlaca,
+  SecoesDoResumo,
 } from "./resumo-da-placa";
 
 const HOJE = "2026-10-29";
@@ -159,6 +160,22 @@ describe("<ResumoDaPlaca>: formatos e valores", () => {
     expect(c["RENAVAM"]).toBe(d.renavam);
   });
 
+  it("em lista de rótulo e valor o dinheiro fica à esquerda, como os outros valores (à direita só em coluna de tabela)", async () => {
+    const comValores = TODAS.find((p) => p.km !== null && p.valorFipeCentavos !== null)!;
+    const marcacao = html(await detalhe(comValores.placa));
+    const dd = /<dt[^>]*>Valor FIPE<\/dt>\s*<dd[^>]*>([\s\S]*?)<\/dd>/.exec(marcacao)?.[1] ?? "";
+    expect(dd).toContain("R$");
+    expect(dd).toMatch(/class="[^"]*text-left/);
+    expect(dd).not.toMatch(/class="[^"]*text-right/);
+    // Mesmo vazio, o traço do valor fica à esquerda.
+    const vazio = TODAS.find((p) => p.valorFipeCentavos === null);
+    if (vazio) {
+      const m = html(await detalhe(vazio.placa));
+      const v = /<dt[^>]*>Valor FIPE<\/dt>\s*<dd[^>]*>([\s\S]*?)<\/dd>/.exec(m)?.[1] ?? "";
+      expect(v).not.toMatch(/class="[^"]*text-right/);
+    }
+  });
+
   it("valores vazios viram traço, nunca 'null' nem 'undefined'", async () => {
     for (const p of TODAS) {
       const t = texto(html(await detalhe(p.placa)));
@@ -202,14 +219,58 @@ describe("<ResumoDaPlaca>: o conjunto", () => {
 });
 
 describe("Abrir ficha completa", () => {
-  it("fica desligado com aria-disabled (o foco continua nele), sem link e com a dica visível", () => {
-    const marcacao = renderToStaticMarkup(<BotaoDaFicha />);
+  it("é um link para a ficha da placa, com o texto do botão e sem dica de 'em breve'", () => {
+    const marcacao = renderToStaticMarkup(<BotaoDaFicha placa="AAA0A00" />);
+    expect(marcacao).toMatch(/<a[^>]*href="\/frota\/placas\/AAA0A00"/);
     expect(marcacao).toContain("Abrir ficha completa");
-    expect(marcacao).toContain('aria-disabled="true"');
-    expect(marcacao).not.toMatch(/<button[^>]*\sdisabled(=|\s|>)/);
-    expect(marcacao).not.toContain("href=");
-    expect(marcacao).toContain("Entra na próxima entrega");
-    expect(marcacao).toMatch(/aria-describedby="[^"]+"/);
+    expect(marcacao).not.toContain("aria-disabled");
+    expect(marcacao).not.toContain("Entra na próxima entrega");
+  });
+  it("aceita um aviso de que a pessoa vai sair da lista (para guardar o ponto de retorno)", () => {
+    const html = renderToStaticMarkup(<BotaoDaFicha placa="AAA0A00" aoAbrir={() => {}} />);
+    expect(html).toContain("Abrir ficha completa");
+  });
+  it("tem alvo de pelo menos 24 px e ocupa a largura do rodapé", () => {
+    const marcacao = renderToStaticMarkup(<BotaoDaFicha placa="AAA0A00" />);
+    expect(marcacao).toMatch(/class="[^"]*min-h-(?:8|9|10)/);
+    expect(marcacao).toMatch(/class="[^"]*w-full/);
+  });
+});
+
+describe("<SecoesDoResumo> na ficha: as placas do conjunto levam à ficha delas", () => {
+  it("com hrefDaPlaca, cada placa do conjunto é um link e não um botão", async () => {
+    const cavalo = TODAS.find((p) => p.tipo === "cavalo" && p.conjunto.implementoIds.length > 0)!;
+    const d = await detalhe(cavalo.placa);
+    const marcacao = renderToStaticMarkup(
+      <SecoesDoResumo detalhe={d} hrefDaPlaca={(p) => `/frota/placas/${p}`} />,
+    );
+    for (const placa of d.conjunto.implementos) {
+      expect(marcacao).toMatch(
+        new RegExp(
+          `<a[^>]*href="/frota/placas/${placa}"[^>]*aria-label="Abrir ficha de ${placa}"|<a[^>]*aria-label="Abrir ficha de ${placa}"[^>]*href="/frota/placas/${placa}"`,
+        ),
+      );
+    }
+    expect(marcacao).not.toMatch(/<button[^>]*aria-label="Espiar /);
+  });
+  it("tem as mesmas cinco seções do resumo do painel, em grade quando pedido", async () => {
+    const d = await detalhe("AAA0A00");
+    const marcacao = renderToStaticMarkup(
+      <SecoesDoResumo detalhe={d} hrefDaPlaca={(p) => `/frota/placas/${p}`} disposicao="grade" />,
+    );
+    expect(titulos(marcacao)).toEqual([
+      [3, "Situação"],
+      [3, "Conjunto"],
+      [3, "Gestão"],
+      [3, "Alertas"],
+      [3, "Dados"],
+    ]);
+    expect(marcacao).toMatch(/lg:grid-cols-2/);
+  });
+  it("o resumo do painel continua igual: botões que trocam o painel", async () => {
+    const cavalo = TODAS.find((p) => p.tipo === "cavalo" && p.conjunto.implementoIds.length > 0)!;
+    const d = await detalhe(cavalo.placa);
+    expect(html(d)).toContain(`aria-label="Espiar ${d.conjunto.implementos[0]}"`);
   });
 });
 

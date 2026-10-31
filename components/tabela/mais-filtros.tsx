@@ -23,7 +23,12 @@ interface Props {
 const GRUPOS = gruposDeSiglas();
 
 /** As classes do botão Mais filtros: o botão reservado usa as mesmas, para nada se mexer. */
-export const CLASSE_DO_BOTAO_MAIS_FILTROS = cn(buttonVariants({ variant: "outline" }));
+// `min-w`: a largura do texto é reservada, para o botão (e o vizinho à direita) não andar quando o
+// HTML chega em pedaços e o texto vem depois do botão.
+export const CLASSE_DO_BOTAO_MAIS_FILTROS = cn(
+  buttonVariants({ variant: "outline" }),
+  "min-w-[6.8125rem]",
+);
 
 /**
  * O lugar do botão enquanto a lista carrega: mesmo tamanho, mesmo ícone, desligado. Quando o botão

@@ -57,6 +57,24 @@ const partesDeSaoPaulo = new Intl.DateTimeFormat("en-CA", {
   day: "2-digit",
 });
 
+const partesDaHoraDeSaoPaulo = new Intl.DateTimeFormat("en-CA", {
+  timeZone: "America/Sao_Paulo",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+  hour: "2-digit",
+  minute: "2-digit",
+  hourCycle: "h23",
+});
+
+/** O dia e a hora de agora em São Paulo, como `aaaa-mm-ddThh:mm` (para guardar e comparar, não para mostrar). */
+export function agoraEmSaoPaulo(agora: Date): string {
+  const partes = Object.fromEntries(
+    partesDaHoraDeSaoPaulo.formatToParts(agora).map((parte) => [parte.type, parte.value]),
+  );
+  return `${partes.year}-${partes.month}-${partes.day}T${partes.hour}:${partes.minute}`;
+}
+
 /** O dia de hoje em São Paulo, como `aaaa-mm-dd` (para guardar e comparar, não para mostrar). */
 export function hojeEmSaoPaulo(agora: Date): string {
   const partes = Object.fromEntries(

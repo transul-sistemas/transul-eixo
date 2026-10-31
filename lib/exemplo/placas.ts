@@ -14,16 +14,15 @@ const TOTAL = 240;
 
 /**
  * Os tipos de ativo se repetem, intercalados, a cada 24 placas (6 cavalos, 10 implementos,
- * 2 equipamentos, 3 caminhões, 2 veículos pequenos e 1 apoio), para qualquer página da lista
+ * 2 equipamentos, 3 caminhões e 3 apoios), para qualquer página da lista
  * mostrar variedade. Sem sorteio: a mesma placa tem sempre o mesmo tipo.
  */
-const CICLO_DE_TIPOS: readonly TipoDeAtivo[] = [..."CIIKCIEIVICIIKCIPIECIVCK"].map((letra) => {
+const CICLO_DE_TIPOS: readonly TipoDeAtivo[] = [..."CIIKCIEIPICIIKCIPIECIPCK"].map((letra) => {
   const porLetra: Record<string, TipoDeAtivo> = {
     C: "cavalo",
     I: "implemento",
     E: "equipamento",
     K: "caminhao",
-    V: "veiculo-pequeno",
     P: "apoio",
   };
   return porLetra[letra] as TipoDeAtivo;
@@ -43,8 +42,7 @@ const MODELOS: Record<TipoDeAtivo, readonly string[]> = {
   ],
   equipamento: ["Empilhadeira", "Carregadeira", "Guindaste"],
   caminhao: ["VM 270", "Atego 2426", "Constellation 24.280"],
-  "veiculo-pequeno": ["Strada", "Saveiro", "Hilux"],
-  apoio: ["Van de apoio", "Camionete de apoio"],
+  apoio: ["Van de apoio", "Camionete de apoio", "Strada", "Saveiro", "Hilux"],
 };
 
 const LETRAS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -72,7 +70,7 @@ function base(i: number, hoje: string): PlacaDeExemplo {
       ? `Motorista Exemplo ${String(i).padStart(3, "0")}`
       : null;
   const motorizado = tipo !== "implemento" && tipo !== "equipamento";
-  const fipeBase = { cavalo: 250_000, caminhao: 180_000, "veiculo-pequeno": 90_000 } as const;
+  const fipeBase = { cavalo: 250_000, caminhao: 180_000, apoio: 90_000 } as const;
   const faixaFipe = fipeBase[tipo as keyof typeof fipeBase];
   const historico = tipo === "cavalo" && i % 9 === 1;
 

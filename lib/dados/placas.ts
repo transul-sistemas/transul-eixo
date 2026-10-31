@@ -4,6 +4,7 @@ import { normalizarPlaca } from "@/lib/dominio/placa";
 import type {
   DadosDoPainel,
   DetalheDaPlaca,
+  FichaDaPlaca,
   OpcoesDaConsulta,
   PaginaDePlacas,
 } from "./placas-tipos";
@@ -32,6 +33,19 @@ export async function obterPlaca(
 ): Promise<DetalheDaPlaca | null> {
   const fonte = await fonteDePlacas();
   return fonte.obter(normalizarPlaca(placa), hoje, opcoes);
+}
+
+/**
+ * A ficha da placa (detalhe e história), ou `null` se ela não existe. Acha também as baixadas.
+ * Na Fase 3 passa a conferir permissão e escopo da carteira; a ficha é uma consulta por abertura.
+ */
+export async function obterFicha(
+  placa: string,
+  hoje: string,
+  opcoes: OpcoesDaConsulta = {},
+): Promise<FichaDaPlaca | null> {
+  const fonte = await fonteDePlacas();
+  return fonte.obterFicha(normalizarPlaca(placa), hoje, opcoes);
 }
 
 /**

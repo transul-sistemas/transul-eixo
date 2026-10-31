@@ -2,6 +2,7 @@ import { normalizarPlaca } from "@/lib/dominio/placa";
 import { alertasDaPlaca } from "@/lib/dominio/alertas";
 import { diasEntre } from "@/lib/dominio/dias";
 import { grupoDaSigla, NOMES_DAS_SIGLAS, SIGLAS_DE_BAIXA } from "@/lib/dominio/status";
+import { eventosDeExemplo } from "@/lib/exemplo/eventos";
 import { placasDeExemplo, type PlacaDeExemplo } from "@/lib/exemplo/placas";
 import type { ConsultaDeTabela } from "@/lib/navegacao/tabela";
 import { STATUS } from "@/lib/visual/tons";
@@ -9,6 +10,7 @@ import { type FonteDePlacas, MENSAGEM_SO_COM_EXEMPLO } from "./fonte";
 import {
   CAMPOS_ORDENAVEIS_DE_PLACAS,
   type DetalheDaPlaca,
+  type FichaDaPlaca,
   type LinhaDePlaca,
   type OpcoesDaConsulta,
   type PaginaDePlacas,
@@ -200,6 +202,32 @@ function consultar(consulta: ConsultaDeTabela, hoje: string): PaginaDePlacas {
   };
 }
 
+/** O detalhe de uma placa de exemplo (e a própria placa de exemplo), ou `null` se não existe. */
+function detalheDe(
+  placa: string,
+  hoje: string,
+): { detalhe: DetalheDaPlaca; exemplo: PlacaDeExemplo } | null {
+  const todas = placasDeExemplo(hoje);
+  const exemplo = todas.find((p) => p.placa === placa);
+  if (!exemplo) return null;
+  const [linha] = paraLinhas(todas, hoje).filter((l) => l.id === exemplo.id);
+  if (!linha) return null;
+  return {
+    exemplo,
+    detalhe: {
+      ...linha,
+      ano: exemplo.ano,
+      renavam: exemplo.renavam,
+      desde: exemplo.desde,
+      crs: exemplo.crs.map((cr) => ({ ...cr })),
+      crsVigentes: exemplo.crs
+        .filter((cr) => cr.inicio <= hoje && (cr.fim === null || hoje < cr.fim))
+        .sort((a, b) => (a.inicio < b.inicio ? -1 : a.inicio > b.inicio ? 1 : 0))
+        .map((cr) => ({ ...cr })),
+    },
+  };
+}
+
 export const fonteDeExemplo: FonteDePlacas = {
   async consultar(consulta, hoje, opcoes: OpcoesDaConsulta) {
     if (process.env.EIXO_DADOS !== "exemplo") throw new Error(MENSAGEM_SO_COM_EXEMPLO);
@@ -213,21 +241,14 @@ export const fonteDeExemplo: FonteDePlacas = {
     const { lentoMs, falhaNoPainel } = opcoes.simulacao ?? {};
     if (lentoMs && lentoMs > 0) await new Promise((r) => setTimeout(r, Math.min(lentoMs, 10_000)));
     if (falhaNoPainel) throw new Error("Falha simulada pela fonte de exemplo, no painel.");
-    const todas = placasDeExemplo(hoje);
-    const achada = todas.find((p) => p.placa === placa);
-    if (!achada) return null;
-    const [linha] = paraLinhas(todas, hoje).filter((l) => l.id === achada.id);
-    if (!linha) return null;
-    return {
-      ...linha,
-      ano: achada.ano,
-      renavam: achada.renavam,
-      desde: achada.desde,
-      crs: achada.crs.map((cr) => ({ ...cr })),
-      crsVigentes: achada.crs
-        .filter((cr) => cr.inicio <= hoje && (cr.fim === null || hoje < cr.fim))
-        .sort((a, b) => (a.inicio < b.inicio ? -1 : a.inicio > b.inicio ? 1 : 0))
-        .map((cr) => ({ ...cr })),
-    };
+    return detalheDe(placa, hoje)?.detalhe ?? null;
+  },
+  async obterFicha(placa, hoje, opcoes: OpcoesDaConsulta): Promise<FichaDaPlaca | null> {
+    if (process.env.EIXO_DADOS !== "exemplo") throw new Error(MENSAGEM_SO_COM_EXEMPLO);
+    const { lentoMs, falha } = opcoes.simulacao ?? {};
+    if (lentoMs && lentoMs > 0) await new Promise((r) => setTimeout(r, Math.min(lentoMs, 10_000)));
+    if (falha) throw new Error("Falha simulada pela fonte de exemplo.");
+    const achado = detalheDe(placa, hoje);
+    return achado ? { ...achado.detalhe, eventos: eventosDeExemplo(achado.exemplo) } : null;
   },
 };

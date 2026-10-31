@@ -44,6 +44,77 @@ Modelo de entrada:
 
 ---
 
+## 31/10/2026 — Retorno da lista sem relógio (F5) e topo reservado do tamanho certo (Mais filtros)
+
+- **A falha:** no run do commit `44ee2d2`, o check `app` do PR #15 caiu em `e2e/lista-ficha.spec.ts:356` ("recarregar a lista (F5) nunca restaura": esperava rolagem 0, veio 150, no 1920). No mesmo run, `placas.spec.ts:1249` ("Mais filtros não pisca", 1366) foi instável: o botão se deslocou 29 px. Só a primeira derrubou o job.
+- **F5 — causa (reproduzida):** a marca "volta armada" ficava em `sessionStorage` com uma **janela de tempo** (1,5 s) e só era apagada pelo restaurador, 60 ms depois. Um F5 dado antes disso (máquina rápida, ou o teste logo após o Voltar) herdava a marca, atravessava o recarregar (o `sessionStorage` sobrevive a ele) e restaurava a rolagem. O teste novo (`e2e/retorno-da-lista.spec.ts`: Voltar e F5 em seguida) falhava a 1x e passava a 6x, porque com CPU lenta os 60 ms já tinham passado: o relógio decidia o resultado.
+- **Troca do tempo por sinais:**
+  - A marca vive **só na memória da página** (nada em armazenamento que sobreviva a um recarregar) e só nasce de sinal real: `popstate` em fase de captura e travessia da Navigation API (Voltar e Avançar), ou o clique nos links "Voltar à lista" e da trilha (sem tecla modificadora).
+  - É **amarrada à URL de destino** e dura até a próxima navegação para outro endereço (Navigation API `navigate` e clique em link, em captura) ou até `pagehide`. **Não há janela de tempo, nem espera de 60 ms.** As rodadas de efeito que o Next repete na lista escondida veem a mesma resposta (`vale`), mas **só a primeira restaura** (`tomarParaRestaurar`), para uma rodada tardia não puxar a rolagem de volta.
+  - Se a lista aparece antes do sinal, o restaurador **espera o sinal** (um aviso quando a marca é armada, e um quadro de animação), não um tempo.
+  - **Carga completa da página:** `performance.getEntriesByType("navigation")[0].type`: `reload` nunca restaura; `back_forward` (Voltar que recarrega o documento, por exemplo depois de um F5 na ficha) conta como volta; qualquer outro tipo, não.
+- **Verificação do F5:** unitários das regras (`lib/navegacao/retorno-da-lista.test.ts`) e e2e em produção com CPU 6x (`e2e/retorno-da-lista.spec.ts` e `.casca.spec.ts`): F5 logo depois do Voltar, F5 depois de restaurar, Voltar e Avançar restauram, visita nova (menu e link direto) começa no topo. 30 repetições seguidas sob CPU 6x: celular 150/150 e 1366 150/150 (a primeira corrida do 1366 teve só um `ENOENT` de artefatos, porque as duas execuções em paralelo dividiam `test-results/`; repetida sozinha, passou tudo). Também cobertos: F5 depois de Voltar e Avançar seguidos e depois de a página voltar do cache de ida e volta (bfcache, simulada pelos eventos `pagehide` e `pageshow` com `persisted`).
+- **Mais filtros — causa (medida quadro a quadro):** o botão não pulava ao trocar o esqueleto pela tabela; pulava **durante a hidratação**, quando o topo do sistema chegava (ele depende de `hoje`, então vem em streaming depois da casca) e empurrava a página. O espaço reservado para o topo (`TopoReservado`) tinha 52 px fixos; o topo real tem **81 px no 1366, 53 no 1920 e 57 no tablet e no celular** (29 px de salto no 1366 e 5 px nos outros).
+- **Correção:** `TopoReservado` reserva a altura do topo real **por faixa de largura**, medida na lista de placas com a barra lateral aberta: 63 px até 383 px, 57 até 1023, 169 até 1151, 125 até 1303, 121 até 1351, 81 até 1463 e 53 de 1464 em diante. Sem mudar o visual do topo.
+- **Mais filtros — segunda causa (achada nas repetições sob carga):** com a rede lenta o HTML chega em pedaços, e o botão "Visões salvas" já existia **sem o texto** (22 px: só padding e borda) ou nem existia ainda. Como o grupo de ações é alinhado à direita (`ml-auto`), o "Mais filtros" andava 82 px (ou 111 px, se o corte vinha antes do segundo botão) quando o resto chegava. Quadros capturados: `[Mais filtros@235+109; botão vazio@352+22]` e, no quadro seguinte, `[Mais filtros@153+109; Visões salvas@271+103]`. Era um por cento das execuções, só com a máquina disputada.
+- **Correção da segunda causa:** os dois botões reservam a largura do texto (`min-w` de 109 px no Mais filtros e 103 px no Visões salvas) e o grupo reserva a soma (`min-w-[13.75rem]`, 220 px) com os botões alinhados **à esquerda** do espaço reservado: não importa em que pedaço o HTML parta, a posição final já é a de antes. Efeito colateral aceito: com filtros na URL, "Limpar filtros" entra à esquerda e a barra cresce nessa direção (é conteúdo novo, não pulo do botão).
+- **Verificação do "Mais filtros":** sem a segunda correção, 1 falha em ~400 execuções. Com ela, sob carga (os quatro projetos em paralelo, CPU 6x e rede com 300 ms): 1366 280/280, 1920 40/40, tablet 40/40 e celular 160/160.
+- **Teste:** `e2e/mais-filtros-sem-pular.spec.ts` e `.casca.spec.ts` medem a caixa (posição e tamanho) de "Mais filtros" e "Visões salvas" quadro a quadro, do primeiro desenho à tabela carregada, com CPU 6x e rede com 300 ms de latência, em 1366, 1920, 820 e 390 e em larguras de quebra (1100, 1250, 1330, 1400, 1500, 1700, 360, 600, 700). Falhava com 29 px (1366) e 5 px (820 e 390) antes da correção.
+- **Limite conhecido (aceito até decisão de Alexandre):** a reserva por faixa vale para a **lista de placas**; o topo real depende da rota (a trilha da ficha é mais longa: 81 px até 1679 px, contra 53 px da lista a partir de 1464) e da barra lateral compacta. Nessas telas ainda pode haver um pulo do topo sob rede lenta. Solução de fundo, para uma decisão futura: tirar `hoje` do servidor (calculá-lo no navegador) e renderizar o esqueleto do topo com a mesma estrutura do real, ou fixar o topo em uma linha só (contexto recolhido abaixo de 1536 px, o que muda o visual do 1366).
+- **Quem decidiu:** Alexandre (correção pedida em 31/10/2026).
+
+---
+
+## 31/10/2026 — Pull request: prazo de 45 min no job `app` e cache dos navegadores do Playwright
+
+- **O que aconteceu:** o check `app` do PR #15 foi **cancelado aos 20m22s**, sem falha de teste. O workflow tinha `timeout-minutes: 20` e a suíte de tela cresceu para 1002 testes.
+- **Onde foi o tempo (run cancelado):** instalação 11 s, lint 10 s, tipos 9 s, testes unitários 23 s, build 24 s, navegador do Playwright 21 s; o `pnpm test:e2e` ficou **18m21s** até o corte. Tudo antes do e2e somou menos de 2 minutos. O Playwright roda com **1 worker no CI** (o padrão dele quando `CI` está definido); no computador de desenvolvimento são vários.
+- **Decisão:** `timeout-minutes: 45` só no job `app` (o nome continua exatamente `app`, como o ruleset exige; `banco` não mudou) e cache de `~/.cache/ms-playwright` (`actions/cache`, chave pelo sistema, pela versão do Playwright e pelo `pnpm-lock.yaml`). Não se dividiu em jobs agora.
+- **Resultado (run 41194833371):** `app` e `banco` passaram. `app` levou 22m56s (e2e: 992 passaram, 9 puladas, 1 instável que passou na nova tentativa). O cache foi gravado nesse run (a primeira vez é sempre sem cache). **O ganho do cache é pequeno** (a instalação do navegador leva ~20 s, e o `--with-deps` ainda instala pacotes do sistema); o que resolve o prazo é o timeout.
+- **Instável conhecido:** `placas.spec.ts` › "o botão ocupa o mesmo lugar e o mesmo tamanho enquanto carrega e depois de carregar" (1366). A branch de robustez da 2C investiga os testes instáveis.
+- **Peso por projeto (testes):** 1366 = 429, 1920 = 429, tablet 820 = 72, celular 390 = 72. Com 1 worker no computador de desenvolvimento: 1920 levou 6m28s, tablet 59 s, celular 1m03s. A medida do 1366 ficou inválida (o computador dormiu durante a corrida); pelo número de testes e pela simetria com o 1920, vale o mesmo. Ou seja, **1366 e 1920 são ~85% do e2e**; no CI, o e2e inteiro levou 20,9 min.
+- **Proposta para dividir depois (não implementada):**
+  1. Um job de preparação com lint, tipos, testes unitários e build.
+  2. Uma matriz de e2e com um job por projeto (1366, 1920, tablet e celular), cada um com `needs` do preparo e reaproveitando o build (artefato) e o cache do navegador. O tempo cairia para o do job mais lento (~10 a 12 min no CI).
+  3. Um job final chamado **`app`** (`needs` da matriz, `if: always()`) que falha se qualquer parte falhar, para o ruleset continuar exigindo só `app` e `banco`.
+  4. Alternativa mais barata, antes da matriz: `workers: 2` no CI (os runners têm 4 núcleos); exige conferir se os testes de tela aguentam a concorrência.
+- **Quem decidiu:** Alexandre.
+
+---
+
+## 30/10/2026 — Lista de placas (2C-3): retorno só na volta, Apoio único e filtros em caixas
+
+- **Retorno da lista (armadilha 2):**
+  - **Só restaura página, rolagem e foco quando a volta é por Voltar/Avançar do navegador ou pelos links "Voltar à lista" e da trilha.** Visita nova (menu, link direto) começa no topo, sem restaurar nada.
+  - **A janela de 30 minutos foi removida** (era um desvio: valia para qualquer visita). O ponto guardado não tem prazo; o que decide é o sinal de volta.
+  - **Sinal de volta ("armado"):** gravado no `popstate`/Navigation API (em captura) ou no clique dos links de voltar; vale 1,5 s e **não é consumido** ao ler, porque o Next 16 reativa efeitos mais de uma vez; é desarmado quando o restaurador age. O restaurador espera 60 ms (o Next mostra a lista antes do `popstate`); a rolagem de visita nova é zerada em `useLayoutEffect` (em timeout quebrava rolagens feitas logo depois de abrir).
+  - **`sessionStorage` bloqueado:** tudo é opcional; sem ele, a lista só abre no topo.
+- **Olhos de espiar alinhados:** largura fixa do link da placa por densidade (`w-20` compacta, `w-24` confortável); `min-w` não bastava.
+- **Tipos de ativo (30/10/2026):** "Veículo pequeno" e "Apoio" viraram **Apoio**. São cinco tipos: Cavalo, Implemento, Equipamento, Caminhão e Apoio. Atualizados: gerador de exemplo (ciclo de 24 passa a 3 apoios), catálogo, `CLAUDE.md` (edição autorizada por Alexandre), `docs/glossario.md` e `docs/projeto-tecnico.md`.
+- **Grupos de filtro da lista:**
+  - **Situação** ("como a placa está agora") em pílulas com a bolinha da régua; seleção com fundo azul claro e borda azul. **Tipo de ativo** ("o que é a placa") em retângulos de canto leve, sem bolinha; seleção com fundo escuro e texto claro (invertido no tema escuro). Cada grupo na sua caixa, com título, subtítulo e barra colorida na lateral. "N filtros ativos" ao lado da busca. A contagem de cada grupo ignora a própria seleção.
+  - **Caixas empilhadas em todas as larguras, e compactas:** lado a lado não cabe no 1366 (≈1174 px contra 1014 úteis) e a versão alta tirava linhas da tabela. A partir de 1024 px o título fica à esquerda dos chips (chips de 24 px); em tablet e celular o título fica em cima. Aceite mantido: 9 linhas no 1366×768 e 14 no 1920.
+  - **Só tokens.** Contraste testado nos dois temas: texto ≥ 4,5:1, bordas e barras ≥ 3:1. A bolinha de "Atenção" (âmbar) tem 2,17:1 no claro: é decorativa (o nome vem escrito no chip), por isso o teste pede ≥ 2:1.
+- **Quem decidiu:** Alexandre.
+
+---
+
+## 30/10/2026 — Ficha da placa (2C-3): a aba na URL, o 404 de verdade e o que foi aceito
+
+- **Relato:** a aba da ficha (`?aba=linha-do-tempo`) não ficava ao recarregar.
+- **O que se verificou:** abrir direto com `?aba=`, clicar na aba e dar F5, e Voltar e Avançar, em desenvolvimento (Chromium do Playwright e Chrome real) e em produção (Playwright, e o HTML do servidor lido com `curl`): **a aba persistiu em todos os casos; a falha relatada não foi reproduzida.** Se voltar a acontecer, são necessários o navegador, a versão e os passos exatos.
+- **O que se achou e corrigiu, com teste que falhava antes:**
+  - **A aba agora é decidida no servidor:** a página lê `?aba=` dos `searchParams` (valor inválido vira Resumo), e o HTML já traz a aba certa, inclusive com o JavaScript desligado. Antes a aba inicial dependia de `useSearchParams` no navegador. Voltar e Avançar são lidos do endereço de verdade (`popstate`).
+  - **Ids de abas e painéis repetidos no documento:** o Next 16 mantém a página anterior escondida depois de uma navegação interna, então duas fichas tinham dois `aba-resumo`. Os ids agora são únicos por instância (`useId`) e o foco do teclado vai por referência, não por `getElementById`.
+  - **404 que contaminava:** o `generateStaticParams` com a placa de amostra fazia a `AAA0A00` responder 404 depois de uma placa mal escrita (em produção, conforme a ordem das requisições). Foi removido. Sem ele, a placa mal escrita voltava a dar 200 (a rota usa Partial Prerender e o casco sai antes de a página poder chamar `notFound()`). **A solução é um `proxy.ts` que confere só o formato da placa** (`lib/navegacao/proxy-da-ficha.ts`, com teste) e responde 404 antes de a rota renderizar. A página mantém o `notFound()` por segurança.
+- **Alinhamento:** em listas de rótulo e valor (o resumo: Valor FIPE e os demais) o valor fica à esquerda; à direita só em coluna de tabela (regra da moeda na tabela, inalterada).
+- **Aceitos por Alexandre:**
+  - **Janela fixa de 30 dias** na faixa colorida (a aba "Linha do tempo" mostra o histórico inteiro).
+  - **`export const instant = false`** na rota da ficha: a rota é dinâmica de ponta a ponta porque valida a placa antes de transmitir. É só um aviso de desenvolvimento do Next (nunca bloqueia o build).
+- **Quem decidiu:** Alexandre.
+
+---
+
 ## 30/10/2026 — Painel de espiar (2C-2): revisão independente e o que ela corrigiu
 
 - **Decisão:** a 2C-2 passou por revisão independente (só leitura) antes do PR. Cada achado virou teste que falhava antes da correção e passa depois (`e2e/espiar.historico.spec.ts`, `e2e/espiar.corrida.spec.ts`, `lib/dados/obter-placa.test.ts`).

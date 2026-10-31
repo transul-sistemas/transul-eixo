@@ -54,3 +54,32 @@ describe("migalhas (a trilha: Módulo › Tela › Modo)", () => {
     }
   });
 });
+
+describe("migalhas da ficha: Módulo › Tela › Identificador", () => {
+  it("a trilha da ficha da placa termina na placa, e 'Placas' volta à lista", () => {
+    expect(migalhas("/frota/placas/AAA0A00", "Administrador")).toEqual([
+      { texto: "Frota", href: "/frota/acompanhamento" },
+      { texto: "Placas", href: "/frota/placas" },
+      { texto: "AAA0A00", atual: true },
+    ]);
+  });
+  it("ignora ?aba=, a barra final e decodifica o identificador", () => {
+    expect(migalhas("/frota/placas/AAA0A00?aba=mapa", "Administrador").at(-1)?.texto).toBe(
+      "AAA0A00",
+    );
+    expect(migalhas("/frota/placas/AAA0A00/", "Administrador")).toHaveLength(3);
+    expect(migalhas("/frota/placas/%41AA0A00", "Administrador").at(-1)?.texto).toBe("AAA0A00");
+  });
+  it("o módulo continua levando à primeira tela que o perfil abre", () => {
+    // O Gestor de frota não vê telas em breve: a primeira que ele abre é Placas.
+    expect(migalhas("/frota/placas/AAA0A00", "Gestor de frota")[0]).toEqual({
+      texto: "Frota",
+      href: "/frota/placas",
+    });
+  });
+  it("rota filha inválida ou de tela sem ficha não tem trilha", () => {
+    expect(migalhas("/frota/placas/%3Cscript%3E", "Administrador")).toEqual([]);
+    expect(migalhas("/frota/acompanhamento/AAA0A00", "Administrador")).toEqual([]);
+    expect(migalhas("/frota/placas/AAA0A00/extra", "Administrador")).toEqual([]);
+  });
+});

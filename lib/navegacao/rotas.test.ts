@@ -33,12 +33,21 @@ describe("rotas e catálogo", () => {
   it.each(telas.map((t) => [t.rota, t.id] as const))("a rota %s (%s) tem página", (rota) => {
     expect(rotasDasPaginas).toContain(rota);
   });
-  it("nenhuma página existe fora do catálogo, exceto a raiz e a de cada módulo", () => {
+  it("nenhuma página existe fora do catálogo, exceto a raiz, a de cada módulo e a ficha de uma tela com ficha", () => {
+    // A ficha é a rota filha `<tela>/[identificador]` de uma tela marcada com `ficha` no catálogo.
+    const ehFicha = (rota: string) =>
+      telas.some((t) => t.ficha && new RegExp(`^${t.rota}/\\[[a-z]+\\]$`).test(rota));
     const foraDoCatalogo = rotasDasPaginas.filter(
       (rota) =>
-        rota !== "/" && !rotasDeModulo.includes(rota) && !telas.some((t) => t.rota === rota),
+        rota !== "/" &&
+        !rotasDeModulo.includes(rota) &&
+        !telas.some((t) => t.rota === rota) &&
+        !ehFicha(rota),
     );
     expect(foraDoCatalogo).toEqual([]);
+  });
+  it("a ficha da placa existe como rota filha de Placas", () => {
+    expect(rotasDasPaginas).toContain("/frota/placas/[placa]");
   });
   it.each(CATALOGO.map((m) => [m.rota, m.id] as const))(
     "o módulo %s tem página, que redireciona para a sua primeira tela visível",

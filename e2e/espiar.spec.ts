@@ -74,7 +74,7 @@ test.describe("painel de espiar: o botão na célula da Placa e o atalho na linh
     await abrirHidratada(page, ROTA);
     const segunda = linhas(page).nth(1);
     const placa = await segunda.locator("[data-espiar-placa]").getAttribute("data-espiar-placa");
-    await segunda.locator("td").nth(2).click();
+    await segunda.locator("td").nth(1).click();
     await expect(page).toHaveURL(new RegExp(`espiar=${placa}`));
     await expect(painel(page, placa as string)).toBeVisible();
   });
@@ -100,7 +100,7 @@ test.describe("painel de espiar: o botão na célula da Placa e o atalho na linh
 
   test("selecionar texto da linha arrastando o mouse não abre o painel", async ({ page }) => {
     await abrirHidratada(page, ROTA);
-    const celula = linhas(page).first().locator("td").nth(4);
+    const celula = linhas(page).first().locator("td").nth(1);
     const caixa = await celula.boundingBox();
     expect(caixa).not.toBeNull();
     const y = (caixa?.y ?? 0) + (caixa?.height ?? 0) / 2;
@@ -120,7 +120,7 @@ test.describe("painel de espiar: o botão na célula da Placa e o atalho na linh
     await linhas(page)
       .first()
       .locator("td")
-      .nth(2)
+      .nth(1)
       .click({ modifiers: ["Control"] });
     await expect(qualquerPainel(page)).toHaveCount(0);
     await expect(page).not.toHaveURL(/espiar=/);

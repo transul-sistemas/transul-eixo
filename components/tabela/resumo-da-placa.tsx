@@ -1,18 +1,35 @@
 import { IconAlertCircle, IconAlertTriangle, IconSearchOff } from "@tabler/icons-react";
-import { useId, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { Etiqueta } from "@/components/etiqueta";
 import { formatarData, formatarDataEHora } from "@/components/formato/data";
 import { Moeda } from "@/components/formato/moeda";
 import { formatarKm } from "@/components/formato/numero";
 import { Placa } from "@/components/placa";
-import { Button } from "@/components/ui/button";
+import { LinkComContexto } from "@/components/navegacao/link-com-contexto";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { type DetalheDaPlaca, NOMES_DOS_TIPOS } from "@/lib/dados/placas-tipos";
+import { cn } from "@/lib/utils";
 
 const SEM_VALOR = <span className="text-muted-foreground">—</span>;
 
-function Secao({ titulo, children }: { titulo: string; children: ReactNode }) {
+function Secao({
+  titulo,
+  grade = false,
+  children,
+}: {
+  titulo: string;
+  /** Na ficha as seções são cartões numa grade; no painel, uma pilha com linhas entre elas. */
+  grade?: boolean;
+  children: ReactNode;
+}) {
   return (
-    <section className="border-border border-b py-4 first:pt-0 last:border-b-0">
+    <section
+      className={
+        grade
+          ? "border-border bg-card rounded-xl border p-4"
+          : "border-border border-b py-4 first:pt-0 last:border-b-0"
+      }
+    >
       <h3 className="mb-2 text-sm font-semibold">{titulo}</h3>
       {children}
     </section>
@@ -36,24 +53,41 @@ function Campo({ rotulo, children }: { rotulo: string; children: ReactNode }) {
 
 const textoOuTraco = (valor: string | null) => (valor === null || valor === "" ? SEM_VALOR : valor);
 
-function haDias(dias: number): string {
+export function haDias(dias: number): string {
   if (dias <= 0) return "hoje";
   return dias === 1 ? "há 1 dia" : `há ${dias} dias`;
 }
 
+const CLASSE_DA_PLACA_DO_CONJUNTO =
+  "focus-visible:ring-ring/50 -m-0.5 inline-flex min-h-6 cursor-pointer items-center rounded p-0.5 outline-none focus-visible:ring-3";
+
+/** Uma placa do conjunto: no painel é um botão que troca o painel; na ficha, um link para a ficha dela. */
 function PlacaDoConjunto({
   placa,
   aoEspiar,
+  hrefDaPlaca,
 }: {
   placa: string;
-  aoEspiar: (placa: string) => void;
+  aoEspiar?: (placa: string) => void;
+  hrefDaPlaca?: (placa: string) => string;
 }) {
+  if (hrefDaPlaca) {
+    return (
+      <LinkComContexto
+        href={hrefDaPlaca(placa)}
+        aria-label={`Abrir ficha de ${placa}`}
+        className={CLASSE_DA_PLACA_DO_CONJUNTO}
+      >
+        <Placa placa={placa} tamanho="m" />
+      </LinkComContexto>
+    );
+  }
   return (
     <button
       type="button"
       aria-label={`Espiar ${placa}`}
-      onClick={() => aoEspiar(placa)}
-      className="focus-visible:ring-ring/50 -m-0.5 inline-flex min-h-6 cursor-pointer items-center rounded p-0.5 outline-none focus-visible:ring-3"
+      onClick={() => aoEspiar?.(placa)}
+      className={CLASSE_DA_PLACA_DO_CONJUNTO}
     >
       <Placa placa={placa} tamanho="m" />
     </button>
@@ -63,9 +97,11 @@ function PlacaDoConjunto({
 function Conjunto({
   detalhe,
   aoEspiar,
+  hrefDaPlaca,
 }: {
   detalhe: DetalheDaPlaca;
-  aoEspiar: (placa: string) => void;
+  aoEspiar?: (placa: string) => void;
+  hrefDaPlaca?: (placa: string) => string;
 }) {
   const { cavalo, implementos } = detalhe.conjunto;
   if (!cavalo && implementos.length === 0) {
@@ -75,7 +111,7 @@ function Conjunto({
     <Campos>
       {cavalo ? (
         <Campo rotulo="Cavalo">
-          <PlacaDoConjunto placa={cavalo} aoEspiar={aoEspiar} />
+          <PlacaDoConjunto placa={cavalo} aoEspiar={aoEspiar} hrefDaPlaca={hrefDaPlaca} />
         </Campo>
       ) : null}
       {implementos.length > 0 ? (
@@ -83,7 +119,7 @@ function Conjunto({
           <ul className="flex flex-wrap gap-2">
             {implementos.map((placa) => (
               <li key={placa}>
-                <PlacaDoConjunto placa={placa} aoEspiar={aoEspiar} />
+                <PlacaDoConjunto placa={placa} aoEspiar={aoEspiar} hrefDaPlaca={hrefDaPlaca} />
               </li>
             ))}
           </ul>
@@ -93,27 +129,27 @@ function Conjunto({
   );
 }
 
-/** O resumo da placa no painel de espiar: situação, conjunto, gestão, alertas e dados. */
-export function ResumoDaPlaca({
+/**
+ * As cinco seções do resumo (situação, conjunto, gestão, alertas e dados), usadas pelo painel de
+ * espiar (em pilha) e pela ficha (em grade). No painel as placas do conjunto trocam o painel
+ * (`aoEspiar`); na ficha levam à ficha delas (`hrefDaPlaca`).
+ */
+export function SecoesDoResumo({
   detalhe,
   aoEspiar,
+  hrefDaPlaca,
+  disposicao = "pilha",
 }: {
   detalhe: DetalheDaPlaca;
-  /** Troca o painel para outra placa (as do conjunto). */
-  aoEspiar: (placa: string) => void;
+  aoEspiar?: (placa: string) => void;
+  hrefDaPlaca?: (placa: string) => string;
+  disposicao?: "pilha" | "grade";
 }) {
   const crlvVencido = detalhe.alertas.some((alerta) => alerta.codigo === "crlv-vencido");
+  const grade = disposicao === "grade";
   return (
-    <div>
-      <div className="border-border mb-4 border-b pb-4">
-        <p className="text-base font-semibold">{detalhe.modelo}</p>
-        <p className="text-muted-foreground text-sm">
-          {NOMES_DOS_TIPOS[detalhe.tipo]}
-          {detalhe.ano !== null ? `, ano ${detalhe.ano}` : ""}
-        </p>
-      </div>
-
-      <Secao titulo="Situação">
+    <div className={grade ? "grid gap-4 lg:grid-cols-2 2xl:grid-cols-3" : undefined}>
+      <Secao titulo="Situação" grade={grade}>
         <Etiqueta status={detalhe.grupo} titulo={detalhe.nomeDaSituacao}>
           <span className="font-semibold">{detalhe.sigla}</span>
           <span>{detalhe.nomeDaSituacao}</span>
@@ -123,11 +159,11 @@ export function ResumoDaPlaca({
         </p>
       </Secao>
 
-      <Secao titulo="Conjunto">
-        <Conjunto detalhe={detalhe} aoEspiar={aoEspiar} />
+      <Secao titulo="Conjunto" grade={grade}>
+        <Conjunto detalhe={detalhe} aoEspiar={aoEspiar} hrefDaPlaca={hrefDaPlaca} />
       </Secao>
 
-      <Secao titulo="Gestão">
+      <Secao titulo="Gestão" grade={grade}>
         <Campos>
           <Campo rotulo="Gestor">{detalhe.gestor}</Campo>
           <Campo rotulo="Operação">{textoOuTraco(detalhe.operacao)}</Campo>
@@ -147,7 +183,7 @@ export function ResumoDaPlaca({
         </Campos>
       </Secao>
 
-      <Secao titulo="Alertas">
+      <Secao titulo="Alertas" grade={grade}>
         {detalhe.alertas.length === 0 ? (
           <p className="text-muted-foreground text-sm">Sem alertas</p>
         ) : (
@@ -165,7 +201,7 @@ export function ResumoDaPlaca({
         )}
       </Secao>
 
-      <Secao titulo="Dados">
+      <Secao titulo="Dados" grade={grade}>
         <Campos>
           <Campo rotulo="Motorista">{textoOuTraco(detalhe.motorista)}</Campo>
           <Campo rotulo="Filial">{detalhe.filial}</Campo>
@@ -183,7 +219,7 @@ export function ResumoDaPlaca({
             <span className="tabular-nums">{formatarKm(detalhe.km)}</span>
           </Campo>
           <Campo rotulo="Valor FIPE">
-            <Moeda valor={detalhe.valorFipeCentavos} />
+            <Moeda valor={detalhe.valorFipeCentavos} className="text-left" />
           </Campo>
           <Campo rotulo="RENAVAM">
             <span className="tabular-nums">{detalhe.renavam}</span>
@@ -194,24 +230,40 @@ export function ResumoDaPlaca({
   );
 }
 
-/** O rodapé fixo do painel. Desligado até a ficha existir (2C-3); `aria-disabled` mantém o foco nele. */
-export function BotaoDaFicha() {
-  const dica = useId();
+/** O resumo da placa no painel de espiar: o modelo, o tipo e o ano, e as cinco seções em pilha. */
+export function ResumoDaPlaca({
+  detalhe,
+  aoEspiar,
+}: {
+  detalhe: DetalheDaPlaca;
+  /** Troca o painel para outra placa (as do conjunto). */
+  aoEspiar: (placa: string) => void;
+}) {
+  return (
+    <div>
+      <div className="border-border mb-4 border-b pb-4">
+        <p className="text-base font-semibold">{detalhe.modelo}</p>
+        <p className="text-muted-foreground text-sm">
+          {NOMES_DOS_TIPOS[detalhe.tipo]}
+          {detalhe.ano !== null ? `, ano ${detalhe.ano}` : ""}
+        </p>
+      </div>
+      <SecoesDoResumo detalhe={detalhe} aoEspiar={aoEspiar} />
+    </div>
+  );
+}
+
+/** O rodapé fixo do painel: leva à ficha completa da placa (o Voltar da ficha devolve ao painel). */
+export function BotaoDaFicha({ placa, aoAbrir }: { placa: string; aoAbrir?: () => void }) {
   return (
     <div className="border-border shrink-0 border-t p-4">
-      <Button
-        type="button"
-        variant="outline"
-        aria-disabled="true"
-        aria-describedby={dica}
-        className="w-full cursor-not-allowed opacity-60"
-        onClick={(evento) => evento.preventDefault()}
+      <LinkComContexto
+        href={`/frota/placas/${placa}`}
+        onClick={aoAbrir}
+        className={cn(buttonVariants({ variant: "outline" }), "min-h-8 w-full")}
       >
         Abrir ficha completa
-      </Button>
-      <p id={dica} className="text-muted-foreground mt-2 text-center text-xs">
-        Entra na próxima entrega
-      </p>
+      </LinkComContexto>
     </div>
   );
 }

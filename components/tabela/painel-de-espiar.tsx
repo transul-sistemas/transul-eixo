@@ -9,6 +9,7 @@ import type { DadosDoPainel } from "@/lib/dados/placas-tipos";
 import { anuncioDaTroca, vizinhas } from "@/lib/navegacao/espiar";
 import { NavegacaoDoPainel } from "./navegacao-do-painel";
 import { useLista } from "./pendencia-da-lista";
+import { guardarRetornoDaLista } from "./retorno-da-lista-no-navegador";
 import {
   BotaoDaFicha,
   ErroDoResumo,
@@ -51,7 +52,7 @@ function trazerLinhaParaAVista(botao: HTMLElement) {
   else if (l.bottom > c.bottom) caixa.scrollTop += l.bottom - c.bottom;
 }
 
-/** Devolve o foco: ao botão Espiar da última placa vista (trazendo a linha à vista); senão, à caixa da tabela. */
+/** Devolve o foco: ao botão Espiar da última placa vista (trazendo a linha à vista); senão, à caixa da tabela, ao campo de busca ou ao conteúdo. */
 function devolverFoco(placa: string | null) {
   const botao = placa
     ? document.querySelector<HTMLElement>(`[data-espiar-placa="${placa}"]`)
@@ -62,9 +63,13 @@ function devolverFoco(placa: string | null) {
     trazerLinhaParaAVista(botao);
     return;
   }
-  document
-    .querySelector<HTMLElement>('[role="region"][aria-label*="rolável"]')
-    ?.focus({ preventScroll: true });
+  // Sem linha nem caixa (lista vazia): o campo de busca, onde a pessoa corrige a consulta; por fim
+  // o conteúdo da página. O foco nunca fica no body.
+  const destino =
+    document.querySelector<HTMLElement>('[role="region"][aria-label*="rolável"]') ??
+    document.querySelector<HTMLElement>('[role="search"] input') ??
+    document.querySelector<HTMLElement>("#conteudo");
+  destino?.focus({ preventScroll: true });
 }
 
 /**
@@ -199,7 +204,12 @@ export function PainelDeEspiar({
                 />
               )}
             </div>
-            {doPainel?.situacao === "ok" ? <BotaoDaFicha /> : null}
+            {doPainel?.situacao === "ok" ? (
+              <BotaoDaFicha
+                placa={doPainel.placa}
+                aoAbrir={() => guardarRetornoDaLista(doPainel.placa)}
+              />
+            ) : null}
           </Drawer.Popup>
         </Drawer.Viewport>
       </Drawer.Portal>

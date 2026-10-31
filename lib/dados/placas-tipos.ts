@@ -1,17 +1,11 @@
 import type { DefinicaoDeColuna } from "@/lib/navegacao/colunas-da-tabela";
 import type { Alerta } from "@/lib/dominio/alertas";
+import type { EventoDeStatus } from "@/lib/dominio/linha-do-tempo";
 import type { Sigla } from "@/lib/dominio/status";
 import type { Status } from "@/lib/visual/tons";
 
 /** Tipos de ativo: o segundo grupo de chips da lista de placas. */
-export const TIPOS_DE_ATIVO = [
-  "cavalo",
-  "implemento",
-  "equipamento",
-  "caminhao",
-  "veiculo-pequeno",
-  "apoio",
-] as const;
+export const TIPOS_DE_ATIVO = ["cavalo", "implemento", "equipamento", "caminhao", "apoio"] as const;
 export type TipoDeAtivo = (typeof TIPOS_DE_ATIVO)[number];
 
 /** Campos pelos quais a lista pode ser ordenada (parâmetro `ordem` da URL). */
@@ -110,6 +104,13 @@ export interface DetalheDaPlaca extends LinhaDePlaca {
   crsVigentes: { codigo: string; nome: string; inicio: string; fim: string | null }[];
 }
 
+/** A ficha da placa: o detalhe do painel mais a história de situações (do mais antigo ao atual). */
+export interface FichaDaPlaca extends DetalheDaPlaca {
+  eventos: EventoDeStatus[];
+}
+
+export type { EventoDeStatus };
+
 /** O que a página entrega ao painel: o detalhe, ou o motivo de não haver. */
 export type DadosDoPainel =
   | { placa: string; situacao: "ok"; detalhe: DetalheDaPlaca }
@@ -138,7 +139,6 @@ export const NOMES_DOS_TIPOS: Record<TipoDeAtivo, string> = {
   implemento: "Implemento",
   equipamento: "Equipamento",
   caminhao: "Caminhão",
-  "veiculo-pequeno": "Veículo pequeno",
   apoio: "Apoio",
 };
 

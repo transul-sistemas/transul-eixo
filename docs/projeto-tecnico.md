@@ -19,6 +19,7 @@ A TranSul 2.0 é um sistema único de gestão, complementar ao Sankhya, constru�
 **Decisões já tomadas**
 
 - Uso interno, não produto.
+- Tipos de ativo: Cavalo, Implemento, Equipamento, Caminhão e Apoio. "Veículo pequeno" e "Apoio" eram a mesma coisa e viraram Apoio (30/10/2026).
 - Módulos: Início, Frota, Operacional, Operações, Pessoas, Parceiros, Resultados, Cadastros e Administração.
 - Nome TranSul Eixo, com identidade de sinalização rodoviária: placa Mercosul, fonte Barlow e uma cor por módulo (detalhes em Identidade visual).
 - Primeiro módulo em uso: Acompanhamento da Frota (premissa, porque a v1 sai do ar). Alternativa: fechamento de Parceiros.

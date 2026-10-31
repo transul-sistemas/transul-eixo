@@ -33,3 +33,20 @@ export function alternarChip(chips: readonly string[], id: string): readonly str
 export function consultaAtiva(consulta: Consulta): boolean {
   return consulta.busca.trim() !== "" || consulta.chips.length > 0;
 }
+
+/**
+ * Quantos filtros estão ativos, para o "N filtros ativos" ao lado da busca: a busca (se tem texto),
+ * cada chip, e cada valor dos parâmetros de "Mais filtros" (`filtrosExtras`). Página, ordem, período
+ * e outros parâmetros da tela nunca contam.
+ */
+export function contarFiltrosAtivos(
+  parametros: URLSearchParams,
+  filtrosExtras: readonly string[],
+): number {
+  const consulta = lerConsulta(parametros);
+  const extras = filtrosExtras.reduce(
+    (soma, chave) => soma + parametros.getAll(chave).filter((valor) => valor !== "").length,
+    0,
+  );
+  return (consulta.busca.trim() !== "" ? 1 : 0) + consulta.chips.length + extras;
+}

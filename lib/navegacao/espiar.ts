@@ -2,15 +2,14 @@
 // painel aberto. O valor vem da URL e nunca é confiável: só a placa já normalizada passa, e
 // qualquer outra coisa é ignorada, sem erro e sem abrir o painel.
 
-export const PARAMETRO_DE_ESPIAR = "espiar";
+import { placaNormalizadaValida } from "@/lib/dominio/placa";
 
-/** Três letras, um algarismo, uma letra ou algarismo e dois algarismos: Mercosul e a placa antiga. */
-const PLACA_NORMALIZADA = /^[A-Z]{3}[0-9][A-Z0-9][0-9]{2}$/;
+export const PARAMETRO_DE_ESPIAR = "espiar";
 
 /** A placa do parâmetro `espiar`, ou `null` se não há ou se está fora do formato. */
 export function lerEspiar(parametros: URLSearchParams): string | null {
   const valor = parametros.get(PARAMETRO_DE_ESPIAR);
-  return valor !== null && PLACA_NORMALIZADA.test(valor) ? valor : null;
+  return valor !== null && placaNormalizadaValida(valor) ? valor : null;
 }
 
 /**
@@ -20,7 +19,7 @@ export function lerEspiar(parametros: URLSearchParams): string | null {
 export function comEspiar(parametros: URLSearchParams, placa: string | null): URLSearchParams {
   const novos = new URLSearchParams(parametros);
   novos.delete(PARAMETRO_DE_ESPIAR);
-  if (placa !== null && PLACA_NORMALIZADA.test(placa)) novos.set(PARAMETRO_DE_ESPIAR, placa);
+  if (placa !== null && placaNormalizadaValida(placa)) novos.set(PARAMETRO_DE_ESPIAR, placa);
   return novos;
 }
 

@@ -34,7 +34,7 @@ async function abrirPorToque(page: Page) {
     .first()
     .locator("[data-espiar-placa]")
     .getAttribute("data-espiar-placa");
-  await linhas(page).first().locator("td").nth(2).tap();
+  await linhas(page).first().locator("td").nth(1).tap();
   await expect(painel(page, placa as string)).toBeVisible();
   return placa as string;
 }
@@ -90,7 +90,7 @@ test.describe("painel de espiar em tablet e celular", () => {
       .first()
       .locator("[data-espiar-placa]")
       .getAttribute("data-espiar-placa");
-    await linhas(page).first().locator("td").nth(2).tap();
+    await linhas(page).first().locator("td").nth(1).tap();
     await expect(painel(page, placa as string)).toBeVisible();
     await expect(page).toHaveURL(/espiar=/); // o painel abre na hora; a URL confirma depois
     await page.goBack();

@@ -120,25 +120,22 @@ test.describe("resumo da placa: o conjunto", () => {
 });
 
 test.describe("resumo da placa: abrir ficha completa", () => {
-  test("fica desligado: alcança o foco, não navega e explica quando entra", async ({ page }) => {
+  test("é um link para a ficha da placa: alcança o foco e leva a ela", async ({ page }) => {
     await abrirHidratada(page, `${ROTA}?espiar=AAA0A00`);
     const painel = painelDe(page, "AAA0A00");
-    const ficha = painel.getByRole("button", { name: "Abrir ficha completa" });
-    await expect(ficha).toHaveAttribute("aria-disabled", "true");
-    await expect(painel.getByText("Entra na próxima entrega")).toBeVisible();
+    const ficha = painel.getByRole("link", { name: "Abrir ficha completa" });
+    await expect(ficha).toHaveAttribute("href", /\/frota\/placas\/AAA0A00/);
     await ficha.focus();
     await expect(ficha).toBeFocused();
-    const antes = page.url();
-    // O Playwright trata aria-disabled como desabilitado e esperaria para sempre: força o clique.
-    await ficha.click({ force: true });
-    expect(page.url()).toBe(antes);
-    await expect(painel).toBeVisible();
+    await ficha.click();
+    await expect(page).toHaveURL(/\/frota\/placas\/AAA0A00(\?|$)/);
+    await expect(page.getByRole("heading", { level: 1, name: "AAA0A00" })).toBeVisible();
   });
 
   test("o rodapé não rola com o resumo", async ({ page }) => {
     await abrirHidratada(page, `${ROTA}?espiar=AAA0A00`);
     const painel = painelDe(page, "AAA0A00");
-    await expect(painel.getByRole("button", { name: "Abrir ficha completa" })).toBeInViewport();
+    await expect(painel.getByRole("link", { name: "Abrir ficha completa" })).toBeInViewport();
     await expect(painel.getByRole("button", { name: "Fechar painel" })).toBeInViewport();
   });
 });

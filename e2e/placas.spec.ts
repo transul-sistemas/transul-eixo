@@ -579,7 +579,7 @@ test.describe("lista de placas: colunas escolhíveis e reordenáveis", () => {
 });
 
 test.describe("lista de placas: chips por tipo de ativo", () => {
-  const TIPOS = ["cavalo", "implemento", "equipamento", "caminhao", "veiculo-pequeno", "apoio"];
+  const TIPOS = ["cavalo", "implemento", "equipamento", "caminhao", "apoio"];
   const contagens = async (page: Page, ids: string[]) => {
     const resultado: Record<string, number> = {};
     for (const id of ids) {
@@ -590,18 +590,14 @@ test.describe("lista de placas: chips por tipo de ativo", () => {
   };
   const STATUS = ["em-atividade", "atencao", "impedida", "patio", "fora"];
 
-  test("há seis chips de tipo, e a soma deles é o total", async ({ page }) => {
+  test("há cinco chips de tipo (veículo pequeno é apoio), e a soma deles é o total", async ({
+    page,
+  }) => {
     await abrirHidratada(page, ROTA);
-    for (const nome of [
-      "Cavalo",
-      "Implemento",
-      "Equipamento",
-      "Caminhão",
-      "Veículo pequeno",
-      "Apoio",
-    ]) {
+    for (const nome of ["Cavalo", "Implemento", "Equipamento", "Caminhão", "Apoio"]) {
       await expect(chip(page, nome)).toBeVisible();
     }
+    await expect(chip(page, "Veículo pequeno")).toHaveCount(0);
     const porTipo = await contagens(page, TIPOS);
     const soma = Object.values(porTipo).reduce((a, b) => a + b, 0);
     expect(soma).toBe(await totalDoResumo(page));
@@ -641,6 +637,8 @@ test.describe("lista de placas: chips por tipo de ativo", () => {
 });
 
 test.describe("lista de placas: grupos de chips com rótulo", () => {
+  const SITUACAO = "Situação, como a placa está agora";
+  const TIPO = "Tipo de ativo, o que é a placa";
   const grupo = (page: Page, nome: string) =>
     consulta(page).getByRole("group", { name: nome, exact: true });
   const topos = async (page: Page, nome: string) =>
@@ -648,24 +646,26 @@ test.describe("lista de placas: grupos de chips com rótulo", () => {
       .getByRole("button")
       .evaluateAll((botoes) => botoes.map((b) => Math.round(b.getBoundingClientRect().y)));
 
-  test("cada grupo tem o seu rótulo visível: Situação e Tipo", async ({ page }) => {
+  test("cada grupo tem o seu título e subtítulo visíveis", async ({ page }) => {
     await abrirHidratada(page, ROTA);
-    await expect(grupo(page, "Situação")).toBeVisible();
-    await expect(grupo(page, "Tipo")).toBeVisible();
-    await expect(grupo(page, "Situação")).toContainText("Situação");
-    await expect(grupo(page, "Tipo")).toContainText("Tipo");
-    await expect(grupo(page, "Situação").getByRole("button")).toHaveCount(5);
-    await expect(grupo(page, "Tipo").getByRole("button")).toHaveCount(6);
+    await expect(grupo(page, SITUACAO)).toBeVisible();
+    await expect(grupo(page, TIPO)).toBeVisible();
+    await expect(grupo(page, SITUACAO)).toContainText("Situação");
+    await expect(grupo(page, SITUACAO)).toContainText("como a placa está agora");
+    await expect(grupo(page, TIPO)).toContainText("Tipo de ativo");
+    await expect(grupo(page, TIPO)).toContainText("o que é a placa");
+    await expect(grupo(page, SITUACAO).getByRole("button")).toHaveCount(5);
+    await expect(grupo(page, TIPO).getByRole("button")).toHaveCount(5);
   });
 
   test("a quebra de linha acontece entre os grupos, nunca dentro de um", async ({ page }) => {
     await abrirHidratada(page, ROTA);
-    for (const nome of ["Situação", "Tipo"]) {
+    for (const nome of [SITUACAO, TIPO]) {
       const ys = await topos(page, nome);
       expect(new Set(ys).size, `chips de ${nome} em linhas diferentes: ${ys}`).toBe(1);
     }
-    const situacao = await grupo(page, "Situação").boundingBox();
-    const tipo = await grupo(page, "Tipo").boundingBox();
+    const situacao = await grupo(page, SITUACAO).boundingBox();
+    const tipo = await grupo(page, TIPO).boundingBox();
     expect(situacao && tipo).toBeTruthy();
     // ou lado a lado (mesma linha) ou um embaixo do outro, mas nunca sobrepostos
     const mesmaLinha = Math.abs((tipo?.y ?? 0) - (situacao?.y ?? 0)) < 4;
@@ -673,23 +673,22 @@ test.describe("lista de placas: grupos de chips com rótulo", () => {
     expect(mesmaLinha || embaixo).toBe(true);
   });
 
-  test("no 1366 os dois grupos não cabem juntos: o Tipo desce inteiro para a linha de baixo", async ({
+  test("as duas caixas ficam empilhadas: o Tipo desce inteiro para baixo da Situação", async ({
     page,
-  }, info) => {
-    test.skip(info.project.name !== "tela-1366", "só o 1366 é estreito para isso");
+  }) => {
     await abrirHidratada(page, ROTA);
-    const situacao = await grupo(page, "Situação").boundingBox();
-    const tipo = await grupo(page, "Tipo").boundingBox();
-    expect((tipo?.y ?? 0) > (situacao?.y ?? 0) + 10).toBe(true);
+    const situacao = await grupo(page, SITUACAO).boundingBox();
+    const tipo = await grupo(page, TIPO).boundingBox();
+    expect((tipo?.y ?? 0) >= (situacao?.y ?? 0) + (situacao?.height ?? 0) - 1).toBe(true);
   });
 
   test("os filtros continuam funcionando com os grupos rotulados", async ({ page }) => {
     await abrirHidratada(page, ROTA);
-    await grupo(page, "Tipo")
+    await grupo(page, TIPO)
       .getByRole("button", { name: /^Cavalo/ })
       .click();
     await expect(page).toHaveURL(/chip=cavalo/);
-    await grupo(page, "Situação")
+    await grupo(page, SITUACAO)
       .getByRole("button", { name: /^Pátio/ })
       .click();
     await expect(page).toHaveURL(/chip=patio/);
@@ -835,7 +834,7 @@ test.describe("lista de placas: rolagem só dentro da tabela", () => {
     expect(largura.total).toBeGreaterThan(largura.visivel);
     await caixa(page).evaluate((c) => (c.scrollLeft = 600));
     const esquerdaDaCaixa = (await caixa(page).boundingBox())?.x ?? 0;
-    const primeiraCelula = linhas(page).first().locator("td").first();
+    const primeiraCelula = linhas(page).first().locator("th[scope=row]");
     const celula = await primeiraCelula.boundingBox();
     expect(Math.abs((celula?.x ?? -99) - esquerdaDaCaixa)).toBeLessThanOrEqual(3);
     const quemEstaPorCima = await primeiraCelula.evaluate((td) => {
