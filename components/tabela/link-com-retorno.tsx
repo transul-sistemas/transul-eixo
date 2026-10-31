@@ -40,7 +40,8 @@ export function LinkComRetorno({ href, rota, ...resto }: Props) {
       onClick={(evento) => {
         resto.onClick?.(evento);
         // Leva ao ponto guardado: a lista que abrir é uma volta e restaura a rolagem e o foco.
-        if (destino) armarVoltaDaLista();
+        const comTecla = evento.ctrlKey || evento.metaKey || evento.shiftKey || evento.altKey;
+        if (destino && !comTecla && evento.button === 0) armarVoltaDaLista(destino);
       }}
     />
   );

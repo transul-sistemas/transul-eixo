@@ -2,12 +2,12 @@
 
 import { useEffect, useLayoutEffect } from "react";
 import {
-  armarRetorno,
-  voltaArmada,
-  desarmarRetorno,
+  criarMarcaDeVolta,
+  destinoDaNavegacao,
   destinoDoRetorno,
   guardarRetorno,
   lerRetorno,
+  sinalDaCargaCompleta,
 } from "@/lib/navegacao/retorno-da-lista";
 
 const CAIXA_DA_TABELA = '[role="region"][aria-label*="rolável"]';
@@ -34,51 +34,84 @@ export function guardarRetornoDaLista(placa: string) {
   });
 }
 
-/** Arma a volta: a próxima lista que abrir agora é uma volta (Voltar do navegador ou link de voltar). */
-export function armarVoltaDaLista() {
-  const armazenamento = armazenamentoDaSessao();
-  if (armazenamento) armarRetorno(armazenamento, Date.now());
+/** A marca de volta desta página: só na memória (um recarregar a apaga) e só por sinal real. */
+const marca = criarMarcaDeVolta();
+const quandoArmar = new Set<() => void>();
+
+const urlAtual = () => `${window.location.pathname}${window.location.search}`;
+
+/** Arma a volta para `destino` (padrão: a URL atual) e avisa quem espera o sinal para restaurar. */
+export function armarVoltaDaLista(destino: string = urlAtual()) {
+  marca.armar(destino);
+  for (const aviso of [...quandoArmar]) aviso();
 }
 
 /**
- * Escuta o Voltar e o Avançar do navegador e arma a volta: o `popstate` (sempre) e, onde o navegador
- * tem a Navigation API, o `navigate` do tipo travessia (que chega antes). Só isso: visita nova à
- * lista (menu, link direto, recarregar) não é travessia e por isso começa no topo.
+ * Escuta os sinais de volta e o fim das voltas: o `popstate` (Voltar e Avançar) e, onde há a
+ * Navigation API, a travessia (`navigate` do tipo `traverse`, que chega antes) armam a volta; qualquer
+ * outra navegação para outro endereço, e o clique num link para outro endereço, apagam a marca;
+ * sair da página (`pagehide`) também. Nada aqui usa tempo.
  */
 export function ArmadorDaVolta() {
   useEffect(() => {
-    // Em fase de captura: dispara antes do `popstate` do próprio Next.
-    window.addEventListener("popstate", armarVoltaDaLista, true);
+    const aoVoltar = () => armarVoltaDaLista();
+    const aoSair = () => marca.limpar();
+    const aoClicar = (evento: MouseEvent) => {
+      const link = (evento.target as Element | null)?.closest?.("a[href]");
+      const destino = link
+        ? destinoDaNavegacao((link as HTMLAnchorElement).href, window.location.origin)
+        : null;
+      if (destino !== null) marca.aoNavegar(destino);
+    };
+    // Em fase de captura: antes do `popstate` do próprio Next e do onClick dos links de voltar
+    // (que arma depois de este clique ter apagado a marca antiga).
+    window.addEventListener("popstate", aoVoltar, true);
+    window.addEventListener("pagehide", aoSair);
+    document.addEventListener("click", aoClicar, true);
+    type EventoDeNavegacao = { navigationType: string; destination?: { url: string } };
     type Navegacao = {
-      addEventListener(
-        tipo: "navigate",
-        ouvinte: (evento: { navigationType: string }) => void,
-      ): void;
-      removeEventListener(
-        tipo: "navigate",
-        ouvinte: (evento: { navigationType: string }) => void,
-      ): void;
+      addEventListener(tipo: "navigate", ouvinte: (evento: EventoDeNavegacao) => void): void;
+      removeEventListener(tipo: "navigate", ouvinte: (evento: EventoDeNavegacao) => void): void;
     };
     const navegacao = (window as unknown as { navigation?: Navegacao }).navigation;
-    const aoNavegar = (evento: { navigationType: string }) => {
-      if (evento.navigationType === "traverse") armarVoltaDaLista();
+    const aoNavegar = (evento: EventoDeNavegacao) => {
+      const destino = evento.destination
+        ? destinoDaNavegacao(evento.destination.url, window.location.origin)
+        : null;
+      if (destino === null) return;
+      if (evento.navigationType === "traverse") armarVoltaDaLista(destino);
+      else marca.aoNavegar(destino);
     };
     navegacao?.addEventListener("navigate", aoNavegar);
     return () => {
-      window.removeEventListener("popstate", armarVoltaDaLista, true);
+      window.removeEventListener("popstate", aoVoltar, true);
+      window.removeEventListener("pagehide", aoSair);
+      document.removeEventListener("click", aoClicar, true);
       navegacao?.removeEventListener("navigate", aoNavegar);
     };
   }, []);
   return null;
 }
 
-/** Quanto o restaurador espera antes de decidir: o sinal de volta pode chegar logo depois de a lista reaparecer. */
-const ESPERA_DO_RESTAURADOR_MS = 60;
+/**
+ * Carga completa da página: só uma vez por documento. Recarregar (F5) nunca é uma volta; Voltar ou
+ * Avançar que recarrega a página inteira é (a Navigation API não alcança o documento novo).
+ */
+let cargaCompletaJaLida = false;
+function lerACargaCompleta() {
+  if (cargaCompletaJaLida) return;
+  cargaCompletaJaLida = true;
+  const tipo = (
+    performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming | undefined
+  )?.type;
+  if (sinalDaCargaCompleta(tipo) === "volta") marca.armar(urlAtual());
+}
 
 /**
- * Ao abrir a lista, se a abertura é uma volta armada e há um ponto guardado para esta mesma URL,
- * devolve a rolagem da tabela e o foco: ao link da placa de onde a pessoa saiu, ou à caixa da
- * tabela se ela não está mais na página. Visita nova não restaura nada. Não desenha nada.
+ * Ao abrir a lista, se a abertura é uma volta (marca armada para esta URL) e há um ponto guardado
+ * para esta mesma URL, devolve a rolagem da tabela e o foco: ao link da placa de onde a pessoa
+ * saiu, ou à caixa da tabela se ela não está mais na página. Visita nova e recarregar não restauram
+ * nada. Não desenha nada. Se a lista aparece antes do sinal de volta, espera o sinal (não o tempo).
  */
 export function RestauradorDaLista({ placasDaPagina }: { placasDaPagina: readonly string[] }) {
   const chave = placasDaPagina.join(",");
@@ -87,8 +120,8 @@ export function RestauradorDaLista({ placasDaPagina }: { placasDaPagina: readonl
   // rolagem de antes e a mostra de novo ao voltar a ela por um link; a rolagem antiga cai antes de
   // pintar. Se a abertura é uma volta, o efeito abaixo devolve o ponto guardado logo em seguida.
   useLayoutEffect(() => {
-    const armazenamento = armazenamentoDaSessao();
-    if (armazenamento && voltaArmada(armazenamento, Date.now())) return;
+    lerACargaCompleta();
+    if (marca.vale(urlAtual())) return;
     const caixa = document.querySelector<HTMLElement>(CAIXA_DA_TABELA);
     if (caixa) {
       caixa.scrollTop = 0;
@@ -97,18 +130,24 @@ export function RestauradorDaLista({ placasDaPagina }: { placasDaPagina: readonl
   }, [chave]);
 
   useEffect(() => {
-    const espera = setTimeout(restaurar, ESPERA_DO_RESTAURADOR_MS);
-    return () => clearTimeout(espera);
+    let quadro = 0;
+    // Pode haver o sinal depois de a lista aparecer: então se restaura quando ele chegar.
+    const aoArmar = () => {
+      cancelAnimationFrame(quadro);
+      quadro = requestAnimationFrame(restaurar);
+    };
+    quandoArmar.add(aoArmar);
+    restaurar();
+    return () => {
+      quandoArmar.delete(aoArmar);
+      cancelAnimationFrame(quadro);
+    };
 
     function restaurar() {
+      const url = urlAtual();
+      if (!marca.tomarParaRestaurar(url)) return;
       const armazenamento = armazenamentoDaSessao();
-      if (!armazenamento || !voltaArmada(armazenamento, Date.now())) return;
-      // Age uma vez por volta: desarma, para outra rodada do efeito ou um recarregar não repetirem.
-      desarmarRetorno(armazenamento);
-      const retorno = lerRetorno(
-        armazenamento,
-        `${window.location.pathname}${window.location.search}`,
-      );
+      const retorno = armazenamento ? lerRetorno(armazenamento, url) : null;
       if (!retorno) return;
       const destino = destinoDoRetorno(retorno, chave === "" ? [] : chave.split(","));
       const caixa = document.querySelector<HTMLElement>(CAIXA_DA_TABELA);

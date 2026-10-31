@@ -1,14 +1,13 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
-  armarRetorno,
-  desarmarRetorno,
-  voltaArmada,
+  criarMarcaDeVolta,
+  destinoDaNavegacao,
   destinoDoRetorno,
   espiarRetorno,
   guardarRetorno,
-  JANELA_DO_ARMADO_MS,
   lerRetorno,
   type Retorno,
+  sinalDaCargaCompleta,
   urlDeVolta,
 } from "./retorno-da-lista";
 
@@ -112,8 +111,6 @@ describe("retorno da lista: o ponto guardado ao sair para a ficha", () => {
     expect(() => guardarRetorno(quebrado, retorno())).not.toThrow();
     expect(lerRetorno(quebrado, URL_DA_LISTA)).toBeNull();
     expect(espiarRetorno(quebrado)).toBeNull();
-    expect(() => armarRetorno(quebrado, AGORA)).not.toThrow();
-    expect(voltaArmada(quebrado, AGORA)).toBe(false);
   });
 
   it("guardar de novo substitui o registro anterior", () => {
@@ -142,72 +139,107 @@ describe("espiarRetorno: olhar o registro (o Voltar à lista da ficha)", () => {
   });
 });
 
-describe("a volta armada: só Voltar, Avançar e os links de voltar restauram; visita nova começa no topo", () => {
+describe("a marca de volta: só sinais reais armam; nenhum relógio decide", () => {
+  const LISTA = "/frota/placas";
+  const OUTRA = "/frota/placas?pagina=2";
+
   it("sem armar, não há volta (visita nova pelo menu ou por link direto)", () => {
-    expect(voltaArmada(armazenamentoFalso(), AGORA)).toBe(false);
+    expect(criarMarcaDeVolta().vale(LISTA)).toBe(false);
   });
 
-  it("armada, vale para todas as rodadas da mesma volta (o Next reativa os efeitos da lista escondida)", () => {
-    const a = armazenamentoFalso();
-    armarRetorno(a, AGORA);
-    expect(voltaArmada(a, AGORA + 100)).toBe(true);
-    expect(voltaArmada(a, AGORA + 300)).toBe(true);
+  it("armada para uma URL, vale só para ela, em todas as rodadas (o Next reativa os efeitos da lista escondida)", () => {
+    const marca = criarMarcaDeVolta();
+    marca.armar(LISTA);
+    expect(marca.vale(LISTA)).toBe(true);
+    expect(marca.vale(LISTA)).toBe(true);
+    expect(marca.vale(OUTRA)).toBe(false);
   });
 
-  it("a marca é curta: a volta chega em instantes; passada a janela, uma visita nova não restaura", () => {
-    const a = armazenamentoFalso();
-    armarRetorno(a, AGORA);
-    expect(voltaArmada(a, AGORA + JANELA_DO_ARMADO_MS + 1)).toBe(false);
-  });
-
-  it("no limite da janela ainda vale", () => {
-    const a = armazenamentoFalso();
-    armarRetorno(a, AGORA);
-    expect(voltaArmada(a, AGORA + JANELA_DO_ARMADO_MS)).toBe(true);
-  });
-
-  it("a janela é de poucos segundos, bem menos do que levaria uma visita nova", () => {
-    expect(JANELA_DO_ARMADO_MS).toBeLessThanOrEqual(3_000);
-  });
-
-  it("relógio que andou para trás não vale", () => {
-    const a = armazenamentoFalso();
-    armarRetorno(a, AGORA + 60_000);
-    expect(voltaArmada(a, AGORA)).toBe(false);
-  });
-
-  it("marca estragada nunca vale", () => {
-    for (const texto of ["", "abc", "null", "-5", "NaN", "{}"]) {
-      const a = armazenamentoFalso({ "eixo-retorno-armado": texto });
-      expect(voltaArmada(a, AGORA), texto).toBe(false);
+  it("não tem prazo: o tempo que passa não muda nada, só um sinal muda", () => {
+    vi.useFakeTimers();
+    try {
+      const marca = criarMarcaDeVolta();
+      marca.armar(LISTA);
+      vi.setSystemTime(Date.now() + 24 * 60 * 60 * 1000);
+      expect(marca.vale(LISTA)).toBe(true);
+    } finally {
+      vi.useRealTimers();
     }
   });
 
-  it("desarmar apaga a marca (o restaurador desarma ao agir, e um recarregar logo depois não restaura)", () => {
-    const a = armazenamentoFalso();
-    armarRetorno(a, AGORA);
-    expect(voltaArmada(a, AGORA + 10)).toBe(true);
-    desarmarRetorno(a);
-    expect(voltaArmada(a, AGORA + 20)).toBe(false);
-    expect(a.dados.size).toBe(0);
+  it("restaura uma vez por volta: a segunda rodada vê a volta, mas não restaura de novo", () => {
+    const marca = criarMarcaDeVolta();
+    marca.armar(LISTA);
+    expect(marca.tomarParaRestaurar(LISTA)).toBe(true);
+    expect(marca.tomarParaRestaurar(LISTA)).toBe(false);
+    expect(marca.vale(LISTA)).toBe(true);
   });
 
-  it("desarmar sem marca, ou com armazenamento que lança, não faz nada", () => {
-    expect(() => desarmarRetorno(armazenamentoFalso())).not.toThrow();
-    expect(() =>
-      desarmarRetorno({
-        removeItem: () => {
-          throw new Error("bloqueado");
-        },
-      }),
-    ).not.toThrow();
+  it("outro Voltar para a mesma URL arma de novo e restaura de novo", () => {
+    const marca = criarMarcaDeVolta();
+    marca.armar(LISTA);
+    marca.tomarParaRestaurar(LISTA);
+    marca.armar(LISTA);
+    expect(marca.tomarParaRestaurar(LISTA)).toBe(true);
   });
 
-  it("armar não mexe no ponto guardado", () => {
-    const a = armazenamentoFalso();
-    guardarRetorno(a, retorno());
-    armarRetorno(a, AGORA);
-    expect(lerRetorno(a, URL_DA_LISTA)).not.toBeNull();
+  it("tomar para outra URL, ou sem marca, não restaura", () => {
+    const marca = criarMarcaDeVolta();
+    expect(marca.tomarParaRestaurar(LISTA)).toBe(false);
+    marca.armar(LISTA);
+    expect(marca.tomarParaRestaurar(OUTRA)).toBe(false);
+  });
+
+  it("navegar para outra URL apaga a marca; navegar para a própria URL armada a mantém", () => {
+    const marca = criarMarcaDeVolta();
+    marca.armar(LISTA);
+    marca.aoNavegar(LISTA);
+    expect(marca.vale(LISTA)).toBe(true);
+    marca.aoNavegar("/frota/placas/AAA0A00");
+    expect(marca.vale(LISTA)).toBe(false);
+    marca.aoNavegar(LISTA);
+    expect(marca.vale(LISTA)).toBe(false);
+  });
+
+  it("limpar (pagehide) apaga a marca", () => {
+    const marca = criarMarcaDeVolta();
+    marca.armar(LISTA);
+    marca.limpar();
+    expect(marca.vale(LISTA)).toBe(false);
+  });
+
+  it("a marca vive só na memória da página: nada em armazenamento que sobreviva a um recarregar", () => {
+    const antes = Object.keys(globalThis).length;
+    criarMarcaDeVolta().armar(LISTA);
+    expect(Object.keys(globalThis).length).toBe(antes);
+  });
+});
+
+describe("sinalDaCargaCompleta: o que a carga da página diz sobre como ela chegou", () => {
+  it("recarregar (F5) nunca restaura", () => {
+    expect(sinalDaCargaCompleta("reload")).toBe("nenhum");
+  });
+  it("Voltar ou Avançar que carrega a página inteira é uma volta de verdade", () => {
+    expect(sinalDaCargaCompleta("back_forward")).toBe("volta");
+  });
+  it("visita nova (menu, link direto, endereço digitado) e o resto: nenhum sinal", () => {
+    for (const tipo of ["navigate", "prerender", "", undefined]) {
+      expect(sinalDaCargaCompleta(tipo as string | undefined), String(tipo)).toBe("nenhum");
+    }
+  });
+});
+
+describe("destinoDaNavegacao: o caminho e a consulta para onde a navegação vai", () => {
+  const ORIGEM = "https://eixo.exemplo.com.br";
+  it("mesma origem: caminho e consulta, sem origem nem âncora", () => {
+    expect(destinoDaNavegacao(`${ORIGEM}/frota/placas?pagina=2#topo`, ORIGEM)).toBe(
+      "/frota/placas?pagina=2",
+    );
+    expect(destinoDaNavegacao("/frota/placas", ORIGEM)).toBe("/frota/placas");
+  });
+  it("outra origem ou texto que não é endereço: nulo", () => {
+    expect(destinoDaNavegacao("https://outro.exemplo.com/frota/placas", ORIGEM)).toBeNull();
+    expect(destinoDaNavegacao("http://[", ORIGEM)).toBeNull();
   });
 });
 

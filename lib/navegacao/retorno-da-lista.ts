@@ -8,9 +8,6 @@ import { placaNormalizadaValida } from "@/lib/dominio/placa";
 // vale para a mesma URL; qualquer dúvida é "não restaurar".
 
 export const CHAVE_DO_RETORNO = "eixo-retorno-da-lista";
-export const CHAVE_DA_VOLTA_ARMADA = "eixo-retorno-armado";
-/** A volta chega em instantes depois de armada; passado isso, ela já não conta. */
-export const JANELA_DO_ARMADO_MS = 1_500;
 
 export interface Retorno {
   /** Caminho e parâmetros da lista (`/frota/placas?pagina=2`). */
@@ -78,39 +75,69 @@ export function espiarRetorno(armazenamento: Pick<Storage, "getItem">): Retorno 
   return bruto === null ? null : lerFormato(bruto);
 }
 
-/** Arma a volta: a próxima lista que abrir agora é uma volta e pode restaurar o ponto. */
-export function armarRetorno(armazenamento: Pick<Storage, "setItem">, agora: number): void {
-  try {
-    armazenamento.setItem(CHAVE_DA_VOLTA_ARMADA, String(agora));
-  } catch {
-    // Sem armazenamento: nada é armado e a lista abre no topo.
-  }
+/**
+ * A marca de volta: "a próxima lista que abrir, nesta URL, é uma volta". Vive só na memória da
+ * página (nada em armazenamento: um recarregar a apaga sozinho) e só nasce de um sinal real: o
+ * `popstate` ou a travessia da Navigation API (Voltar e Avançar) e o clique nos links de voltar.
+ * Não tem prazo nem relógio. Vale para a URL de destino e dura até a próxima navegação para outro
+ * lugar (`aoNavegar`) ou até a página ser deixada (`limpar`, no `pagehide`). As rodadas de efeito
+ * que o Next repete na lista escondida enxergam a mesma resposta (`vale`), mas só a primeira
+ * restaura (`tomarParaRestaurar`), para uma rodada tardia não puxar a rolagem de volta.
+ */
+export interface MarcaDeVolta {
+  armar(destino: string): void;
+  /** Esta URL é o destino de uma volta armada? Não gasta a marca. */
+  vale(url: string): boolean;
+  /** Verdadeiro uma única vez por volta, para quem vai restaurar. */
+  tomarParaRestaurar(url: string): boolean;
+  /** Uma navegação começou: para outro lugar, a marca acaba; para o próprio destino, continua. */
+  aoNavegar(destino: string): void;
+  limpar(): void;
 }
 
-/** Desarma a volta: quem agiu sobre ela (o restaurador) apaga a marca, para um recarregar logo depois não restaurar. */
-export function desarmarRetorno(armazenamento: Pick<Storage, "removeItem">): void {
-  try {
-    armazenamento.removeItem(CHAVE_DA_VOLTA_ARMADA);
-  } catch {
-    // Sem como apagar: a janela curta ainda protege.
-  }
+export function criarMarcaDeVolta(): MarcaDeVolta {
+  let destino: string | null = null;
+  let restaurada = false;
+  return {
+    armar(novo) {
+      destino = novo;
+      restaurada = false;
+    },
+    vale: (url) => destino !== null && destino === url,
+    tomarParaRestaurar(url) {
+      if (destino === null || destino !== url || restaurada) return false;
+      restaurada = true;
+      return true;
+    },
+    aoNavegar(para) {
+      if (destino !== null && destino !== para) {
+        destino = null;
+        restaurada = false;
+      }
+    },
+    limpar() {
+      destino = null;
+      restaurada = false;
+    },
+  };
 }
 
 /**
- * A volta foi armada há pouco? Não gasta a marca: o Next reativa os efeitos da lista escondida mais
- * de uma vez ao mostrá-la de novo, e todas as rodadas de uma mesma volta têm de enxergar a mesma
- * resposta. A janela curta é o que impede uma visita nova de herdar uma volta antiga.
+ * O que a carga completa da página diz (`performance.getEntriesByType("navigation")[0].type`):
+ * recarregar (F5) nunca é uma volta; Voltar ou Avançar que recarrega a página inteira é.
  */
-export function voltaArmada(armazenamento: Pick<Storage, "getItem">, agora: number): boolean {
-  let bruto: string | null;
+export function sinalDaCargaCompleta(tipo: string | undefined): "volta" | "nenhum" {
+  return tipo === "back_forward" ? "volta" : "nenhum";
+}
+
+/** Caminho e consulta de um endereço da mesma origem, sem origem nem âncora; `null` para outra origem. */
+export function destinoDaNavegacao(endereco: string, origem: string): string | null {
   try {
-    bruto = armazenamento.getItem(CHAVE_DA_VOLTA_ARMADA);
+    const url = new URL(endereco, origem);
+    return url.origin === new URL(origem).origin ? `${url.pathname}${url.search}` : null;
   } catch {
-    return false;
+    return null;
   }
-  if (bruto === null || !/^\d+$/.test(bruto)) return false;
-  const armadoEm = Number(bruto);
-  return armadoEm <= agora && agora - armadoEm <= JANELA_DO_ARMADO_MS;
 }
 
 export type DestinoDoRetorno = { tipo: "linha"; placa: string } | { tipo: "tabela" };
