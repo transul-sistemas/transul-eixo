@@ -137,7 +137,7 @@ test.describe("stepper e rodapé", () => {
     await expect(c.locator('li[aria-current="step"]')).toContainText("Identificação");
   });
 
-  test("o rodapé mostra o rascunho salvo, Voltar e Continuar; no fim, Gravar placa", async ({
+  test("o rodapé mostra o rascunho salvo, Voltar e Continuar; no fim, o nome da ação", async ({
     page,
   }) => {
     await abrirOCadastro(page);
@@ -148,9 +148,9 @@ test.describe("stepper e rodapé", () => {
     await expect(c.getByRole("button", { name: "Continuar" })).toBeVisible();
     await expect(c.getByRole("button", { name: "Avançar" })).toHaveCount(0);
     await irAteConferirOCadastro(page, { placa: placaUnica() });
-    await expect(c.getByRole("button", { name: "Gravar placa" })).toBeVisible();
+    await expect(c.getByRole("button", { name: "Cadastrar placa" })).toBeVisible();
     await expect(c.getByRole("button", { name: "Continuar" })).toHaveCount(0);
-    const rodape = await caixa(c.getByRole("button", { name: "Gravar placa" }));
+    const rodape = await caixa(c.getByRole("button", { name: "Cadastrar placa" }));
     const painel = await caixa(c);
     expect(rodape.y + rodape.height).toBeGreaterThan(painel.y + painel.height - 24);
   });

@@ -116,7 +116,7 @@ export async function irAteConferirOCadastro(page: Page, d: DadosDoCadastro) {
   await passoValor(page, d.tipo);
   await passoPosse(page, d);
   await passoLocal(page);
-  await expect(cadastro(page).getByRole("button", { name: "Gravar placa" })).toBeVisible();
+  await expect(cadastro(page).getByRole("button", { name: "Cadastrar placa" })).toBeVisible();
 }
 
 /** Procura a placa na lista pela busca (a URL guarda o termo). */

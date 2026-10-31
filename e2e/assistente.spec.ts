@@ -198,7 +198,7 @@ test.describe("assistente: envio", () => {
     const aviso = assistente(page).getByRole("alert");
     await expect(aviso).toContainText("mudou");
     await expect(aviso).toContainText("Pneu 295/80 (versão nova)");
-    await aviso.getByRole("button", { name: "Revisar com os dados atuais" }).click();
+    await assistente(page).getByRole("button", { name: "Revisar com os dados atuais" }).click();
     await expect(assistente(page)).toContainText("Pneu 295/80"); // nada se perdeu
     await assistente(page).getByRole("button", { name: "Cadastrar item" }).click();
     await expect(assistente(page).getByTestId("assistente-concluido")).toBeVisible();

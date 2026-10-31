@@ -88,7 +88,7 @@ test.describe("assistentes da Frota em tablet e celular", () => {
     const placa = placaUnica();
     await abrirOCadastro(page);
     await irAteConferirOCadastro(page, { placa });
-    await cadastro(page).getByRole("button", { name: "Gravar placa" }).tap();
+    await cadastro(page).getByRole("button", { name: "Cadastrar placa" }).tap();
     await expect(cadastro(page).getByTestId("assistente-concluido")).toHaveText(
       "Placa cadastrada.",
     );

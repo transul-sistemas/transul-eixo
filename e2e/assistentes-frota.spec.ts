@@ -73,7 +73,7 @@ test.describe("cadastrar placa: o fluxo", () => {
     await irAteConferirOCadastro(page, { placa, operacao: "Operação Exemplo 1" });
     await expect(cadastro(page)).toContainText(placa);
     await expect(cadastro(page)).toContainText("R$ 78.500,00");
-    await cadastro(page).getByRole("button", { name: "Gravar placa" }).click();
+    await cadastro(page).getByRole("button", { name: "Cadastrar placa" }).click();
     await expect(cadastro(page).getByTestId("assistente-concluido")).toHaveText(
       "Placa cadastrada.",
     );
@@ -96,7 +96,7 @@ test.describe("cadastrar placa: o fluxo", () => {
     const placa = placaUnica();
     await abrirOCadastro(page);
     await irAteConferirOCadastro(page, { placa });
-    await cadastro(page).getByRole("button", { name: "Gravar placa" }).dblclick();
+    await cadastro(page).getByRole("button", { name: "Cadastrar placa" }).dblclick();
     await expect(cadastro(page).getByTestId("assistente-concluido")).toBeVisible();
     await cadastro(page).getByRole("button", { name: "Fechar", exact: true }).click();
     await buscarNaLista(page, placa);
@@ -118,7 +118,7 @@ test.describe("cadastrar placa: o fluxo", () => {
   test("placa que já existe é acusada, com o link para a ficha dela", async ({ page }) => {
     await abrirOCadastro(page);
     await irAteConferirOCadastro(page, { placa: "AAA0A00" });
-    await cadastro(page).getByRole("button", { name: "Gravar placa" }).click();
+    await cadastro(page).getByRole("button", { name: "Cadastrar placa" }).click();
     const alerta = cadastro(page).getByRole("alert");
     await expect(alerta).toContainText("já está cadastrada");
     await expect(alerta.getByRole("link", { name: "Abrir a ficha de AAA0A00" })).toHaveAttribute(
@@ -244,7 +244,7 @@ test.describe("cadastrar placa: dependências entre campos", () => {
   }) => {
     await abrirOCadastro(page);
     await irAteConferirOCadastro(page, { placa: placaUnica() }); // sem operação nem CR
-    await expect(cadastro(page).getByRole("button", { name: "Gravar placa" })).toBeVisible();
+    await expect(cadastro(page).getByRole("button", { name: "Cadastrar placa" })).toBeVisible();
   });
 
   test("a garagem é da filial escolhida", async ({ page }) => {
@@ -319,7 +319,7 @@ test.describe("cadastrar placa: o + cria o que falta, na hora", () => {
     await passoValor(page);
     await passoPosse(page, {});
     await passoLocal(page);
-    await c.getByRole("button", { name: "Gravar placa" }).click();
+    await c.getByRole("button", { name: "Cadastrar placa" }).click();
     await expect(c.getByTestId("assistente-concluido")).toBeVisible();
     await c.getByRole("button", { name: "Fechar", exact: true }).click();
     await buscarNaLista(page, placa);

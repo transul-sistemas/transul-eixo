@@ -26,7 +26,7 @@ async function irAteAConferir(page: import("@playwright/test").Page) {
   await r.getByRole("button", { name: "Continuar" }).click(); // situação
   await r.getByRole("button", { name: "Continuar" }).click(); // conjunto
   await r.getByRole("button", { name: "Continuar" }).click(); // conferir
-  await expect(r.getByRole("button", { name: "Gravar placa" })).toBeVisible();
+  await expect(r.getByRole("button", { name: "Receber placa" })).toBeVisible();
 }
 
 test.describe("disponibilizar ao Operacional", () => {
@@ -43,7 +43,7 @@ test.describe("disponibilizar ao Operacional", () => {
     await d.getByLabel("Filial", { exact: true }).selectOption({ label: "Filial Exemplo B" });
     await d.getByRole("button", { name: "Continuar" }).click();
     await expect(d).toContainText("Filial Exemplo B");
-    await d.getByRole("button", { name: "Gravar placa" }).click();
+    await d.getByRole("button", { name: "Disponibilizar ao Operacional" }).click();
     await expect(d.getByTestId("assistente-concluido")).toHaveText(
       "Placa disponibilizada ao Operacional.",
     );
@@ -112,7 +112,7 @@ test.describe("disponibilizar ao Operacional", () => {
       const d = disponibilizacao(aba);
       await d.getByLabel("Filial", { exact: true }).selectOption({ label: filial });
       await d.getByRole("button", { name: "Continuar" }).click();
-      await d.getByRole("button", { name: "Gravar placa" }).click();
+      await d.getByRole("button", { name: "Disponibilizar ao Operacional" }).click();
     }
     await expect(disponibilizacao(outra).getByTestId("assistente-concluido")).toBeVisible();
     await expect(disponibilizacao(page).getByRole("alert")).toContainText("mudou");
@@ -127,7 +127,7 @@ test.describe("receber placa", () => {
     await expect(r).toBeVisible();
     await expect(r.getByTestId("motivo-da-transferencia")).not.toBeEmpty();
     await irAteAConferir(page);
-    await r.getByRole("button", { name: "Gravar placa" }).click();
+    await r.getByRole("button", { name: "Receber placa" }).click();
     await expect(r.getByTestId("assistente-concluido")).toHaveText("Placa recebida.");
     await r.getByRole("button", { name: "Fechar", exact: true }).click();
     await expect(r).toBeHidden();
