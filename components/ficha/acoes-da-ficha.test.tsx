@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { AcoesDaFicha } from "./acoes-da-ficha";
 
 const acoes = [
-  { id: "operacional.receber-placa", nome: "Receber placa" },
+  { id: "frota.receber-placa", nome: "Receber placa" },
   { id: "frota.disponibilizar-ao-operacional", nome: "Disponibilizar ao Operacional" },
 ];
 const com = (lista = acoes) => renderToStaticMarkup(<AcoesDaFicha acoes={lista} />);

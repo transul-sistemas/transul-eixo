@@ -289,13 +289,23 @@ test.describe("ficha da placa: o conteúdo", () => {
   test("as ações do momento aparecem desligadas, só para quem vê (o Administrador provisório)", async ({
     page,
   }) => {
-    await abrirFicha(page, "AAA0A04"); // DOp: receber placa
+    // Uma placa no pátio (PÁT): disponibilizar ao Operacional. Receber placa só com pedido de
+    // transferência pendente, e ainda não há pedido de exemplo.
+    await abrirHidratada(page, `${LISTA}?chip=patio`);
+    const placaNoPatio = (await page
+      .locator("[data-espiar-placa]")
+      .first()
+      .getAttribute("data-espiar-placa"))!;
+    await abrirFicha(page, placaNoPatio);
     const grupo = page.getByRole("group", { name: "Ações do momento" });
-    const botao = grupo.getByRole("button", { name: "Receber placa" });
+    const botao = grupo.getByRole("button", { name: "Disponibilizar ao Operacional" });
     await expect(botao).toHaveAttribute("aria-disabled", "true");
+    await expect(grupo.getByRole("button", { name: "Receber placa" })).toHaveCount(0);
     await expect(grupo).toContainText("chega com os assistentes (2D)");
     await botao.click({ force: true });
-    await expect(page).toHaveURL(/\/frota\/placas\/AAA0A04$/);
+    await expect(page).toHaveURL(new RegExp(`/frota/placas/${placaNoPatio}$`));
+    await abrirFicha(page, "AAA0A04"); // DOp: já está no Operacional, sem ação aqui
+    await expect(page.getByRole("group", { name: "Ações do momento" })).toHaveCount(0);
     await abrirFicha(page, "AAA0A00"); // outra situação: sem ação
     await expect(page.getByRole("group", { name: "Ações do momento" })).toHaveCount(0);
   });

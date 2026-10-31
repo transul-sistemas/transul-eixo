@@ -1,6 +1,6 @@
 import { IconPlus, IconSearch, IconTrash, IconTruck } from "@tabler/icons-react";
 import type { Metadata } from "next";
-import type { ReactNode } from "react";
+import { type ReactNode, Suspense } from "react";
 import { Etiqueta } from "@/components/etiqueta";
 import { formatarData } from "@/components/formato/data";
 import { Moeda } from "@/components/formato/moeda";
@@ -20,6 +20,7 @@ import { PaginaDeLeitura } from "@/components/layout/pagina-de-leitura";
 import { BarraLateral } from "@/components/navegacao/barra-lateral";
 import { Button } from "@/components/ui/button";
 import { MODULOS, STATUS, type Modulo, type Status } from "@/lib/visual/tons";
+import { AssistenteDeTeste } from "./assistente-de-teste";
 import { CampoDeExemplo } from "./campo-de-exemplo";
 
 export const metadata: Metadata = { title: "Base visual do Eixo · TranSul Eixo" };
@@ -132,7 +133,21 @@ function Amostra({ nome, forte, suave }: { nome: string; forte: string; suave: s
   );
 }
 
-export default function Demonstracao() {
+/**
+ * Pausa do "servidor" de mentira (`?lento=1500`, até 10 s): cada navegação desta página espera, como
+ * com a rede lenta. Fica num trecho dinâmico dentro de Suspense, para o resto da página seguir estático.
+ */
+async function PausaSimulada({ parametros }: { parametros: Promise<{ lento?: string }> }) {
+  const ms = Number((await parametros).lento);
+  if (ms > 0) await new Promise((resolve) => setTimeout(resolve, Math.min(ms, 10_000)));
+  return null;
+}
+
+export default function Demonstracao({
+  searchParams,
+}: {
+  searchParams: Promise<{ lento?: string }>;
+}) {
   return (
     <PaginaDeLeitura
       titulo="Base visual do Eixo"
@@ -356,6 +371,18 @@ export default function Demonstracao() {
             <AssinaturaTranSul className="h-10" />
             <AssinaturaTranSul apenasSimbolo className="h-10" />
           </div>
+        </Secao>
+
+        <Secao
+          titulo="Assistente"
+          explicacao="O motor dos assistentes: modal de tela quase cheia com passos, resumo ao vivo, rascunho salvo e envio que não duplica. O assistente de teste cadastra um item de brinquedo; ?simular=falha, conflito, campo ou lento mostra cada estado."
+        >
+          <Suspense fallback={null}>
+            <PausaSimulada parametros={searchParams} />
+          </Suspense>
+          <Suspense fallback={null}>
+            <AssistenteDeTeste />
+          </Suspense>
         </Secao>
       </div>
     </PaginaDeLeitura>

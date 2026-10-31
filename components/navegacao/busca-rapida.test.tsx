@@ -46,7 +46,7 @@ describe("<ConteudoDaBusca>: campo e lista", () => {
   });
   it("cada opção mostra o caminho Módulo › Tela", () => {
     expect(html).toContain("Frota › Placas");
-    expect(html).toContain("Operacional › Receber placa");
+    expect(html).toContain("Frota › Receber placa");
   });
   it("tela em breve leva a etiqueta Em breve", () => {
     expect(html).toContain("Em breve");
