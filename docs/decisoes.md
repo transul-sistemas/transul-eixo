@@ -51,6 +51,23 @@ Modelo de entrada:
 
 ---
 
+## 31/10/2026 — Fase 2D, Checkpoint 2: o motor de interface dos assistentes
+
+- **Onde mora:** modal de tela quase cheia sobre a tela de origem, aberto por `?assistente=<id>` na URL, com a mesma disciplina do painel de espiar: abre na hora (otimista) e a URL confirma; abrir é um passo novo no histórico; fechar só usa o Voltar do navegador se a entrada anterior é a própria tela (`entradaAnteriorEhALista`, agora com parâmetros configuráveis), senão tira o parâmetro; fechar antes de a URL chegar fecha quando ela chegar. Teste de abrir e fechar depressa com o servidor lento (`?lento=1500`).
+- **Passos:** stepper horizontal (a linha do tempo dos passos) com barra de progresso embaixo, a partir de 1024 px; abaixo disso (tablet e celular) vira "Passo N de M · título" com a mesma barra. Passos já visitados são botões; os não alcançados ficam `aria-disabled`. O passo "Conferir" (sem campos) mostra o resumo.
+- **Resumo ao vivo:** à direita a partir de 1024 px; abaixo disso, uma gaveta "Ver resumo" / "Esconder resumo".
+- **Formulário:** React Hook Form 7.91.0 e `@hookform/resolvers` 6.0.2 com o mesmo esquema Zod da Server Action (Checkpoint 1). Avançar valida só os campos do passo e leva o foco ao primeiro com erro; Concluir valida tudo e volta ao primeiro passo com erro. Enter avança (menos em área de texto, seleção e botão).
+- **Fechar é fechar:** com mudanças, Esc, o botão de fechar e o clique no fundo perguntam ("Continuar editando" tem o foco; "Salvar rascunho e sair"; "Descartar"). Sem mudanças, fecha na hora e **não apaga** um rascunho que já existia. O Voltar do navegador fecha sem perguntar (não há como impedi-lo), mas o que estava na tela já fica no rascunho (salvo a cada 400 ms de pausa e ao desmontar). Enquanto envia, não fecha.
+- **Rascunho:** `localStorage`, por pessoa e navegador, lido na montagem do assistente (por isso o assistente só monta no navegador, depois da hidratação), validado só por tipo (um campo digitado pela metade não pode derrubar o rascunho por regra de negócio), versão do esquema conferida, aviso quando descartado ou quando não dá para salvar. "Começar de novo" apaga e volta ao passo 1.
+- **Envio:** uma chave de envio por abertura; clique duplo e Enter repetido enviam uma vez (guarda síncrona no início); botão `aria-disabled` com "Enviando…"; falha mostra "Tentar de novo" com a mesma chave; conflito mostra o registro atual e "Revisar com os dados atuais" (gera nova chave, mantém o que foi digitado); erro de campo do servidor volta ao passo do campo.
+- **"+" e mini-wizard:** campo de seleção com o botão "+" abre o mini-wizard num painel lateral (folha de baixo no celular), com os mesmos passos e rascunho desligado (nunca vira rascunho do assistente de baixo); ao gravar, fecha sozinho, devolve o campo preenchido e o foco volta ao "+". Esc fecha só o mini; as teclas do mini não sobem ao assistente de baixo.
+- **Dois achados no caminho, ambos corrigidos:** (1) a mensagem de erro que aparece ao sair de um campo vazio empurrava para baixo o botão que a pessoa estava clicando (o clique se perdia entre apertar e soltar); agora a linha do erro tem altura reservada; (2) passar a propriedade `initialFocus` ao Dialog do base-ui faz o assistente de baixo reaplicar o foco e fechar o mini-wizard; o foco inicial é feito por um efeito próprio.
+- **Alvos de toque** de 44 px no celular (fechar, voltar, avançar, concluir, campos e "+").
+- **Assistente de teste:** seção "Assistente" da página `/admin/demonstracao`, que cadastra um "item" de brinquedo sem tocar em dados; `?simular=falha|conflito|campo|lento` faz o "servidor" de mentira responder assim; `?lento=ms` atrasa as navegações da página.
+- **Quem decidiu:** Alexandre (plano da 2D aprovado em 31/10/2026); o desenho acima é a execução do Checkpoint 2.
+
+---
+
 ## 30/10/2026 — Painel de espiar (2C-2): desenho aprovado e o que fica para a Fase 3
 
 - **Decisão:**

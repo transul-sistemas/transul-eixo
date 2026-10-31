@@ -133,3 +133,7 @@ Entregue na branch `fase-2d-motor-de-wizard`: Tarefa 0 (catálogo de ações e r
 - **`exigirPermissao`:** `exigirPermissao({ modulo, acao }, perfil = perfilAtual())` lança `ErroDePermissao`; Administrador e Diretoria criam em todo módulo, os demais só nos módulos do seu perfil.
 - **Escrita de exemplo:** em memória do processo (some ao reiniciar). Fica fora do Checkpoint 1 ligar o armazém à lista e à ficha, e as Server Actions (`acoes.ts`); isso entra nos próximos checkpoints.
 
+## Checkpoint 2 — feito (motor de interface), à espera de aprovação do visual
+
+Entregue em `components/wizard/` (passos, resumo ao vivo, campos, núcleo `Assistente`, gancho da URL), no assistente de teste da demonstração (`app/(sistema)/admin/demonstracao/assistente-de-teste.tsx`) e em `e2e/assistente*.spec.ts`. Decisões e achados em `docs/decisoes.md` (31/10/2026, Checkpoint 2). Fica para o Checkpoint 3: os assistentes de placa, as Server Actions e a ligação do armazém à lista e à ficha.
+

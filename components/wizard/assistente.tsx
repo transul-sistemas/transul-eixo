@@ -486,7 +486,7 @@ export function Assistente<V extends FieldValues>({
                 <div className="flex items-center justify-between gap-2">
                   <Button
                     variant="outline"
-                    className="max-sm:h-11 max-sm:px-4"
+                    className="aria-disabled:cursor-default aria-disabled:opacity-50 max-sm:h-11 max-sm:px-4"
                     aria-disabled={passo === 0 || ocupado ? true : undefined}
                     onClick={() => {
                       if (passo === 0 || ocupado) return;
@@ -497,7 +497,7 @@ export function Assistente<V extends FieldValues>({
                   </Button>
                   {passo < ultimo ? (
                     <Button
-                      className="max-sm:h-11 max-sm:px-4"
+                      className="aria-disabled:cursor-default aria-disabled:opacity-50 max-sm:h-11 max-sm:px-4"
                       aria-disabled={ocupado ? true : undefined}
                       onClick={() => {
                         if (!ocupado) void avancar();
@@ -507,7 +507,7 @@ export function Assistente<V extends FieldValues>({
                     </Button>
                   ) : (
                     <Button
-                      className="max-sm:h-11 max-sm:px-4"
+                      className="aria-disabled:cursor-default aria-disabled:opacity-50 max-sm:h-11 max-sm:px-4"
                       aria-disabled={ocupado ? true : undefined}
                       onClick={() => void concluir()}
                     >
