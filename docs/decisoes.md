@@ -649,3 +649,9 @@ Modelo de entrada:
 
 - **Decisão:** `supabase` entra como devDependency e roda com `pnpm exec supabase`; nada instalado globalmente.
 - **Motivo:** mesma versão na máquina e no CI.
+
+## 31/10/2026 — e2e que "morre" com código 143 (SIGTERM)
+
+- **Decisão:** ao rodar e2e na máquina de desenvolvimento, o `timeout` do comando precisa ser maior que (testes × tempo do teste); em teste que deve falhar (vermelho do TDD), usar `--timeout=6000`. Um e2e que sai com `code=143` sem resultado foi encerrado de fora, não falhou.
+- **Motivo:** o 143 veio do `timeout` do próprio comando (250 s) encerrando o Playwright enquanto 23 testes esperavam, cada um, o tempo inteiro por um botão que ainda não existia. Com o build de produção, um projeto por vez e `--timeout=6000`, os 23 terminam em ~5 min e falham pelo motivo certo. Havia também um `vitest` órfão de uma rodada anterior, encerrado à mão.
+- **Quem decidiu:** Alexandre (limite de duas rodadas de investigação).
