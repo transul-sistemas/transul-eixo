@@ -196,3 +196,28 @@ describe("entradaAnteriorEhALista: fechar só volta se a entrada de antes é a p
     expect(entradaAnteriorEhALista("http://[", aqui)).toBe(false);
   });
 });
+
+describe("entradaAnteriorEhALista com outro parâmetro (o assistente)", () => {
+  const ORIGEM = "http://localhost:3300";
+  const aqui = { origem: ORIGEM, caminho: "/admin/demonstracao" };
+  it("a entrada anterior já com ?assistente= não é a tela de origem: não volta", () => {
+    expect(
+      entradaAnteriorEhALista(`${ORIGEM}/admin/demonstracao?assistente=teste`, aqui, [
+        "assistente",
+      ]),
+    ).toBe(false);
+    expect(entradaAnteriorEhALista(`${ORIGEM}/admin/demonstracao`, aqui, ["assistente"])).toBe(
+      true,
+    );
+  });
+  it("um parâmetro que não está na lista não impede de voltar", () => {
+    expect(
+      entradaAnteriorEhALista(`${ORIGEM}/admin/demonstracao?espiar=AAA0A00`, aqui, ["assistente"]),
+    ).toBe(true);
+  });
+  it("sem a lista, vale o padrão (?espiar=)", () => {
+    expect(entradaAnteriorEhALista(`${ORIGEM}/admin/demonstracao?espiar=AAA0A00`, aqui)).toBe(
+      false,
+    );
+  });
+});

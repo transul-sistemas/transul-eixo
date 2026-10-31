@@ -63,6 +63,8 @@ export function anuncioDaTroca(placa: string, v: Vizinhas): string {
 export function entradaAnteriorEhALista(
   anterior: string | null | undefined,
   aqui: { origem: string; caminho: string },
+  /** Parâmetros que, presentes na entrada anterior, mostram que ela já era a tela aberta (o painel ou o assistente). */
+  parametros: readonly string[] = [PARAMETRO_DE_ESPIAR],
 ): boolean {
   if (!anterior) return false;
   try {
@@ -70,7 +72,7 @@ export function entradaAnteriorEhALista(
     return (
       url.origin === aqui.origem &&
       url.pathname === aqui.caminho &&
-      !url.searchParams.has(PARAMETRO_DE_ESPIAR)
+      !parametros.some((p) => url.searchParams.has(p))
     );
   } catch {
     return false;

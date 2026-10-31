@@ -13,6 +13,7 @@ import {
   useState,
   useTransition,
 } from "react";
+import { urlDaEntradaAnterior } from "@/components/navegacao/historico-do-navegador";
 import { comEspiar, entradaAnteriorEhALista, lerEspiar } from "@/lib/navegacao/espiar";
 import { montarCookie, type PreferenciasDaTabela } from "@/lib/navegacao/preferencias-da-tabela";
 
@@ -39,21 +40,6 @@ interface ContextoDaLista {
 }
 
 const Contexto = createContext<ContextoDaLista | null>(null);
-
-/**
- * A URL da entrada anterior do histórico (Navigation API). Sem a API, `undefined`: não há como
- * saber e o painel fecha sem voltar (tirando `?espiar=` da URL), o caminho que nunca sai do sistema.
- */
-function urlDaEntradaAnterior(): string | null | undefined {
-  type Entrada = { url: string | null };
-  const navegacao = (
-    window as unknown as {
-      navigation?: { currentEntry: { index: number } | null; entries(): Entrada[] };
-    }
-  ).navigation;
-  if (!navegacao?.currentEntry) return undefined;
-  return navegacao.entries()[navegacao.currentEntry.index - 1]?.url ?? null;
-}
 
 /** Quem usa fora de uma lista (a página de demonstração) recebe `null` e segue sem transição. */
 export function useLista(): ContextoDaLista | null {
