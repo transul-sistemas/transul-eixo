@@ -1,3 +1,4 @@
+import { podeDisponibilizar } from "./custodia";
 import { SIGLAS_DE_BAIXA, type Sigla } from "./status";
 
 // Quais ações do catálogo (`ACOES` em lib/navegacao/acoes.ts) combinam com a placa. Regra provisória,
@@ -9,8 +10,6 @@ import { SIGLAS_DE_BAIXA, type Sigla } from "./status";
 // - "Receber placa" (módulo Frota): é a transferência entre gestores de frota; não depende da
 //   situação, e sim de haver um pedido de transferência pendente para a placa.
 // - Placa baixada (VND e SUC): nenhuma ação.
-const PODEM_DISPONIBILIZAR: readonly Sigla[] = ["PÁT", "VAz", "ETv"];
-
 export function idsDasAcoesDoMomento({
   sigla,
   pedidoPendente = false,
@@ -22,6 +21,6 @@ export function idsDasAcoesDoMomento({
   if (SIGLAS_DE_BAIXA.includes(sigla)) return [];
   const ids: string[] = [];
   if (pedidoPendente) ids.push("frota.receber-placa");
-  if (PODEM_DISPONIBILIZAR.includes(sigla)) ids.push("frota.disponibilizar-ao-operacional");
+  if (podeDisponibilizar(sigla)) ids.push("frota.disponibilizar-ao-operacional");
   return ids;
 }
