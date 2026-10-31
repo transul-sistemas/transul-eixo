@@ -2,11 +2,12 @@ import { normalizarPlaca } from "@/lib/dominio/placa";
 import { alertasDaPlaca } from "@/lib/dominio/alertas";
 import { diasEntre } from "@/lib/dominio/dias";
 import { grupoDaSigla, NOMES_DAS_SIGLAS, SIGLAS_DE_BAIXA } from "@/lib/dominio/status";
-import { eventosDeExemplo } from "@/lib/exemplo/eventos";
-import { placasDeExemplo, type PlacaDeExemplo } from "@/lib/exemplo/placas";
+import { type Armazem, armazemDoProcesso } from "@/lib/exemplo/armazem";
+import type { PlacaDeExemplo } from "@/lib/exemplo/placas";
 import type { ConsultaDeTabela } from "@/lib/navegacao/tabela";
 import { STATUS } from "@/lib/visual/tons";
-import { type FonteDePlacas, MENSAGEM_SO_COM_EXEMPLO } from "./fonte";
+import { podeDisponibilizar } from "@/lib/dominio/custodia";
+import { type FonteDeEscrita, type FonteDePlacas, MENSAGEM_SO_COM_EXEMPLO } from "./fonte";
 import {
   CAMPOS_ORDENAVEIS_DE_PLACAS,
   type DetalheDaPlaca,
@@ -146,7 +147,7 @@ export function comparar(campo: string, sentido: "asc" | "desc") {
 }
 
 function consultar(consulta: ConsultaDeTabela, hoje: string): PaginaDePlacas {
-  const linhas = paraLinhas(placasDeExemplo(hoje), hoje);
+  const linhas = paraLinhas(armazemDoProcesso(hoje).placasParaLista(), hoje);
 
   const busca = simples(consulta.busca.trim());
   const placaBuscada = normalizarPlaca(consulta.busca);
@@ -207,7 +208,7 @@ function detalheDe(
   placa: string,
   hoje: string,
 ): { detalhe: DetalheDaPlaca; exemplo: PlacaDeExemplo } | null {
-  const todas = placasDeExemplo(hoje);
+  const todas = armazemDoProcesso(hoje).placasParaLista();
   const exemplo = todas.find((p) => p.placa === placa);
   if (!exemplo) return null;
   const [linha] = paraLinhas(todas, hoje).filter((l) => l.id === exemplo.id);
@@ -249,6 +250,36 @@ export const fonteDeExemplo: FonteDePlacas = {
     if (lentoMs && lentoMs > 0) await new Promise((r) => setTimeout(r, Math.min(lentoMs, 10_000)));
     if (falha) throw new Error("Falha simulada pela fonte de exemplo.");
     const achado = detalheDe(placa, hoje);
-    return achado ? { ...achado.detalhe, eventos: eventosDeExemplo(achado.exemplo) } : null;
+    return achado
+      ? { ...achado.detalhe, eventos: armazemDoProcesso(hoje).eventosDaPlaca(placa) }
+      : null;
   },
 };
+
+/** A escrita sobre um armazém qualquer (a de verdade usa o do processo; os testes passam o seu). */
+export function escritaDoArmazem(armazem: Armazem): FonteDeEscrita {
+  return {
+    cadastrarPlaca: async (entrada, chave, agora) => armazem.cadastrar(entrada, chave, agora),
+    disponibilizarPlaca: async (entrada, chave, agora) =>
+      armazem.disponibilizar(entrada, chave, agora),
+    receberPlaca: async (entrada, chave, agora, gestorId) =>
+      armazem.receber(entrada, chave, agora, gestorId),
+    criarItemDeCatalogo: async (entrada, chave) => armazem.criarItemDeCatalogo(entrada, chave),
+    catalogos: async () => armazem.catalogos(),
+    placaParaAssistente: async (placa) => armazem.obterPlaca(placa),
+    pedidoPendenteDa: async (placa) => armazem.pedidoPendenteDa(placa),
+    pedidosPendentes: async () => armazem.pedidosPendentes(),
+    candidatosDoConjunto: async (placa) => armazem.candidatosDoConjunto(placa),
+    placasQuePodemSerDisponibilizadas: async () =>
+      armazem
+        .placasParaLista()
+        .filter((p) => podeDisponibilizar(p.sigla))
+        .map((p) => ({ placa: p.placa, nome: `${p.placa} · ${p.modelo}` }))
+        .sort((a, b) => (a.placa < b.placa ? -1 : 1)),
+  };
+}
+
+export function escritaDeExemplo(hoje: string): FonteDeEscrita {
+  if (process.env.EIXO_DADOS !== "exemplo") throw new Error(MENSAGEM_SO_COM_EXEMPLO);
+  return escritaDoArmazem(armazemDoProcesso(hoje));
+}
