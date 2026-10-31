@@ -367,14 +367,70 @@ export function Assistente<V extends FieldValues>({
             </button>
           </div>
 
-          {estado.tipo === "concluido" ? (
-            <div className="flex flex-1 flex-col items-start justify-center gap-4 px-4 py-8 sm:px-6">
-              <p role="status" data-testid="assistente-concluido" className="text-lg font-semibold">
-                {mensagemConcluido}
-              </p>
-              <Button autoFocus onClick={() => aoFechar()}>
-                Fechar
-              </Button>
+          {estado.tipo === "concluido" || estado.tipo === "erro" || estado.tipo === "conflito" ? (
+            // Tela de resultado (concluído, erro, placa já cadastrada, conflito): centralizada no
+            // painel, em uma coluna de leitura de uns 480 px, com o botão de ação ao centro.
+            <div className="flex min-h-0 flex-1 flex-col items-center justify-center overflow-y-auto px-4 py-8 sm:px-6">
+              <div
+                data-testid="resultado-do-assistente"
+                className="flex w-full max-w-[480px] flex-col items-center gap-4 text-center"
+              >
+                {estado.tipo === "concluido" ? (
+                  <>
+                    <p
+                      role="status"
+                      data-testid="assistente-concluido"
+                      className="text-lg font-semibold"
+                    >
+                      {mensagemConcluido}
+                    </p>
+                    <Button autoFocus onClick={() => aoFechar()}>
+                      Fechar
+                    </Button>
+                  </>
+                ) : estado.tipo === "erro" ? (
+                  <>
+                    <div role="alert" className="flex flex-col items-center gap-3 text-base">
+                      <span className="font-semibold">{estado.erro.mensagem}</span>
+                      {descreverErro?.(estado.erro)}
+                    </div>
+                    <div className="flex flex-wrap items-center justify-center gap-2">
+                      {estado.erro.codigo === "falha" ? (
+                        <Button autoFocus onClick={() => void concluir()}>
+                          Tentar de novo
+                        </Button>
+                      ) : null}
+                      <Button
+                        autoFocus={estado.erro.codigo !== "falha"}
+                        variant="outline"
+                        onClick={() => setEstado({ tipo: "editando" })}
+                      >
+                        Voltar ao formulário
+                      </Button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div role="alert" className="flex flex-col items-center gap-3 text-base">
+                      <span className="font-semibold">{estado.erro.mensagem}</span>
+                      {descreverAtual && estado.erro.atual !== undefined ? (
+                        <div className="bg-muted w-full rounded-lg p-3 text-sm">
+                          {descreverAtual(estado.erro.atual)}
+                        </div>
+                      ) : null}
+                    </div>
+                    <Button
+                      autoFocus
+                      onClick={() => {
+                        chaveDeEnvio.current = novaChaveDeEnvio();
+                        setEstado({ tipo: "editando" });
+                      }}
+                    >
+                      Revisar com os dados atuais
+                    </Button>
+                  </>
+                )}
+              </div>
             </div>
           ) : (
             <>
@@ -509,38 +565,6 @@ export function Assistente<V extends FieldValues>({
                   <p role="status" className="text-muted-foreground text-sm">
                     Enviando…
                   </p>
-                ) : null}
-                {estado.tipo === "erro" ? (
-                  <div role="alert" className="flex flex-wrap items-center gap-3 text-sm">
-                    <span>{estado.erro.mensagem}</span>
-                    {descreverErro?.(estado.erro)}
-                    {estado.erro.codigo === "falha" ? (
-                      <Button variant="outline" onClick={() => void concluir()}>
-                        Tentar de novo
-                      </Button>
-                    ) : null}
-                  </div>
-                ) : null}
-                {estado.tipo === "conflito" ? (
-                  <div role="alert" className="flex flex-col gap-2 text-sm">
-                    <span>{estado.erro.mensagem}</span>
-                    {descreverAtual && estado.erro.atual !== undefined ? (
-                      <div className="bg-muted rounded-lg p-3">
-                        {descreverAtual(estado.erro.atual)}
-                      </div>
-                    ) : null}
-                    <div>
-                      <Button
-                        variant="outline"
-                        onClick={() => {
-                          chaveDeEnvio.current = novaChaveDeEnvio();
-                          setEstado({ tipo: "editando" });
-                        }}
-                      >
-                        Revisar com os dados atuais
-                      </Button>
-                    </div>
-                  </div>
                 ) : null}
                 <div className="flex items-center gap-2">
                   {comRascunho && salvoAs ? (

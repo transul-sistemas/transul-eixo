@@ -193,7 +193,7 @@ export function CadastrarPlaca({
       usuario={USUARIO_PROVISORIO}
       camposSensiveis={["renavam"]}
       focoFinal={focoFinal}
-      rotuloConcluir="Gravar placa"
+      rotuloConcluir="Cadastrar placa"
       mensagemConcluido="Placa cadastrada."
       aoConcluir={(valores, chaveDeEnvio) =>
         cadastrarPlacaAcao({

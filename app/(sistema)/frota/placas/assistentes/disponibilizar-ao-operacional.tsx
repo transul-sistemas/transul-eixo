@@ -71,7 +71,7 @@ export function DisponibilizarAoOperacional({
       registro={placa.placa}
       rascunho={false}
       focoFinal={focoFinal}
-      rotuloConcluir="Gravar placa"
+      rotuloConcluir="Disponibilizar ao Operacional"
       mensagemConcluido="Placa disponibilizada ao Operacional."
       aoConcluir={(valores, chaveDeEnvio) =>
         disponibilizarPlacaAcao({

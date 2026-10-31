@@ -139,7 +139,7 @@ export function ReceberPlaca({
       registro={placa.placa}
       rascunho={false}
       focoFinal={focoFinal}
-      rotuloConcluir="Gravar placa"
+      rotuloConcluir="Receber placa"
       mensagemConcluido="Placa recebida."
       aoConcluir={(valores, chaveDeEnvio) =>
         receberPlacaAcao({ chaveDeEnvio, dados: entrada(valores) })
