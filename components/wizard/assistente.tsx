@@ -400,7 +400,7 @@ export function Assistente<V extends FieldValues>({
               <div
                 className={cn(
                   "grid min-h-0 flex-1 overflow-y-auto",
-                  !lateral && "lg:grid-cols-[minmax(0,1fr)_20rem]",
+                  !lateral && !ehConferir && "lg:grid-cols-[minmax(0,1fr)_20rem]",
                 )}
               >
                 <form
@@ -415,9 +415,9 @@ export function Assistente<V extends FieldValues>({
                     {ehConferir ? <ResumoAoVivo secoes={secoes} /> : renderPasso(passoAtual, form)}
                   </div>
                 </form>
-                {!lateral ? (
+                {!lateral && !ehConferir ? (
                   <div className="border-border hidden border-l p-4 lg:block">
-                    {ehConferir ? null : <ResumoAoVivo secoes={secoes} />}
+                    <ResumoAoVivo secoes={secoes} />
                   </div>
                 ) : null}
               </div>

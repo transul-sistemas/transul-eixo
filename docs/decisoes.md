@@ -64,6 +64,8 @@ Modelo de entrada:
 - **Dois achados no caminho, ambos corrigidos:** (1) a mensagem de erro que aparece ao sair de um campo vazio empurrava para baixo o botão que a pessoa estava clicando (o clique se perdia entre apertar e soltar); agora a linha do erro tem altura reservada; (2) passar a propriedade `initialFocus` ao Dialog do base-ui faz o assistente de baixo reaplicar o foco e fechar o mini-wizard; o foco inicial é feito por um efeito próprio.
 - **Alvos de toque** de 44 px no celular (fechar, voltar, avançar, concluir, campos e "+").
 - **Assistente de teste:** seção "Assistente" da página `/admin/demonstracao`, que cadastra um "item" de brinquedo sem tocar em dados; `?simular=falha|conflito|campo|lento` faz o "servidor" de mentira responder assim; `?lento=ms` atrasa as navegações da página.
+- **Verificação (produção, 31/10/2026):** e2e completo, 1115 passaram, 19 puladas, 0 falhas; abrir e fechar o assistente depressa com o servidor lento, 60 de 60 (2 cenários × 30, 1366, 4 workers); fluxo no tablet (820) e no celular (390) passando.
+- **Reteste do resíduo "trocar de placa muitas vezes seguidas" (painel de espiar):** 1 falha em 30 (1366, 4 workers), com a mesma mensagem de antes (o painel da placa esperada some no passo 13 de 14). Continua **sem causa encontrada**: o teto de 2 rodadas já foi usado e não houve nova investigação. Segue como pendência registrada.
 - **Quem decidiu:** Alexandre (plano da 2D aprovado em 31/10/2026); o desenho acima é a execução do Checkpoint 2.
 
 ---

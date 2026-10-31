@@ -50,10 +50,14 @@ test.describe("assistente: abrir e fechar pela URL", () => {
     await expect(campoNome(page)).toBeFocused();
     for (let i = 0; i < 14; i++) {
       await page.keyboard.press("Tab");
-      const dentro = await page.evaluate(
-        () => document.activeElement?.closest('[role="dialog"]') !== null,
-      );
-      expect(dentro, `Tab ${i + 1}`).toBe(true);
+      // Na volta do ciclo o foco passa um instante por um sentinela do base-ui antes de voltar ao
+      // primeiro botão: o que não pode é ficar fora do assistente.
+      await expect
+        .poll(
+          () => page.evaluate(() => document.activeElement?.closest('[role="dialog"]') !== null),
+          { message: `Tab ${i + 1}`, timeout: 2_000 },
+        )
+        .toBe(true);
     }
   });
 });
