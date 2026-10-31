@@ -23,10 +23,10 @@ async function irAteAConferir(page: import("@playwright/test").Page) {
   const r = recebimento(page);
   for (const caixa of await r.getByLabel("Resolvida:", { exact: false }).all()) await caixa.check();
   await r.getByLabel("Conferi o que chegou").check();
-  await r.getByRole("button", { name: "Avançar" }).click(); // situação
-  await r.getByRole("button", { name: "Avançar" }).click(); // conjunto
-  await r.getByRole("button", { name: "Avançar" }).click(); // conferir
-  await expect(r.getByRole("button", { name: "Receber placa" })).toBeVisible();
+  await r.getByRole("button", { name: "Continuar" }).click(); // situação
+  await r.getByRole("button", { name: "Continuar" }).click(); // conjunto
+  await r.getByRole("button", { name: "Continuar" }).click(); // conferir
+  await expect(r.getByRole("button", { name: "Gravar placa" })).toBeVisible();
 }
 
 test.describe("disponibilizar ao Operacional", () => {
@@ -41,9 +41,9 @@ test.describe("disponibilizar ao Operacional", () => {
     const d = disponibilizacao(page);
     await expect(d).toBeVisible();
     await d.getByLabel("Filial", { exact: true }).selectOption({ label: "Filial Exemplo B" });
-    await d.getByRole("button", { name: "Avançar" }).click();
+    await d.getByRole("button", { name: "Continuar" }).click();
     await expect(d).toContainText("Filial Exemplo B");
-    await d.getByRole("button", { name: "Disponibilizar ao Operacional" }).click();
+    await d.getByRole("button", { name: "Gravar placa" }).click();
     await expect(d.getByTestId("assistente-concluido")).toHaveText(
       "Placa disponibilizada ao Operacional.",
     );
@@ -66,7 +66,7 @@ test.describe("disponibilizar ao Operacional", () => {
     await page.getByRole("button", { name: "Disponibilizar ao Operacional" }).click();
     const d = disponibilizacao(page);
     await d.getByLabel("Filial", { exact: true }).selectOption({ label: "Escolha…" });
-    await d.getByRole("button", { name: "Avançar" }).click();
+    await d.getByRole("button", { name: "Continuar" }).click();
     await expect(d.getByText("Escolha a filial.")).toBeVisible();
     await expect(passoAtual(d)).toContainText("Filial");
   });
@@ -111,8 +111,8 @@ test.describe("disponibilizar ao Operacional", () => {
     ] as const) {
       const d = disponibilizacao(aba);
       await d.getByLabel("Filial", { exact: true }).selectOption({ label: filial });
-      await d.getByRole("button", { name: "Avançar" }).click();
-      await d.getByRole("button", { name: "Disponibilizar ao Operacional" }).click();
+      await d.getByRole("button", { name: "Continuar" }).click();
+      await d.getByRole("button", { name: "Gravar placa" }).click();
     }
     await expect(disponibilizacao(outra).getByTestId("assistente-concluido")).toBeVisible();
     await expect(disponibilizacao(page).getByRole("alert")).toContainText("mudou");
@@ -127,7 +127,7 @@ test.describe("receber placa", () => {
     await expect(r).toBeVisible();
     await expect(r.getByTestId("motivo-da-transferencia")).not.toBeEmpty();
     await irAteAConferir(page);
-    await r.getByRole("button", { name: "Receber placa" }).click();
+    await r.getByRole("button", { name: "Gravar placa" }).click();
     await expect(r.getByTestId("assistente-concluido")).toHaveText("Placa recebida.");
     await r.getByRole("button", { name: "Fechar", exact: true }).click();
     await expect(r).toBeHidden();
@@ -139,11 +139,11 @@ test.describe("receber placa", () => {
     await abrirHidratada(page, FICHA(PLACA_COM_PEDIDO));
     await page.getByRole("button", { name: "Receber placa" }).click();
     const r = recebimento(page);
-    await r.getByRole("button", { name: "Avançar" }).click();
+    await r.getByRole("button", { name: "Continuar" }).click();
     await expect(r.getByText("Confira o que chegou antes de concluir.")).toBeVisible();
     await expect(passoAtual(r)).toContainText("Chegada");
     await r.getByLabel("Conferi o que chegou").check();
-    await r.getByRole("button", { name: "Avançar" }).click();
+    await r.getByRole("button", { name: "Continuar" }).click();
     await expect(r.getByText("Resolva todas as pendências antes de concluir.")).toBeVisible();
     await expect(passoAtual(r)).toContainText("Chegada");
   });
@@ -155,8 +155,8 @@ test.describe("receber placa", () => {
     for (const caixa of await r.getByLabel("Resolvida:", { exact: false }).all())
       await caixa.check();
     await r.getByLabel("Conferi o que chegou").check();
-    await r.getByRole("button", { name: "Avançar" }).click();
-    await r.getByRole("button", { name: "Avançar" }).click();
+    await r.getByRole("button", { name: "Continuar" }).click();
+    await r.getByRole("button", { name: "Continuar" }).click();
     // Passo do conjunto: a placa do pedido de exemplo é um cavalo.
     await expect(r.getByLabel("Meta do conjunto")).toBeVisible();
     await expect(r.getByText("Implementos do conjunto")).toBeVisible();

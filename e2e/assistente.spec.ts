@@ -75,11 +75,11 @@ test.describe("assistente: passos, validação e resumo", () => {
     await expect(barra).toHaveAttribute("aria-valuetext", "Passo 1 de 4");
   });
 
-  test("Avançar com campo inválido não avança, mostra o erro e leva o foco ao campo", async ({
+  test("Continuar com campo inválido não avança, mostra o erro e leva o foco ao campo", async ({
     page,
   }) => {
     await abrirOAssistente(page);
-    await assistente(page).getByRole("button", { name: "Avançar" }).click();
+    await assistente(page).getByRole("button", { name: "Continuar" }).click();
     await expect(
       assistente(page).getByText("Informe o nome com pelo menos 3 letras."),
     ).toBeVisible();

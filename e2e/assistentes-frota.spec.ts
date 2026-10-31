@@ -73,7 +73,7 @@ test.describe("cadastrar placa: o fluxo", () => {
     await irAteConferirOCadastro(page, { placa, operacao: "Operação Exemplo 1" });
     await expect(cadastro(page)).toContainText(placa);
     await expect(cadastro(page)).toContainText("R$ 78.500,00");
-    await cadastro(page).getByRole("button", { name: "Cadastrar placa" }).click();
+    await cadastro(page).getByRole("button", { name: "Gravar placa" }).click();
     await expect(cadastro(page).getByTestId("assistente-concluido")).toHaveText(
       "Placa cadastrada.",
     );
@@ -96,7 +96,7 @@ test.describe("cadastrar placa: o fluxo", () => {
     const placa = placaUnica();
     await abrirOCadastro(page);
     await irAteConferirOCadastro(page, { placa });
-    await cadastro(page).getByRole("button", { name: "Cadastrar placa" }).dblclick();
+    await cadastro(page).getByRole("button", { name: "Gravar placa" }).dblclick();
     await expect(cadastro(page).getByTestId("assistente-concluido")).toBeVisible();
     await cadastro(page).getByRole("button", { name: "Fechar", exact: true }).click();
     await buscarNaLista(page, placa);
@@ -107,7 +107,7 @@ test.describe("cadastrar placa: o fluxo", () => {
     page,
   }) => {
     await abrirOCadastro(page);
-    await cadastro(page).getByRole("button", { name: "Avançar" }).click();
+    await cadastro(page).getByRole("button", { name: "Continuar" }).click();
     await expect(cadastro(page).getByText("Placa inválida.", { exact: false })).toBeVisible();
     await expect(cadastro(page).getByText("RENAVAM inválido.", { exact: false })).toBeVisible();
     await expect(cadastro(page).getByText("Escolha o tipo de ativo.")).toBeVisible();
@@ -118,7 +118,7 @@ test.describe("cadastrar placa: o fluxo", () => {
   test("placa que já existe é acusada, com o link para a ficha dela", async ({ page }) => {
     await abrirOCadastro(page);
     await irAteConferirOCadastro(page, { placa: "AAA0A00" });
-    await cadastro(page).getByRole("button", { name: "Cadastrar placa" }).click();
+    await cadastro(page).getByRole("button", { name: "Gravar placa" }).click();
     const alerta = cadastro(page).getByRole("alert");
     await expect(alerta).toContainText("já está cadastrada");
     await expect(alerta.getByRole("link", { name: "Abrir a ficha de AAA0A00" })).toHaveAttribute(
@@ -177,7 +177,7 @@ test.describe("cadastrar placa: valor por tipo", () => {
     await page.keyboard.type("2500000");
     await c.getByLabel("Fonte do valor").fill("Nota fiscal");
     await c.getByLabel("Data do valor").fill("2099-01-01");
-    await c.getByRole("button", { name: "Avançar" }).click();
+    await c.getByRole("button", { name: "Continuar" }).click();
     await expect(c.getByText("A data do valor não pode ser no futuro.")).toBeVisible();
   });
 
@@ -193,12 +193,12 @@ test.describe("cadastrar placa: valor por tipo", () => {
     await c.getByRole("button", { name: "Voltar" }).click(); // para a identificação
     await c.getByLabel("Tipo de ativo").selectOption({ label: "Apoio" });
     await expect(c.getByLabel("Placa", { exact: true })).toHaveValue(placa);
-    await c.getByRole("button", { name: "Avançar" }).click();
+    await c.getByRole("button", { name: "Continuar" }).click();
     await expect(c.getByLabel("Marca", { exact: true }).locator("option:checked")).toHaveText(
       "Volvo",
     );
-    await c.getByRole("button", { name: "Avançar" }).click();
-    await c.getByRole("button", { name: "Avançar" }).click(); // o valor está vazio: fica no passo
+    await c.getByRole("button", { name: "Continuar" }).click();
+    await c.getByRole("button", { name: "Continuar" }).click(); // o valor está vazio: fica no passo
     await expect(c.getByLabel("Fonte do valor")).toBeVisible();
     await expect(c.getByLabel("Código FIPE")).toHaveCount(0);
   });
@@ -244,7 +244,7 @@ test.describe("cadastrar placa: dependências entre campos", () => {
   }) => {
     await abrirOCadastro(page);
     await irAteConferirOCadastro(page, { placa: placaUnica() }); // sem operação nem CR
-    await expect(cadastro(page).getByRole("button", { name: "Cadastrar placa" })).toBeVisible();
+    await expect(cadastro(page).getByRole("button", { name: "Gravar placa" })).toBeVisible();
   });
 
   test("a garagem é da filial escolhida", async ({ page }) => {
@@ -315,12 +315,11 @@ test.describe("cadastrar placa: o + cria o que falta, na hora", () => {
     await dialogo(page, "Cadastrar modelo")
       .getByRole("button", { name: "Cadastrar modelo" })
       .click();
-    await c.getByLabel("Ano").fill("2023");
-    await c.getByRole("button", { name: "Avançar" }).click();
+    await c.getByRole("button", { name: "Continuar" }).click();
     await passoValor(page);
     await passoPosse(page, {});
     await passoLocal(page);
-    await c.getByRole("button", { name: "Cadastrar placa" }).click();
+    await c.getByRole("button", { name: "Gravar placa" }).click();
     await expect(c.getByTestId("assistente-concluido")).toBeVisible();
     await c.getByRole("button", { name: "Fechar", exact: true }).click();
     await buscarNaLista(page, placa);
@@ -360,7 +359,7 @@ test.describe("cadastrar placa: o + cria o que falta, na hora", () => {
     await expect(c.getByLabel("CR", { exact: true }).locator("option:checked")).toHaveText(
       "CR-2001",
     );
-    await c.getByRole("button", { name: "Avançar" }).click();
+    await c.getByRole("button", { name: "Continuar" }).click();
 
     await c.getByRole("button", { name: "Cadastrar filial" }).click();
     await dialogo(page, "Cadastrar filial").getByLabel("Nome da filial").fill("Filial Nova");
@@ -399,7 +398,8 @@ test.describe("cadastrar placa: o + cria o que falta, na hora", () => {
     await cadastro(page).getByLabel("Placa", { exact: true }).fill(placa);
     await cadastro(page).getByLabel("RENAVAM").fill("00639884962");
     await cadastro(page).getByLabel("Tipo de ativo").selectOption({ label: "Cavalo" });
-    await cadastro(page).getByRole("button", { name: "Avançar" }).click();
+    await cadastro(page).getByLabel("Ano").fill("2022");
+    await cadastro(page).getByRole("button", { name: "Continuar" }).click();
     await cadastro(page).getByRole("button", { name: "Cadastrar marca" }).click();
     await page.keyboard.press("Escape");
     await expect(dialogo(page, "Cadastrar marca")).toBeHidden();

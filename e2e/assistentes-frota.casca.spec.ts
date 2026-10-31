@@ -42,16 +42,17 @@ test.describe("assistentes da Frota em tablet e celular", () => {
     for (const alvo of [
       c.getByLabel("Placa", { exact: true }),
       c.getByLabel("Tipo de ativo"),
-      c.getByRole("button", { name: "Avançar" }),
+      c.getByRole("button", { name: "Continuar" }),
       c.getByRole("button", { name: "Fechar assistente" }),
     ]) {
       const caixa = await alvo.boundingBox();
       expect(caixa!.height).toBeGreaterThanOrEqual(ehCelular(page) ? 40 : 32);
     }
     await c.getByLabel("Tipo de ativo").selectOption({ label: "Cavalo" });
+    await c.getByLabel("Ano").fill("2022");
     await c.getByLabel("Placa", { exact: true }).fill(placaUnica());
     await c.getByLabel("RENAVAM").fill("00639884962");
-    await c.getByRole("button", { name: "Avançar" }).click();
+    await c.getByRole("button", { name: "Continuar" }).click();
     const mais = await c.getByRole("button", { name: "Cadastrar marca" }).boundingBox();
     expect(mais!.width).toBeGreaterThanOrEqual(ehCelular(page) ? 40 : 32);
     expect(mais!.height).toBeGreaterThanOrEqual(ehCelular(page) ? 40 : 32);
@@ -63,9 +64,10 @@ test.describe("assistentes da Frota em tablet e celular", () => {
     await abrirOCadastro(page);
     const c = cadastro(page);
     await c.getByLabel("Tipo de ativo").selectOption({ label: "Cavalo" });
+    await c.getByLabel("Ano").fill("2022");
     await c.getByLabel("Placa", { exact: true }).fill(placaUnica());
     await c.getByLabel("RENAVAM").fill("00639884962");
-    await c.getByRole("button", { name: "Avançar" }).click();
+    await c.getByRole("button", { name: "Continuar" }).click();
     await c.getByRole("button", { name: "Cadastrar marca" }).tap();
     const mini = dialogo(page, "Cadastrar marca");
     await expect(mini).toBeVisible();
@@ -86,7 +88,7 @@ test.describe("assistentes da Frota em tablet e celular", () => {
     const placa = placaUnica();
     await abrirOCadastro(page);
     await irAteConferirOCadastro(page, { placa });
-    await cadastro(page).getByRole("button", { name: "Cadastrar placa" }).tap();
+    await cadastro(page).getByRole("button", { name: "Gravar placa" }).tap();
     await expect(cadastro(page).getByTestId("assistente-concluido")).toHaveText(
       "Placa cadastrada.",
     );

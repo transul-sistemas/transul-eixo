@@ -60,7 +60,7 @@ test.describe("assistente em tablet e celular", () => {
   test("no celular os alvos de toque têm pelo menos 40 px", async ({ page }, info) => {
     test.skip(info.project.name !== "celular-390", "só no celular");
     await abrirOAssistente(page);
-    for (const nome of ["Fechar assistente", "Avançar", "Voltar", "Cadastrar categoria"]) {
+    for (const nome of ["Fechar assistente", "Continuar", "Voltar", "Cadastrar categoria"]) {
       const caixa = await assistente(page)
         .getByRole("button", { name: nome, exact: true })
         .boundingBox();

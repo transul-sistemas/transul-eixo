@@ -44,7 +44,7 @@ export async function abrirOCadastro(page: Page) {
   await expect(cadastro(page)).toBeVisible();
 }
 
-const avancar = (caixa: Locator) => caixa.getByRole("button", { name: "Avançar" }).click();
+const avancar = (caixa: Locator) => caixa.getByRole("button", { name: "Continuar" }).click();
 
 export interface DadosDoCadastro {
   placa: string;
@@ -56,21 +56,21 @@ export interface DadosDoCadastro {
   cr?: string;
 }
 
-/** Passo 1: placa, RENAVAM e tipo; avança. */
+/** Passo 1: placa, RENAVAM, tipo e ano; avança. */
 export async function passoIdentificacao(page: Page, d: DadosDoCadastro) {
   const c = cadastro(page);
   await c.getByLabel("Placa", { exact: true }).fill(d.placa);
   await c.getByLabel("RENAVAM").fill("00639884962");
   await c.getByLabel("Tipo de ativo").selectOption({ label: d.tipo ?? "Cavalo" });
+  await c.getByLabel("Ano").fill(d.ano ?? "2022");
   await avancar(c);
 }
 
-/** Passo 2: marca, modelo e ano; avança. */
+/** Passo 2: marca e modelo; avança. */
 export async function passoVeiculo(page: Page, d: Partial<DadosDoCadastro>) {
   const c = cadastro(page);
   await c.getByLabel("Marca", { exact: true }).selectOption({ label: d.marca ?? "Volvo" });
   await c.getByLabel("Modelo", { exact: true }).selectOption({ label: d.modelo ?? "FH 540" });
-  await c.getByLabel("Ano").fill(d.ano ?? "2022");
   await avancar(c);
 }
 
@@ -116,7 +116,7 @@ export async function irAteConferirOCadastro(page: Page, d: DadosDoCadastro) {
   await passoValor(page, d.tipo);
   await passoPosse(page, d);
   await passoLocal(page);
-  await expect(cadastro(page).getByRole("button", { name: "Cadastrar placa" })).toBeVisible();
+  await expect(cadastro(page).getByRole("button", { name: "Gravar placa" })).toBeVisible();
 }
 
 /** Procura a placa na lista pela busca (a URL guarda o termo). */
