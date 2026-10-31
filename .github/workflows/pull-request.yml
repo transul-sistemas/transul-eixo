@@ -2,8 +2,7 @@ name: pull request
 
 on:
   pull_request:
-    # TEMPORÁRIO (teste do caso só docs): esta branch também vale como base. Sai antes do merge.
-    branches: [main, ci/pular-e2e-em-docs]
+    branches: [main]
 
 permissions:
   contents: read
