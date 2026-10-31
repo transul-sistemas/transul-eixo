@@ -104,3 +104,19 @@ export interface CandidatoDoConjunto {
 
 /** O que as Server Actions de escrita devolvem como "registro atual" num conflito. */
 export type AtualDaAcao = PlacaGravada | PedidoDeTransferencia;
+
+export interface DadosDosAssistentes {
+  /** `aaaa-mm-dd` em São Paulo. */
+  hoje: string;
+  anoAtual: number;
+  catalogos: Catalogos;
+  /** A placa do assistente (a da URL, ou a da ficha), com a versão. `null` se não há ou não existe. */
+  placaAlvo: PlacaGravada | null;
+  /** O pedido de transferência pendente da placa alvo (Receber placa). */
+  pedido: PedidoDeTransferencia | null;
+  candidatosDoConjunto: CandidatoDoConjunto[];
+  /** Receber placa aberto sem placa escolhida: as placas que têm pedido pendente. */
+  placasComPedido: { placa: string; nome: string }[];
+  /** Disponibilizar aberto sem placa escolhida: as placas em PÁT, VAz ou ETv. */
+  placasParaDisponibilizar: { placa: string; nome: string }[];
+}

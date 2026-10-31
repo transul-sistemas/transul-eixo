@@ -1,27 +1,13 @@
 import type { PedidoDeTransferencia } from "@/lib/dominio/custodia";
 import { normalizarPlaca, placaNormalizadaValida } from "@/lib/dominio/placa";
-import type { CandidatoDoConjunto, Catalogos, PlacaGravada } from "./escrita-tipos";
+import type { DadosDosAssistentes, PlacaGravada } from "./escrita-tipos";
+
+export type { DadosDosAssistentes };
 import type { FonteDeEscrita } from "./fonte";
 
 // O que a lista e a ficha entregam aos assistentes da Frota (tudo serializável, para ir à tela):
 // o dia, os catálogos (o "+" e os campos de seleção) e, conforme o assistente pedido, a placa com a
 // versão que a pessoa vê, o pedido de transferência e as placas a escolher.
-
-export interface DadosDosAssistentes {
-  /** `aaaa-mm-dd` em São Paulo. */
-  hoje: string;
-  anoAtual: number;
-  catalogos: Catalogos;
-  /** A placa do assistente (a da URL, ou a da ficha), com a versão. `null` se não há ou não existe. */
-  placaAlvo: PlacaGravada | null;
-  /** O pedido de transferência pendente da placa alvo (Receber placa). */
-  pedido: PedidoDeTransferencia | null;
-  candidatosDoConjunto: CandidatoDoConjunto[];
-  /** Receber placa aberto sem placa escolhida: as placas que têm pedido pendente. */
-  placasComPedido: { placa: string; nome: string }[];
-  /** Disponibilizar aberto sem placa escolhida: as placas em PÁT, VAz ou ETv. */
-  placasParaDisponibilizar: { placa: string; nome: string }[];
-}
 
 export interface PedidoDosDados {
   /** O assistente pedido na URL (`?assistente=`), se houver. */
