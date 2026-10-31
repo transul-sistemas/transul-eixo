@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { TIPOS_DE_ATIVO, type TipoDeAtivo } from "@/lib/dados/placas-tipos";
+import { conjuntoMisto } from "../conjunto";
 import { normalizarPlaca, placaNormalizadaValida } from "../placa";
 import { SIGLAS, type Sigla } from "../status";
 
@@ -221,7 +222,11 @@ export const esquemaEnvioDeTransferencia = z.object({
 export type EntradaEnvioDeTransferencia = z.infer<typeof esquemaEnvioDeTransferencia>;
 
 /** Quem recebe confere o que chega, define o que muda, resolve as pendências e conclui. */
-export function esquemaRecebimento(tipo: TipoDeAtivo) {
+export function esquemaRecebimento(
+  tipo: TipoDeAtivo,
+  /** A carroceria de cada implemento candidato, por id: com ela, conjunto misto é recusado. */
+  carroceriaDoImplemento?: Readonly<Record<string, string>>,
+) {
   const situacoes = siglasIniciaisDoTipo(tipo) as [Sigla, ...Sigla[]];
   return z
     .object({
@@ -258,6 +263,19 @@ export function esquemaRecebimento(tipo: TipoDeAtivo) {
           code: "custom",
           path: ["conjunto", "implementoIds"],
           message: "Há implemento repetido no conjunto. Tire a repetição.",
+        });
+      }
+      if (
+        carroceriaDoImplemento &&
+        conjuntoMisto(
+          implementoIds.map((id) => carroceriaDoImplemento[id]).filter((c) => c !== undefined),
+        )
+      ) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["conjunto", "implementoIds"],
+          message:
+            "Conjunto misto não pode. Escolha implementos da mesma carroceria, como só Sider ou só Graneleiro.",
         });
       }
       if (tipo !== "cavalo" && implementoIds.length > 0) {

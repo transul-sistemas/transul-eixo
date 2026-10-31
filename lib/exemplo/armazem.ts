@@ -10,6 +10,7 @@ import type {
   EntradaRecebimento,
   TipoDeItemDeCatalogo,
 } from "@/lib/dominio/esquemas/placa";
+import { carroceriaDoModelo } from "@/lib/dominio/conjunto";
 import type { EventoDeStatus } from "@/lib/dominio/linha-do-tempo";
 import { normalizarPlaca } from "@/lib/dominio/placa";
 import type { Sigla } from "@/lib/dominio/status";
@@ -323,7 +324,11 @@ export function criarArmazem({
                 (p.conjunto.cavaloId === null || p.conjunto.cavaloId === minhaId),
             )
           : atuais.filter((p) => p.tipo === "cavalo");
-      return candidatos.map((p) => ({ id: p.id, nome: `${p.placa} · ${p.modelo}` }));
+      return candidatos.map((p) => ({
+        id: p.id,
+        nome: `${p.placa} · ${p.modelo}`,
+        carroceria: carroceriaDoModelo(p.modelo),
+      }));
     },
 
     criarItemDeCatalogo(entrada, chave) {

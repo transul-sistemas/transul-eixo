@@ -101,7 +101,9 @@ export async function executarReceber(
   return gravando(async () => {
     const atual = await fonte.placaParaAssistente(normalizarPlaca(aPlaca.dados.placa));
     if (!atual) return erroDaAcao("nao_encontrado");
-    const v = validar(esquemaRecebimento(atual.tipo), dados);
+    const candidatos = await fonte.candidatosDoConjunto(atual.placa);
+    const carrocerias = Object.fromEntries(candidatos.map((c) => [c.id, c.carroceria]));
+    const v = validar(esquemaRecebimento(atual.tipo, carrocerias), dados);
     if (!v.ok) return v.erro;
     return fonte.receberPlaca(v.dados, chave, agora, gestorId);
   });

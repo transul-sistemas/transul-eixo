@@ -438,3 +438,58 @@ describe("esquemaItemDeCatalogo: o que o mini-wizard do + cria", () => {
     if (r.success) expect("paiId" in r.data).toBe(false);
   });
 });
+
+describe("esquemaRecebimento: conjunto misto de carrocerias é bloqueado e o cavalo é o mestre", () => {
+  const carrocerias = { "imp-1": "Sider", "imp-2": "Graneleiro", "imp-3": "Sider" };
+  const ok = {
+    placa: "AAA0A00",
+    pedidoId: "ped-1",
+    versaoDoPedido: 2,
+    versaoDaPlaca: 3,
+    conferido: true,
+    situacao: "PÁT",
+    operacaoId: null,
+    crId: null,
+    motoristaId: null,
+    metaDoConjuntoCentavos: null,
+    conjunto: { cavaloId: null, implementoIds: ["imp-1", "imp-3"] },
+    pendencias: [],
+  };
+  const doCavalo = esquemaRecebimento("cavalo", carrocerias);
+  it("implementos da mesma carroceria passam", () => {
+    expect(doCavalo.safeParse(ok).success).toBe(true);
+  });
+  it("Sider com Graneleiro no mesmo cavalo é recusado, com o aviso no campo dos implementos", () => {
+    const r = doCavalo.safeParse({
+      ...ok,
+      conjunto: { cavaloId: null, implementoIds: ["imp-1", "imp-2"] },
+    });
+    expect(r.success).toBe(false);
+    if (!r.success) {
+      const achado = r.error.issues.find((i) => i.path.join(".") === "conjunto.implementoIds");
+      expect(achado?.message).toContain("mesma carroceria");
+    }
+  });
+  it("só o cavalo é mestre: implemento não leva implementos nem recebe meta, e cavalo não tem cavalo", () => {
+    const doImplemento = esquemaRecebimento("implemento", carrocerias);
+    expect(doImplemento.safeParse(ok).success).toBe(false);
+    expect(
+      doImplemento.safeParse({
+        ...ok,
+        conjunto: { cavaloId: "cav-1", implementoIds: [] },
+        metaDoConjuntoCentavos: 1_000_00,
+      }).success,
+    ).toBe(false);
+    expect(
+      doCavalo.safeParse({ ...ok, conjunto: { cavaloId: "cav-1", implementoIds: [] } }).success,
+    ).toBe(false);
+  });
+  it("sem a tabela de carrocerias, a regra do misto não roda (o resto do esquema vale)", () => {
+    expect(
+      esquemaRecebimento("cavalo").safeParse({
+        ...ok,
+        conjunto: { cavaloId: null, implementoIds: ["imp-1", "imp-2"] },
+      }).success,
+    ).toBe(true);
+  });
+});

@@ -202,6 +202,23 @@ describe("executarReceber: o esquema depende do tipo da placa", () => {
       });
     expect(await ctx.fonte.pedidoPendenteDa(foraDoPatio.placa)).toBeNull();
   });
+  it("conjunto misto de carrocerias é recusado no servidor, e nada muda", async () => {
+    const ctx = contexto();
+    const candidatos = await ctx.fonte.candidatosDoConjunto(foraDoPatio.placa);
+    const sider = candidatos.find((c) => c.carroceria === "Sider");
+    const graneleiro = candidatos.find((c) => c.carroceria === "Graneleiro");
+    expect(sider && graneleiro).toBeTruthy();
+    const r = await executarReceber(
+      CHAVE_A,
+      entrada(foraDoPatio.placa, {
+        conjunto: { cavaloId: null, implementoIds: [sider?.id, graneleiro?.id] },
+      }),
+      ctx,
+    );
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(Object.keys(r.erro.campos ?? {})).toContain("conjunto.implementoIds");
+    expect(await ctx.fonte.pedidoPendenteDa(foraDoPatio.placa)).not.toBeNull();
+  });
   it("não conferido é recusado pelo esquema, e nada muda", async () => {
     const ctx = contexto();
     const r = await executarReceber(CHAVE_A, entrada(foraDoPatio.placa, { conferido: false }), ctx);

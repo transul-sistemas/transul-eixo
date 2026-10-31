@@ -100,6 +100,8 @@ export interface ItemCriado {
 export interface CandidatoDoConjunto {
   id: string;
   nome: string;
+  /** A carroceria (Sider, Graneleiro…), para o conjunto misto ser recusado. */
+  carroceria: string;
 }
 
 /** O que as Server Actions de escrita devolvem como "registro atual" num conflito. */
