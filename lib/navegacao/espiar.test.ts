@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   anuncioDaTroca,
   comEspiar,
+  entradaAnteriorEhALista,
   lerEspiar,
   PARAMETRO_DE_ESPIAR,
   textoDaPosicao,
@@ -168,5 +169,30 @@ describe("anuncioDaTroca: o que o leitor de tela ouve quando o painel muda de pl
   });
   it("sem posição (placa do conjunto fora da página), só a placa", () => {
     expect(anuncioDaTroca("ZZZ9Z99", vizinhas(placas, "ZZZ9Z99"))).toBe("Placa ZZZ9Z99");
+  });
+});
+
+describe("entradaAnteriorEhALista: fechar só volta se a entrada de antes é a própria lista", () => {
+  const ORIGEM = "http://localhost:3300";
+  const aqui = { origem: ORIGEM, caminho: "/frota/placas" };
+  it("a lista, com ou sem filtros: pode voltar", () => {
+    expect(entradaAnteriorEhALista(`${ORIGEM}/frota/placas`, aqui)).toBe(true);
+    expect(entradaAnteriorEhALista(`${ORIGEM}/frota/placas?chip=patio&pagina=2`, aqui)).toBe(true);
+  });
+  it("sem entrada anterior, ou página em branco: não volta (sairia do sistema)", () => {
+    expect(entradaAnteriorEhALista(null, aqui)).toBe(false);
+    expect(entradaAnteriorEhALista(undefined, aqui)).toBe(false);
+    expect(entradaAnteriorEhALista("about:blank", aqui)).toBe(false);
+  });
+  it("outro site, ou outra página do sistema: não volta", () => {
+    expect(entradaAnteriorEhALista("https://outro.exemplo.com/frota/placas", aqui)).toBe(false);
+    expect(entradaAnteriorEhALista(`${ORIGEM}/frota/placas/AAA0A00`, aqui)).toBe(false);
+    expect(entradaAnteriorEhALista(`${ORIGEM}/inicio/tarefas`, aqui)).toBe(false);
+  });
+  it("a entrada anterior já com o painel aberto (?espiar=) não é a lista: não volta", () => {
+    expect(entradaAnteriorEhALista(`${ORIGEM}/frota/placas?espiar=AAA0A00`, aqui)).toBe(false);
+  });
+  it("texto que não é endereço: não volta", () => {
+    expect(entradaAnteriorEhALista("http://[", aqui)).toBe(false);
   });
 });

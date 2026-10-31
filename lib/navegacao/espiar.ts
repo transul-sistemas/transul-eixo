@@ -52,3 +52,27 @@ export function textoDaPosicao(v: Vizinhas): string {
 export function anuncioDaTroca(placa: string, v: Vizinhas): string {
   return v.posicao === null ? `Placa ${placa}` : `Placa ${placa}, ${v.posicao} de ${v.total}`;
 }
+
+/**
+ * Fechar o painel desfaz o passo de abrir com o Voltar do navegador, mas só se a entrada de antes
+ * do histórico é a própria lista (mesmo endereço, sem `?espiar=`). Com o servidor lento, a URL de
+ * abrir pode ser engolida por uma troca de placa e a entrada nunca nasce: voltar então sairia do
+ * sistema. `anterior` é a URL da entrada anterior (Navigation API); `undefined` e `null` querem
+ * dizer que não há como saber ou que não há entrada, e nos dois casos não se volta.
+ */
+export function entradaAnteriorEhALista(
+  anterior: string | null | undefined,
+  aqui: { origem: string; caminho: string },
+): boolean {
+  if (!anterior) return false;
+  try {
+    const url = new URL(anterior);
+    return (
+      url.origin === aqui.origem &&
+      url.pathname === aqui.caminho &&
+      !url.searchParams.has(PARAMETRO_DE_ESPIAR)
+    );
+  } catch {
+    return false;
+  }
+}

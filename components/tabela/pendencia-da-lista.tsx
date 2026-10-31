@@ -13,7 +13,7 @@ import {
   useState,
   useTransition,
 } from "react";
-import { comEspiar, lerEspiar } from "@/lib/navegacao/espiar";
+import { comEspiar, entradaAnteriorEhALista, lerEspiar } from "@/lib/navegacao/espiar";
 import { montarCookie, type PreferenciasDaTabela } from "@/lib/navegacao/preferencias-da-tabela";
 
 // Estado compartilhado de uma lista na tela: se uma nova página, filtro ou ordem está a caminho
@@ -39,6 +39,21 @@ interface ContextoDaLista {
 }
 
 const Contexto = createContext<ContextoDaLista | null>(null);
+
+/**
+ * A URL da entrada anterior do histórico (Navigation API). Sem a API, `undefined`: não há como
+ * saber e o painel fecha sem voltar (tirando `?espiar=` da URL), o caminho que nunca sai do sistema.
+ */
+function urlDaEntradaAnterior(): string | null | undefined {
+  type Entrada = { url: string | null };
+  const navegacao = (
+    window as unknown as {
+      navigation?: { currentEntry: { index: number } | null; entries(): Entrada[] };
+    }
+  ).navigation;
+  if (!navegacao?.currentEntry) return undefined;
+  return navegacao.entries()[navegacao.currentEntry.index - 1]?.url ?? null;
+}
 
 /** Quem usa fora de uma lista (a página de demonstração) recebe `null` e segue sem transição. */
 export function useLista(): ContextoDaLista | null {
@@ -132,14 +147,21 @@ export function ProvedorDaLista({
         setCancelada(otimista);
         return;
       }
-      if (abertoPelaLista.current) {
+      if (
+        abertoPelaLista.current &&
+        entradaAnteriorEhALista(urlDaEntradaAnterior(), {
+          origem: window.location.origin,
+          caminho: rota,
+        })
+      ) {
         abertoPelaLista.current = false;
         router.back();
       } else {
+        abertoPelaLista.current = false;
         router.replace(enderecoCom(null), { scroll: false });
       }
     });
-  }, [daUrl, otimista, enderecoCom, router, definirOtimista]);
+  }, [daUrl, otimista, enderecoCom, router, definirOtimista, rota]);
 
   // Só zera "aberto pela lista" quando a URL de fato saiu de "com placa" para "sem placa". Zerar a
   // cada execução apagava a marca logo depois do clique (a URL ainda era nula) e o fechar virava
