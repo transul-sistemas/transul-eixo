@@ -20,6 +20,7 @@ import {
   type UseFormReturn,
   useWatch,
 } from "react-hook-form";
+import { agoraEmSaoPaulo } from "@/components/formato/data";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { novaChaveDeEnvio } from "@/lib/wizard/chave-de-envio";
@@ -62,6 +63,11 @@ export interface PropsDoAssistente<V extends FieldValues> {
   /** Desenha os campos de um passo (o de conferir, sem campos, o motor desenha sozinho). */
   renderPasso: (passo: PassoDoAssistente, form: UseFormReturn<V>) => ReactNode;
   resumo: (valores: V) => SecaoDoResumo[];
+  /**
+   * O que vai acontecer ao gravar, em texto simples. Com ele o passo Conferir ganha duas colunas
+   * ("Dados" e "O que vai acontecer"); sem ele, o resumo ocupa o passo sozinho.
+   */
+  efeitos?: (valores: V) => readonly ReactNode[];
   /** Verbo e objeto, o mesmo nome do começo ao fim: "Cadastrar item" e depois "Item cadastrado". */
   rotuloConcluir: string;
   mensagemConcluido: string;
@@ -110,6 +116,7 @@ export function Assistente<V extends FieldValues>({
   camposSensiveis,
   renderPasso,
   resumo,
+  efeitos,
   rotuloConcluir,
   mensagemConcluido,
   aoConcluir,
@@ -156,6 +163,8 @@ export function Assistente<V extends FieldValues>({
       : null,
   );
   const [retomado, setRetomado] = useState(rascunho.tipo === "rascunho");
+  // A hora (HH:MM) do último rascunho guardado nesta abertura; o rodapé mostra "Rascunho salvo às …".
+  const [salvoAs, setSalvoAs] = useState<string | null>(null);
   const chaveDeEnvio = useRef(novaChaveDeEnvio());
   const enviando = useRef(false);
   const descartado = useRef(false);
@@ -180,6 +189,8 @@ export function Assistente<V extends FieldValues>({
     });
     if (r === "indisponivel") {
       setAvisoDoRascunho("Não foi possível salvar o rascunho neste navegador.");
+    } else {
+      setSalvoAs(agoraEmSaoPaulo(new Date()).slice(11, 16));
     }
   }, [chaveDoRasc, definicao.versaoDoEsquema, camposSensiveis, comRascunho]);
 
@@ -309,6 +320,8 @@ export function Assistente<V extends FieldValues>({
   const passoAtual = passos[passo] as PassoDoAssistente;
   const ehConferir = passoAtual.campos.length === 0;
   const secoes = resumo(valores);
+  const listaDeEfeitos = efeitos ? efeitos(valores) : null;
+  const conferirEmColunas = ehConferir && listaDeEfeitos !== null;
   const ocupado = estado.tipo === "enviando";
 
   return (
@@ -332,14 +345,15 @@ export function Assistente<V extends FieldValues>({
             "bg-background fixed z-50 flex flex-col overflow-hidden shadow-lg outline-none",
             lateral
               ? "inset-y-0 right-0 w-[28rem] max-w-full border-l max-sm:inset-x-0 max-sm:top-auto max-sm:bottom-0 max-sm:max-h-[92dvh] max-sm:w-full max-sm:rounded-t-xl max-sm:border-t"
-              : "inset-2 rounded-xl border sm:inset-4 lg:inset-x-10 lg:inset-y-6",
+              : // Abaixo de 1024 px: tela cheia. Daí em diante: painel centralizado de até 1040 px e 90% da altura.
+                "inset-2 rounded-xl border sm:inset-4 lg:inset-auto lg:top-1/2 lg:left-1/2 lg:h-[min(90dvh,820px)] lg:w-[min(1040px,calc(100vw-3rem))] lg:-translate-x-1/2 lg:-translate-y-1/2 lg:rounded-2xl",
           )}
         >
           <div className="border-border flex items-start justify-between gap-3 border-b px-4 py-3 sm:px-6">
             <div className="flex min-w-0 flex-col gap-0.5">
               <Dialog.Title className="text-lg font-semibold">{definicao.titulo}</Dialog.Title>
               <Dialog.Description className="text-muted-foreground text-sm">
-                {passoAtual.titulo}. Esc fecha e Enter avança.
+                {passoAtual.titulo}. Esc fecha e Enter continua.
               </Dialog.Description>
             </div>
             <button
@@ -403,29 +417,68 @@ export function Assistente<V extends FieldValues>({
               <div
                 className={cn(
                   "grid min-h-0 flex-1 overflow-y-auto",
-                  !lateral && !ehConferir && "lg:grid-cols-[minmax(0,1fr)_20rem]",
+                  !lateral && !ehConferir && "lg:grid-cols-[minmax(0,1fr)_300px]",
                 )}
               >
                 <form
                   noValidate
                   onSubmit={(e) => e.preventDefault()}
                   onKeyDown={aoTeclar}
-                  className="flex min-w-0 flex-col gap-4 px-4 py-4 sm:px-6"
+                  className="flex min-w-0 flex-col gap-4 px-4 py-4 sm:px-6 lg:px-8 lg:py-6"
                 >
-                  {/* `key` por passo: sem ele o React reaproveita o mesmo campo entre passos e mistura os valores. */}
-                  <div key={passoAtual.id} ref={corpo} className="flex max-w-xl flex-col gap-4">
-                    <h3 className="text-base font-semibold">{passoAtual.titulo}</h3>
-                    {ehConferir ? <ResumoAoVivo secoes={secoes} /> : renderPasso(passoAtual, form)}
+                  {/* `key` por passo: sem ele o React reaproveita o mesmo campo entre passos e mistura os valores.
+                      A coluna de leitura fica centralizada (até 620 px; no Conferir em duas colunas, até 860 px). */}
+                  <div
+                    key={passoAtual.id}
+                    ref={corpo}
+                    data-testid="coluna-de-leitura"
+                    className={cn(
+                      "flex w-full flex-col gap-4",
+                      !lateral && "mx-auto",
+                      conferirEmColunas ? "max-w-[860px]" : lateral ? "max-w-xl" : "max-w-[620px]",
+                    )}
+                  >
+                    <h3 className="text-base font-semibold">
+                      {conferirEmColunas ? "Conferir e gravar" : passoAtual.titulo}
+                    </h3>
+                    {conferirEmColunas ? (
+                      <div className="grid gap-4 lg:grid-cols-2">
+                        <ResumoAoVivo secoes={secoes} modo="conferir" />
+                        <section
+                          aria-label="O que vai acontecer"
+                          className="border-border bg-muted/50 flex flex-col gap-3 rounded-xl border p-4"
+                        >
+                          <h4 className="text-muted-foreground text-sm font-semibold">
+                            O que vai acontecer
+                          </h4>
+                          <ul className="flex flex-col gap-2.5 text-sm">
+                            {listaDeEfeitos.map((efeito, i) => (
+                              <li key={i} className="flex gap-2.5">
+                                <span
+                                  aria-hidden
+                                  className="mt-1.5 size-2 shrink-0 rounded-full bg-[var(--acao)]"
+                                />
+                                <span>{efeito}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </section>
+                      </div>
+                    ) : ehConferir ? (
+                      <ResumoAoVivo secoes={secoes} />
+                    ) : (
+                      renderPasso(passoAtual, form)
+                    )}
                   </div>
                 </form>
                 {!lateral && !ehConferir ? (
-                  <div className="border-border hidden border-l p-4 lg:block">
-                    <ResumoAoVivo secoes={secoes} />
+                  <div className="hidden lg:block">
+                    <ResumoAoVivo secoes={secoes} modo="coluna" />
                   </div>
                 ) : null}
               </div>
 
-              {!lateral ? (
+              {!lateral && !ehConferir ? (
                 <div className="border-border border-t px-4 py-2 sm:px-6 lg:hidden">
                   <button
                     type="button"
@@ -489,10 +542,20 @@ export function Assistente<V extends FieldValues>({
                     </div>
                   </div>
                 ) : null}
-                <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  {comRascunho && salvoAs ? (
+                    <span
+                      data-testid="rascunho-salvo"
+                      className="text-muted-foreground mr-auto text-sm max-sm:text-xs max-sm:leading-tight"
+                    >
+                      Rascunho salvo às {salvoAs}
+                    </span>
+                  ) : (
+                    <span className="mr-auto" />
+                  )}
                   <Button
                     variant="outline"
-                    className="aria-disabled:cursor-default aria-disabled:opacity-50 max-sm:h-11 max-sm:px-4"
+                    className="aria-disabled:cursor-default aria-disabled:opacity-50 max-sm:h-11 max-sm:px-4 lg:h-10 lg:px-4.5"
                     aria-disabled={passo === 0 || ocupado ? true : undefined}
                     onClick={() => {
                       if (passo === 0 || ocupado) return;
@@ -503,17 +566,17 @@ export function Assistente<V extends FieldValues>({
                   </Button>
                   {passo < ultimo ? (
                     <Button
-                      className="aria-disabled:cursor-default aria-disabled:opacity-50 max-sm:h-11 max-sm:px-4"
+                      className="aria-disabled:cursor-default aria-disabled:opacity-50 max-sm:h-11 max-sm:px-4 lg:h-10 lg:px-5.5"
                       aria-disabled={ocupado ? true : undefined}
                       onClick={() => {
                         if (!ocupado) void avancar();
                       }}
                     >
-                      Avançar
+                      Continuar
                     </Button>
                   ) : (
                     <Button
-                      className="aria-disabled:cursor-default aria-disabled:opacity-50 max-sm:h-11 max-sm:px-4"
+                      className="aria-disabled:cursor-default aria-disabled:opacity-50 max-sm:h-11 max-sm:px-4 lg:h-10 lg:px-5.5"
                       aria-disabled={ocupado ? true : undefined}
                       onClick={() => void concluir()}
                     >

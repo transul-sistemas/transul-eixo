@@ -1,6 +1,7 @@
 "use client";
 
 import { type RefObject } from "react";
+import { agoraEmSaoPaulo, formatarDataEHora } from "@/components/formato/data";
 import { Controller, type Resolver } from "react-hook-form";
 import { Assistente } from "@/components/wizard/assistente";
 import { CampoComMais } from "@/components/wizard/campos";
@@ -70,7 +71,7 @@ export function DisponibilizarAoOperacional({
       registro={placa.placa}
       rascunho={false}
       focoFinal={focoFinal}
-      rotuloConcluir="Disponibilizar ao Operacional"
+      rotuloConcluir="Gravar placa"
       mensagemConcluido="Placa disponibilizada ao Operacional."
       aoConcluir={(valores, chaveDeEnvio) =>
         disponibilizarPlacaAcao({
@@ -100,6 +101,22 @@ export function DisponibilizarAoOperacional({
           ],
         },
         { titulo: "Filial", linhas: [{ rotulo: "Filial", valor: filial(v.filialId) }] },
+      ]}
+      efeitos={(v) => [
+        <>
+          A placa sai de{" "}
+          <b>
+            {placa.sigla} · {NOMES_DAS_SIGLAS[placa.sigla]}
+          </b>{" "}
+          e passa para <b>DOp · {NOMES_DAS_SIGLAS.DOp}</b>, na filial{" "}
+          <b>{filial(v.filialId) || "a escolher"}</b>.
+        </>,
+        "O Operacional da filial passa a ver a placa para alocar a um carregamento.",
+        <>
+          Um evento é registrado na linha do tempo da placa, em{" "}
+          <b>{formatarDataEHora(agoraEmSaoPaulo(new Date()))}</b>.
+        </>,
+        "O conjunto da placa não é alterado por esta ação.",
       ]}
       renderPasso={(_, form) => (
         <Controller

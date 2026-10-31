@@ -90,7 +90,7 @@ export function PassosDoAssistente({
         aria-valuemax={100}
         aria-valuenow={percentual}
         aria-valuetext={`Passo ${numero} de ${total}`}
-        className="bg-muted h-1.5 w-full overflow-hidden rounded-full"
+        className="bg-muted h-1 w-full overflow-hidden rounded-full"
       >
         <div
           className="h-full rounded-full bg-[var(--acao)] transition-[width] duration-200 motion-reduce:transition-none"

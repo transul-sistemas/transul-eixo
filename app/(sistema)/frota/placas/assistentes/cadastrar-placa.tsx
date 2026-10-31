@@ -4,12 +4,14 @@ import Link from "next/link";
 import { type RefObject, useMemo } from "react";
 import { Controller, type Resolver, type UseFormReturn } from "react-hook-form";
 import { z } from "zod";
+import { agoraEmSaoPaulo, formatarDataEHora } from "@/components/formato/data";
 import { CampoMoeda, Moeda } from "@/components/formato/moeda";
 import { Assistente } from "@/components/wizard/assistente";
 import {
   Campo,
   CampoComMais,
   CLASSE_DO_CAMPO,
+  GradeDeCampos,
   type OpcaoDeSelecao,
 } from "@/components/wizard/campos";
 import type { DadosDosAssistentes } from "@/lib/dados/escrita-tipos";
@@ -75,10 +77,14 @@ const VALORES_INICIAIS: ValoresDoCadastro = {
 export const DEFINICAO_DO_CADASTRO: DefinicaoDeAssistente = {
   id: "cadastrar-placa",
   titulo: "Cadastrar placa",
-  versaoDoEsquema: 1,
+  versaoDoEsquema: 2,
   passos: [
-    { id: "identificacao", titulo: "Identificação", campos: ["placa", "renavam", "tipo"] },
-    { id: "veiculo", titulo: "Veículo", campos: ["marcaId", "modeloId", "ano"] },
+    {
+      id: "identificacao",
+      titulo: "Identificação",
+      campos: ["placa", "renavam", "tipo", "ano"],
+    },
+    { id: "veiculo", titulo: "Veículo", campos: ["marcaId", "modeloId"] },
     {
       id: "valor",
       titulo: "Valor",
@@ -187,7 +193,7 @@ export function CadastrarPlaca({
       usuario={USUARIO_PROVISORIO}
       camposSensiveis={["renavam"]}
       focoFinal={focoFinal}
-      rotuloConcluir="Cadastrar placa"
+      rotuloConcluir="Gravar placa"
       mensagemConcluido="Placa cadastrada."
       aoConcluir={(valores, chaveDeEnvio) =>
         cadastrarPlacaAcao({
@@ -274,6 +280,39 @@ export function CadastrarPlaca({
           ],
         },
       ]}
+      efeitos={(v) => {
+        const gestor = nome(catalogos.gestores, v.gestorId);
+        const operacao = nome(catalogos.operacoes, v.operacaoId);
+        const cr = crCodigo(v.crId);
+        const sigla = (v.situacaoInicial || "PÁT") as Sigla;
+        return [
+          <>
+            A placa entra na frota com a situação{" "}
+            <b>
+              {sigla} · {NOMES_DAS_SIGLAS[sigla]}
+            </b>
+            {gestor ? (
+              <>
+                {" "}
+                e fica na carteira de <b>{gestor}</b>
+              </>
+            ) : null}
+            .
+          </>,
+          operacao ? (
+            <>
+              Os custos passam a cair no CR <b>{cr || "a escolher"}</b>, na <b>{operacao}</b>.
+            </>
+          ) : (
+            "A placa fica sem operação e sem CR por enquanto."
+          ),
+          <>
+            Um evento é registrado na linha do tempo da placa, em{" "}
+            <b>{formatarDataEHora(agoraEmSaoPaulo(new Date()))}</b>.
+          </>,
+          "Nenhum conjunto é montado agora. Engatar é uma ação à parte.",
+        ];
+      }}
       renderPasso={(passo, form) => (
         <PassoDoCadastro
           passo={passo.id}
@@ -305,40 +344,55 @@ function PassoDoCadastro({
   if (passo === "identificacao") {
     return (
       <>
-        <Campo rotulo="Placa" erro={erros.placa?.message}>
-          {(p) => (
-            <input
-              {...p}
-              {...form.register("placa")}
-              autoComplete="off"
-              autoCapitalize="characters"
-              className={CLASSE_DO_CAMPO}
-            />
-          )}
-        </Campo>
-        <Campo rotulo="RENAVAM" erro={erros.renavam?.message}>
-          {(p) => (
-            <input
-              {...p}
-              {...form.register("renavam")}
-              autoComplete="off"
-              inputMode="numeric"
-              className={CLASSE_DO_CAMPO}
-            />
-          )}
-        </Campo>
-        <Campo rotulo="Tipo de ativo" erro={erros.tipo?.message}>
-          {(p) => (
-            <select {...p} {...form.register("tipo")} className={CLASSE_DO_CAMPO}>
-              <option value="">Escolha…</option>
-              {TIPOS_DE_ATIVO.map((t) => (
-                <option key={t} value={t}>
-                  {NOMES_DOS_TIPOS[t]}
-                </option>
-              ))}
-            </select>
-          )}
-        </Campo>
+        <GradeDeCampos>
+          <Campo rotulo="Placa" erro={erros.placa?.message}>
+            {(p) => (
+              <input
+                {...p}
+                {...form.register("placa")}
+                autoComplete="off"
+                autoCapitalize="characters"
+                className={CLASSE_DO_CAMPO}
+              />
+            )}
+          </Campo>
+          <Campo rotulo="RENAVAM" erro={erros.renavam?.message}>
+            {(p) => (
+              <input
+                {...p}
+                {...form.register("renavam")}
+                autoComplete="off"
+                inputMode="numeric"
+                className={CLASSE_DO_CAMPO}
+              />
+            )}
+          </Campo>
+        </GradeDeCampos>
+        <GradeDeCampos>
+          <Campo rotulo="Tipo de ativo" erro={erros.tipo?.message}>
+            {(p) => (
+              <select {...p} {...form.register("tipo")} className={CLASSE_DO_CAMPO}>
+                <option value="">Escolha…</option>
+                {TIPOS_DE_ATIVO.map((t) => (
+                  <option key={t} value={t}>
+                    {NOMES_DOS_TIPOS[t]}
+                  </option>
+                ))}
+              </select>
+            )}
+          </Campo>
+          <Campo rotulo="Ano" erro={erros.ano?.message}>
+            {(p) => (
+              <input
+                {...p}
+                {...form.register("ano")}
+                inputMode="numeric"
+                autoComplete="off"
+                className={CLASSE_DO_CAMPO}
+              />
+            )}
+          </Campo>
+        </GradeDeCampos>
       </>
     );
   }
@@ -346,7 +400,7 @@ function PassoDoCadastro({
   if (passo === "veiculo") {
     const modelos = catalogos.modelos.filter((m) => m.marcaId === marcaId);
     return (
-      <>
+      <GradeDeCampos>
         <Controller
           control={form.control}
           name="marcaId"
@@ -383,24 +437,13 @@ function PassoDoCadastro({
             />
           )}
         />
-        <Campo rotulo="Ano" erro={erros.ano?.message}>
-          {(p) => (
-            <input
-              {...p}
-              {...form.register("ano")}
-              inputMode="numeric"
-              autoComplete="off"
-              className={CLASSE_DO_CAMPO}
-            />
-          )}
-        </Campo>
-      </>
+      </GradeDeCampos>
     );
   }
 
   if (passo === "valor") {
     return ehTipoFipe(tipo) ? (
-      <>
+      <GradeDeCampos>
         <Campo rotulo="Código FIPE" erro={erros.codigoFipe?.message} ajuda="No formato 000000-0.">
           {(p) => (
             <input
@@ -412,26 +455,28 @@ function PassoDoCadastro({
           )}
         </Campo>
         <CampoDeValor form={form} nome="valorFipeCentavos" rotulo="Valor FIPE" />
-      </>
+      </GradeDeCampos>
     ) : (
       <>
-        <CampoDeValor form={form} nome="valorManualCentavos" rotulo="Valor" />
+        <GradeDeCampos>
+          <CampoDeValor form={form} nome="valorManualCentavos" rotulo="Valor" />
+          <Campo rotulo="Data do valor" erro={erros.dataDoValor?.message}>
+            {(p) => (
+              <input
+                {...p}
+                {...form.register("dataDoValor")}
+                type="date"
+                className={CLASSE_DO_CAMPO}
+              />
+            )}
+          </Campo>
+        </GradeDeCampos>
         <Campo rotulo="Fonte do valor" erro={erros.fonteDoValor?.message}>
           {(p) => (
             <input
               {...p}
               {...form.register("fonteDoValor")}
               autoComplete="off"
-              className={CLASSE_DO_CAMPO}
-            />
-          )}
-        </Campo>
-        <Campo rotulo="Data do valor" erro={erros.dataDoValor?.message}>
-          {(p) => (
-            <input
-              {...p}
-              {...form.register("dataDoValor")}
-              type="date"
               className={CLASSE_DO_CAMPO}
             />
           )}
@@ -462,41 +507,43 @@ function PassoDoCadastro({
             />
           )}
         />
-        <Controller
-          control={form.control}
-          name="operacaoId"
-          render={({ field }) => (
-            <CampoComMais
-              rotulo="Operação"
-              rotuloDoMais={ACAO_DO_MAIS("operacao")}
-              opcoes={catalogos.operacoes}
-              valor={field.value}
-              aoMudar={(id) => {
-                if (id !== field.value) form.setValue("crId", "");
-                field.onChange(id);
-              }}
-              erro={erros.operacaoId?.message}
-              renderMini={(m) => renderizarMini(m, "operacao", undefined, aoItemCriado)}
-            />
-          )}
-        />
-        <Controller
-          control={form.control}
-          name="crId"
-          render={({ field }) => (
-            <CampoComMais
-              rotulo="CR"
-              rotuloDoMais={ACAO_DO_MAIS("cr")}
-              opcoes={crs}
-              valor={field.value}
-              aoMudar={field.onChange}
-              erro={erros.crId?.message}
-              desligadoPorque={operacaoId ? undefined : "Escolha a operação primeiro."}
-              semOpcao="Esta operação ainda não tem CR. Use o + para cadastrar."
-              renderMini={(m) => renderizarMini(m, "cr", operacaoId, aoItemCriado)}
-            />
-          )}
-        />
+        <GradeDeCampos>
+          <Controller
+            control={form.control}
+            name="operacaoId"
+            render={({ field }) => (
+              <CampoComMais
+                rotulo="Operação"
+                rotuloDoMais={ACAO_DO_MAIS("operacao")}
+                opcoes={catalogos.operacoes}
+                valor={field.value}
+                aoMudar={(id) => {
+                  if (id !== field.value) form.setValue("crId", "");
+                  field.onChange(id);
+                }}
+                erro={erros.operacaoId?.message}
+                renderMini={(m) => renderizarMini(m, "operacao", undefined, aoItemCriado)}
+              />
+            )}
+          />
+          <Controller
+            control={form.control}
+            name="crId"
+            render={({ field }) => (
+              <CampoComMais
+                rotulo="CR"
+                rotuloDoMais={ACAO_DO_MAIS("cr")}
+                opcoes={crs}
+                valor={field.value}
+                aoMudar={field.onChange}
+                erro={erros.crId?.message}
+                desligadoPorque={operacaoId ? undefined : "Escolha a operação primeiro."}
+                semOpcao="Esta operação ainda não tem CR. Use o + para cadastrar."
+                renderMini={(m) => renderizarMini(m, "cr", operacaoId, aoItemCriado)}
+              />
+            )}
+          />
+        </GradeDeCampos>
       </>
     );
   }
@@ -506,42 +553,44 @@ function PassoDoCadastro({
   const situacoes = siglasIniciaisDoTipo((tipo || "apoio") as never);
   return (
     <>
-      <Controller
-        control={form.control}
-        name="filialId"
-        render={({ field }) => (
-          <CampoComMais
-            rotulo="Filial"
-            rotuloDoMais={ACAO_DO_MAIS("filial")}
-            opcoes={catalogos.filiais}
-            valor={field.value}
-            aoMudar={(id) => {
-              if (id !== field.value) form.setValue("garagemId", "");
-              field.onChange(id);
-            }}
-            erro={erros.filialId?.message}
-            semOpcao="Nenhuma filial ainda. Use o + para cadastrar a primeira."
-            renderMini={(m) => renderizarMini(m, "filial", undefined, aoItemCriado)}
-          />
-        )}
-      />
-      <Controller
-        control={form.control}
-        name="garagemId"
-        render={({ field }) => (
-          <CampoComMais
-            rotulo="Garagem"
-            rotuloDoMais={ACAO_DO_MAIS("garagem")}
-            opcoes={garagens}
-            valor={field.value}
-            aoMudar={field.onChange}
-            erro={erros.garagemId?.message}
-            desligadoPorque={filialId ? undefined : "Escolha a filial primeiro."}
-            semOpcao="Esta filial ainda não tem garagem. Use o + para cadastrar."
-            renderMini={(m) => renderizarMini(m, "garagem", filialId, aoItemCriado)}
-          />
-        )}
-      />
+      <GradeDeCampos>
+        <Controller
+          control={form.control}
+          name="filialId"
+          render={({ field }) => (
+            <CampoComMais
+              rotulo="Filial"
+              rotuloDoMais={ACAO_DO_MAIS("filial")}
+              opcoes={catalogos.filiais}
+              valor={field.value}
+              aoMudar={(id) => {
+                if (id !== field.value) form.setValue("garagemId", "");
+                field.onChange(id);
+              }}
+              erro={erros.filialId?.message}
+              semOpcao="Nenhuma filial ainda. Use o + para cadastrar a primeira."
+              renderMini={(m) => renderizarMini(m, "filial", undefined, aoItemCriado)}
+            />
+          )}
+        />
+        <Controller
+          control={form.control}
+          name="garagemId"
+          render={({ field }) => (
+            <CampoComMais
+              rotulo="Garagem"
+              rotuloDoMais={ACAO_DO_MAIS("garagem")}
+              opcoes={garagens}
+              valor={field.value}
+              aoMudar={field.onChange}
+              erro={erros.garagemId?.message}
+              desligadoPorque={filialId ? undefined : "Escolha a filial primeiro."}
+              semOpcao="Esta filial ainda não tem garagem. Use o + para cadastrar."
+              renderMini={(m) => renderizarMini(m, "garagem", filialId, aoItemCriado)}
+            />
+          )}
+        />
+      </GradeDeCampos>
       <Campo rotulo="Situação inicial" erro={erros.situacaoInicial?.message}>
         {(p) => (
           <select {...p} {...form.register("situacaoInicial")} className={CLASSE_DO_CAMPO}>

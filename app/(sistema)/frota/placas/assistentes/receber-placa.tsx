@@ -2,12 +2,14 @@
 
 import { type RefObject, useMemo } from "react";
 import { Controller, type Resolver, type UseFormReturn } from "react-hook-form";
+import { agoraEmSaoPaulo, formatarDataEHora } from "@/components/formato/data";
 import { CampoMoeda, Moeda } from "@/components/formato/moeda";
 import { Assistente } from "@/components/wizard/assistente";
 import {
   Campo,
   CampoComMais,
   CLASSE_DO_CAMPO,
+  GradeDeCampos,
   type OpcaoDeSelecao,
 } from "@/components/wizard/campos";
 import type { DadosDosAssistentes } from "@/lib/dados/escrita-tipos";
@@ -20,6 +22,7 @@ import { USUARIO_PROVISORIO } from "@/lib/navegacao/perfis";
 import type { DefinicaoDeAssistente } from "@/lib/wizard/passos";
 import { receberPlacaAcao } from "../acoes";
 import { errosDoResolvedor } from "./erros-do-resolvedor";
+import { SeletorDeImplementos } from "./seletor-de-implementos";
 import { ACAO_DO_MAIS, renderizarMini } from "./mini-cadastro-de-catalogo";
 
 // Receber placa: o gestor de destino confere o que chega, resolve as pendências que o gestor de
@@ -46,7 +49,14 @@ const DEFINICAO: DefinicaoDeAssistente = {
     {
       id: "conjunto",
       titulo: "Conjunto e motorista",
-      campos: ["conjunto", "motoristaId", "metaDoConjuntoCentavos"],
+      // As folhas de `conjunto` entram junto: o React Hook Form descarta o erro aninhado de um pai que não é um campo registrado.
+      campos: [
+        "conjunto",
+        "conjunto.implementoIds",
+        "conjunto.cavaloId",
+        "motoristaId",
+        "metaDoConjuntoCentavos",
+      ],
     },
     { id: "conferir", titulo: "Conferir", campos: [] },
   ],
@@ -73,7 +83,14 @@ export function ReceberPlaca({
   aoFechar: () => void;
   focoFinal?: RefObject<HTMLElement | null>;
 }) {
-  const esquema = useMemo(() => esquemaRecebimento(placa.tipo), [placa.tipo]);
+  const esquema = useMemo(
+    () =>
+      esquemaRecebimento(
+        placa.tipo,
+        Object.fromEntries(candidatos.map((c) => [c.id, c.carroceria])),
+      ),
+    [placa.tipo, candidatos],
+  );
   const situacoes = siglasIniciaisDoTipo(placa.tipo);
   const valoresIniciais: ValoresDoRecebimento = {
     conferido: false,
@@ -122,7 +139,7 @@ export function ReceberPlaca({
       registro={placa.placa}
       rascunho={false}
       focoFinal={focoFinal}
-      rotuloConcluir="Receber placa"
+      rotuloConcluir="Gravar placa"
       mensagemConcluido="Placa recebida."
       aoConcluir={(valores, chaveDeEnvio) =>
         receberPlacaAcao({ chaveDeEnvio, dados: entrada(valores) })
@@ -196,6 +213,40 @@ export function ReceberPlaca({
           ],
         },
       ]}
+      efeitos={(v) => {
+        const gestor = nome(catalogos.gestores, pedido.paraGestorId);
+        const operacao = nome(catalogos.operacoes, v.operacaoId);
+        const cr = catalogos.crs.find((c) => c.id === v.crId)?.codigo ?? "";
+        const sigla = v.situacao as Sigla;
+        const implementos = v.conjunto.implementoIds.length;
+        return [
+          <>
+            A placa passa para a carteira de <b>{gestor || "quem recebe"}</b>, com a situação{" "}
+            <b>
+              {sigla} · {NOMES_DAS_SIGLAS[sigla]}
+            </b>
+            .
+          </>,
+          operacao ? (
+            <>
+              A operação passa a ser <b>{operacao}</b>, no CR <b>{cr || "a escolher"}</b>.
+            </>
+          ) : (
+            "A placa fica sem operação e sem CR."
+          ),
+          <>
+            Um evento é registrado na linha do tempo da placa, em{" "}
+            <b>{formatarDataEHora(agoraEmSaoPaulo(new Date()))}</b>.
+          </>,
+          placa.tipo === "cavalo"
+            ? `O conjunto fica com ${implementos} ${implementos === 1 ? "implemento" : "implementos"}, e o cavalo é o mestre.`
+            : placa.tipo === "implemento"
+              ? v.conjunto.cavaloId
+                ? "O implemento passa a seguir o cavalo escolhido."
+                : "O implemento fica sem cavalo."
+              : "Esta placa não faz parte de conjunto.",
+        ];
+      }}
       renderPasso={(passo, form) => (
         <PassoDoRecebimento
           passo={passo.id}
@@ -302,41 +353,43 @@ function PassoDoRecebimento({
             </select>
           )}
         </Campo>
-        <Controller
-          control={form.control}
-          name="operacaoId"
-          render={({ field }) => (
-            <CampoComMais
-              rotulo="Operação"
-              rotuloDoMais={ACAO_DO_MAIS("operacao")}
-              opcoes={catalogos.operacoes}
-              valor={field.value}
-              aoMudar={(id) => {
-                if (id !== field.value) form.setValue("crId", "");
-                field.onChange(id);
-              }}
-              erro={erros.operacaoId?.message}
-              renderMini={(m) => renderizarMini(m, "operacao", undefined, aoItemCriado)}
-            />
-          )}
-        />
-        <Controller
-          control={form.control}
-          name="crId"
-          render={({ field }) => (
-            <CampoComMais
-              rotulo="CR"
-              rotuloDoMais={ACAO_DO_MAIS("cr")}
-              opcoes={crs}
-              valor={field.value}
-              aoMudar={field.onChange}
-              erro={erros.crId?.message}
-              desligadoPorque={operacaoId ? undefined : "Escolha a operação primeiro."}
-              semOpcao="Esta operação ainda não tem CR. Use o + para cadastrar."
-              renderMini={(m) => renderizarMini(m, "cr", operacaoId, aoItemCriado)}
-            />
-          )}
-        />
+        <GradeDeCampos>
+          <Controller
+            control={form.control}
+            name="operacaoId"
+            render={({ field }) => (
+              <CampoComMais
+                rotulo="Operação"
+                rotuloDoMais={ACAO_DO_MAIS("operacao")}
+                opcoes={catalogos.operacoes}
+                valor={field.value}
+                aoMudar={(id) => {
+                  if (id !== field.value) form.setValue("crId", "");
+                  field.onChange(id);
+                }}
+                erro={erros.operacaoId?.message}
+                renderMini={(m) => renderizarMini(m, "operacao", undefined, aoItemCriado)}
+              />
+            )}
+          />
+          <Controller
+            control={form.control}
+            name="crId"
+            render={({ field }) => (
+              <CampoComMais
+                rotulo="CR"
+                rotuloDoMais={ACAO_DO_MAIS("cr")}
+                opcoes={crs}
+                valor={field.value}
+                aoMudar={field.onChange}
+                erro={erros.crId?.message}
+                desligadoPorque={operacaoId ? undefined : "Escolha a operação primeiro."}
+                semOpcao="Esta operação ainda não tem CR. Use o + para cadastrar."
+                renderMini={(m) => renderizarMini(m, "cr", operacaoId, aoItemCriado)}
+              />
+            )}
+          />
+        </GradeDeCampos>
       </>
     );
   }
@@ -362,36 +415,12 @@ function PassoDoRecebimento({
         </Campo>
       ) : null}
       {placa.tipo === "cavalo" ? (
-        <fieldset className="flex flex-col gap-2">
-          <legend className="text-muted-foreground mb-1 text-sm">Implementos do conjunto</legend>
-          {candidatos.length === 0 ? (
-            <p className="text-muted-foreground text-sm">
-              Nenhum implemento livre para este conjunto.
-            </p>
-          ) : null}
-          {candidatos.map((c) => (
-            <label key={c.id} className="flex min-h-9 items-center gap-2 text-sm max-sm:min-h-11">
-              <input
-                type="checkbox"
-                className="size-4"
-                checked={implementos.includes(c.id)}
-                onChange={(e) =>
-                  form.setValue(
-                    "conjunto.implementoIds",
-                    e.target.checked
-                      ? [...implementos, c.id]
-                      : implementos.filter((id) => id !== c.id),
-                    { shouldDirty: true },
-                  )
-                }
-              />
-              <span>{c.nome}</span>
-            </label>
-          ))}
-          <p role="alert" className="text-destructive min-h-4 text-xs">
-            {erroDoImplemento}
-          </p>
-        </fieldset>
+        <SeletorDeImplementos
+          candidatos={candidatos}
+          valor={implementos}
+          aoMudar={(ids) => form.setValue("conjunto.implementoIds", ids, { shouldDirty: true })}
+          erro={erroDoImplemento}
+        />
       ) : null}
       {COM_MOTORISTA.includes(placa.tipo) ? (
         <Campo rotulo="Motorista" erro={erros.motoristaId?.message}>

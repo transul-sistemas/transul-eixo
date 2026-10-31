@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 
 /** As classes dos campos de texto, número e seleção dos assistentes (só tokens do sistema visual). */
 export const CLASSE_DO_CAMPO =
-  "border-input bg-card focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:border-destructive h-9 w-full rounded-lg border px-3 text-sm outline-none focus-visible:ring-3 max-sm:h-11";
+  "border-input bg-card focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:border-destructive h-10 w-full rounded-[10px] border px-3 text-sm outline-none focus-visible:ring-3 max-sm:h-11";
 
 /**
  * Um campo do assistente: rótulo, o controle e a mensagem de erro ligada a ele (`aria-describedby`,
@@ -53,6 +53,11 @@ export function Campo({
       </p>
     </div>
   );
+}
+
+/** Dois campos lado a lado a partir de 640 px; em uma coluna abaixo disso. */
+export function GradeDeCampos({ children }: { children: ReactNode }) {
+  return <div className="grid gap-x-4 gap-y-4 sm:grid-cols-2">{children}</div>;
 }
 
 export interface OpcaoDeSelecao {
@@ -126,7 +131,7 @@ export function CampoComMais({
             onClick={() => {
               if (!desligadoPorque) setAberto(true);
             }}
-            className="border-input bg-card hover:bg-muted focus-visible:ring-ring/50 grid size-9 shrink-0 place-items-center rounded-lg border outline-none focus-visible:ring-3 aria-disabled:cursor-default aria-disabled:opacity-50 max-sm:size-11"
+            className="hover:bg-muted focus-visible:ring-ring/50 grid size-10 shrink-0 place-items-center rounded-[10px] border border-dashed border-[var(--acao)] bg-[var(--acao-suave)] text-[var(--acao)] outline-none focus-visible:ring-3 aria-disabled:cursor-default aria-disabled:opacity-50 max-sm:size-11"
           >
             <IconPlus aria-hidden className="size-4" />
           </button>
