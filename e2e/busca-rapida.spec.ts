@@ -141,7 +141,7 @@ test.describe("busca rápida: ações reservadas para a 2D", () => {
     await campo(page).fill("receber placa");
     const acoes = janela(page).getByRole("group", { name: "Ações" });
     await expect(acoes).toBeVisible();
-    const acao = acoes.getByRole("option", { name: /Operacional › Receber placa/ });
+    const acao = acoes.getByRole("option", { name: /Frota › Receber placa/ });
     await expect(acao).toHaveAttribute("aria-disabled", "true");
     await expect(acao).toContainText("Em breve");
     const antes = page.url();

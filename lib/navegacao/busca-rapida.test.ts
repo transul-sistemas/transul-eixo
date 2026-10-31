@@ -68,7 +68,7 @@ describe("montarGrupos: com termo", () => {
     const acao = grupos[1]?.itens[0];
     expect(acao).toMatchObject({
       tipo: "acao",
-      rotulo: "Operacional › Receber placa",
+      rotulo: "Frota › Receber placa",
       emBreve: true,
       disponivel: false,
     });
