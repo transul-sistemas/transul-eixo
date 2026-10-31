@@ -28,6 +28,16 @@ Modelo de entrada:
 
 ---
 
+## 31/10/2026 — Fase 2D, Checkpoint 1 aprovado: escolhas do motor e da custódia
+
+- **Situação inicial por tipo (aprovada):** para todo tipo, **PÁT** (padrão), MAN, REF, SIN, DOC, SDo, ALU, EMP e VEN; **SMo só para cavalo, caminhão e apoio**. Ficam fora as situações de operação (DOp, ACe, CAr, CAn, ETc, ADe, DEs, ETv, VAz, MAc, MAt, MAv), folga e férias (FOg, FEr) e a baixa (SUC, VND). A tabela é provisória até a régua ter a marca "válida para conjunto, solo ou ambos".
+- **Meta do conjunto (definida em `docs/glossario.md`):** pertence à **composição, não à placa**; só o **cavalo**, mestre do conjunto, a recebe (no esquema e no armazém, outro tipo com meta é recusado); não se confunde com a meta de campanha do motorista. O campo se chama `metaDoConjuntoCentavos` (antes `metaCentavos`).
+- **Versões (edição concorrente):** **Receber placa** confere a versão do pedido de transferência **e** a da placa (`versaoDoPedido` e `versaoDaPlaca`); se qualquer uma mudou, devolve `conflito` com o registro como está agora e não grava. **Disponibilizar** confere a versão da placa (`versaoDaPlaca`).
+- **Sem Navigation API, o painel de espiar fecha por `replace`:** só se sabe com certeza que existe uma entrada anterior do histórico (a própria lista) com a Navigation API; nos navegadores sem ela, o painel fecha tirando `?espiar=` da URL, o caminho que nunca sai do sistema, ao custo de um passo de Voltar sem efeito visível. Aprovado por Alexandre.
+- **Quem decidiu:** Alexandre (31/10/2026).
+
+---
+
 ## 30/10/2026 — Painel de espiar (2C-2): desenho aprovado e o que fica para a Fase 3
 
 - **Decisão:**
