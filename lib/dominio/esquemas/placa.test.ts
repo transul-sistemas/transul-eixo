@@ -217,16 +217,16 @@ describe("siglasIniciaisDoTipo", () => {
 });
 
 describe("esquemaDisponibilizacao: placa, filial e a versão que a pessoa viu", () => {
-  const ok = { placa: "aaa-0a00", filialId: "filial-a", versaoEsperada: 3 };
+  const ok = { placa: "aaa-0a00", filialId: "filial-a", versaoDaPlaca: 3 };
   it("aceita e normaliza a placa", () => {
     const r = esquemaDisponibilizacao.safeParse(ok);
     expect(r.success && r.data.placa).toBe("AAA0A00");
   });
   it("a filial é obrigatória e a versão é um inteiro de 1 em diante", () => {
     expect(esquemaDisponibilizacao.safeParse({ ...ok, filialId: "" }).success).toBe(false);
-    expect(esquemaDisponibilizacao.safeParse({ ...ok, versaoEsperada: 0 }).success).toBe(false);
-    expect(esquemaDisponibilizacao.safeParse({ ...ok, versaoEsperada: 1.5 }).success).toBe(false);
-    expect(esquemaDisponibilizacao.safeParse({ ...ok, versaoEsperada: undefined }).success).toBe(
+    expect(esquemaDisponibilizacao.safeParse({ ...ok, versaoDaPlaca: 0 }).success).toBe(false);
+    expect(esquemaDisponibilizacao.safeParse({ ...ok, versaoDaPlaca: 1.5 }).success).toBe(false);
+    expect(esquemaDisponibilizacao.safeParse({ ...ok, versaoDaPlaca: undefined }).success).toBe(
       false,
     );
   });
@@ -236,13 +236,14 @@ describe("esquemaRecebimento: quem recebe confere e conclui", () => {
   const ok = {
     placa: "AAA0A00",
     pedidoId: "ped-1",
-    versaoEsperada: 2,
+    versaoDoPedido: 2,
+    versaoDaPlaca: 3,
     conferido: true,
     situacao: "PÁT",
     operacaoId: null,
     crId: null,
     motoristaId: null,
-    metaCentavos: null,
+    metaDoConjuntoCentavos: null,
     conjunto: { cavaloId: null, implementoIds: [] },
     pendencias: [{ id: "p1", resolvida: true }],
   };
@@ -279,10 +280,47 @@ describe("esquemaRecebimento: quem recebe confere e conclui", () => {
       false,
     );
   });
-  it("meta é dinheiro em centavos, positiva, ou vazia", () => {
-    expect(esquemaDoCavalo.safeParse({ ...ok, metaCentavos: 1_500_000 }).success).toBe(true);
-    expect(esquemaDoCavalo.safeParse({ ...ok, metaCentavos: -1 }).success).toBe(false);
-    expect(esquemaDoCavalo.safeParse({ ...ok, metaCentavos: 10.5 }).success).toBe(false);
+  it("a meta do conjunto é dinheiro em centavos, positiva, ou vazia", () => {
+    expect(esquemaDoCavalo.safeParse({ ...ok, metaDoConjuntoCentavos: 1_500_000 }).success).toBe(
+      true,
+    );
+    expect(esquemaDoCavalo.safeParse({ ...ok, metaDoConjuntoCentavos: -1 }).success).toBe(false);
+    expect(esquemaDoCavalo.safeParse({ ...ok, metaDoConjuntoCentavos: 10.5 }).success).toBe(false);
+  });
+  it("confere a versão do pedido E a da placa: falta de qualquer uma recusa", () => {
+    const semPedido: Partial<typeof ok> = { ...ok };
+    delete semPedido.versaoDoPedido;
+    const semPlaca: Partial<typeof ok> = { ...ok };
+    delete semPlaca.versaoDaPlaca;
+    const r1 = esquemaDoCavalo.safeParse(semPedido);
+    const r2 = esquemaDoCavalo.safeParse(semPlaca);
+    expect(r1.success).toBe(false);
+    expect(r2.success).toBe(false);
+    if (!r1.success)
+      expect(r1.error.issues.map((i) => i.path.join("."))).toContain("versaoDoPedido");
+    if (!r2.success)
+      expect(r2.error.issues.map((i) => i.path.join("."))).toContain("versaoDaPlaca");
+    expect(esquemaDoCavalo.safeParse({ ...ok, versaoDoPedido: 0 }).success).toBe(false);
+    expect(esquemaDoCavalo.safeParse({ ...ok, versaoDaPlaca: 1.5 }).success).toBe(false);
+  });
+  it("a meta do conjunto é do cavalo, o mestre: só o cavalo a recebe", () => {
+    expect(esquemaDoCavalo.safeParse({ ...ok, metaDoConjuntoCentavos: 1_500_000 }).success).toBe(
+      true,
+    );
+    for (const tipo of ["implemento", "equipamento", "caminhao", "apoio"] as const) {
+      const r = esquemaRecebimento(tipo).safeParse({ ...ok, metaDoConjuntoCentavos: 1_500_000 });
+      expect(r.success, tipo).toBe(false);
+      if (!r.success) {
+        expect(
+          r.error.issues.map((i) => i.path.join(".")),
+          tipo,
+        ).toContain("metaDoConjuntoCentavos");
+      }
+      expect(
+        esquemaRecebimento(tipo).safeParse({ ...ok, metaDoConjuntoCentavos: null }).success,
+        tipo,
+      ).toBe(true);
+    }
   });
   it("conjunto: só cavalo tem implementos, só implemento tem cavalo, sem repetir", () => {
     expect(

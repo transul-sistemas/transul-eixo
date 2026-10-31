@@ -200,7 +200,8 @@ export type EntradaCadastrarPlaca = z.infer<ReturnType<typeof esquemaCadastrarPl
 export const esquemaDisponibilizacao = z.object({
   placa,
   filialId: id("a filial"),
-  versaoEsperada: versao,
+  /** A versão da placa que a pessoa viu (edição concorrente). */
+  versaoDaPlaca: versao,
 });
 export type EntradaDisponibilizacao = z.infer<typeof esquemaDisponibilizacao>;
 
@@ -224,13 +225,16 @@ export function esquemaRecebimento(tipo: TipoDeAtivo) {
     .object({
       placa,
       pedidoId: id("o pedido de transferência"),
-      versaoEsperada: versao,
+      /** A versão do pedido e a da placa que a pessoa viu: se qualquer uma mudou, avisa. */
+      versaoDoPedido: versao,
+      versaoDaPlaca: versao,
       conferido: z.literal(true, { error: "Confira o que chegou antes de concluir." }),
       situacao: z.enum(situacoes, { error: "Escolha uma situação que se aplique a este tipo." }),
       operacaoId: id("a operação").nullable(),
       crId: id("o CR").nullable(),
       motoristaId: id("o motorista").nullable(),
-      metaCentavos: centavos("a meta").nullable(),
+      /** Meta do conjunto (ver docs/glossario.md): é do cavalo, o mestre; só ele a recebe. */
+      metaDoConjuntoCentavos: centavos("a meta do conjunto").nullable(),
       conjunto: z.object({
         cavaloId: id("o cavalo").nullable(),
         implementoIds: z.array(id("o implemento")),
@@ -259,6 +263,13 @@ export function esquemaRecebimento(tipo: TipoDeAtivo) {
           code: "custom",
           path: ["conjunto", "implementoIds"],
           message: "Só o cavalo leva implementos. Tire os implementos deste conjunto.",
+        });
+      }
+      if (tipo !== "cavalo" && dados.metaDoConjuntoCentavos !== null) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["metaDoConjuntoCentavos"],
+          message: "A meta do conjunto é do cavalo. Deixe-a vazia neste tipo de ativo.",
         });
       }
       if (tipo !== "implemento" && cavaloId !== null) {

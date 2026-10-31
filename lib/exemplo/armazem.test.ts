@@ -149,7 +149,7 @@ const entradaDeDisponibilizar = (
 ): EntradaDisponibilizacao => ({
   placa: noPatio.placa,
   filialId: "filial-b",
-  versaoEsperada: 1,
+  versaoDaPlaca: 1,
   ...parcial,
 });
 
@@ -216,13 +216,14 @@ describe("disponibilizar ao Operacional", () => {
 const entradaDeRecebimento = (parcial: Partial<EntradaRecebimento> = {}): EntradaRecebimento => ({
   placa: foraDoPatio.placa,
   pedidoId: "ped-1",
-  versaoEsperada: 1,
+  versaoDoPedido: 1,
+  versaoDaPlaca: 1,
   conferido: true,
   situacao: "MAN",
   operacaoId: "op-2",
   crId: "cr-1002",
   motoristaId: null,
-  metaCentavos: null,
+  metaDoConjuntoCentavos: null,
   conjunto: { cavaloId: null, implementoIds: [] },
   pendencias: [{ id: "p1", resolvida: true }],
   ...parcial,
@@ -269,9 +270,85 @@ describe("receber placa (transferência entre gestores)", () => {
 
   it("versão do pedido velha devolve conflito", () => {
     const a = novo();
-    const r = a.receber(entradaDeRecebimento({ versaoEsperada: 7 }), CHAVE_A, AGORA, "gestor-2");
+    const r = a.receber(entradaDeRecebimento({ versaoDoPedido: 7 }), CHAVE_A, AGORA, "gestor-2");
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.erro.codigo).toBe("conflito");
+  });
+
+  it("versão da placa velha (a placa mudou depois de o pedido sair) devolve conflito com a placa atual", () => {
+    const a = criarArmazem({
+      placasBase: base,
+      pedidosBase: [{ ...pedidoBase(noPatio.placa), id: "ped-2" }],
+    });
+    a.disponibilizar(entradaDeDisponibilizar(), CHAVE_A, AGORA); // a placa vai a versão 2
+    const r = a.receber(
+      entradaDeRecebimento({ placa: noPatio.placa, pedidoId: "ped-2", versaoDaPlaca: 1 }),
+      CHAVE_B,
+      DEPOIS,
+      "gestor-2",
+    );
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.erro.codigo).toBe("conflito");
+    expect((r.erro.atual as { placa: string; versao: number }).placa).toBe(noPatio.placa);
+    expect((r.erro.atual as { versao: number }).versao).toBe(2);
+    expect(a.pedidoPendenteDa(noPatio.placa)).not.toBeNull(); // nada foi gravado
+  });
+
+  it("com as duas versões certas, recebe", () => {
+    const a = criarArmazem({
+      placasBase: base,
+      pedidosBase: [{ ...pedidoBase(noPatio.placa), id: "ped-2" }],
+    });
+    a.disponibilizar(entradaDeDisponibilizar(), CHAVE_A, AGORA);
+    const r = a.receber(
+      entradaDeRecebimento({ placa: noPatio.placa, pedidoId: "ped-2", versaoDaPlaca: 2 }),
+      CHAVE_B,
+      DEPOIS,
+      "gestor-2",
+    );
+    expect(r.ok).toBe(true);
+  });
+
+  it("a meta do conjunto é gravada no cavalo e recusada em qualquer outro tipo", () => {
+    const cavalo = base.find((p) => p.tipo === "cavalo" && p.sigla !== "VND" && p.sigla !== "SUC")!;
+    const outro = base.find(
+      (p) => p.tipo === "implemento" && p.sigla !== "VND" && p.sigla !== "SUC",
+    )!;
+    const a = criarArmazem({
+      placasBase: base,
+      pedidosBase: [
+        { ...pedidoBase(cavalo.placa), id: "ped-c" },
+        { ...pedidoBase(outro.placa), id: "ped-i" },
+      ],
+    });
+    const recusada = a.receber(
+      entradaDeRecebimento({
+        placa: outro.placa,
+        pedidoId: "ped-i",
+        metaDoConjuntoCentavos: 1_500_000,
+      }),
+      CHAVE_A,
+      AGORA,
+      "gestor-2",
+    );
+    expect(recusada.ok).toBe(false);
+    if (!recusada.ok) {
+      expect(recusada.erro.codigo).toBe("entrada_invalida");
+      expect(Object.keys(recusada.erro.campos ?? {})).toContain("metaDoConjuntoCentavos");
+    }
+    const aceita = a.receber(
+      entradaDeRecebimento({
+        placa: cavalo.placa,
+        pedidoId: "ped-c",
+        metaDoConjuntoCentavos: 1_500_000,
+      }),
+      CHAVE_B,
+      AGORA,
+      "gestor-2",
+    );
+    expect(aceita.ok).toBe(true);
+    if (aceita.ok) expect(aceita.linha.metaDoConjuntoCentavos).toBe(1_500_000);
   });
 
   it("quem não é o destinatário não recebe (sem_permissao) e nada muda", () => {

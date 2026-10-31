@@ -51,7 +51,7 @@ export interface PlacaGravada {
   filialId: string | null;
   filial: string;
   motoristaId: string | null;
-  metaCentavos: number | null;
+  metaDoConjuntoCentavos: number | null;
   conjunto: { cavaloId: string | null; implementoIds: string[] };
   /** Sobe a cada mudança (edição concorrente). */
   versao: number;
@@ -102,7 +102,7 @@ function daBase(p: PlacaDeExemplo): PlacaGravada {
     filialId: filial?.id ?? null,
     filial: p.filial,
     motoristaId: null,
-    metaCentavos: null,
+    metaDoConjuntoCentavos: null,
     conjunto: { cavaloId: p.conjunto.cavaloId, implementoIds: [...p.conjunto.implementoIds] },
     versao: 1,
     gestores: [
@@ -211,7 +211,7 @@ export function criarArmazem({
           filialId: null,
           filial: "—",
           motoristaId: null,
-          metaCentavos: null,
+          metaDoConjuntoCentavos: null,
           conjunto: { cavaloId: null, implementoIds: [] },
           versao: 1,
           gestores: [{ gestorId: gestor!.id, gestor: gestor!.nome, inicio: agora, fim: null }],
@@ -228,7 +228,7 @@ export function criarArmazem({
         const placa = normalizarPlaca(entrada.placa);
         const atual = obterPlaca(placa);
         if (!atual) return erroDaAcao<Atual>("nao_encontrado");
-        if (atual.versao !== entrada.versaoEsperada) return emConflito(atual);
+        if (atual.versao !== entrada.versaoDaPlaca) return emConflito(atual);
         if (!podeDisponibilizar(atual.sigla)) {
           return erroDaAcao<Atual>("entrada_invalida", {
             campos: { placa: ["Só dá para disponibilizar placa em PÁT, VAz ou ETv."] },
@@ -264,13 +264,14 @@ export function criarArmazem({
             campos: { placa: ["Este pedido de transferência é de outra placa."] },
           });
         }
-        if (pedido.situacao !== "pendente" || pedido.versao !== entrada.versaoEsperada) {
+        if (pedido.situacao !== "pendente" || pedido.versao !== entrada.versaoDoPedido) {
           return emConflito(pedido);
         }
         const pode = podeReceberPedido(pedido, gestorId);
         if (!pode.ok) return erroDaAcao<Atual>("sem_permissao");
         const atual = obterPlaca(placa);
         if (!atual) return erroDaAcao<Atual>("nao_encontrado");
+        if (atual.versao !== entrada.versaoDaPlaca) return emConflito(atual);
         const destino = GESTORES.find((g) => g.id === pedido.paraGestorId);
         const operacao = entrada.operacaoId
           ? OPERACOES.find((o) => o.id === entrada.operacaoId)
@@ -283,6 +284,9 @@ export function criarArmazem({
           campos.crId = ["Este CR não é da operação escolhida."];
         }
         if (!destino) campos.placa = ["O gestor de destino do pedido não existe mais."];
+        if (atual.tipo !== "cavalo" && entrada.metaDoConjuntoCentavos !== null) {
+          campos.metaDoConjuntoCentavos = ["A meta do conjunto é do cavalo. Deixe-a vazia."];
+        }
         if (Object.keys(campos).length > 0)
           return erroDaAcao<Atual>("entrada_invalida", { campos });
 
@@ -299,7 +303,7 @@ export function criarArmazem({
           operacao: operacao?.nome ?? null,
           crId: cr?.id ?? null,
           motoristaId: entrada.motoristaId,
-          metaCentavos: entrada.metaCentavos,
+          metaDoConjuntoCentavos: entrada.metaDoConjuntoCentavos,
           conjunto: {
             cavaloId: entrada.conjunto.cavaloId,
             implementoIds: [...entrada.conjunto.implementoIds],
