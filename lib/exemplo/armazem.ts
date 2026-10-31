@@ -585,20 +585,21 @@ export function criarArmazem({
 }
 
 const CHAVE_DO_PROCESSO = Symbol.for("eixo.armazem-de-exemplo");
+const SESSAO_VALIDA = /^[a-z0-9-]{8,64}$/;
+const LIMITE_DE_SESSOES = 50;
 
-/**
- * O armazém do processo: um só, que sobrevive ao recarregar de módulo em desenvolvimento (`globalThis`).
- * Nasce das placas de exemplo de `hoje` e de um pedido de transferência de exemplo.
- */
-export function armazemDoProcesso(hoje: string): Armazem {
-  const global = globalThis as unknown as Record<symbol, Armazem | undefined>;
-  const existente = global[CHAVE_DO_PROCESSO];
-  if (existente) return existente;
+/** O armazém padrão e o de cada sessão (cookie), do mais antigo ao mais recente uso. */
+function armazensDoProcesso(): Map<string, Armazem> {
+  const global = globalThis as unknown as Record<symbol, Map<string, Armazem> | undefined>;
+  return (global[CHAVE_DO_PROCESSO] ??= new Map());
+}
+
+function novoArmazemDeExemplo(hoje: string): Armazem {
   const placasBase = placasDeExemplo(hoje);
   const comPedido = placasBase.find(
     (p) => p.gestor === GESTORES[0]?.nome && p.sigla !== "VND" && p.sigla !== "SUC",
   );
-  const criado = criarArmazem({
+  return criarArmazem({
     placasBase,
     pedidosBase: comPedido
       ? [
@@ -618,6 +619,30 @@ export function armazemDoProcesso(hoje: string): Armazem {
         ]
       : [],
   });
-  global[CHAVE_DO_PROCESSO] = criado;
+}
+
+/**
+ * O armazém do processo, que sobrevive ao recarregar de módulo em desenvolvimento (`globalThis`).
+ * Sem `sessao`, é o armazém padrão, um só. Com uma sessão (o valor de um cookie, só letras minúsculas,
+ * algarismos e hífen, de 8 a 64 caracteres), cada uma tem o seu, isolado dos outros: assim os testes de
+ * tela que gravam não mexem nas contagens uns dos outros. Guarda no máximo 50 sessões (sai a menos
+ * usada); uma sessão com formato estranho cai no armazém padrão. Nasce das placas de exemplo de
+ * `hoje` e de um pedido de transferência de exemplo.
+ */
+export function armazemDoProcesso(hoje: string, sessao?: string): Armazem {
+  const todos = armazensDoProcesso();
+  const chave = sessao !== undefined && SESSAO_VALIDA.test(sessao) ? `sessao:${sessao}` : "padrao";
+  const existente = todos.get(chave);
+  if (existente) {
+    todos.delete(chave); // volta ao fim: é o mais recente
+    todos.set(chave, existente);
+    return existente;
+  }
+  const criado = novoArmazemDeExemplo(hoje);
+  todos.set(chave, criado);
+  const sessoes = [...todos.keys()].filter((k) => k !== "padrao");
+  for (const antiga of sessoes.slice(0, Math.max(0, sessoes.length - LIMITE_DE_SESSOES))) {
+    todos.delete(antiga);
+  }
   return criado;
 }

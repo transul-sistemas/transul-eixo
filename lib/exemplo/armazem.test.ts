@@ -428,6 +428,30 @@ describe("isolamento", () => {
   it("o armazém do processo é um só (sobrevive ao recarregar de módulo em desenvolvimento)", () => {
     expect(armazemDoProcesso(HOJE)).toBe(armazemDoProcesso(HOJE));
   });
+  it("cada sessão (cookie) tem o seu armazém, isolado dos outros e do padrão", () => {
+    const padrao = armazemDoProcesso(HOJE);
+    const a = armazemDoProcesso(HOJE, "sessao-de-teste-a");
+    const b = armazemDoProcesso(HOJE, "sessao-de-teste-b");
+    expect(a).not.toBe(padrao);
+    expect(a).not.toBe(b);
+    expect(armazemDoProcesso(HOJE, "sessao-de-teste-a")).toBe(a); // a mesma sessão, o mesmo armazém
+    a.criarItemDeCatalogo({ tipo: "marca", nome: "Marca só da sessão A" }, CHAVE_A);
+    expect(a.catalogos().marcas.some((m) => m.nome === "Marca só da sessão A")).toBe(true);
+    expect(b.catalogos().marcas.some((m) => m.nome === "Marca só da sessão A")).toBe(false);
+    expect(padrao.catalogos().marcas.some((m) => m.nome === "Marca só da sessão A")).toBe(false);
+  });
+  it("sessão com formato estranho cai no armazém padrão (nada de chave arbitrária na memória)", () => {
+    const padrao = armazemDoProcesso(HOJE);
+    for (const lixo of ["", "a", "ab cd", "../x", "x".repeat(80), "ÀÁ-sessão", undefined]) {
+      expect(armazemDoProcesso(HOJE, lixo), String(lixo)).toBe(padrao);
+    }
+  });
+  it("o número de sessões guardadas é limitado: as mais antigas saem", () => {
+    const primeira = armazemDoProcesso(HOJE, "sessao-limite-0000");
+    for (let i = 1; i <= 60; i++)
+      armazemDoProcesso(HOJE, `sessao-limite-${String(i).padStart(4, "0")}`);
+    expect(armazemDoProcesso(HOJE, "sessao-limite-0000")).not.toBe(primeira); // saiu e nasceu de novo
+  });
   it("uma chave de envio de uma ação não vale para outra", () => {
     const a = novo();
     a.cadastrar(entradaDeCadastro(), CHAVE_C, AGORA);

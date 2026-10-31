@@ -89,5 +89,5 @@ export async function fonteDeEscrita(hoje: string): Promise<FonteDeEscrita> {
     throw new Error(`${MENSAGEM_SO_COM_EXEMPLO}; a fonte do banco entra na Fase 3.`);
   }
   const { escritaDeExemplo } = await import("./fonte-de-exemplo");
-  return escritaDeExemplo(hoje);
+  return await escritaDeExemplo(hoje);
 }
