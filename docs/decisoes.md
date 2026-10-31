@@ -8,6 +8,19 @@ Modelo de entrada:
 
 ---
 
+## 31/10/2026 — Robustez da 2C: medição limpa, fechar o painel sem sair do sistema e backlog do topo
+
+- **Medição pós-#15 (produção da `main`, 1 worker, um projeto por vez):** 1366: **442 passaram, 1 pulada, 0 falhas, 0 instáveis** (6,6 min); 1920: **434 passaram, 9 puladas, 0 falhas, 0 instáveis** (6,3 min). As puladas são testes de um só projeto (o aceite de 9 linhas só no 1366, o de 14 só no 1920).
+- **Falhas da medição anterior (3 no 1366 e 1 no 1920):** os **nomes não foram guardados** (o relatório `dot` não lista e a saída foi descartada). Pelo que se corrigiu depois no PR #15 (marca de retorno por sinais e larguras reservadas do "Mais filtros"), eram desses dois assuntos, mas isso é inferência, não registro. Regra daqui em diante: toda medição de instabilidade guarda o relatório em arquivo antes de resumir.
+- **Foco ao fechar o painel de espiar (`espiar.vizinhas`), 30 execuções em produção sob carga (1366, 4 workers):** falhava 2 em 30. **Causa achada** (rodada 2, com o estado da tela impresso no momento da falha): a página estava em `about:blank`. Com o servidor lento, a URL de abrir o painel ainda estava a caminho quando a pessoa trocava de placa e fechava; o Next junta as navegações e **a entrada de histórico de abrir nunca nascia**, mas a marca "aberto pela lista" continuava verdadeira. O Esc fazia `router.back()` e o navegador **saía do sistema**, contra a regra "Voltar nunca joga para fora do sistema".
+- **Correção:** fechar só usa o Voltar do navegador se a **entrada anterior do histórico é a própria lista** (Navigation API; `entradaAnteriorEhALista`, regra pura testada); senão tira `?espiar=` da URL com `replace`. Sem a Navigation API (outros navegadores) o painel sempre fecha por `replace`: nunca sai do sistema, ao custo de um passo de Voltar sem efeito visível. Testes: `e2e/espiar.fechar-lento.spec.ts` (servidor lento com `?lento=1500`: abrir, trocar e fechar; falhava indo para `about:blank` nos dois cenários) e unitários em `lib/navegacao/espiar.test.ts`.
+- **Resultado:** os dois testes novos passam; o painel (45 testes de histórico, atalhos e corrida no 1366) passa; o celular passa uma vez. O foco 30× no 1366 passou de 2 falhas para **1 falha em 30**.
+- **Resíduo, causa não encontrada (teto de 2 rodadas):** 1 em 30 sob carga, com mensagem diferente: ao trocar de placa várias vezes seguidas (passo 13 de 14), o painel da placa esperada some por mais de 5 s (a tela mostra a lista sem painel). Suspeita, não provada: disputa entre o estado otimista do painel e a URL que chega atrasada. Não se investigou mais. Se reaparecer fora de carga extrema, vira tarefa própria com teste antes.
+- **Backlog (ideia, fora de qualquer fase):** **calcular "hoje" no navegador** para o topo do sistema entrar no primeiro desenho. Hoje o topo depende de `hoje` calculado no servidor e chega em streaming, depois da casca, e por isso o espaço reservado (`TopoReservado`) precisa acompanhar a altura real por faixa de largura (válido só para a lista de placas). Com `hoje` no navegador, o topo sairia no primeiro desenho com a mesma estrutura do real e a reserva por faixas deixaria de existir (e a ficha e a barra lateral compacta deixariam de ter pulo do topo).
+- **Quem decidiu:** Alexandre (fechamento da robustez em 31/10/2026).
+
+---
+
 ## 30/10/2026 — Dados do Sankhya: acesso só leitura, trava do Eixo, campos e chaves
 
 - **Decisão:** a planilha `docs/sankhya/Eixo_Dados_do_Sankhya.xlsx` (dicionário de campos, respostas do responsável pelo Sankhya e SQL das 14 views) entra no repositório, com o resumo por assunto em `docs/sankhya/mapa.md`. Conferida antes de commitar: só nomes de campos, respostas e SQL, sem senha, chave nem credencial. O que ela estabelece:
