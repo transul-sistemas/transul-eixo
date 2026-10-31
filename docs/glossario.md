@@ -62,3 +62,5 @@ O que é a placa. São cinco, e cada placa tem um só. O tipo é o segundo grupo
 | Caminhão | Veículo de carga com carroceria própria, sem cavalo |
 | Apoio | Veículo de apoio à operação: van, camionete e utilitários. "Veículo pequeno" e "apoio" eram a mesma coisa e foram unificados em Apoio (30/10/2026) |
 
+
+<!-- teste do CI: PR só de docs, será descartado -->
