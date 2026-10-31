@@ -18,6 +18,24 @@ jobs:
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Dois commits: o merge do pull request e o primeiro pai (a base), para o git diff abaixo.
+          fetch-depth: 2
+      - id: mudancas
+        # Só docs/ mudou? Então o build, o navegador e o e2e (que só eles usam) são pulados; lint,
+        # tipos e testes unitários rodam sempre. Sem arquivos mudados, ou sem como saber, roda tudo.
+        run: |
+          arquivos="$(git diff --name-only HEAD^1 HEAD 2>/dev/null || true)"
+          if [ -n "$arquivos" ] && ! echo "$arquivos" | grep -qvE '^docs/'; then
+            echo "so_docs=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "so_docs=false" >> "$GITHUB_OUTPUT"
+          fi
+          echo "Arquivos do pull request:"
+          echo "$arquivos"
+      - if: steps.mudancas.outputs.so_docs == 'true'
+        run: |
+          echo "O pull request só mexe em docs/. Build e e2e pulados; lint, tipos e testes unitários rodaram." >> "$GITHUB_STEP_SUMMARY"
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
@@ -27,15 +45,20 @@ jobs:
       - run: pnpm lint
       - run: pnpm typecheck
       - run: pnpm test
-      - run: pnpm build
+      - if: steps.mudancas.outputs.so_docs != 'true'
+        run: pnpm build
       - id: playwright
+        if: steps.mudancas.outputs.so_docs != 'true'
         run: echo "versao=$(pnpm exec playwright --version | awk '{print $2}')" >> "$GITHUB_OUTPUT"
       - uses: actions/cache@v4
+        if: steps.mudancas.outputs.so_docs != 'true'
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.versao }}-${{ hashFiles('pnpm-lock.yaml') }}
-      - run: pnpm exec playwright install --with-deps chromium
-      - run: pnpm test:e2e
+      - if: steps.mudancas.outputs.so_docs != 'true'
+        run: pnpm exec playwright install --with-deps chromium
+      - if: steps.mudancas.outputs.so_docs != 'true'
+        run: pnpm test:e2e
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
