@@ -24,6 +24,23 @@ Modelo de entrada:
 
 ---
 
+## 31/10/2026 — Pull request: prazo de 45 min no job `app` e cache dos navegadores do Playwright
+
+- **O que aconteceu:** o check `app` do PR #15 foi **cancelado aos 20m22s**, sem falha de teste. O workflow tinha `timeout-minutes: 20` e a suíte de tela cresceu para 1002 testes.
+- **Onde foi o tempo (run cancelado):** instalação 11 s, lint 10 s, tipos 9 s, testes unitários 23 s, build 24 s, navegador do Playwright 21 s; o `pnpm test:e2e` ficou **18m21s** até o corte. Tudo antes do e2e somou menos de 2 minutos. O Playwright roda com **1 worker no CI** (o padrão dele quando `CI` está definido); no computador de desenvolvimento são vários.
+- **Decisão:** `timeout-minutes: 45` só no job `app` (o nome continua exatamente `app`, como o ruleset exige; `banco` não mudou) e cache de `~/.cache/ms-playwright` (`actions/cache`, chave pelo sistema, pela versão do Playwright e pelo `pnpm-lock.yaml`). Não se dividiu em jobs agora.
+- **Resultado (run 41194833371):** `app` e `banco` passaram. `app` levou 22m56s (e2e: 992 passaram, 9 puladas, 1 instável que passou na nova tentativa). O cache foi gravado nesse run (a primeira vez é sempre sem cache). **O ganho do cache é pequeno** (a instalação do navegador leva ~20 s, e o `--with-deps` ainda instala pacotes do sistema); o que resolve o prazo é o timeout.
+- **Instável conhecido:** `placas.spec.ts` › "o botão ocupa o mesmo lugar e o mesmo tamanho enquanto carrega e depois de carregar" (1366). A branch de robustez da 2C investiga os testes instáveis.
+- **Peso por projeto (testes):** 1366 = 429, 1920 = 429, tablet 820 = 72, celular 390 = 72. Com 1 worker no computador de desenvolvimento: 1920 levou 6m28s, tablet 59 s, celular 1m03s. A medida do 1366 ficou inválida (o computador dormiu durante a corrida); pelo número de testes e pela simetria com o 1920, vale o mesmo. Ou seja, **1366 e 1920 são ~85% do e2e**; no CI, o e2e inteiro levou 20,9 min.
+- **Proposta para dividir depois (não implementada):**
+  1. Um job de preparação com lint, tipos, testes unitários e build.
+  2. Uma matriz de e2e com um job por projeto (1366, 1920, tablet e celular), cada um com `needs` do preparo e reaproveitando o build (artefato) e o cache do navegador. O tempo cairia para o do job mais lento (~10 a 12 min no CI).
+  3. Um job final chamado **`app`** (`needs` da matriz, `if: always()`) que falha se qualquer parte falhar, para o ruleset continuar exigindo só `app` e `banco`.
+  4. Alternativa mais barata, antes da matriz: `workers: 2` no CI (os runners têm 4 núcleos); exige conferir se os testes de tela aguentam a concorrência.
+- **Quem decidiu:** Alexandre.
+
+---
+
 ## 30/10/2026 — Lista de placas (2C-3): retorno só na volta, Apoio único e filtros em caixas
 
 - **Retorno da lista (armadilha 2):**
