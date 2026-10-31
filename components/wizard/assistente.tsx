@@ -69,6 +69,8 @@ export interface PropsDoAssistente<V extends FieldValues> {
   aoConcluir: (valores: V, chaveDeEnvio: string) => Promise<ResultadoDaAcao<unknown, unknown>>;
   /** O que mostrar do registro atual quando o servidor avisa que ele mudou. */
   descreverAtual?: (atual: unknown) => ReactNode;
+  /** O que acrescentar à mensagem de um erro (por exemplo, o link para a ficha da placa que já existe). */
+  descreverErro?: (erro: ErroDaAcao) => ReactNode;
   /** Chamado quando o assistente deve fechar de verdade (quem chamou tira o estado da URL). */
   aoFechar: () => void;
   /** Chamado com a linha gravada, antes de mostrar "concluído". */
@@ -112,6 +114,7 @@ export function Assistente<V extends FieldValues>({
   mensagemConcluido,
   aoConcluir,
   descreverAtual,
+  descreverErro,
   aoFechar,
   aoGravar,
   variante = "modal",
@@ -457,9 +460,12 @@ export function Assistente<V extends FieldValues>({
                 {estado.tipo === "erro" ? (
                   <div role="alert" className="flex flex-wrap items-center gap-3 text-sm">
                     <span>{estado.erro.mensagem}</span>
-                    <Button variant="outline" onClick={() => void concluir()}>
-                      Tentar de novo
-                    </Button>
+                    {descreverErro?.(estado.erro)}
+                    {estado.erro.codigo === "falha" ? (
+                      <Button variant="outline" onClick={() => void concluir()}>
+                        Tentar de novo
+                      </Button>
+                    ) : null}
                   </div>
                 ) : null}
                 {estado.tipo === "conflito" ? (

@@ -72,6 +72,7 @@ export function CampoComMais({
   aoMudar,
   erro,
   semOpcao,
+  desligadoPorque,
   renderMini,
 }: {
   rotulo: string;
@@ -83,6 +84,8 @@ export function CampoComMais({
   erro?: string;
   /** Texto de ajuda quando não há nenhuma opção. */
   semOpcao?: string;
+  /** Por que o "+" ainda não pode ser usado (por exemplo, falta escolher a marca): desliga o botão e diz o motivo. */
+  desligadoPorque?: string;
   renderMini: (mini: {
     /** Chame com a opção criada: o campo passa a ter essa opção e ela vem escolhida. */
     aoCriar: (opcao: OpcaoDeSelecao) => void;
@@ -93,7 +96,11 @@ export function CampoComMais({
   const [aberto, setAberto] = useState(false);
   const botao = useRef<HTMLButtonElement>(null);
   return (
-    <Campo rotulo={rotulo} erro={erro} ajuda={opcoes.length === 0 ? semOpcao : undefined}>
+    <Campo
+      rotulo={rotulo}
+      erro={erro}
+      ajuda={desligadoPorque ?? (opcoes.length === 0 ? semOpcao : undefined)}
+    >
       {(propriedades) => (
         <div className="flex items-center gap-2">
           <select
@@ -113,10 +120,13 @@ export function CampoComMais({
             ref={botao}
             type="button"
             aria-label={rotuloDoMais}
-            title={rotuloDoMais}
+            title={desligadoPorque ? `${rotuloDoMais}. ${desligadoPorque}` : rotuloDoMais}
             aria-haspopup="dialog"
-            onClick={() => setAberto(true)}
-            className="border-input bg-card hover:bg-muted focus-visible:ring-ring/50 grid size-9 shrink-0 place-items-center rounded-lg border outline-none focus-visible:ring-3 max-sm:size-11"
+            aria-disabled={desligadoPorque ? true : undefined}
+            onClick={() => {
+              if (!desligadoPorque) setAberto(true);
+            }}
+            className="border-input bg-card hover:bg-muted focus-visible:ring-ring/50 grid size-9 shrink-0 place-items-center rounded-lg border outline-none focus-visible:ring-3 aria-disabled:cursor-default aria-disabled:opacity-50 max-sm:size-11"
           >
             <IconPlus aria-hidden className="size-4" />
           </button>
