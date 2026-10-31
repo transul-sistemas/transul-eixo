@@ -86,6 +86,17 @@ Modelo de entrada:
 
 ---
 
+## 31/10/2026 — Teste do Mais filtros: media antes de o botão existir, agora espera o primeiro desenho
+
+- **A falha:** `e2e/placas.spec.ts:1249` ("o botão ocupa o mesmo lugar e o mesmo tamanho enquanto carrega e depois de carregar") derrubou o check `app` do CI dos PRs #16 (1366 e 1920) e #17 (1366), nas duas tentativas, sempre em `expect(antes).not.toBeNull()` (linha 1259): a caixa do botão vinha `null`.
+- **Causa:** o teste media **antes de o botão existir**. Ele esperava `toBeVisible()` e, em seguida, pedia `boundingBox()` ao localizador; entre os dois o botão (ou o esqueleto dele) pode ser trocado (a casca pelo conteúdo real, as cópias escondidas do streaming), e a caixa vinha `null`. Num runner lento isso acontecia sempre. Não era regressão do produto: o deslocamento real do botão foi corrigido no #15 (topo reservado por faixa e larguras reservadas dos botões).
+- **Correção, sem afrouxar o que o teste vigia:** o teste instala um amostrador que registra, a cada quadro, a caixa de "Mais filtros" e de "Visões salvas" (só do que está visível e tem tamanho). Primeiro **espera o primeiro desenho** (os dois botões com caixa); depois deixa a lista carregar (e meio segundo além) e compara cada quadro com a **primeira caixa**: continua falhando se o botão se deslocar mais de 1 px ou mudar de tamanho depois do primeiro desenho. O teste liga CPU 4x e rede de 300 ms por conta própria (`CPU_LENTA` e `REDE_MS` mudam os valores), para vigiar o mesmo em qualquer máquina.
+- **Prova por mutação:** desfeita a reserva do topo (volta aos 52 px fixos), o teste falha no 1366 com `Mais filtros y mudou 29 px depois do primeiro desenho` (os mesmos 29 px do CI). No 1920 a diferença é de 1 px (52 contra 53) e o teste passa, como se espera. Restaurado, passa.
+- **Verificação em ambiente de CI:** produção, 1 worker, rede de 300 ms, CPU 4x e 6x, 1366 e 1920, 30 repetições seguidas em cada combinação: 120 de 120.
+- **Quem decidiu:** Alexandre (31/10/2026).
+
+---
+
 ## 31/10/2026 — Retorno da lista sem relógio (F5) e topo reservado do tamanho certo (Mais filtros)
 
 - **A falha:** no run do commit `44ee2d2`, o check `app` do PR #15 caiu em `e2e/lista-ficha.spec.ts:356` ("recarregar a lista (F5) nunca restaura": esperava rolagem 0, veio 150, no 1920). No mesmo run, `placas.spec.ts:1249` ("Mais filtros não pisca", 1366) foi instável: o botão se deslocou 29 px. Só a primeira derrubou o job.
