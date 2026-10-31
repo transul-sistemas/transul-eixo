@@ -2,7 +2,7 @@
 
 > **Para quem for executar:** use a skill `executing-plans` (ou `subagent-driven-development`) fatia por fatia. Cada fatia tem teste antes, checkpoint e pull request próprio. **Este documento é só plano: nenhum código, nenhuma migration e nenhum comando de banco foram escritos ou rodados.**
 
-**Status:** versão 3, 31/10/2026. Plano **aprovado por Alexandre**, com as respostas registradas na seção "Decisões de Alexandre". Duas coisas continuam abertas e travam fatias: a **conferência do Apêndice A** (trava a 3.1 e a 3.5) e a **regra de reconhecimento de bitrem, bitrezão e rodotrem**, que é da equipe (a **fatia 3.4 só começa depois que Alexandre responder**). **O código só começa depois do merge dos PRs #21 (assistentes da Frota) e #22 (este plano); Alexandre avisa, e a primeira fatia é a 3.0.**
+**Status:** versão 4, 31/10/2026. Plano **aprovado por Alexandre**, com as respostas registradas na seção "Decisões de Alexandre". Duas coisas continuam abertas e travam fatias: a **conferência do Apêndice A** (trava a 3.1 e a 3.5) e a **regra de reconhecimento de bitrem, bitrezão e rodotrem**, que é da equipe (a **fatia 3.4 só começa depois que Alexandre responder**). **O código só começa depois do merge dos PRs #21 (assistentes da Frota) e #22 (este plano); Alexandre avisa, e a primeira fatia é a 3.0.**
 **Base:** `main` em `a476641`. O PR #21 ainda está aberto: `FonteDeEscrita`, `lib/dados/escrita.ts`, as Server Actions de `app/(sistema)/frota/placas/acoes.ts` e `lib/dominio/conjunto.ts` só existem nele.
 **Modelo:** o mais forte nesta fase (constraints, `EXCLUDE`, triggers de regra e RLS no banco; a tela só espelha).
 
@@ -39,7 +39,7 @@
 | 11 | O Operacional tem **escopo por filial** já agora | Seção 6 |
 | 12 | CPF mascarado por padrão e completo só com permissão específica, aplicado **no banco** | Seções 1 e 6 |
 | 13 | e2e em modo banco **noturno e sob demanda**, não a cada pull request | Seção 9 |
-| 14 | Apêndice A: Alexandre confere linha a linha. **Já fixo:** as siglas de operação (DOp, ACe, CAr, CAn, ETc, ADe, DEs, ETv) valem só para composição e caminhão; VAz e PÁT ficam em atividade | Seção 4; Apêndice A |
+| 14 | Apêndice A conferido contra o catálogo de siglas e corrigido com as regras de 31/10: DOp, ETv e SMo valem para composição, caminhão **e cavalo sozinho**; ACe, CAr, CAn, ETc, ADe e DEs, só para conjunto com implemento e para caminhão; **implemento sozinho nunca entra em etapa de operação**; MAc, MAt e MAv são só de conjunto; MAN e SIN são de solo; VAz e PÁT valem para ambos; FOg e FEr ficam em "sem motorista" | Seção 4; Apêndice A |
 | 15 | Aceito o rascunho: FOg e FEr em "sem motorista"; PÁT e VAz em atividade; **cavalo impedido deixa o conjunto impedido**; implemento engatado herda **só** a atividade do cavalo | Seção 4 |
 | 16 | Eixos do implemento no **modelo**, com correção local. A regra de rodotrem e bitrezão é da equipe: **não será inventada**, e a fatia 3.4 só começa depois da resposta de Alexandre | Seção 3 |
 
@@ -148,7 +148,11 @@ Todas em `nucleo`, todas com a `EXCLUDE` da convenção 2, origem da data e excl
 4. **Sem motorista:** SMo, FOg, FEr.
 5. **Atividade:** DOp, ACe, CAr, CAn, ETc, ADe, DEs, ETv, VAz e PÁT.
 
-**Siglas de operação** (DOp, ACe, CAr, CAn, ETc, ADe, DEs, ETv) valem **só para composição e caminhão** (`config.status.tipos_validos`): apoio, equipamento e implemento solto nunca as recebem. O implemento engatado as vê pela herança do cavalo. VAz e PÁT são de atividade e valem para todos os tipos.
+**Como ler `aplica_a` e `tipos_validos` (decisão 14):**
+- `aplica_a` descreve a placa mestre em relação ao implemento: **`conjunto`** = cavalo com pelo menos um implemento engatado (ou o próprio implemento engatado); **`solo`** = placa sem composição (cavalo sem implemento, implemento solto, caminhão, apoio, equipamento); **`ambos`** = com ou sem.
+- `tipos_validos` diz quais tipos de ativo podem receber a sigla. O **caminhão nunca tem composição**, então para ele vale só `tipos_validos` (a marca conjunto ou solo não se aplica).
+- **Implemento sozinho nunca entra em etapa de operação.** O implemento engatado vê a atividade do cavalo por herança (decisão 15); ele nunca a registra por conta própria.
+- Quando cavalo e implemento estão numa composição, as siglas de camada 3 que ele pode ter são as de conjunto (MAc, MAt, MAv); fora dela, as de solo (MAN, SIN).
 
 **Eventos com hora:** `nucleo.evento_de_status (ativo_id, camada, sigla, em timestamptz, origem, registrado_por, registrado_em, justificativa)`. Cada camada tem **um estado por vez**; um evento novo troca o da sua camada, e `sigla` nula **encerra** a camada (saiu da manutenção). Chave estrangeira composta `(sigla, camada)` garante que a sigla é da camada. Só inserção (correção é um evento novo com justificativa, nunca `UPDATE`), vários por dia, único por `(ativo_id, camada, em)` para a reentrada ser inofensiva. `origem`: `operacional`, `sankhya`, `manual` ou `derivado`.
 
@@ -163,6 +167,22 @@ Todas em `nucleo`, todas com a `EXCLUDE` da convenção 2, origem da data e excl
 **Custódia e status andam juntos:** disponibilizar grava a custódia `operacional` **e** o evento `DOp` na mesma função, com a mesma hora.
 
 **Testes antes:** as 26 siglas existem, com camada, chip e `aplica_a` (e o teste compara os nomes e os chips com o glossário); sigla fora da camada falha; baixada vence impedida e impedida vence atividade; `sigla` nula encerra só a camada dela; implemento engatado mostra a atividade do cavalo e **não** herda FEr; manutenção do implemento engatado deixa o conjunto impedido; desengatar fecha a composição e grava a operação de saída; `UPDATE` e `DELETE` em evento falham; a linha do tempo de uma placa bate com a de `lib/exemplo/` (teste de contrato da fatia 3.9).
+
+### Ajuste herdado da 2D (entra na fatia 3.1, sem mexer no código agora)
+
+**O assistente Disponibilizar ao Operacional (2D, PR #21) hoje não respeita o tipo de ativo.** A regra de 31/10 (DOp vale para composição, caminhão e cavalo sozinho; implemento sozinho nunca entra em etapa de operação) significa que uma carreta, um apoio ou um equipamento nunca podem ser disponibilizados. Conferi no código do `fase-2d-assistentes`: a decisão olha **só a sigla**, nunca o tipo. Onde isso acontece:
+
+- `lib/dominio/custodia.ts`: `podeDisponibilizar(sigla)` aceita PÁT, VAz e ETv de qualquer tipo.
+- `lib/dominio/acoes-do-momento.ts`: o botão "Disponibilizar ao Operacional" da ficha aparece para qualquer placa em PÁT, VAz ou ETv, inclusive implemento.
+- `app/(sistema)/frota/placas/assistentes/assistentes-da-frota.tsx`: o assistente abre para qualquer placa que passe em `podeDisponibilizar(sigla)`.
+- `lib/dados/fonte-de-exemplo.ts`: a lista de "placas que podem ser disponibilizadas" (Ctrl+K sem placa) filtra só pela sigla.
+- `lib/exemplo/armazem.ts` (`disponibilizarPlaca`): a gravação só recusa pela sigla.
+- `esquemaDisponibilizacao` (`lib/dominio/esquemas/placa.ts`): valida placa, filial e versão, sem tipo.
+- Os e2e `assistentes-frota-custodia.spec.ts` e `ficha.spec.ts` escolhem "a primeira placa de `?chip=patio`", que pode ser um implemento.
+
+**O ajuste da 3.1:** trocar `podeDisponibilizar(sigla)` por uma regra que lê o catálogo `config.status` (a sigla de origem está em PÁT, VAz ou ETv **e** o tipo está em `tipos_validos` de DOp), usada pela ficha, pelo assistente, pela lista do Ctrl+K, pela gravação (a função SQL da 3.7 e o armazém de exemplo) e pelo esquema; mensagem de recusa que diz o motivo ("Só cavalo ou caminhão podem ser disponibilizados ao Operacional; a carreta segue o cavalo a que está engatada"); e os e2e passam a escolher uma placa que possa ser disponibilizada. Teste antes: carreta solta em PÁT não oferece o botão, não aparece na lista e a gravação é recusada; cavalo sozinho em PÁT e caminhão podem.
+
+**Efeito colateral a confirmar (SMo):** a situação inicial da 2D (decisão de 31/10, CP1) dá SMo a cavalo, caminhão **e apoio**. A regra nova põe SMo só em composição, caminhão e cavalo sozinho; o apoio **perde** o SMo na situação inicial quando o catálogo substituir a tabela provisória.
 
 ## 5. Cadastro com origem por campo
 
@@ -221,7 +241,7 @@ Tamanhos: P (cerca de um dia), M (dois a três), G (quatro ou mais). Cada fatia 
 | # | Fatia | Entrega | Pronto quando | Tam. |
 | --- | --- | --- | --- | --- |
 | 3.0 | Alicerce do banco | Ver a seção "Fatia 3.0 em detalhes" | `supabase test db` roda com os auxiliares; toda tabela sem RLS falha | M |
-| 3.1 | Catálogos e régua | `config.*`: tipo, carroceria, marca, modelo (com `eixos`), filial, garagem, `status` (26 siglas, camadas, `aplica_a`, `tipos_validos`), configurações e nomes de conjunto (sem regra de reconhecimento). **Usa o Apêndice A conferido por Alexandre** | As 26 siglas conferidas contra o glossário e contra o Apêndice A aprovado; os 12 nomes de conjunto; seed de produção | M |
+| 3.1 | Catálogos e régua | `config.*`: tipo, carroceria, marca, modelo (com `eixos`), filial, garagem, `status` (26 siglas, camadas, `aplica_a`, `tipos_validos`), configurações e nomes de conjunto (sem regra de reconhecimento). **Usa o Apêndice A conferido por Alexandre.** Inclui o ajuste herdado da 2D (Disponibilizar por tipo de ativo) | As 26 siglas conferidas contra o glossário e contra o Apêndice A aprovado; os 12 nomes de conjunto; seed de produção | M |
 | 3.2 | Chaves: pessoa e ativo | `pessoa` e `pessoa_documento` (CPF/CNPJ), `ativo` (RENAVAM e série), `placa_do_ativo`, validações e imutabilidade | Duplicata, dígito errado, placa em dois ativos e chave editada recusados; CPF mascarado provado | M |
 | 3.3 | Vigências, CR e operação | posse, gestor (sem buraco), `cr` (com `codcencus`), `cr_do_ativo`, custódia, transferência; visão `operacao_do_ativo` e alerta de CR sem operação; `lib/dominio/vigencia.ts`; fim do `CR-0000` no Zod | Sobreposição recusada em cada tabela; buraco recusado em posse e gestor e alertado nos demais; limites `[)`; operação engatada, solta e sem operação | G |
 | 3.4 | Conjuntos | composição, `operacao_na_saida_id`, meta, `nome_do_conjunto`, conjunto misto. **Só começa depois que Alexandre responder a regra de bitrem, bitrezão e rodotrem** | Misto, quarto implemento, meta fora do cavalo e os nomes testados com a regra da equipe | M |
@@ -306,35 +326,41 @@ Ordem: o acesso no banco (3.6) vem antes das escritas (3.7), que precisam da RLS
 
 ## Apêndice A: as 26 siglas, para Alexandre conferir
 
-Os nomes são os do `docs/glossario.md`, e as 26 siglas do `CLAUDE.md` estão todas aqui, sem sobra nem falta. A **camada** é a decisão 7 aplicada. **Aplica a** é o campo que o `CLAUDE.md` pede ("válida para conjunto, solo ou ambos"); o que está **fixo** por Alexandre é a linha das oito siglas de operação e a de VAz e PÁT; o resto é rascunho meu.
+**De onde vem cada coluna.** O `CLAUDE.md` e o `docs/glossario.md` trazem as 26 siglas, os nomes e os chips (e o `CLAUDE.md` diz que a régua marca cada sigla como válida para conjunto, solo ou ambos), mas **nenhum dos dois traz a marca de cada sigla**. Por isso nenhuma linha de "aplica a" vem do `CLAUDE.md`: ou é regra que Alexandre fixou em 31/10, ou é rascunho meu. A coluna "diverge de" compara a **camada** (decisão 7) com o **chip** do glossário e aponta o que muda em relação ao que já está no código. As 26 siglas do `CLAUDE.md` estão todas aqui, sem sobra nem falta.
 
-| Sigla | Nome | Camada | Aplica a |
-| --- | --- | --- | --- |
-| VND | Vendido | 1 Baixada | solo |
-| SUC | Sucata | 1 Baixada | solo |
-| ALU | Alugado a terceiro | 2 Fora da frota | solo |
-| EMP | Emprestado | 2 Fora da frota | solo |
-| VEN | Disponível para venda | 2 Fora da frota | solo |
-| SIN | Sinistro | 3 Impedida | ambos |
-| MAc | Manutenção / carregado | 3 Impedida | ambos |
-| MAt | Manutenção / tombado | 3 Impedida | ambos |
-| MAv | Manutenção / vazio | 3 Impedida | ambos |
-| MAN | Em manutenção | 3 Impedida | ambos |
-| REF | Em reforma | 3 Impedida | ambos |
-| SDo | Sem documento | 3 Impedida | solo |
-| DOC | Problema documental | 3 Impedida | solo |
-| SMo | Sem motorista | 4 Sem motorista | conjunto |
-| FOg | Folga | 4 Sem motorista | conjunto |
-| FEr | Férias | 4 Sem motorista | conjunto |
-| DOp | Disponível no Operacional | 5 Atividade | **fixo:** só composição e caminhão |
-| ACe | Aguardando carregamento | 5 Atividade | **fixo:** só composição e caminhão |
-| CAr | Carregando | 5 Atividade | **fixo:** só composição e caminhão |
-| CAn | Carregado aguardando nota | 5 Atividade | **fixo:** só composição e caminhão |
-| ETc | Em trânsito carregado | 5 Atividade | **fixo:** só composição e caminhão |
-| ADe | Aguardando descarga | 5 Atividade | **fixo:** só composição e caminhão |
-| DEs | Descarregando | 5 Atividade | **fixo:** só composição e caminhão |
-| ETv | Em trânsito vazio | 5 Atividade | **fixo:** só composição e caminhão |
-| VAz | Vazio | 5 Atividade (**fixo**) | ambos |
-| PÁT | Pátio | 5 Atividade (**fixo**) | ambos |
+**Como ler "aplica a" e "tipos":** ver a seção 4. `conjunto` = cavalo com implemento engatado (ou o implemento engatado); `solo` = placa sem composição; `ambos` = com ou sem. "Tipos" são os `tipos_validos`; o caminhão só depende deles.
 
-**Como o fixo vira regra:** "só composição e caminhão" é a coluna `config.status.tipos_validos` (cavalo com seu conjunto, e caminhão). Apoio, equipamento e implemento solto nunca recebem essas oito siglas; o implemento engatado as vê pela herança do cavalo (decisão 15).
+| Sigla | Nome | Camada | Aplica a | Tipos | Origem | Diverge de |
+| --- | --- | --- | --- | --- | --- | --- |
+| VND | Vendido | 1 Baixada | solo | todos | rascunho meu | chip "Fora": a baixada é camada própria (o glossário já a trata à parte) |
+| SUC | Sucata | 1 Baixada | solo | todos | rascunho meu | chip "Fora": idem |
+| ALU | Alugado a terceiro | 2 Fora da frota | solo | todos | rascunho meu | — |
+| EMP | Emprestado | 2 Fora da frota | solo | todos | rascunho meu | — |
+| VEN | Disponível para venda | 2 Fora da frota | solo | todos | rascunho meu | — |
+| SIN | Sinistro | 3 Impedida | solo | todos | Alexandre 31/10 (aplica a); rascunho meu (tipos) | — |
+| MAc | Manutenção / carregado | 3 Impedida | conjunto | cavalo, implemento | Alexandre 31/10 (aplica a); rascunho meu (tipos) | — |
+| MAt | Manutenção / tombado | 3 Impedida | conjunto | cavalo, implemento | Alexandre 31/10 (aplica a); rascunho meu (tipos) | — |
+| MAv | Manutenção / vazio | 3 Impedida | conjunto | cavalo, implemento | Alexandre 31/10 (aplica a); rascunho meu (tipos) | — |
+| MAN | Em manutenção | 3 Impedida | solo | todos | Alexandre 31/10 (aplica a); rascunho meu (tipos) | — |
+| REF | Em reforma | 3 Impedida | solo | todos | rascunho meu (era "ambos" na versão anterior; passou a "solo" por coerência com MAN) | — |
+| SDo | Sem documento | 3 Impedida | solo | todos | rascunho meu | — |
+| DOC | Problema documental | 3 Impedida | solo | todos | rascunho meu | — |
+| SMo | Sem motorista | 4 Sem motorista | ambos | cavalo, caminhão | Alexandre 31/10 | chip "Atenção"; e a situação inicial da 2D dá SMo também ao **apoio**, que perde |
+| FOg | Folga | 4 Sem motorista | ambos | cavalo, caminhão | Alexandre 31/10 (camada); rascunho meu (aplica a e tipos, iguais aos de SMo) | chip "Atenção" |
+| FEr | Férias | 4 Sem motorista | ambos | cavalo, caminhão | Alexandre 31/10 (camada); rascunho meu (aplica a e tipos, iguais aos de SMo) | chip "Atenção" |
+| DOp | Disponível no Operacional | 5 Atividade | ambos | cavalo, caminhão | Alexandre 31/10 | Disponibilizar (2D) não confere o tipo: ver o ajuste da 3.1 |
+| ACe | Aguardando carregamento | 5 Atividade | conjunto | cavalo, caminhão | Alexandre 31/10 | — |
+| CAr | Carregando | 5 Atividade | conjunto | cavalo, caminhão | Alexandre 31/10 | — |
+| CAn | Carregado aguardando nota | 5 Atividade | conjunto | cavalo, caminhão | Alexandre 31/10 | — |
+| ETc | Em trânsito carregado | 5 Atividade | conjunto | cavalo, caminhão | Alexandre 31/10 | — |
+| ADe | Aguardando descarga | 5 Atividade | conjunto | cavalo, caminhão | Alexandre 31/10 | — |
+| DEs | Descarregando | 5 Atividade | conjunto | cavalo, caminhão | Alexandre 31/10 | — |
+| ETv | Em trânsito vazio | 5 Atividade | ambos | cavalo, caminhão | Alexandre 31/10 | A 2D deixa Disponibilizar partir de ETv para qualquer tipo |
+| VAz | Vazio | 5 Atividade | ambos | cavalo, caminhão | Alexandre 31/10 (camada e aplica a); rascunho meu (tipos) | chip "Atenção"; a 2D deixa Disponibilizar partir de VAz para qualquer tipo |
+| PÁT | Pátio | 5 Atividade | ambos | todos | Alexandre 31/10 (camada e aplica a); rascunho meu (tipos) | chip "Pátio"; a 2D deixa Disponibilizar partir de PÁT para qualquer tipo |
+
+**Notas de leitura**
+- "Todos" são os cinco tipos (cavalo, implemento, equipamento, caminhão e apoio). Nas siglas de camada 5, o **implemento nunca registra** a sigla: ele a vê pela herança do cavalo. A exceção é PÁT, que vale para todos os tipos, inclusive o implemento solto.
+- ACe, CAr, CAn, ETc, ADe e DEs: o **cavalo só entra se estiver com implemento engatado**; o caminhão entra sempre (não tem composição).
+- DOp, ETv e SMo: o cavalo entra **com ou sem implemento**, que é o que Disponibilizar ao Operacional faz.
+- **Rascunho a confirmar:** a coluna "Tipos" onde diz "rascunho meu (tipos)" (apoio e equipamento ficam fora de toda sigla de operação, por coerência com a regra anterior); VAz só para cavalo e caminhão e PÁT para todos (implemento solto, apoio e equipamento ficam no pátio); FOg e FEr iguais a SMo; REF em solo.
