@@ -193,7 +193,7 @@ export function BarraDeConsulta({
         <p role="status" className="sr-only" />
       )}
 
-      <div className="ml-auto flex flex-wrap items-center gap-2">
+      <div className="ml-auto flex min-w-[13.75rem] flex-wrap items-center justify-start gap-2">
         {ativa ? (
           <Button
             variant="ghost"
@@ -208,11 +208,23 @@ export function BarraDeConsulta({
           </Button>
         ) : null}
         {maisFiltros ?? (
-          <Button variant="outline" disabled title="Entra com a tabela (entrega 2C)">
+          <Button
+            variant="outline"
+            disabled
+            title="Entra com a tabela (entrega 2C)"
+            className="min-w-[6.8125rem]"
+          >
             Mais filtros
           </Button>
         )}
-        <Button variant="outline" disabled title="Entra na próxima entrega">
+        {/* A largura do texto é reservada: com o HTML chegando em pedaços, o botão já existe antes do
+            texto, e o grupo alinhado à direita empurraria o vizinho quando o texto chegasse. */}
+        <Button
+          variant="outline"
+          disabled
+          title="Entra na próxima entrega"
+          className="min-w-[6.4375rem]"
+        >
           Visões salvas
         </Button>
       </div>
