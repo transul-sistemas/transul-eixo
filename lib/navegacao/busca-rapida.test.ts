@@ -65,14 +65,14 @@ describe("montarGrupos: com termo", () => {
   it("acha ações, em outro grupo e depois das telas", () => {
     const grupos = montarGrupos("placa", "Administrador", SEM_CONTEXTO);
     expect(grupos.map((g) => g.id)).toEqual(["telas", "acoes"]);
-    const acao = grupos[1]?.itens[0];
+    const acao = grupos[1]?.itens.find((i) => i.rotulo === "Frota › Receber placa");
     expect(acao).toMatchObject({
       tipo: "acao",
       rotulo: "Frota › Receber placa",
-      emBreve: true,
-      disponivel: false,
+      emBreve: false,
+      disponivel: true,
+      rota: "/frota/placas?assistente=receber-placa",
     });
-    expect(acao?.rota).toBeUndefined();
   });
   it("só ação, quando nenhuma tela combina: o grupo de telas não aparece vazio", () => {
     const grupos = montarGrupos("disponibilizar", "Administrador", SEM_CONTEXTO);

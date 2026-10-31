@@ -18,18 +18,32 @@ export interface AcaoDoCatalogo {
   readonly estado: "pronto" | "em-breve";
   /** Uma linha do que a ação fará. */
   readonly descricao: string;
+  /** Para onde a busca rápida leva ao executar a ação (a tela com o assistente aberto, `?assistente=`). */
+  readonly rota?: string;
 }
 
 export const ACOES: readonly AcaoDoCatalogo[] = [
+  {
+    id: "frota.cadastrar-placa",
+    nome: "Cadastrar placa",
+    icone: "IconCirclePlus",
+    modulo: "frota",
+    permissao: { modulo: "frota", acao: "criar" },
+    estado: "pronto",
+    descricao:
+      "Cadastra uma placa nova, com o tipo, o valor, o gestor, a operação e a situação inicial.",
+    rota: "/frota/placas?assistente=cadastrar-placa",
+  },
   {
     id: "frota.receber-placa",
     nome: "Receber placa",
     icone: "IconCirclePlus",
     modulo: "frota",
     permissao: { modulo: "frota", acao: "criar" },
-    estado: "em-breve",
+    estado: "pronto",
     descricao:
       "Recebe a placa transferida por outro gestor de frota e conclui a conferência do que chegou.",
+    rota: "/frota/placas?assistente=receber-placa",
   },
   {
     id: "frota.disponibilizar-ao-operacional",
@@ -37,8 +51,9 @@ export const ACOES: readonly AcaoDoCatalogo[] = [
     icone: "IconSend",
     modulo: "frota",
     permissao: { modulo: "frota", acao: "criar" },
-    estado: "em-breve",
+    estado: "pronto",
     descricao: "Passa a placa do gestor de frota para o Operacional da filial.",
+    rota: "/frota/placas?assistente=disponibilizar",
   },
 ];
 

@@ -2,14 +2,27 @@ import { describe, expect, it } from "vitest";
 import { ACOES, type AcaoDoCatalogo, buscarAcoes } from "./acoes";
 import { CATALOGO } from "./catalogo";
 
-describe("ações reservadas para a entrega 2D (assistentes)", () => {
-  it("são Receber placa e Disponibilizar ao Operacional, ainda em breve", () => {
+describe("ações dos assistentes da Frota", () => {
+  it("são Cadastrar placa, Receber placa e Disponibilizar ao Operacional, todas prontas", () => {
     expect(ACOES.map((a) => a.id)).toEqual([
+      "frota.cadastrar-placa",
       "frota.receber-placa",
       "frota.disponibilizar-ao-operacional",
     ]);
-    expect(ACOES.map((a) => a.nome)).toEqual(["Receber placa", "Disponibilizar ao Operacional"]);
-    expect(ACOES.every((a) => a.estado === "em-breve")).toBe(true);
+    expect(ACOES.map((a) => a.nome)).toEqual([
+      "Cadastrar placa",
+      "Receber placa",
+      "Disponibilizar ao Operacional",
+    ]);
+    expect(ACOES.every((a) => a.estado === "pronto")).toBe(true);
+  });
+  it("cada ação leva à lista de placas com o assistente aberto (?assistente=)", () => {
+    const rotas = Object.fromEntries(ACOES.map((a) => [a.id, a.rota]));
+    expect(rotas).toEqual({
+      "frota.cadastrar-placa": "/frota/placas?assistente=cadastrar-placa",
+      "frota.receber-placa": "/frota/placas?assistente=receber-placa",
+      "frota.disponibilizar-ao-operacional": "/frota/placas?assistente=disponibilizar",
+    });
   });
   it("cada ação pertence a um módulo do catálogo, e a permissão é a desse módulo", () => {
     const modulos = CATALOGO.map((m) => m.id);
@@ -55,7 +68,11 @@ describe("buscarAcoes", () => {
     );
   });
   it("acha por uma palavra só, com o nome que contém o termo antes do que só combina pelo módulo", () => {
-    expect(buscarAcoes("placa", "Administrador").map((a) => a.nome)).toEqual(["Receber placa"]);
+    expect(
+      buscarAcoes("placa", "Administrador")
+        .map((a) => a.nome)
+        .sort(),
+    ).toEqual(["Cadastrar placa", "Receber placa"]);
     // "Receber placa" saiu do módulo Operacional: só o nome de "Disponibilizar ao Operacional" combina.
     expect(buscarAcoes("operacional", "Administrador").map((a) => a.nome)).toEqual([
       "Disponibilizar ao Operacional",
@@ -66,10 +83,15 @@ describe("buscarAcoes", () => {
     expect(buscarAcoes("   ", "Administrador")).toEqual([]);
     expect(buscarAcoes("zzzz", "Administrador")).toEqual([]);
   });
-  it("ação em breve só aparece para Administrador e Diretoria", () => {
-    expect(buscarAcoes("receber placa", "Gestor de frota")).toEqual([]);
+  it("as ações da Frota aparecem para quem tem o módulo Frota (e para Administrador e Diretoria), nunca para o Operacional", () => {
+    for (const perfil of ["Administrador", "Diretoria", "Gestor de frota"] as const) {
+      expect(buscarAcoes("receber placa", perfil), perfil).toHaveLength(1);
+      expect(buscarAcoes("cadastrar placa", perfil), perfil).toHaveLength(1);
+      expect(buscarAcoes("disponibilizar", perfil), perfil).toHaveLength(1);
+    }
     expect(buscarAcoes("receber placa", "Operacional")).toEqual([]);
-    expect(buscarAcoes("receber placa", "Diretoria")).toHaveLength(1);
+    expect(buscarAcoes("cadastrar placa", "Operacional")).toEqual([]);
+    expect(buscarAcoes("disponibilizar", "Operacional")).toEqual([]);
   });
 
   const pronta = (modulo: AcaoDoCatalogo["modulo"]): AcaoDoCatalogo => ({
