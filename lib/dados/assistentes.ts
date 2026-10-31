@@ -1,4 +1,3 @@
-import type { PedidoDeTransferencia } from "@/lib/dominio/custodia";
 import { normalizarPlaca, placaNormalizadaValida } from "@/lib/dominio/placa";
 import type { DadosDosAssistentes, PlacaGravada } from "./escrita-tipos";
 
