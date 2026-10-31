@@ -4,6 +4,7 @@ import {
   esquemaCadastrarPlaca,
   esquemaDisponibilizacao,
   esquemaEnvioDeTransferencia,
+  esquemaItemDeCatalogo,
   esquemaRecebimento,
   siglasIniciaisDoTipo,
   validarRenavam,
@@ -15,12 +16,14 @@ const ANO = 2026;
 const base = {
   placa: "aaa-0a00",
   renavam: "00639884962",
-  marca: "Volvo",
-  modelo: "FH 540",
+  marcaId: "marca-volvo",
+  modeloId: "modelo-fh-540",
   ano: 2022,
   gestorId: "gestor-1",
   operacaoId: null,
   crId: null,
+  filialId: "filial-a",
+  garagemId: "garagem-a1",
   situacaoInicial: "PÁT",
 };
 const cavalo = {
@@ -32,7 +35,7 @@ const cavalo = {
 const implemento = {
   ...base,
   tipo: "implemento",
-  modelo: "Sider 3 eixos",
+  modeloId: "modelo-sider",
   valorManualCentavos: 25_000_000,
   fonteDoValor: "Nota fiscal de compra",
   dataDoValor: "2026-09-10",
@@ -94,11 +97,20 @@ describe("esquemaCadastrarPlaca: identificação", () => {
 });
 
 describe("esquemaCadastrarPlaca: veículo e ano", () => {
-  it("marca e modelo são obrigatórios, sem espaços sobrando", () => {
-    expect(campos({ ...cavalo, marca: "   " })).toContain("marca");
-    expect(campos({ ...cavalo, modelo: "" })).toContain("modelo");
-    const r = esquema.safeParse({ ...cavalo, marca: "  Volvo  " });
-    expect(r.success && r.data.marca).toBe("Volvo");
+  it("marca e modelo são escolhas do cadastro (ids), obrigatórias", () => {
+    expect(campos({ ...cavalo, marcaId: "" })).toContain("marcaId");
+    expect(campos({ ...cavalo, modeloId: "" })).toContain("modeloId");
+    expect(campos({ ...cavalo, marcaId: undefined })).toContain("marcaId");
+    expect(campos({ ...cavalo, modeloId: undefined })).toContain("modeloId");
+  });
+  it("marca e modelo em texto livre não valem mais", () => {
+    const r = esquema.safeParse({
+      ...cavalo,
+      marcaId: undefined,
+      marca: "Volvo",
+      modelo: "FH 540",
+    });
+    expect(r.success).toBe(false);
   });
   it("ano entre 1980 e o ano atual mais um", () => {
     expect(campos({ ...cavalo, ano: 1979 })).toContain("ano");
@@ -160,6 +172,12 @@ describe("esquemaCadastrarPlaca: valor por tipo", () => {
 });
 
 describe("esquemaCadastrarPlaca: posse e situação inicial", () => {
+  it("filial e garagem são obrigatórias (escolhas do cadastro)", () => {
+    expect(campos({ ...cavalo, filialId: "" })).toContain("filialId");
+    expect(campos({ ...cavalo, garagemId: "" })).toContain("garagemId");
+    expect(campos({ ...cavalo, filialId: undefined })).toContain("filialId");
+    expect(campos({ ...cavalo, garagemId: undefined })).toContain("garagemId");
+  });
   it("o gestor é obrigatório", () => {
     expect(campos({ ...cavalo, gestorId: "" })).toContain("gestorId");
   });
@@ -370,5 +388,53 @@ describe("esquemaEnvioDeTransferencia: quem envia deixa o motivo e as pendência
     expect(
       esquemaEnvioDeTransferencia.safeParse({ ...ok, pendenciasConhecidas: [" "] }).success,
     ).toBe(false);
+  });
+});
+
+describe("esquemaItemDeCatalogo: o que o mini-wizard do + cria", () => {
+  const ok = { tipo: "marca", nome: "Volvo" };
+  it("aceita marca, gestor, operação e filial só com o nome", () => {
+    for (const tipo of ["marca", "gestor", "operacao", "filial"]) {
+      expect(esquemaItemDeCatalogo.safeParse({ tipo, nome: "Nome certo" }).success, tipo).toBe(
+        true,
+      );
+    }
+  });
+  it("modelo precisa da marca; garagem, da filial; CR, da operação", () => {
+    expect(esquemaItemDeCatalogo.safeParse({ tipo: "modelo", nome: "FH 540" }).success).toBe(false);
+    expect(
+      esquemaItemDeCatalogo.safeParse({ tipo: "modelo", nome: "FH 540", paiId: "marca-volvo" })
+        .success,
+    ).toBe(true);
+    expect(esquemaItemDeCatalogo.safeParse({ tipo: "garagem", nome: "Garagem 3" }).success).toBe(
+      false,
+    );
+    expect(
+      esquemaItemDeCatalogo.safeParse({ tipo: "garagem", nome: "Garagem 3", paiId: "filial-a" })
+        .success,
+    ).toBe(true);
+    expect(esquemaItemDeCatalogo.safeParse({ tipo: "cr", nome: "CR-1006" }).success).toBe(false);
+    expect(
+      esquemaItemDeCatalogo.safeParse({ tipo: "cr", nome: "CR-1006", paiId: "op-1" }).success,
+    ).toBe(true);
+  });
+  it("o CR segue o formato CR-0000", () => {
+    for (const nome of ["1006", "CR1006", "CR-100", "CR-10066", "cr-1006"]) {
+      const r = esquemaItemDeCatalogo.safeParse({ tipo: "cr", nome, paiId: "op-1" });
+      expect(r.success, nome).toBe(false);
+    }
+  });
+  it("o nome é obrigatório, sem espaços sobrando, de 2 a 60 caracteres", () => {
+    expect(esquemaItemDeCatalogo.safeParse({ ...ok, nome: " " }).success).toBe(false);
+    expect(esquemaItemDeCatalogo.safeParse({ ...ok, nome: "A" }).success).toBe(false);
+    expect(esquemaItemDeCatalogo.safeParse({ ...ok, nome: "x".repeat(61) }).success).toBe(false);
+    const r = esquemaItemDeCatalogo.safeParse({ ...ok, nome: "  Scania  " });
+    expect(r.success && r.data.nome).toBe("Scania");
+  });
+  it("tipo desconhecido não vale; o pai de quem não tem pai é ignorado", () => {
+    expect(esquemaItemDeCatalogo.safeParse({ tipo: "cor", nome: "Azul" }).success).toBe(false);
+    const r = esquemaItemDeCatalogo.safeParse({ ...ok, paiId: "qualquer" });
+    expect(r.success).toBe(true);
+    if (r.success) expect("paiId" in r.data).toBe(false);
   });
 });

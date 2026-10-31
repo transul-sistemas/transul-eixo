@@ -142,8 +142,8 @@ export function esquemaCadastrarPlaca({ anoAtual, hoje }: { anoAtual: number; ho
   const identificacao = {
     placa,
     renavam,
-    marca: texto("a marca", 60),
-    modelo: texto("o modelo", 80),
+    marcaId: id("a marca"),
+    modeloId: id("o modelo"),
     ano: z
       .number({ error: "Informe o ano." })
       .int({ error: "Informe o ano com quatro dígitos." })
@@ -152,6 +152,8 @@ export function esquemaCadastrarPlaca({ anoAtual, hoje }: { anoAtual: number; ho
     gestorId: id("o gestor de frota"),
     operacaoId: id("a operação").nullable(),
     crId: id("o CR").nullable(),
+    filialId: id("a filial"),
+    garagemId: id("a garagem"),
     situacaoInicial: siglaConhecida.default("PÁT"),
   };
   const comFipe = (tipo: "cavalo" | "caminhao") =>
@@ -284,3 +286,35 @@ export function esquemaRecebimento(tipo: TipoDeAtivo) {
 export type EntradaRecebimento = z.infer<ReturnType<typeof esquemaRecebimento>>;
 
 export { TIPOS_DE_ATIVO };
+
+// ---------- itens de catálogo (o mini-wizard do "+") ----------
+
+const nomeDoItem = z
+  .string({ error: "Informe o nome." })
+  .trim()
+  .min(2, { error: "Informe o nome com pelo menos 2 letras." })
+  .max(60, { error: "Use até 60 caracteres no nome." });
+
+/** O que o "+" cria: marca, modelo (de uma marca), gestor, operação, CR (de uma operação), filial e garagem (de uma filial). */
+export const esquemaItemDeCatalogo = z.discriminatedUnion(
+  "tipo",
+  [
+    z.object({ tipo: z.literal("marca"), nome: nomeDoItem }),
+    z.object({ tipo: z.literal("modelo"), nome: nomeDoItem, paiId: id("a marca") }),
+    z.object({ tipo: z.literal("gestor"), nome: nomeDoItem }),
+    z.object({ tipo: z.literal("operacao"), nome: nomeDoItem }),
+    z.object({
+      tipo: z.literal("cr"),
+      nome: z
+        .string({ error: "Informe o código do CR." })
+        .trim()
+        .regex(/^CR-\d{4}$/, { error: "Código inválido. Use o formato CR-0000." }),
+      paiId: id("a operação"),
+    }),
+    z.object({ tipo: z.literal("filial"), nome: nomeDoItem }),
+    z.object({ tipo: z.literal("garagem"), nome: nomeDoItem, paiId: id("a filial") }),
+  ],
+  { error: "Escolha o que cadastrar." },
+);
+export type EntradaItemDeCatalogo = z.infer<typeof esquemaItemDeCatalogo>;
+export type TipoDeItemDeCatalogo = EntradaItemDeCatalogo["tipo"];
