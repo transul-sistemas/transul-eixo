@@ -118,6 +118,20 @@ Modelo de entrada:
 
 ---
 
+## 31/10/2026 — CI: o job `app` pula build e e2e quando o pull request só muda `docs/`
+
+- **Decisão:** no job `app` (o nome não muda, o ruleset exige `app` e `banco`), um passo `mudancas` lê os arquivos do pull request (`git diff --name-only HEAD^1 HEAD` sobre o merge do PR, com `fetch-depth: 2`). Se há ao menos um arquivo e **todos** começam por `docs/`, `so_docs=true`. Com isso são pulados o **build, o cache e a instalação do navegador do Playwright e o e2e** (o build só serve ao e2e); **lint, tipos e testes unitários rodam sempre**, e o resumo da execução avisa que pulou. Sem arquivos mudados, ou se o `git diff` falhar, `so_docs=false`: roda tudo.
+- **Mantido:** prazo de 45 minutos; sem `workers: 2`; o job `banco` não muda e roda sempre.
+- **Teste estrutural:** `lib/qualidade/workflow-pull-request.test.ts` (nomes dos jobs, passos que nunca são pulados, passos que só rodam fora do caso só docs, ausência de `workers: 2`).
+- **Teste de comportamento, com PRs de verdade:**
+  - **Só docs:** PR de teste empilhado sobre a branch do CI, mudando só `docs/glossario.md`: `app` passou em **1m21s**, com build, cache, navegador e e2e `skipped` e lint, tipos e testes unitários executados; `banco` passou. O PR foi fechado sem merge e a branch descartada.
+  - **Com código:** o próprio PR do CI (muda o workflow e um teste): `so_docs=false`, build, navegador e e2e rodaram, o resumo de "pulou" ficou `skipped`.
+  - Para o teste empilhado foi preciso aceitar a branch do CI como base de PR (`on.pull_request.branches`); essa linha foi revertida para `[main]` antes do merge.
+- **Limite conhecido:** só `docs/` conta. Mudar só um `.md` da raiz (como `CLAUDE.md`) ou `README.md` roda tudo, por segurança.
+- **Quem decidiu:** Alexandre (31/10/2026).
+
+---
+
 ## 31/10/2026 — Pull request: prazo de 45 min no job `app` e cache dos navegadores do Playwright
 
 - **O que aconteceu:** o check `app` do PR #15 foi **cancelado aos 20m22s**, sem falha de teste. O workflow tinha `timeout-minutes: 20` e a suíte de tela cresceu para 1002 testes.
