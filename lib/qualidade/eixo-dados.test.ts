@@ -1,22 +1,11 @@
 import { existsSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { listarArquivos, lerTexto } from "./armadilhas";
+import { liberadoParaEixoDados } from "./eixo-dados";
 
 // EIXO_DADOS=exemplo liga os dados fictícios de lib/exemplo/. Só pode existir onde foi liberada
 // (desenvolvimento, testes) e nunca na Vercel, em produção ou em arquivo com segredo.
 
-const LIBERADOS = [
-  ".env.development",
-  ".env.example",
-  "playwright.config.ts",
-  "lib/qualidade/eixo-dados.test.ts",
-  "docs/decisoes.md",
-  "docs/superpowers/plans/2026-10-29-fase-2c-1-lista-de-placas.md",
-  "docs/superpowers/plans/2026-10-30-fase-2c-2-painel-de-espiar.md",
-  "docs/superpowers/plans/2026-10-30-fase-2c-3-ficha-da-placa.md",
-  "docs/superpowers/plans/2026-10-31-fase-2d-motor-de-wizard.md",
-  "docs/superpowers/plans/2026-10-31-fase-3-nucleo-de-dados.md",
-];
 const SEM_VARREDURA =
   /^(node_modules|\.next|\.git|test-results|playwright-report|supabase\/\.temp)/;
 
@@ -65,13 +54,7 @@ describe("EIXO_DADOS nunca vai para a Vercel nem para produção", () => {
       ".env.example",
     ].filter((c) => existsSync(c) && !SEM_VARREDURA.test(c));
     const usam = arquivos.filter((c) => lerTexto(c).includes("EIXO_DADOS"));
-    const fora = usam.filter(
-      (c) =>
-        !LIBERADOS.includes(c) &&
-        !/^lib\/dados\/(fonte-de-exemplo|fonte)(\.test)?\.tsx?$/.test(c) &&
-        !/\.test\.tsx?$/.test(c) &&
-        !c.startsWith(".github/workflows/pull-request.yml"),
-    );
+    const fora = usam.filter((c) => !liberadoParaEixoDados(c));
     expect(fora).toEqual([]);
   });
   it("o servidor de testes liga o exemplo de forma explícita", () => {
@@ -82,5 +65,63 @@ describe("EIXO_DADOS nunca vai para a Vercel nem para produção", () => {
     expect(texto).toContain("EIXO_DADOS");
     expect(texto.toLowerCase()).toContain("nunca");
     expect(texto.toLowerCase()).toContain("vercel");
+  });
+});
+
+describe("quem pode citar EIXO_DADOS (a regra, sem olhar o repositório)", () => {
+  it("qualquer arquivo de docs/superpowers/plans/ é liberado por padrão, inclusive um plano que ainda não existe", () => {
+    expect(liberadoParaEixoDados("docs/superpowers/plans/2027-01-15-fase-9-um-plano-novo.md")).toBe(
+      true,
+    );
+    expect(
+      liberadoParaEixoDados("docs/superpowers/plans/2026-10-31-fase-3-nucleo-de-dados.md"),
+    ).toBe(true);
+    expect(liberadoParaEixoDados("docs/superpowers/plans/rascunhos/ideia.md")).toBe(true);
+  });
+
+  it("o mesmo texto em outro lugar de docs/ continua barrado", () => {
+    for (const caminho of [
+      "docs/glossario.md",
+      "docs/projeto-tecnico.md",
+      "docs/superpowers/specs/2026-11-01-um-desenho.md",
+      "docs/sankhya/mapa.md",
+      "docs/superpowers/plansx/falso.md",
+    ]) {
+      expect(liberadoParaEixoDados(caminho), caminho).toBe(false);
+    }
+  });
+
+  it("o mesmo texto em arquivo de código ou configuração continua barrado", () => {
+    for (const caminho of [
+      "app/(sistema)/frota/placas/pagina-de-placas.tsx",
+      "components/wizard/assistente.tsx",
+      "lib/dominio/status.ts",
+      "lib/dados/placas.ts",
+      "supabase/seed.sql",
+      "scripts/db-tipos.mjs",
+      "vercel.json",
+      ".env.production",
+    ]) {
+      expect(liberadoParaEixoDados(caminho), caminho).toBe(false);
+    }
+  });
+
+  it("não deixa escapar por um caminho que sobe de pasta", () => {
+    expect(liberadoParaEixoDados("docs/superpowers/plans/../../glossario.md")).toBe(false);
+    expect(liberadoParaEixoDados("docs/superpowers/plans/../../../app/x.ts")).toBe(false);
+  });
+
+  it("a lista fixa continua valendo para o resto do repositório", () => {
+    for (const caminho of [
+      ".env.development",
+      ".env.example",
+      "playwright.config.ts",
+      "docs/decisoes.md",
+    ]) {
+      expect(liberadoParaEixoDados(caminho), caminho).toBe(true);
+    }
+    expect(liberadoParaEixoDados("lib/dados/fonte-de-exemplo.ts")).toBe(true);
+    expect(liberadoParaEixoDados("lib/dados/fonte.test.ts")).toBe(true);
+    expect(liberadoParaEixoDados("e2e/ficha.spec.ts")).toBe(false);
   });
 });
