@@ -17,12 +17,11 @@ select is(
     select count(*)
     from information_schema.tables
     where table_schema = any (array[
-      'nucleo', 'operacional', 'pessoas', 'rh_clinico', 'parceiros',
-      'financeiro', 'sync', 'config', 'auditoria'
+      'operacional', 'pessoas', 'rh_clinico', 'parceiros', 'financeiro', 'sync'
     ])
   ),
   0::bigint,
-  'nenhuma tabela nos schemas das áreas'
+  'nenhuma tabela nos schemas que ficam vazios na Fase 3 (nucleo, config e auditoria já têm)'
 );
 
 select * from finish();

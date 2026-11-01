@@ -1,0 +1,53 @@
+-- Auxiliares só dos testes pgTAP. Cada teste os inclui com `\ir apoio/como_usuario.psql` logo depois
+-- do `begin;`: tudo vive na transação do teste e some no `rollback`.
+--
+-- Agir como um usuário é sempre agir como `authenticated` (ou `anon`) com as claims dele, a mesma
+-- identidade que o app usa. Nunca se usa a chave mestra: a política que passa só porque o teste
+-- ignorou a RLS não prova nada. Este arquivo tem a extensão `.psql` de propósito: o `supabase test db`
+-- só roda como teste os arquivos `.sql`.
+
+create schema if not exists tests;
+
+-- Cria um usuário no Auth local e devolve o id. Só roda como dono do banco (antes de `tests.como`).
+create or replace function tests.criar_usuario(p_email text)
+returns uuid
+language plpgsql
+as $$
+declare
+  v_id uuid := gen_random_uuid();
+begin
+  insert into auth.users (id, aud, role, email, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
+  values (v_id, 'authenticated', 'authenticated', p_email, '{}'::jsonb, '{}'::jsonb, now(), now());
+  return v_id;
+end;
+$$;
+
+-- Passa a agir como o usuário até o fim da transação (ou até `reset role;`).
+create or replace function tests.como(p_usuario uuid)
+returns void
+language plpgsql
+as $$
+begin
+  perform set_config(
+    'request.jwt.claims',
+    jsonb_build_object('sub', p_usuario, 'role', 'authenticated')::text,
+    true
+  );
+  perform set_config('request.jwt.claim.sub', p_usuario::text, true);
+  perform set_config('request.jwt.claim.role', 'authenticated', true);
+  set local role authenticated;
+end;
+$$;
+
+-- Passa a agir como visitante sem login.
+create or replace function tests.como_anonimo()
+returns void
+language plpgsql
+as $$
+begin
+  perform set_config('request.jwt.claims', '{"role":"anon"}', true);
+  perform set_config('request.jwt.claim.sub', '', true);
+  perform set_config('request.jwt.claim.role', 'anon', true);
+  set local role anon;
+end;
+$$;

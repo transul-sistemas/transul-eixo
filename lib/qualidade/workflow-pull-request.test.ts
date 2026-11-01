@@ -80,3 +80,16 @@ describe("workflow do pull request: pular o e2e quando só docs/ muda", () => {
     expect(job("banco")).not.toContain("so_docs");
   });
 });
+
+describe("workflow do pull request: os tipos do banco ficam em dia", () => {
+  it("o job banco regenera os tipos (db:tipos) depois de subir o banco", () => {
+    expect(passoCom("banco", "supabase start")).toContain("supabase start");
+    expect(passoCom("banco", "db:tipos")).toContain("db:tipos");
+  });
+
+  it("e falha se o arquivo de tipos mudar (git diff --exit-code)", () => {
+    const passo = passoCom("banco", "git diff --exit-code");
+    expect(passo).toContain("git diff --exit-code");
+    expect(passo).toContain("lib/dados/tipos-do-banco.ts");
+  });
+});
