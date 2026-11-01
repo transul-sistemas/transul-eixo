@@ -9,7 +9,12 @@ import { useAssistenteNaUrl } from "@/components/wizard/use-assistente-na-url";
 import type { DadosDosAssistentes } from "@/lib/dados/escrita-tipos";
 import { mesclarCatalogos } from "@/lib/dados/catalogos-locais";
 import type { ItemCriado } from "@/lib/dados/escrita-tipos";
-import { podeDisponibilizar } from "@/lib/dominio/custodia";
+import {
+  MENSAGEM_DE_TIPO_QUE_NAO_DISPONIBILIZA,
+  motivoDeNaoDisponibilizar,
+  podeDisponibilizar,
+} from "@/lib/dominio/custodia";
+import { NOMES_DOS_TIPOS } from "@/lib/dados/placas-tipos";
 import { normalizarPlaca, placaNormalizadaValida } from "@/lib/dominio/placa";
 import { CadastrarPlaca } from "./cadastrar-placa";
 import { DisponibilizarAoOperacional } from "./disponibilizar-ao-operacional";
@@ -85,7 +90,7 @@ export function AssistentesDaFrota({
   const prontoParaDisponibilizar =
     dados.placaAlvo !== null &&
     dados.placaAlvo.placa === placaPedida &&
-    podeDisponibilizar(dados.placaAlvo.sigla)
+    podeDisponibilizar(dados.placaAlvo.sigla, dados.placaAlvo.tipo)
       ? dados.placaAlvo
       : null;
   const disponibilizarGuardada = useGuardadoEnquantoAberto(
@@ -170,7 +175,12 @@ export function AssistentesDaFrota({
                 ? "Nenhuma placa está em pátio, vazia ou em trânsito vazio. Só estas podem ser disponibilizadas ao Operacional."
                 : dados.placaAlvo === null
                   ? `Não achamos a placa ${nomeDaPlaca}. Confira a placa ou escolha outra na lista.`
-                  : `A placa ${nomeDaPlaca} está em ${dados.placaAlvo.sigla}. Só placas em PÁT, VAz ou ETv podem ser disponibilizadas ao Operacional.`
+                  : motivoDeNaoDisponibilizar({
+                        sigla: dados.placaAlvo.sigla,
+                        tipo: dados.placaAlvo.tipo,
+                      }) === MENSAGEM_DE_TIPO_QUE_NAO_DISPONIBILIZA
+                    ? `A placa ${nomeDaPlaca} é ${NOMES_DOS_TIPOS[dados.placaAlvo.tipo].toLowerCase()}. ${MENSAGEM_DE_TIPO_QUE_NAO_DISPONIBILIZA}`
+                    : `A placa ${nomeDaPlaca} está em ${dados.placaAlvo.sigla}. Só placas em PÁT, VAz ou ETv podem ser disponibilizadas ao Operacional.`
             }
             aoEscolher={escolherPlaca}
             aoFechar={disponibilizar.fechar}

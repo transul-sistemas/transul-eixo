@@ -1,7 +1,7 @@
 import { z } from "zod";
 import {
   esquemaCadastrarPlaca,
-  esquemaDisponibilizacao,
+  esquemaDisponibilizacaoDe,
   esquemaItemDeCatalogo,
   esquemaRecebimento,
 } from "@/lib/dominio/esquemas/placa";
@@ -76,6 +76,10 @@ export async function executarCadastrarPlaca(
   return gravando(() => fonte.cadastrarPlaca(v.dados, chave, agora));
 }
 
+/**
+ * O esquema da disponibilização depende do tipo da placa (só cavalo e caminhão vão ao Operacional),
+ * então a placa é lida antes. A situação de origem fica com a fonte, que confere a versão primeiro.
+ */
 export async function executarDisponibilizar(
   chave: string,
   dados: unknown,
@@ -83,9 +87,15 @@ export async function executarDisponibilizar(
 ): Promise<Resultado<PlacaGravada>> {
   const semChave = conferirChave(chave);
   if (semChave) return semChave;
-  const v = validar(esquemaDisponibilizacao, dados);
-  if (!v.ok) return v.erro;
-  return gravando(() => fonte.disponibilizarPlaca(v.dados, chave, agora));
+  const aPlaca = validar(SO_A_PLACA, dados);
+  if (!aPlaca.ok) return aPlaca.erro;
+  return gravando(async () => {
+    const atual = await fonte.placaParaAssistente(normalizarPlaca(aPlaca.dados.placa));
+    if (!atual) return erroDaAcao("nao_encontrado");
+    const v = validar(esquemaDisponibilizacaoDe({ tipo: atual.tipo }), dados);
+    if (!v.ok) return v.erro;
+    return fonte.disponibilizarPlaca(v.dados, chave, agora);
+  });
 }
 
 /** O esquema do recebimento depende do tipo da placa (meta e conjunto), então a placa é lida antes. */

@@ -288,7 +288,7 @@ export function escritaDoArmazem(armazem: Armazem): FonteDeEscrita {
     placasQuePodemSerDisponibilizadas: async () =>
       armazem
         .placasParaLista()
-        .filter((p) => podeDisponibilizar(p.sigla))
+        .filter((p) => podeDisponibilizar(p.sigla, p.tipo))
         .map((p) => ({ placa: p.placa, nome: `${p.placa} · ${p.modelo}` }))
         .sort((a, b) => (a.placa < b.placa ? -1 : 1)),
   };
