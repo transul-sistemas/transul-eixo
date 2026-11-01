@@ -1,0 +1,5 @@
+-- Seed de produção: só catálogos iniciais (siglas, tipos, perfis, permissões, carrocerias...),
+-- que entram nas fatias seguintes da Fase 3. Está vazio de propósito na fundação.
+--
+-- Dado de exemplo NUNCA entra aqui: fica em supabase/exemplo/ e só é carregado no ambiente local
+-- e no CI de teste.

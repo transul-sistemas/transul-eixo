@@ -81,3 +81,5 @@ jobs:
       - run: pnpm exec supabase start
       - run: pnpm exec supabase db lint --fail-on warning
       - run: pnpm exec supabase test db
+      - run: pnpm run db:tipos
+      - run: git diff --exit-code -- lib/dados/tipos-do-banco.ts
