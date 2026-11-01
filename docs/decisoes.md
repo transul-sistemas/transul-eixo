@@ -710,3 +710,12 @@ Modelo de entrada:
 - **Auxiliar de pgTAP:** `supabase/tests/apoio/como_usuario.psql` (extensão `.psql` para o `supabase test db` não o rodar como teste), incluído por `\ir`. Age como `authenticated` ou `anon` com as claims do usuário de teste, nunca com a chave mestra.
 - **Verificação (Docker local):** `db reset` aplicado do zero sem erro (várias vezes), `supabase test db` com 89 testes passando, `db lint --fail-on warning` sem alertas.
 - **Quem decidiu:** Alexandre aprovou o plano e a ordem; os detalhes acima aguardam a confirmação do checkpoint da 3.0.
+
+## 01/11/2026 — Checkpoint 3.0 aprovado: complementos e a regra do chassi
+
+- **Aprovado por Alexandre (01/11/2026):** as chaves de pessoa, ativo e placa ficam na 3.0 (o plano foi atualizado); privilégio por função (`revoke ... from public`) no lugar de `alter default privileges`; máscara do documento por gatilho; `SECURITY DEFINER` só em `registrar_mudanca` e `consumir_envio`; equipamento com número de série obrigatório e sem RENAVAM; a exposição de `nucleo` e `config` na Data API sem grant.
+- **Funções de validação dos `CHECK` (3.6):** quando o papel que grava receber EXECUTE nelas, cada função entra numa **lista de exceções do teste de catálogo com a justificativa por item** (por exemplo, "pura, imutável e sem acesso a dado"). Nenhuma outra função dos nove schemas passa a ser executável por `anon` ou `authenticated`.
+- **Tipo do ativo (3.4):** o `tipo` do ativo **não pode mudar enquanto houver vínculo vigente** (composição, posse). A trava entra na fatia 3.4, com teste.
+- **Chassi único não se enfraquece para a importação passar.** A restrição `unique` do chassi (e as de RENAVAM, número de série, `codveiculo` e documento) não será afrouxada, tornada parcial nem removida para uma carga entrar. **Duplicata vinda do Sankhya é saneamento antes de importar**: entra na lista de saneamento, é resolvida na origem ou por decisão registrada, e só então a carga acontece.
+- **Fim de linha do arquivo de tipos:** `lib/dados/tipos-do-banco.ts` é sempre LF (`.gitattributes` com `text eol=lf` e `linguist-generated`), e `scripts/db-tipos.mjs` grava o texto já normalizado. Assim a conferência de "tipos defasados" do job `banco` (Linux) compara o mesmo texto que a geração local produz. Provas: um teste Vitest (que falha sem a regra no `.gitattributes`) e a verificação local forçando CRLF no arquivo: depois de `pnpm db:tipos` ele volta a LF e o `git diff` fica limpo.
+- **Quem decidiu:** Alexandre.
