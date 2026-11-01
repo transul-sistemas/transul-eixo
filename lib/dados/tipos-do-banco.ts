@@ -8,13 +8,177 @@ export type Database = {
   
   "config": {
           Tables: {
-            [_ in never]: never
+            "camada_de_status": {
+                  Row: {
+                    "codigo": string,"nome": string,"prioridade": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "codigo": string,"nome": string,"prioridade": number
+                  }
+                  Update: {
+                    "codigo"?: string,"nome"?: string,"prioridade"?: number
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"carroceria": {
+                  Row: {
+                    "criado_em": string,"excluido_em": string | null,"excluido_por": string | null,"id": string,"motivo_da_exclusao": string | null,"nome": string,"versao": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "criado_em"?: string,"excluido_em"?: string | null,"excluido_por"?: string | null,"id"?: string,"motivo_da_exclusao"?: string | null,"nome": string,"versao"?: number
+                  }
+                  Update: {
+                    "criado_em"?: string,"excluido_em"?: string | null,"excluido_por"?: string | null,"id"?: string,"motivo_da_exclusao"?: string | null,"nome"?: string,"versao"?: number
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"configuracao_de_conjunto": {
+                  Row: {
+                    "codigo": string,"com_dolly": boolean | null,"eixos_por_implemento": number | null,"nome": string,"quantidade_de_implementos": number | null,"versao": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "codigo": string,"com_dolly"?: boolean | null,"eixos_por_implemento"?: number | null,"nome": string,"quantidade_de_implementos"?: number | null,"versao"?: number
+                  }
+                  Update: {
+                    "codigo"?: string,"com_dolly"?: boolean | null,"eixos_por_implemento"?: number | null,"nome"?: string,"quantidade_de_implementos"?: number | null,"versao"?: number
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"filial": {
+                  Row: {
+                    "criado_em": string,"excluido_em": string | null,"excluido_por": string | null,"id": string,"motivo_da_exclusao": string | null,"nome": string,"versao": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "criado_em"?: string,"excluido_em"?: string | null,"excluido_por"?: string | null,"id"?: string,"motivo_da_exclusao"?: string | null,"nome": string,"versao"?: number
+                  }
+                  Update: {
+                    "criado_em"?: string,"excluido_em"?: string | null,"excluido_por"?: string | null,"id"?: string,"motivo_da_exclusao"?: string | null,"nome"?: string,"versao"?: number
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"garagem": {
+                  Row: {
+                    "criado_em": string,"excluido_em": string | null,"excluido_por": string | null,"filial_id": string,"id": string,"motivo_da_exclusao": string | null,"nome": string,"versao": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "criado_em"?: string,"excluido_em"?: string | null,"excluido_por"?: string | null,"filial_id": string,"id"?: string,"motivo_da_exclusao"?: string | null,"nome": string,"versao"?: number
+                  }
+                  Update: {
+                    "criado_em"?: string,"excluido_em"?: string | null,"excluido_por"?: string | null,"filial_id"?: string,"id"?: string,"motivo_da_exclusao"?: string | null,"nome"?: string,"versao"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "garagem_filial_id_fkey"
+      columns: ["filial_id"]
+isOneToOne: false
+      referencedRelation: "filial"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"marca": {
+                  Row: {
+                    "criado_em": string,"excluido_em": string | null,"excluido_por": string | null,"id": string,"motivo_da_exclusao": string | null,"nome": string,"versao": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "criado_em"?: string,"excluido_em"?: string | null,"excluido_por"?: string | null,"id"?: string,"motivo_da_exclusao"?: string | null,"nome": string,"versao"?: number
+                  }
+                  Update: {
+                    "criado_em"?: string,"excluido_em"?: string | null,"excluido_por"?: string | null,"id"?: string,"motivo_da_exclusao"?: string | null,"nome"?: string,"versao"?: number
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"modelo": {
+                  Row: {
+                    "carroceria_padrao_id": string | null,"criado_em": string,"eixos": number | null,"excluido_em": string | null,"excluido_por": string | null,"id": string,"marca_id": string,"motivo_da_exclusao": string | null,"nome": string,"versao": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "carroceria_padrao_id"?: string | null,"criado_em"?: string,"eixos"?: number | null,"excluido_em"?: string | null,"excluido_por"?: string | null,"id"?: string,"marca_id": string,"motivo_da_exclusao"?: string | null,"nome": string,"versao"?: number
+                  }
+                  Update: {
+                    "carroceria_padrao_id"?: string | null,"criado_em"?: string,"eixos"?: number | null,"excluido_em"?: string | null,"excluido_por"?: string | null,"id"?: string,"marca_id"?: string,"motivo_da_exclusao"?: string | null,"nome"?: string,"versao"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "modelo_carroceria_padrao_id_fkey"
+      columns: ["carroceria_padrao_id"]
+isOneToOne: false
+      referencedRelation: "carroceria"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "modelo_marca_id_fkey"
+      columns: ["marca_id"]
+isOneToOne: false
+      referencedRelation: "marca"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"nomenclatura_de_conjunto": {
+                  Row: {
+                    "carroceria_id": string,"configuracao": string,"nome": string,"versao": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "carroceria_id": string,"configuracao": string,"nome": string,"versao"?: number
+                  }
+                  Update: {
+                    "carroceria_id"?: string,"configuracao"?: string,"nome"?: string,"versao"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "nomenclatura_de_conjunto_carroceria_id_fkey"
+      columns: ["carroceria_id"]
+isOneToOne: false
+      referencedRelation: "carroceria"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "nomenclatura_de_conjunto_configuracao_fkey"
+      columns: ["configuracao"]
+isOneToOne: false
+      referencedRelation: "configuracao_de_conjunto"
+      referencedColumns: ["codigo"]
+    }
+                  ]
+                },"status": {
+                  Row: {
+                    "aplica_a": string,"baixada": boolean,"camada": string,"chip": string,"nome": string,"ordem": number,"sigla": string,"tipos_validos": (Database["nucleo"]['Enums']["tipo_de_ativo"])[],"versao": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "aplica_a": string,"baixada": boolean,"camada": string,"chip": string,"nome": string,"ordem": number,"sigla": string,"tipos_validos": (Database["nucleo"]['Enums']["tipo_de_ativo"])[],"versao"?: number
+                  }
+                  Update: {
+                    "aplica_a"?: string,"baixada"?: boolean,"camada"?: string,"chip"?: string,"nome"?: string,"ordem"?: number,"sigla"?: string,"tipos_validos"?: (Database["nucleo"]['Enums']["tipo_de_ativo"])[],"versao"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "status_camada_fkey"
+      columns: ["camada"]
+isOneToOne: false
+      referencedRelation: "camada_de_status"
+      referencedColumns: ["codigo"]
+    }
+                  ]
+                }
           }
           Views: {
             [_ in never]: never
           }
           Functions: {
-            [_ in never]: never
+            "nome_do_conjunto":
+{ Args: { "p_carroceria_id": string,"p_eixos": number,"p_quantidade_de_implementos": number }; Returns: string
+                           }
           }
           Enums: {
             "origem_da_data": "derivada"|"observada"|"informada"
@@ -44,14 +208,14 @@ export type Database = {
           Tables: {
             "ativo": {
                   Row: {
-                    "chassi": string | null,"codveiculo": number | null,"criado_em": string,"excluido_em": string | null,"excluido_por": string | null,"id": string,"motivo_da_exclusao": string | null,"numero_de_serie": string | null,"renavam": string | null,"tipo": Database["nucleo"]['Enums']["tipo_de_ativo"],"versao": number
+                    "carroceria_id": string | null,"chassi": string | null,"codveiculo": number | null,"criado_em": string,"excluido_em": string | null,"excluido_por": string | null,"id": string,"modelo_id": string | null,"motivo_da_exclusao": string | null,"numero_de_serie": string | null,"renavam": string | null,"tipo": Database["nucleo"]['Enums']["tipo_de_ativo"],"versao": number
                   }
                   ComputedFields: never
                   Insert: {
-                    "chassi"?: string | null,"codveiculo"?: number | null,"criado_em"?: string,"excluido_em"?: string | null,"excluido_por"?: string | null,"id"?: string,"motivo_da_exclusao"?: string | null,"numero_de_serie"?: string | null,"renavam"?: string | null,"tipo": Database["nucleo"]['Enums']["tipo_de_ativo"],"versao"?: number
+                    "carroceria_id"?: string | null,"chassi"?: string | null,"codveiculo"?: number | null,"criado_em"?: string,"excluido_em"?: string | null,"excluido_por"?: string | null,"id"?: string,"modelo_id"?: string | null,"motivo_da_exclusao"?: string | null,"numero_de_serie"?: string | null,"renavam"?: string | null,"tipo": Database["nucleo"]['Enums']["tipo_de_ativo"],"versao"?: number
                   }
                   Update: {
-                    "chassi"?: string | null,"codveiculo"?: number | null,"criado_em"?: string,"excluido_em"?: string | null,"excluido_por"?: string | null,"id"?: string,"motivo_da_exclusao"?: string | null,"numero_de_serie"?: string | null,"renavam"?: string | null,"tipo"?: Database["nucleo"]['Enums']["tipo_de_ativo"],"versao"?: number
+                    "carroceria_id"?: string | null,"chassi"?: string | null,"codveiculo"?: number | null,"criado_em"?: string,"excluido_em"?: string | null,"excluido_por"?: string | null,"id"?: string,"modelo_id"?: string | null,"motivo_da_exclusao"?: string | null,"numero_de_serie"?: string | null,"renavam"?: string | null,"tipo"?: Database["nucleo"]['Enums']["tipo_de_ativo"],"versao"?: number
                   }
                   Relationships: [
                     
