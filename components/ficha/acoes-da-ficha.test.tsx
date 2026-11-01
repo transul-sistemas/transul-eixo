@@ -6,9 +6,10 @@ const acoes = [
   { id: "frota.receber-placa", nome: "Receber placa" },
   { id: "frota.disponibilizar-ao-operacional", nome: "Disponibilizar ao Operacional" },
 ];
-const com = (lista = acoes) => renderToStaticMarkup(<AcoesDaFicha acoes={lista} />);
+const com = (lista = acoes) =>
+  renderToStaticMarkup(<AcoesDaFicha acoes={lista} aoAbrir={() => {}} />);
 
-describe("<AcoesDaFicha>: ações do momento, desligadas até os assistentes (2D)", () => {
+describe("<AcoesDaFicha>: as ações do momento abrem o assistente", () => {
   it("sem ações não desenha nada", () => {
     expect(com([])).toBe("");
   });
@@ -20,28 +21,29 @@ describe("<AcoesDaFicha>: ações do momento, desligadas até os assistentes (2D
     expect([...html.matchAll(/<button/g)]).toHaveLength(2);
   });
 
-  it("está desligada com aria-disabled (o foco continua nela), nunca disabled", () => {
+  it("os botões estão ligados: nada de aria-disabled, disabled nem a mensagem antiga", () => {
     const html = com();
-    expect([...html.matchAll(/aria-disabled="true"/g)]).toHaveLength(2);
+    expect(html).not.toContain("aria-disabled");
     expect(html).not.toMatch(/<button[^>]*\sdisabled(=|\s|>)/);
+    expect(html).not.toContain("chega com os assistentes");
+    expect(html).not.toContain("opacity-60");
+    expect(html).not.toContain("cursor-not-allowed");
     expect(html).toMatch(/<button[^>]*type="button"/);
   });
 
-  it("a mensagem 'chega com os assistentes (2D)' fica visível e ligada a cada botão", () => {
+  it("cada botão avisa que abre um painel (aria-haspopup=dialog)", () => {
     const html = com();
-    expect([...html.matchAll(/chega com os assistentes \(2D\)/g)].length).toBeGreaterThanOrEqual(1);
-    expect(html).toMatch(/aria-describedby="[^"]+"/);
-    const ids = [...html.matchAll(/aria-describedby="([^"]+)"/g)].map((m) => m[1]);
-    for (const id of ids) expect(html).toContain(`id="${id}"`);
+    expect([...html.matchAll(/aria-haspopup="dialog"/g)]).toHaveLength(2);
   });
 
-  it("o grupo tem nome e os botões têm alvo de pelo menos 24 px", () => {
+  it("o grupo tem nome e os botões têm alvo de pelo menos 32 px (44 px no celular)", () => {
     const html = com();
     expect(html).toMatch(/role="group"[^>]*aria-label="Ações do momento"/);
-    expect(html).toMatch(/<button[^>]*class="[^"]*min-h-(?:6|8|9|10)/);
+    expect(html).toMatch(/<button[^>]*class="[^"]*min-h-8/);
+    expect(html).toMatch(/<button[^>]*class="[^"]*max-sm:min-h-11/);
   });
 
-  it("não executa nada ao clicar: nenhum botão leva link nem formulário", () => {
+  it("não vira link nem formulário: o clique abre o assistente pela tela", () => {
     const html = com();
     expect(html).not.toContain("href=");
     expect(html).not.toContain("<form");

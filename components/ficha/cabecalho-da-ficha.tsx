@@ -30,7 +30,12 @@ export function CabecalhoDaFicha({
           <div className="flex flex-wrap items-center gap-2">{situacao}</div>
         </div>
         {acoes ? (
-          <div role="group" aria-label="Ações" className="flex flex-wrap items-center gap-2">
+          <div
+            role="group"
+            aria-label="Ações"
+            // Sem ações (o conteúdo não desenha nada), o espaço some junto.
+            className="flex flex-wrap items-center gap-2 empty:hidden"
+          >
             {acoes}
           </div>
         ) : null}

@@ -27,7 +27,7 @@ export async function abrirOAssistente(page: Page, consulta = "") {
 export async function preencherIdentificacao(page: Page, nome = "Pneu 295/80") {
   await campoNome(page).fill(nome);
   await assistente(page).getByLabel("Categoria", { exact: true }).selectOption("pneu");
-  await assistente(page).getByRole("button", { name: "Avançar" }).click();
+  await assistente(page).getByRole("button", { name: "Continuar" }).click();
 }
 
 /** Preenche o passo 2 (quantidade e valor) e avança. */
@@ -36,13 +36,13 @@ export async function preencherValores(page: Page) {
   const valor = assistente(page).getByLabel("Valor", { exact: true });
   await valor.click();
   await page.keyboard.type("12345"); // R$ 123,45
-  await assistente(page).getByRole("button", { name: "Avançar" }).click();
+  await assistente(page).getByRole("button", { name: "Continuar" }).click();
 }
 
 /** Do começo até o passo de conferir, com dados válidos. */
 export async function irAteConferir(page: Page, nome = "Pneu 295/80") {
   await preencherIdentificacao(page, nome);
   await preencherValores(page);
-  await assistente(page).getByRole("button", { name: "Avançar" }).click(); // observação (opcional)
+  await assistente(page).getByRole("button", { name: "Continuar" }).click(); // observação (opcional)
   await expect(assistente(page).getByRole("button", { name: "Cadastrar item" })).toBeVisible();
 }

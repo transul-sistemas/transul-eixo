@@ -14,10 +14,10 @@ export interface ItemDaBusca {
   readonly rotulo: string;
   readonly icone: string;
   readonly cor: ModuloDoCatalogo["cor"];
-  /** Telas e modos têm rota; ação não. */
+  /** Telas e modos têm rota; a ação pronta leva à tela com o assistente aberto. */
   readonly rota?: string;
   readonly emBreve: boolean;
-  /** Falso para a ação reservada: aparece, mas ainda não executa. */
+  /** Falso para a ação ainda reservada (em breve): aparece, mas não executa. */
   readonly disponivel: boolean;
 }
 
@@ -82,6 +82,7 @@ function itemDaAcao(acao: AcaoDoCatalogo, catalogo: readonly ModuloDoCatalogo[])
     rotulo: `${modulo?.nome ?? acao.modulo} › ${acao.nome}`,
     icone: acao.icone,
     cor: modulo?.cor ?? "acao",
+    ...(acao.rota !== undefined ? { rota: acao.rota } : {}),
     emBreve: acao.estado === "em-breve",
     disponivel: acao.estado === "pronto",
   };

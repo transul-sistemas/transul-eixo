@@ -663,3 +663,34 @@ Modelo de entrada:
 
 - **Decisão:** `supabase` entra como devDependency e roda com `pnpm exec supabase`; nada instalado globalmente.
 - **Motivo:** mesma versão na máquina e no CI.
+
+## 31/10/2026 — e2e que "morre" com código 143 (SIGTERM)
+
+- **Decisão:** ao rodar e2e na máquina de desenvolvimento, o `timeout` do comando precisa ser maior que (testes × tempo do teste); em teste que deve falhar (vermelho do TDD), usar `--timeout=6000`. Um e2e que sai com `code=143` sem resultado foi encerrado de fora, não falhou.
+- **Motivo:** o 143 veio do `timeout` do próprio comando (250 s) encerrando o Playwright enquanto 23 testes esperavam, cada um, o tempo inteiro por um botão que ainda não existia. Com o build de produção, um projeto por vez e `--timeout=6000`, os 23 terminam em ~5 min e falham pelo motivo certo. Havia também um `vitest` órfão de uma rodada anterior, encerrado à mão.
+- **Quem decidiu:** Alexandre (limite de duas rodadas de investigação).
+
+## 31/10/2026 — Interface dos assistentes da Frota (Checkpoint 3 da 2D)
+
+- **Decisão:** um hospedeiro único (`assistentes-da-frota.tsx`) abre Cadastrar placa, Receber placa e Disponibilizar ao Operacional pela URL (`?assistente=`), na lista, na ficha e pelo Ctrl+K. Sem `?placa=`, Receber e Disponibilizar perguntam a placa ("Escolher a placa") e, sem placa possível, dizem por quê. O hospedeiro fica sempre montado na ficha e guarda o que o assistente aberto recebeu: depois de gravar, a tela atualiza por baixo (o pedido some, a placa muda de situação) e a mensagem "concluído" não pode desaparecer junto.
+- **Decisão:** o "+" (marca, modelo, gestor, operação, CR, filial, garagem) usa o mesmo `Assistente` em variante lateral, com o esquema `esquemaItemDeCatalogo` do servidor. O "+" do filho (modelo, CR, garagem) fica desligado, com o motivo, até o pai ser escolhido; trocar o pai limpa o filho.
+- **Decisão:** nos dois lados a validação é o mesmo esquema Zod; o resolvedor traduz os problemas para o formato do React Hook Form (`errosDoResolvedor`). Sem tipo escolhido, o resto do cadastro é conferido como um tipo qualquer, para os erros de placa e RENAVAM aparecerem junto com o do tipo.
+- **Decisão:** o Zod só roda as regras cruzadas (pendências resolvidas, posse) depois que os campos básicos passam; por isso "Confira o que chegou" aparece antes de "Resolva todas as pendências".
+- **Decisão:** alvos de toque seguem o motor: 44 px abaixo de 640 px (celular, mini como folha de baixo) e 32 a 36 px no tablet (mini como painel à direita).
+- **Quem decidiu:** plano da 2D aprovado por Alexandre; detalhes de tela, desta entrega (aguarda aprovação do visual).
+
+## 31/10/2026 — Visual refinado dos assistentes da Frota (prévia, terceira tela)
+
+- **Decisão:** a partir de 1024 px o assistente é um painel centralizado (até 1040 px de largura e 90% da altura, altura fixa por assistente para não pular entre passos, cantos de 16 px, fundo escurecido); abaixo disso continua em tela cheia. Dentro dele, coluna de leitura de até 620 px com o resumo ao vivo de 300 px à direita (escondido no passo Conferir). Campos em duas colunas a partir de 640 px; o "+" é um botão de 40 px com borda tracejada azul e fundo suave (só tokens: `--acao` e `--acao-suave`).
+- **Decisão:** rodapé fixo com "Rascunho salvo às HH:MM" à esquerda, "Voltar" e "Continuar" à direita (antes "Avançar"); no último passo, o botão leva o nome da própria ação, o mesmo do título (regra do CLAUDE.md): "Cadastrar placa", "Receber placa" e "Disponibilizar ao Operacional" (corrigido depois de uma primeira versão com "Gravar placa"); a mensagem de conclusão continua a de cada um ("Placa cadastrada.", "Placa recebida.", "Placa disponibilizada ao Operacional.").
+- **Decisão:** o passo Conferir tem duas colunas a partir de 1024 px, "Dados" e "O que vai acontecer" (situação, gestor, operação e CR, evento com data e hora, conjunto afetado), em texto simples; abaixo disso, uma coluna. O "Ver resumo" da gaveta some no Conferir.
+- **Decisão:** o ano da placa passa para o passo Identificação (tipo e ano lado a lado) e o passo Veículo fica com marca e modelo; a versão do esquema do rascunho sobe para 2 (rascunho antigo é descartado com aviso).
+- **Decisão:** conjunto misto de carrocerias é bloqueado (`lib/dominio/conjunto.ts`, no esquema do recebimento, na tela e no servidor). Enquanto a tabela de nomenclatura não existe, a carroceria sai do nome do modelo sem a configuração de eixos ("Sider 3 eixos" e "Sider 2 eixos" são Sider). Os conjuntos de exemplo passaram a respeitar a regra. Receber placa, passo Conjunto: busca, lista com rolagem interna de altura fixa, contador "N escolhidos" e os escolhidos fixados acima da lista.
+- **Decisão:** o React Hook Form descarta o erro aninhado de um campo-pai que não está registrado (`conjunto`); por isso o passo lista também as folhas (`conjunto.implementoIds`, `conjunto.cavaloId`). Quem criar passo com campo aninhado faz o mesmo.
+- **Decisão:** o cabeçalho da ficha esconde o grupo "Ações" quando não há ação a mostrar (`empty:hidden`).
+- **Quem decidiu:** Alexandre (prévia e regras); aguarda aprovação do visual.
+
+## 31/10/2026 — Telas de resultado dos assistentes centralizadas
+
+- **Decisão:** concluído, erro (inclusive "placa já cadastrada"), e conflito passam a ser uma tela de resultado que substitui o formulário dentro do painel: conteúdo e botões centralizados, em uma coluna de leitura de até 480 px. O erro tem "Tentar de novo" (só quando é falha de gravação) e "Voltar ao formulário" (volta ao último passo, com o que foi digitado); o conflito tem "Revisar com os dados atuais"; o concluído tem "Fechar". Antes o erro e o conflito apareciam como uma linha no rodapé, colada à esquerda.
+- **Quem decidiu:** Alexandre.

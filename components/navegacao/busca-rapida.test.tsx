@@ -40,22 +40,21 @@ describe("<ConteudoDaBusca>: campo e lista", () => {
     expect(html).toContain('role="group" aria-label="Telas"');
     expect(html).toContain('role="group" aria-label="Ações"');
     expect(html).toContain('id="lista-opcao-0"');
-    expect(html.match(/role="option"/g)?.length).toBe(2);
+    expect(html.match(/role="option"/g)?.length).toBe(3); // a tela e as duas ações que combinam
     expect(html.match(/aria-selected="true"/g)).toHaveLength(1);
-    expect(html.match(/aria-selected="false"/g)).toHaveLength(1);
+    expect(html.match(/aria-selected="false"/g)).toHaveLength(2);
   });
   it("cada opção mostra o caminho Módulo › Tela", () => {
     expect(html).toContain("Frota › Placas");
     expect(html).toContain("Frota › Receber placa");
   });
   it("tela em breve leva a etiqueta Em breve", () => {
-    expect(html).toContain("Em breve");
+    expect(conteudo("carteira")).toContain("Em breve");
   });
-  it("a ação reservada aparece desabilitada, para não ser tomada por uma ação que funciona", () => {
-    expect(html).toMatch(
-      /aria-disabled="true"[^>]*>(?:(?!<div role="option")[\s\S])*Receber placa/,
-    );
-    expect(html.match(/aria-disabled="true"/g)).toHaveLength(1);
+  it("a ação pronta aparece habilitada e sem a etiqueta Em breve", () => {
+    expect(html).toContain("Frota › Cadastrar placa");
+    expect(html).not.toContain("Em breve");
+    expect(html).not.toContain('aria-disabled="true"');
   });
   it("a opção ativa muda com o índice", () => {
     const outra = conteudo("placa", { ativo: 1 });

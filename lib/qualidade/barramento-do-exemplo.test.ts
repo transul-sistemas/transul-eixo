@@ -135,6 +135,52 @@ describe("barramento: o navegador nunca importa a fonte de dados", () => {
     ]);
     expect(acusados).toEqual(["components/ficha/d/index.tsx"]);
   });
+  it("um client pode importar uma Server Action ('use server') que usa a fonte: ela não vai para o navegador", () => {
+    expect(
+      clienteImportaAFonte([
+        { caminho: "components/a.tsx", texto: `${CLIENTE}import { gravar } from "./acoes";` },
+        {
+          caminho: "components/acoes.ts",
+          texto: '"use server";\nimport { escrever } from "@/lib/dados/fonte";',
+        },
+      ]),
+    ).toEqual([]);
+  });
+  it("a Server Action também pode vir depois de uma cadeia, com comentário antes da diretiva", () => {
+    expect(
+      clienteImportaAFonte([
+        { caminho: "components/a.tsx", texto: `${CLIENTE}import { X } from "./b";` },
+        { caminho: "components/b.tsx", texto: 'import { gravar } from "./acoes";' },
+        {
+          caminho: "components/acoes.ts",
+          texto: '// ações\n"use server";\nimport { f } from "@/lib/dados/fonte-de-exemplo";',
+        },
+      ]),
+    ).toEqual([]);
+  });
+  it("a Server Action não libera o client que importa a fonte direto", () => {
+    expect(
+      clienteImportaAFonte([
+        {
+          caminho: "components/a.tsx",
+          texto: `${CLIENTE}import { g } from "./acoes";\nimport { f } from "@/lib/dados/fonte";`,
+        },
+        { caminho: "components/acoes.ts", texto: '"use server";\nexport const g = 1;' },
+      ]),
+    ).toEqual(["components/a.tsx"]);
+  });
+  it("arquivo comum (sem a diretiva) que importa a fonte continua acusado, mesmo ao lado de uma Server Action", () => {
+    expect(
+      clienteImportaAFonte([
+        { caminho: "components/a.tsx", texto: `${CLIENTE}import { x } from "./comum";` },
+        { caminho: "components/comum.ts", texto: 'import { f } from "@/lib/dados/fonte";' },
+        {
+          caminho: "components/acoes.ts",
+          texto: '"use server";\nimport { f } from "@/lib/dados/fonte";',
+        },
+      ]),
+    ).toEqual(["components/comum.ts"]);
+  });
   it("não acusa o arquivo de servidor que importa a fonte mas nenhum client alcança", () => {
     expect(
       clienteImportaAFonte([

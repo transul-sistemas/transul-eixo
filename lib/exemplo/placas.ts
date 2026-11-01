@@ -1,3 +1,4 @@
+import { carroceriaDoModelo } from "@/lib/dominio/conjunto";
 import { SIGLAS } from "@/lib/dominio/status";
 import { CASOS_FEIOS } from "./casos-feios";
 import { somarDias } from "./datas";
@@ -142,12 +143,21 @@ export function placasDeExemplo(hoje: string): PlacaDeExemplo[] {
     .filter((i) => tipoDe(i) !== "cavalo" && tipoDe(i) !== "implemento")
     .map((i) => comCasoFeio(base(i, hoje), hoje));
 
+  // Conjunto misto de carrocerias é bloqueado: cada cavalo só recebe implementos da mesma carroceria.
+  const carroceriaDoCavalo = new Map<string, string>();
   const implementos = indices
     .filter((i) => tipoDe(i) === "implemento")
     .map((i, k) => {
-      const cavalo = k < IMPLEMENTOS_COM_CAVALO ? cavalos[k % cavalos.length] : undefined;
       const placa = base(i, hoje);
+      const carroceria = carroceriaDoModelo(placa.modelo);
+      const cavalo =
+        k < IMPLEMENTOS_COM_CAVALO
+          ? Array.from({ length: cavalos.length }, (_, d) => cavalos[(k + d) % cavalos.length])
+              .filter((c) => c !== undefined)
+              .find((c) => (carroceriaDoCavalo.get(c.id) ?? carroceria) === carroceria)
+          : undefined;
       if (cavalo) {
+        carroceriaDoCavalo.set(cavalo.id, carroceria);
         cavalo.conjunto.implementoIds.push(placa.id);
         return comCasoFeio(
           {

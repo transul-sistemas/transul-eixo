@@ -134,32 +134,26 @@ test.describe("busca rápida: encontrar e abrir", () => {
   });
 });
 
-test.describe("busca rápida: ações reservadas para a 2D", () => {
-  test("Receber placa aparece em Ações, em breve, e ainda não executa", async ({ page }) => {
+test.describe("busca rápida: ações da Frota", () => {
+  test("Receber placa aparece em Ações, executa e abre o assistente", async ({ page }) => {
     await abrirHidratada(page, "/inicio/tarefas");
     await abrirBusca(page);
     await campo(page).fill("receber placa");
     const acoes = janela(page).getByRole("group", { name: "Ações" });
     await expect(acoes).toBeVisible();
     const acao = acoes.getByRole("option", { name: /Frota › Receber placa/ });
-    await expect(acao).toHaveAttribute("aria-disabled", "true");
-    await expect(acao).toContainText("Em breve");
-    const antes = page.url();
+    await expect(acao).not.toHaveAttribute("aria-disabled", "true");
+    await expect(acao).not.toContainText("Em breve");
     await page.keyboard.press("Enter");
-    await expect(janela(page)).toBeVisible();
-    await expect(
-      janela(page)
-        .getByRole("status")
-        .filter({ hasText: "Esta ação chega com os assistentes (entrega 2D)." }),
-    ).toBeVisible();
-    expect(page.url()).toBe(antes);
+    await expect(page).toHaveURL(/\/frota\/placas\?.*assistente=receber-placa/);
+    await expect(page.getByRole("dialog", { name: "Receber placa" })).toBeVisible();
   });
 
-  test("Disponibilizar ao Operacional também está reservada", async ({ page }) => {
+  test("Disponibilizar ao Operacional também está ligada", async ({ page }) => {
     await abrirHidratada(page, "/inicio/tarefas");
     await abrirBusca(page);
     await campo(page).fill("disponibilizar");
-    await expect(opcao(page, /Frota › Disponibilizar ao Operacional/)).toHaveAttribute(
+    await expect(opcao(page, /Frota › Disponibilizar ao Operacional/)).not.toHaveAttribute(
       "aria-disabled",
       "true",
     );
