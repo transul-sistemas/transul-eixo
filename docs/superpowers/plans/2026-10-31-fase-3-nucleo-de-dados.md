@@ -361,7 +361,7 @@ Registro de direção, sem código. O texto completo está em `docs/decisoes.md`
 
 **Backlog (depois do Acompanhamento da Frota; prioridade alta de negócio):** "Conformidade da composição (peso por eixo, CMT, AET por rota, dimensões)". Todo limite legal só entra com fonte, vigência e conferência no texto consolidado da Resolução CONTRAN 882/2021 e alterações. Fora da Fase 3.
 
-**Princípios:** massas em kg e distâncias em mm, sempre inteiros; "pendente" ou "inconclusivo" quando faltar dado, nunca presumir; capacidade do fabricante separada do limite legal.
+**Princípios:** massas em kg e distâncias em mm, sempre inteiros; "pendente" ou "inconclusivo" quando faltar dado, nunca presumir; capacidade do fabricante separada do limite legal; **existir no catálogo não é autorização de circular**.
 
 **O Sankhya descreve a peça; o Eixo entende o conjunto.** O modelo da placa no Sankhya ("Carreta 3 eixos") é a descrição da peça e não é tratado como errado. O Eixo entende o que a peça forma: dois implementos de 3 eixos, sem dolly, são um bitrezão.
 
@@ -369,7 +369,8 @@ Registro de direção, sem código. O texto completo está em `docs/decisoes.md`
 - Entram no ativo: **carroceria** (do catálogo do Eixo; a coluna `carroceria_id` já nasce na 3.1), **eixos por implemento** (inteiro), **tara**, **PBT** e **CMT** (kg, inteiros). Cada campo tem a sua origem (do Sankhya, derivada, informada, correção local ou pendente). O `eixos` do modelo (3.1) continua só como sugestão; o valor do implemento mora no ativo.
 - **Na importação** (fora desta fase, regra já registrada): os eixos saem do **texto do modelo**, com origem **derivada**; texto ambíguo ou sem eixos vira **pendente**.
 - **Fila de exceções** para a equipe revisar, no lugar de uma planilha de todos os implementos: entra o que **não foi deduzido** e o caso em que o **texto do modelo discorda do catálogo**.
-- **Catálogo de carrocerias é do Eixo:** seis de partida, ampliado com a confirmação da equipe; a lista de uns 40 do estudo serve só de candidatos. **A confirmar:** se o tipo de carroceria vem em campo próprio do Sankhya ou só dentro do nome do modelo (conferir com a lista de nomes de modelo dos implementos).
+- **Catálogo de carrocerias: curto, do Eixo.** Seis de partida, ampliado só com a confirmação da equipe e pelo "+". Subtipo e finalidade (tanque para leite, silo para cimento, graneleiro de alumínio) são **campo opcional**. Nome de conjunto nunca entra no nome do implemento. Equipamento fixo em caminhão (poliguindaste, munck, betoneira) e peças (linha de eixos) ficam fora até a TranSul dizer que opera. A lista de uns 100 itens do estudo serve só de candidatos: **não se semeia**. **A carroceria vale para implemento e caminhão** (cavalo, equipamento e apoio não têm). **A confirmar:** se o tipo de carroceria vem em campo próprio do Sankhya ou só dentro do nome do modelo (conferir com a lista de nomes de modelo dos implementos).
+- **Configuração de tração (cavalo e caminhão): catálogo próprio**, semeado com 4x2, 6x2, 6x4, 8x2 e 8x4, ampliável pelo "+". As variações de eixo (elevável, autodirecional, auxiliar, suspenso, tandem e tridem, rodagem e suspensão) ficam para o módulo de conformidade: agora só o número de eixos. Proposta de fatia (a confirmar): a tabela e o campo no ativo entram na 3.7.
 
 **Acréscimo à fatia 3.4 (nome do conjunto):** o nome olha a **estrutura** (número de implementos, dolly e eixos por implemento), **não o total de eixos**. As colunas da regra em `config.configuracao_de_conjunto` (nulas na 3.1) são `quantidade_de_implementos`, `com_dolly` e `eixos_por_implemento`. **A confirmar com a equipe** (fontes: sites do setor, não a norma):
 
