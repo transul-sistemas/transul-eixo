@@ -8,6 +8,13 @@ Modelo de entrada:
 
 ---
 
+## 01/11/2026 — Higiene do EIXO_DADOS: todo plano é liberado por padrão
+
+- **Decisão:** o teste de higiene que barra a variável `EIXO_DADOS` fora dos arquivos liberados passa a usar uma regra, em `lib/qualidade/eixo-dados.ts` (`liberadoParaEixoDados`): **qualquer arquivo em `docs/superpowers/plans/` é liberado por padrão**, inclusive plano que ainda não existe. A **lista fixa continua valendo para o resto do repositório** (`.env.development`, `.env.example`, `playwright.config.ts`, `docs/decisoes.md`, o código da fonte de exemplo, os arquivos `.test.ts(x)` e o workflow do pull request). Os planos saíram da lista fixa. Um caminho que sobe de pasta (`..`) não herda a liberação.
+- **Motivo:** cada plano novo que cita a variável (o modo banco e o modo exemplo aparecem em quase todos) derrubava o check `app` do pull request, e a lista fixa pedia um commit só para liberar o arquivo (foi o que aconteceu com o PR do plano da Fase 3). Plano é documentação de trabalho; o risco que a regra protege (a variável chegar à Vercel, à produção ou a código) continua barrado.
+- **Teste antes, vendo falhar:** o bloco novo de `lib/qualidade/eixo-dados.test.ts` falhou por a regra não existir; depois da regra, 12 testes passam. Provas: um plano novo que cita a variável passa; o mesmo texto em outro lugar de `docs/` (glossário, projeto técnico, `specs/`, `sankhya/`), em arquivo de código ou configuração (`app/`, `components/`, `lib/dominio/`, `supabase/`, `scripts/`, `vercel.json`, `.env.production`) e em caminho com `..` continua barrado. Conferido também no repositório, com arquivos temporários: o plano novo passou e os outros dois reprovaram.
+- **Quem decidiu:** Alexandre.
+
 ## 31/10/2026 — Robustez da 2C: medição limpa, fechar o painel sem sair do sistema e backlog do topo
 
 - **Medição pós-#15 (produção da `main`, 1 worker, um projeto por vez):** 1366: **442 passaram, 1 pulada, 0 falhas, 0 instáveis** (6,6 min); 1920: **434 passaram, 9 puladas, 0 falhas, 0 instáveis** (6,3 min). As puladas são testes de um só projeto (o aceite de 9 linhas só no 1366, o de 14 só no 1920).
