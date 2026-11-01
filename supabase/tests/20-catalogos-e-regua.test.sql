@@ -5,7 +5,7 @@ begin;
 
 \ir apoio/como_usuario.psql
 
-select plan(47);
+select plan(51);
 
 create temp table ids (nome text primary key, id uuid not null);
 
@@ -265,7 +265,7 @@ select ok(
   'eixos é opcional: nulo quer dizer "não se sabe"'
 );
 
--- ---- ativo: carroceria obrigatória no implemento e proibida nos demais; modelo opcional ----
+-- ---- ativo: carroceria obrigatória no implemento, opcional no caminhão, proibida nos demais; modelo opcional ----
 select throws_ok(
   $$insert into nucleo.ativo (tipo, renavam) values ('implemento', pg_temp.renavam(11))$$,
   '23514',
@@ -283,6 +283,29 @@ select lives_ok(
   $$insert into nucleo.ativo (tipo, renavam, carroceria_id)
     values ('implemento', pg_temp.renavam(13), (select id from config.carroceria where nome = 'Sider'))$$,
   'implemento com carroceria passa'
+);
+select lives_ok(
+  $$insert into nucleo.ativo (tipo, renavam, carroceria_id)
+    values ('caminhao', pg_temp.renavam(16), (select id from config.carroceria where nome = 'Baú frigorífico'))$$,
+  'caminhão com carroceria passa'
+);
+select lives_ok(
+  $$insert into nucleo.ativo (tipo, renavam) values ('caminhao', pg_temp.renavam(17))$$,
+  'caminhão sem carroceria passa (a equipe ainda vai informar)'
+);
+select throws_ok(
+  $$insert into nucleo.ativo (tipo, renavam, carroceria_id)
+    values ('equipamento', pg_temp.renavam(18), (select id from config.carroceria where nome = 'Sider'))$$,
+  '23514',
+  null,
+  'carroceria em equipamento é recusada'
+);
+select throws_ok(
+  $$insert into nucleo.ativo (tipo, renavam, carroceria_id)
+    values ('apoio', pg_temp.renavam(19), (select id from config.carroceria where nome = 'Sider'))$$,
+  '23514',
+  null,
+  'carroceria em apoio é recusada'
 );
 select lives_ok(
   $$insert into nucleo.ativo (tipo, renavam) values ('cavalo', pg_temp.renavam(14))$$,

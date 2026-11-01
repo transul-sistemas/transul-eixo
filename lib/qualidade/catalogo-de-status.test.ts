@@ -9,6 +9,7 @@ import {
 } from "@/lib/dominio/status";
 import { NOMES_DOS_CHIPS } from "@/lib/dominio/status";
 import type { Status } from "@/lib/visual/tons";
+import { blocoDoSeed, lerSiglasDoSeed } from "@/lib/qualidade/catalogo-de-status";
 
 // O seed de produção (supabase/seed.sql) é a fonte do catálogo no banco; o glossário e o espelho em
 // TypeScript (lib/dominio/status.ts) precisam dizer a mesma coisa. Este teste lê o texto do seed
@@ -17,42 +18,8 @@ import type { Status } from "@/lib/visual/tons";
 const seed = readFileSync("supabase/seed.sql", "utf-8");
 const glossario = readFileSync("docs/glossario.md", "utf-8");
 
-/** O trecho de um `insert into <tabela>` até o `;`. */
-function bloco(tabela: string): string {
-  const achado = new RegExp(`insert\\s+into\\s+${tabela.replace(".", "\\.")}[\\s\\S]*?;`, "i").exec(
-    seed,
-  );
-  return achado?.[0] ?? "";
-}
-
-interface LinhaDoSeed {
-  sigla: string;
-  nome: string;
-  chip: string;
-  camada: string;
-  baixada: boolean;
-  aplicaA: string;
-  tipos: string[];
-  ordem: number;
-}
-
-function siglasDoSeed(): LinhaDoSeed[] {
-  const linhas = [
-    ...bloco("config.status").matchAll(
-      /\('([^']+)',\s*'([^']+)',\s*'([^']+)',\s*'([^']+)',\s*(true|false),\s*'([^']+)',\s*array\[([^\]]*)\]::nucleo\.tipo_de_ativo\[\],\s*(\d+)\)/g,
-    ),
-  ];
-  return linhas.map((m) => ({
-    sigla: m[1] as string,
-    nome: m[2] as string,
-    chip: m[3] as string,
-    camada: m[4] as string,
-    baixada: m[5] === "true",
-    aplicaA: m[6] as string,
-    tipos: [...(m[7] as string).matchAll(/'([^']+)'/g)].map((t) => t[1] as string),
-    ordem: Number(m[8]),
-  }));
-}
+const bloco = (tabela: string) => blocoDoSeed(seed, tabela);
+const siglasDoSeed = () => lerSiglasDoSeed(seed);
 
 describe("seed.sql: a régua de 26 siglas", () => {
   const linhas = siglasDoSeed();

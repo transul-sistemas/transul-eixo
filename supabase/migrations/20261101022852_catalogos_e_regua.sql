@@ -7,7 +7,7 @@
 --  * Nomes de conjunto: configurações (simples, bi, bitrezão, rodo) e a tabela carroceria x
 --    configuração. A regra que reconhece cada configuração (pela estrutura: implementos, dolly e
 --    eixos por implemento) é da equipe e fica vazia até a fatia 3.4: nada é inventado aqui.
---  * `nucleo.ativo` ganha `carroceria_id` (só implemento) e `modelo_id` (opcional).
+--  * `nucleo.ativo` ganha `carroceria_id` (implemento e caminhão) e `modelo_id` (opcional).
 --
 -- Tudo nasce fechado: RLS ligado e nenhum grant (as permissões do "+" são da 3.6).
 
@@ -219,13 +219,15 @@ $$;
 revoke all on function config.nome_do_conjunto(uuid, integer, integer) from public;
 
 -- ---------------------------------------------------------------------------------------------
--- O ativo: carroceria (só implemento) e modelo (opcional)
+-- O ativo: carroceria (implemento e caminhão) e modelo (opcional)
 -- ---------------------------------------------------------------------------------------------
 alter table nucleo.ativo add column carroceria_id uuid references config.carroceria (id);
 alter table nucleo.ativo add column modelo_id uuid references config.modelo (id);
-alter table nucleo.ativo add constraint ativo_carroceria_do_implemento
-  check ((tipo = 'implemento') = (carroceria_id is not null));
+alter table nucleo.ativo add constraint ativo_carroceria_obrigatoria_no_implemento
+  check (tipo <> 'implemento' or carroceria_id is not null);
+alter table nucleo.ativo add constraint ativo_carroceria_so_em_implemento_e_caminhao
+  check (tipo in ('implemento', 'caminhao') or carroceria_id is null);
 create index ativo_carroceria_id_idx on nucleo.ativo (carroceria_id);
 create index ativo_modelo_id_idx on nucleo.ativo (modelo_id);
-comment on column nucleo.ativo.carroceria_id is 'Obrigatória no implemento e proibida nos demais tipos.';
+comment on column nucleo.ativo.carroceria_id is 'Obrigatória no implemento, opcional no caminhão e proibida em cavalo, equipamento e apoio.';
 comment on column nucleo.ativo.modelo_id is 'Opcional: a v1 tem cavalos com modelo "A DEFINIR".';
