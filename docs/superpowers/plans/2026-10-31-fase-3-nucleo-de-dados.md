@@ -33,7 +33,7 @@
 | 5 | CR: guardar o `CODCENCUS` numérico (único, chave do Sankhya) **e** o código de exibição; a tela deixa de impor `CR-0000` | Seções 2 e 7 |
 | 6 | Vigência em `timestamptz`. **Proibir buraco** em posse e em gestor da carteira (placa sem dono ou sem responsável); nos demais vínculos, só alerta | Seção 2 |
 | 7 | Régua por camadas de prioridade: baixada, fora da frota, impedida, sem motorista, atividade. Implemento engatado usa a atividade do cavalo. Manutenção de implemento engatado deixa o conjunto impedido ou o gestor desengata | Seção 4 |
-| 8 | Nomenclatura de conjuntos configurável e renomeável, com os nomes da seção 3. Conjunto misto é bloqueado. Bitrem e bitrezão se distinguem por eixos (em geral 7 e 9; **confirmar com a equipe**) | Seção 3 |
+| 8 | Nomenclatura de conjuntos configurável e renomeável, com os nomes da seção 3. Conjunto misto é bloqueado. Bitrem e bitrezão se distinguem por eixos (**atualizado em 01/11: pela estrutura, não pelo total de eixos**; antes: em geral 7 e 9; **confirmar com a equipe**) | Seção 3 |
 | 9 | Correção local de campo vale na hora, com motivo; a alçada entra depois | Seção 5 |
 | 10 | Usuário criado no Studio; o Eixo só vincula à Pessoa. O wizard "Novo usuário" fica para depois | Seção 6 |
 | 11 | O Operacional tem **escopo por filial** já agora | Seção 6 |
@@ -41,7 +41,7 @@
 | 13 | e2e em modo banco **noturno e sob demanda**, não a cada pull request | Seção 9 |
 | 14 | **Apêndice A aprovado** em 31/10 (marcas por sigla, tipos válidos e divergências do catálogo): DOp, ETv e SMo valem para composição, caminhão **e cavalo sozinho**; ACe, CAr, CAn, ETc, ADe e DEs, só para conjunto com implemento e para caminhão; **implemento sozinho nunca entra em etapa de operação**; MAc, MAt e MAv são só de conjunto; MAN e SIN são de solo; FOg e FEr ficam em "sem motorista". SDo e DOC: documento vencido de implemento engatado deixa o conjunto impedido (mesma regra da manutenção) | Seção 4; Apêndice A |
 | 15 | Aceito o rascunho: FOg e FEr em "sem motorista"; PÁT e VAz em atividade; **cavalo impedido deixa o conjunto impedido**; implemento engatado herda **só** a atividade do cavalo | Seção 4 |
-| 16 | Eixos do implemento no **modelo**, com correção local. A regra de rodotrem e bitrezão é da equipe: **não será inventada**, e a fatia 3.4 só começa depois da resposta de Alexandre | Seção 3 |
+| 16 | Eixos do implemento no **modelo**, com correção local. A regra de reconhecimento (agora pela estrutura: ver a seção "Conformidade da composição" (01/11/2026)) é da equipe: **não será inventada**, e a fatia 3.4 só começa depois da resposta de Alexandre | Seção 3 |
 | 17 | **Ajuste herdado da 2D aceito:** Disponibilizar ao Operacional passa a ler o catálogo (sigla de origem em PÁT, VAz ou ETv **e** tipo em `tipos_validos` de DOp), com a mensagem "Só cavalo ou caminhão podem ser disponibilizados ao Operacional" | Seção 4 (ajuste herdado); fatia 3.1 |
 | 18 | **Efeito aceito:** o apoio **perde o SMo** na situação inicial quando o catálogo substituir a tabela provisória | Seção 4; fatia 3.1 |
 | 19 | **VAz (pendência de Alexandre):** até ele decidir, vale o rascunho do Apêndice A (só cavalo e caminhão); o catálogo é configurável e a decisão final entra na fatia 3.1 | Apêndice A; fatia 3.1 |
@@ -251,10 +251,10 @@ Tamanhos: P (cerca de um dia), M (dois a três), G (quatro ou mais). Cada fatia 
 | 3.1 | Catálogos e régua | `config.*`: tipo, carroceria, marca, modelo (com `eixos`), filial, garagem, `status` (26 siglas, camadas, `aplica_a`, `tipos_validos`), configurações e nomes de conjunto (sem regra de reconhecimento). **Usa o Apêndice A conferido por Alexandre.** Inclui o ajuste herdado da 2D (Disponibilizar por tipo de ativo) | As 26 siglas conferidas contra o glossário e contra o Apêndice A aprovado; os 12 nomes de conjunto; seed de produção | M |
 | 3.2 | Chaves: pessoa e ativo (**absorvida pela 3.0**) | Feita na 3.0, com a aprovação de 01/11. O que sobra dela é o acesso ao documento completo (`pessoas.ver_documento`), que é da 3.6 | Provada na 3.0 | - |
 | 3.3 | Vigências, CR e operação | posse, gestor (sem buraco), `cr` (com `codcencus`), `cr_do_ativo`, custódia, transferência; visão `operacao_do_ativo` e alerta de CR sem operação; `lib/dominio/vigencia.ts`; fim do `CR-0000` no Zod | Sobreposição recusada em cada tabela; buraco recusado em posse e gestor e alertado nos demais; limites `[)`; operação engatada, solta e sem operação | G |
-| 3.4 | Conjuntos | composição, `operacao_na_saida_id`, meta, `nome_do_conjunto`, conjunto misto. **Só começa depois que Alexandre responder a regra de bitrem, bitrezão e rodotrem**. Trava nova: **o `tipo` do ativo não pode mudar enquanto houver vínculo vigente** (composição ou posse), com teste | Misto, quarto implemento, meta fora do cavalo e os nomes testados com a regra da equipe | M |
+| 3.4 | Conjuntos | composição, `operacao_na_saida_id`, meta, `nome_do_conjunto`, conjunto misto. **Só começa depois que Alexandre responder a regra de bitrem, bitrezão e rodotrem**, que olha a estrutura (número de implementos, dolly e eixos por implemento): ver a seção "Conformidade da composição" (01/11/2026). Trava nova: **o `tipo` do ativo não pode mudar enquanto houver vínculo vigente** (composição ou posse), com teste | Misto, quarto implemento, meta fora do cavalo e os nomes testados com a regra da equipe | M |
 | 3.5 | Eventos e situação | `evento_de_status` por camada, `situacao_em`, `situacao_atual`, impedimento do implemento engatado e do cavalo, linha do tempo. **Usa o Apêndice A conferido** | Camadas, atividade do cavalo, impedimento do conjunto por manutenção **e por SDo ou DOC** do implemento engatado, e só-inserção provados | M |
 | 3.6 | Acesso no banco | usuário, perfil, permissão, escopos (`tudo`, `minha_carteira`, `operacao`, `filial`), RLS em todas as tabelas; pgTAP da matriz por perfil; **lista de exceções do teste de catálogo** com as funções de validação dos `CHECK` que o papel que grava passa a executar, **cada uma com a justificativa registrada** | Cada perfil vê só o que deve; `anon` não vê nada; política sem teste falha | G |
-| 3.7 | Cadastro com origem e escritas | correção de campo, auditoria, idempotência, versão e as funções atômicas (cadastrar ativo, disponibilizar, receber, desengatar, criar item) | Conflito de versão, chave de envio repetida e atomicidade provados | G |
+| 3.7 | Cadastro com origem e escritas | correção de campo, **carroceria, eixos por implemento, tara, PBT e CMT no ativo, cada campo com origem (ver a seção "Conformidade da composição" (01/11/2026))**, auditoria, idempotência, versão e as funções atômicas (cadastrar ativo, disponibilizar, receber, desengatar, criar item) | Conflito de versão, chave de envio repetida e atomicidade provados | G |
 | 3.8 | Login real (Supabase Auth) e vínculo | Auth local, login e logout, `sessao.ts`, `exigirPermissao()` assíncrono, menu pela tabela, `vincular_usuario` | Um usuário de cada perfil entra e vê só o que deve (e2e); Server Actions sem perfil fixo | G |
 | 3.9 | Fonte do banco | `fonte-do-banco`, teste de contrato, lista por função SQL, seed de exemplo, modo `EIXO_DADOS=banco`, workflow de e2e em modo banco (agendado à noite e manual) | Contrato igual nas duas fontes; e2e de lista, ficha e assistentes passando em modo banco | G |
 | 3.10 | Fechamento | Revisão independente, e2e completo, advisors, `docs/decisoes.md`, glossário, PR final | Critério de pronto da fase | M |
@@ -354,6 +354,36 @@ Ordem: o acesso no banco (3.6) vem antes das escritas (3.7), que precisam da RLS
 | 3.1-D | Colunas do ativo | `modelo_id` e `carroceria_id` na 3.1; `ano`, valor FIPE e valor manual na 3.7, com origem por campo |
 | 3.1-E | Marca, modelo, filial e garagem | Sem semente de produção: entram pelo "+" e, mais tarde, pela ponte |
 | 3.1-F | `eixos` do modelo | Opcional; exigido só quando a 3.4 precisar nomear o conjunto |
+
+## Conformidade da composição e a correção sobre o Sankhya (registrado em 01/11/2026)
+
+Registro de direção, sem código. O texto completo está em `docs/decisoes.md` (entrada de 01/11/2026); aqui ficam os acréscimos às fatias.
+
+**Backlog (depois do Acompanhamento da Frota; prioridade alta de negócio):** "Conformidade da composição (peso por eixo, CMT, AET por rota, dimensões)". Todo limite legal só entra com fonte, vigência e conferência no texto consolidado da Resolução CONTRAN 882/2021 e alterações. Fora da Fase 3.
+
+**Princípios:** massas em kg e distâncias em mm, sempre inteiros; "pendente" ou "inconclusivo" quando faltar dado, nunca presumir; capacidade do fabricante separada do limite legal; **existir no catálogo não é autorização de circular**.
+
+**O Sankhya descreve a peça; o Eixo entende o conjunto.** O modelo da placa no Sankhya ("Carreta 3 eixos") é a descrição da peça e não é tratado como errado. O Eixo entende o que a peça forma: dois implementos de 3 eixos, sem dolly, são um bitrezão.
+
+**Acréscimo à fatia 3.7 (cadastro com origem por campo):**
+- Entram no ativo: **carroceria** (do catálogo do Eixo; a coluna `carroceria_id` já nasce na 3.1), **eixos por implemento** (inteiro), **tara**, **PBT** e **CMT** (kg, inteiros). Cada campo tem a sua origem (do Sankhya, derivada, informada, correção local ou pendente). O `eixos` do modelo (3.1) continua só como sugestão; o valor do implemento mora no ativo.
+- **Na importação** (fora desta fase, regra já registrada): os eixos saem do **texto do modelo**, com origem **derivada**; texto ambíguo ou sem eixos vira **pendente**.
+- **Fila de exceções** para a equipe revisar, no lugar de uma planilha de todos os implementos: entra o que **não foi deduzido** e o caso em que o **texto do modelo discorda do catálogo**.
+- **Catálogo de carrocerias: curto, do Eixo.** Seis de partida, ampliado só com a confirmação da equipe e pelo "+". Subtipo e finalidade (tanque para leite, silo para cimento, graneleiro de alumínio) são **campo opcional**. Nome de conjunto nunca entra no nome do implemento. Equipamento fixo em caminhão (poliguindaste, munck, betoneira) e peças (linha de eixos) ficam fora até a TranSul dizer que opera. A lista de uns 100 itens do estudo serve só de candidatos: **não se semeia**. **A carroceria vale para implemento e caminhão** (cavalo, equipamento e apoio não têm). **A confirmar:** se o tipo de carroceria vem em campo próprio do Sankhya ou só dentro do nome do modelo (conferir com a lista de nomes de modelo dos implementos).
+- **Configuração de tração (cavalo e caminhão): catálogo próprio**, semeado com 4x2, 6x2, 6x4, 8x2 e 8x4, ampliável pelo "+". As variações de eixo (elevável, autodirecional, auxiliar, suspenso, tandem e tridem, rodagem e suspensão) ficam para o módulo de conformidade: agora só o número de eixos. Proposta de fatia (a confirmar): a tabela e o campo no ativo entram na 3.7.
+
+**Acréscimo à fatia 3.4 (nome do conjunto):** o nome olha a **estrutura** (número de implementos, dolly e eixos por implemento), **não o total de eixos**. As colunas da regra em `config.configuracao_de_conjunto` (nulas na 3.1) são `quantidade_de_implementos`, `com_dolly` e `eixos_por_implemento`. **A confirmar com a equipe** (fontes: sites do setor, não a norma):
+
+| Ponto | Leitura provisória, a confirmar |
+| --- | --- |
+| Bitrem | Dois semirreboques de 2 eixos, engatados direto |
+| Bitrezão | Dois semirreboques de 3 eixos |
+| Rodotrem | Com dolly entre os dois |
+| Dolly | Quantos eixos tem |
+| Eixos diferentes | Se existem conjuntos com implementos de eixos diferentes |
+| Treminhão ou tritrem | Se a TranSul opera |
+
+**AET:** tipo de documento no motor único de documentos (vencimento e alerta), sem criar módulo.
 
 ## Armadilhas que nascem aqui
 
