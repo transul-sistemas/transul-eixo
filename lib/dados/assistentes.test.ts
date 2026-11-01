@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { podeDisponibilizar, type PedidoDeTransferencia } from "@/lib/dominio/custodia";
+import {
+  podeDisponibilizar,
+  SIGLAS_QUE_PODEM_DISPONIBILIZAR,
+  type PedidoDeTransferencia,
+} from "@/lib/dominio/custodia";
 import { criarArmazem } from "@/lib/exemplo/armazem";
 import { placasDeExemplo } from "@/lib/exemplo/placas";
 import { dadosDosAssistentes } from "./assistentes";
@@ -7,10 +11,12 @@ import { escritaDoArmazem } from "./fonte-de-exemplo";
 
 const HOJE = "2026-10-31";
 const base = placasDeExemplo(HOJE);
-const noPatio = base.find((p) => podeDisponibilizar(p.sigla))!;
+const emOrigem = (sigla: string) =>
+  (SIGLAS_QUE_PODEM_DISPONIBILIZAR as readonly string[]).includes(sigla);
+const noPatio = base.find((p) => podeDisponibilizar(p.sigla, p.tipo))!;
+const carretaNoPatio = base.find((p) => p.tipo === "implemento" && emOrigem(p.sigla))!;
 const comPedido = base.find(
-  (p) =>
-    !podeDisponibilizar(p.sigla) && p.tipo === "cavalo" && p.sigla !== "VND" && p.sigla !== "SUC",
+  (p) => !emOrigem(p.sigla) && p.tipo === "cavalo" && p.sigla !== "VND" && p.sigla !== "SUC",
 )!;
 const pedido: PedidoDeTransferencia = {
   id: "ped-1",
@@ -71,6 +77,31 @@ describe("dadosDosAssistentes: o que a tela entrega ao assistente", () => {
     const placas = d.placasParaDisponibilizar.map((p) => p.placa);
     expect([...placas].sort()).toEqual(placas);
     expect(placas).toContain(noPatio.placa);
+  });
+
+  it("para disponibilizar sem placa, a carreta, o apoio e o equipamento nunca entram na lista (nem no Ctrl+K)", async () => {
+    const d = await dadosDosAssistentes(fonte(), {
+      hoje: HOJE,
+      assistente: "disponibilizar",
+      placa: null,
+    });
+    const placas = d.placasParaDisponibilizar.map((p) => p.placa);
+    expect(placas).not.toContain(carretaNoPatio.placa);
+    for (const p of base.filter((x) => x.tipo !== "cavalo" && x.tipo !== "caminhao")) {
+      expect(placas, p.placa).not.toContain(p.placa);
+    }
+  });
+
+  it("para disponibilizar sem placa, todo cavalo e caminhão em PÁT, VAz ou ETv aparece", async () => {
+    const d = await dadosDosAssistentes(fonte(), {
+      hoje: HOJE,
+      assistente: "disponibilizar",
+      placa: null,
+    });
+    const placas = new Set(d.placasParaDisponibilizar.map((p) => p.placa));
+    for (const p of base.filter((x) => podeDisponibilizar(x.sigla, x.tipo))) {
+      expect(placas.has(p.placa), p.placa).toBe(true);
+    }
   });
 
   it("para disponibilizar com a placa, traz a placa com a versão", async () => {

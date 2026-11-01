@@ -3,6 +3,7 @@ import { SIGLAS, SIGLAS_DE_BAIXA } from "../status";
 import {
   esquemaCadastrarPlaca,
   esquemaDisponibilizacao,
+  esquemaDisponibilizacaoDe,
   esquemaEnvioDeTransferencia,
   esquemaItemDeCatalogo,
   esquemaRecebimento,
@@ -205,8 +206,11 @@ describe("esquemaCadastrarPlaca: posse e situação inicial", () => {
       expect(campos({ ...cavalo, situacaoInicial }), situacaoInicial).toContain("situacaoInicial");
     }
   });
-  it("sem motorista (SMo) só para quem tem motorista: cavalo, caminhão e apoio", () => {
+  it("sem motorista (SMo) só para cavalo e caminhão; o apoio perde o SMo (efeito aceito em 01/11/2026)", () => {
     expect(esquema.safeParse({ ...cavalo, situacaoInicial: "SMo" }).success).toBe(true);
+    expect(campos({ ...implemento, tipo: "apoio", situacaoInicial: "SMo" })).toContain(
+      "situacaoInicial",
+    );
     expect(campos({ ...implemento, situacaoInicial: "SMo" })).toContain("situacaoInicial");
     expect(campos({ ...implemento, tipo: "equipamento", situacaoInicial: "SMo" })).toContain(
       "situacaoInicial",
@@ -491,5 +495,83 @@ describe("esquemaRecebimento: conjunto misto de carrocerias é bloqueado e o cav
         conjunto: { cavaloId: null, implementoIds: ["imp-1", "imp-2"] },
       }).success,
     ).toBe(true);
+  });
+});
+
+describe("siglasIniciaisDoTipo: sai do catálogo da régua", () => {
+  it("o apoio não tem SMo; cavalo e caminhão têm", () => {
+    expect(siglasIniciaisDoTipo("apoio")).not.toContain("SMo");
+    expect(siglasIniciaisDoTipo("cavalo")).toContain("SMo");
+    expect(siglasIniciaisDoTipo("caminhao")).toContain("SMo");
+    expect(siglasIniciaisDoTipo("implemento")).not.toContain("SMo");
+    expect(siglasIniciaisDoTipo("equipamento")).not.toContain("SMo");
+  });
+  it("nenhuma sigla de operação, folga ou férias entra na situação inicial", () => {
+    for (const tipo of ["cavalo", "implemento", "equipamento", "caminhao", "apoio"] as const) {
+      const lista = siglasIniciaisDoTipo(tipo);
+      for (const s of [
+        "DOp",
+        "ACe",
+        "CAr",
+        "CAn",
+        "ETc",
+        "ADe",
+        "DEs",
+        "ETv",
+        "VAz",
+        "FOg",
+        "FEr",
+        "MAc",
+        "MAt",
+        "MAv",
+      ]) {
+        expect(lista, `${tipo} ${s}`).not.toContain(s);
+      }
+    }
+  });
+});
+
+describe("esquemaDisponibilizacaoDe: o tipo e a situação da placa decidem", () => {
+  const entrada = { placa: "AAA0A00", filialId: "filial-a", versaoDaPlaca: 1 };
+  it("cavalo e caminhão em PÁT, VAz ou ETv passam", () => {
+    for (const tipo of ["cavalo", "caminhao"] as const) {
+      for (const sigla of ["PÁT", "VAz", "ETv"] as const) {
+        expect(
+          esquemaDisponibilizacaoDe({ tipo, sigla }).safeParse(entrada).success,
+          `${tipo} ${sigla}`,
+        ).toBe(true);
+      }
+    }
+  });
+  it("carreta em PÁT é recusada, com a mensagem do tipo no campo da placa", () => {
+    const r = esquemaDisponibilizacaoDe({ tipo: "implemento", sigla: "PÁT" }).safeParse(entrada);
+    expect(r.success).toBe(false);
+    if (!r.success) {
+      const achado = r.error.issues.find((i) => i.path.join(".") === "placa");
+      expect(achado?.message).toContain(
+        "Só cavalo ou caminhão podem ser disponibilizados ao Operacional",
+      );
+    }
+  });
+  it("apoio e equipamento também; cavalo fora de PÁT, VAz e ETv recebe a mensagem da situação", () => {
+    for (const tipo of ["apoio", "equipamento"] as const) {
+      expect(
+        esquemaDisponibilizacaoDe({ tipo, sigla: "PÁT" }).safeParse(entrada).success,
+        tipo,
+      ).toBe(false);
+    }
+    const r = esquemaDisponibilizacaoDe({ tipo: "cavalo", sigla: "MAN" }).safeParse(entrada);
+    expect(r.success).toBe(false);
+    if (!r.success)
+      expect(r.error.issues.map((i) => i.message).join(" ")).toMatch(/PÁT, VAz ou ETv/);
+  });
+  it("o esquema base continua conferindo placa, filial e versão", () => {
+    expect(esquemaDisponibilizacao.safeParse({ ...entrada, filialId: "" }).success).toBe(false);
+    expect(
+      esquemaDisponibilizacaoDe({ tipo: "cavalo", sigla: "PÁT" }).safeParse({
+        ...entrada,
+        versaoDaPlaca: 0,
+      }).success,
+    ).toBe(false);
   });
 });
