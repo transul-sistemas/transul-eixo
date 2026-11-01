@@ -2,7 +2,7 @@
 
 > **Para quem for executar:** use a skill `executing-plans` (ou `subagent-driven-development`) fatia por fatia. Cada fatia tem teste antes, checkpoint e pull request próprio. **Este documento é só plano: nenhum código, nenhuma migration e nenhum comando de banco foram escritos ou rodados.**
 
-**Status:** versão 5, 31/10/2026. Plano **aprovado por Alexandre**, com as respostas registradas na seção "Decisões de Alexandre"; o **Apêndice A está aprovado**. Duas coisas continuam abertas: a **regra de reconhecimento de bitrem, bitrezão e rodotrem**, que é da equipe (a **fatia 3.4 só começa depois que Alexandre responder**) e a **decisão final sobre o VAz** (até lá vale o rascunho do apêndice; entra na fatia 3.1). O PR #21 (assistentes da Frota) já foi mesclado; a execução começa pela fatia 3.0.
+**Status:** versão 6, 01/11/2026. Plano **aprovado por Alexandre**, com as respostas registradas na seção "Decisões de Alexandre"; o **Apêndice A está aprovado**. A **fatia 3.0 foi aprovada no checkpoint e está no PR #23** (o alicerce **e** as chaves de pessoa, ativo e placa). **A 3.1 só começa depois que Alexandre avisar que a 3.0 está MERGED**; a seção "Fatia 3.1 em detalhes" lista o que ele precisa decidir antes. Continuam abertas: a **regra de reconhecimento de bitrem, bitrezão e rodotrem** (da equipe; trava a 3.4) e a **decisão final sobre o VAz** (entra na 3.1).
 **Base:** `main` em `a476641`. O PR #21 ainda está aberto: `FonteDeEscrita`, `lib/dados/escrita.ts`, as Server Actions de `app/(sistema)/frota/placas/acoes.ts` e `lib/dominio/conjunto.ts` só existem nele.
 **Modelo:** o mais forte nesta fase (constraints, `EXCLUDE`, triggers de regra e RLS no banco; a tela só espelha).
 
@@ -45,6 +45,8 @@
 | 17 | **Ajuste herdado da 2D aceito:** Disponibilizar ao Operacional passa a ler o catálogo (sigla de origem em PÁT, VAz ou ETv **e** tipo em `tipos_validos` de DOp), com a mensagem "Só cavalo ou caminhão podem ser disponibilizados ao Operacional" | Seção 4 (ajuste herdado); fatia 3.1 |
 | 18 | **Efeito aceito:** o apoio **perde o SMo** na situação inicial quando o catálogo substituir a tabela provisória | Seção 4; fatia 3.1 |
 | 19 | **VAz (pendência de Alexandre):** até ele decidir, vale o rascunho do Apêndice A (só cavalo e caminhão); o catálogo é configurável e a decisão final entra na fatia 3.1 | Apêndice A; fatia 3.1 |
+| 20 | **Checkpoint 3.0 aprovado (01/11):** as chaves de pessoa, ativo e placa ficam na 3.0 (a 3.2 do plano foi absorvida); privilégio por função (`revoke ... from public`) em vez de `alter default privileges`; máscara do documento por gatilho; `SECURITY DEFINER` em duas funções (`registrar_mudanca` e `consumir_envio`); equipamento com número de série obrigatório e sem RENAVAM; **a restrição de chassi único não se enfraquece para a importação passar** (duplicata do Sankhya é saneamento antes de importar) | Fatia 3.0 (PR #23); `docs/decisoes.md` |
+| 21 | **Tipo do ativo imutável com vínculo vigente (3.4):** o `tipo` não pode mudar enquanto houver composição ou posse vigente. **Funções de validação dos `CHECK` (3.6):** entram numa lista de exceções do teste de catálogo, **cada uma com a justificativa registrada** | Fatias 3.4 e 3.6 |
 
 **Interpretações aceitas:** a operação do implemento solto é a do cavalo no desengate, gravada **uma vez**, no fechamento da composição; o custo fica no CR da própria placa; só a atividade é herdada; o CPF fica em duas tabelas mais uma visão mascarada.
 
@@ -244,13 +246,13 @@ Tamanhos: P (cerca de um dia), M (dois a três), G (quatro ou mais). Cada fatia 
 
 | # | Fatia | Entrega | Pronto quando | Tam. |
 | --- | --- | --- | --- | --- |
-| 3.0 | Alicerce do banco | Ver a seção "Fatia 3.0 em detalhes" | `supabase test db` roda com os auxiliares; toda tabela sem RLS falha | M |
+| 3.0 | Alicerce do banco **e chaves de pessoa, ativo e placa** (aprovada em 01/11; PR #23) | Ver a seção "Fatia 3.0 em detalhes". Inclui `pessoa` e `pessoa_documento`, `ativo` (RENAVAM e série) e `placa_do_ativo` | `supabase test db` com 89 testes; `db lint` limpo; toda tabela sem RLS falha | M |
 | 3.1 | Catálogos e régua | `config.*`: tipo, carroceria, marca, modelo (com `eixos`), filial, garagem, `status` (26 siglas, camadas, `aplica_a`, `tipos_validos`), configurações e nomes de conjunto (sem regra de reconhecimento). **Usa o Apêndice A conferido por Alexandre.** Inclui o ajuste herdado da 2D (Disponibilizar por tipo de ativo) | As 26 siglas conferidas contra o glossário e contra o Apêndice A aprovado; os 12 nomes de conjunto; seed de produção | M |
-| 3.2 | Chaves: pessoa e ativo | `pessoa` e `pessoa_documento` (CPF/CNPJ), `ativo` (RENAVAM e série), `placa_do_ativo`, validações e imutabilidade | Duplicata, dígito errado, placa em dois ativos e chave editada recusados; CPF mascarado provado | M |
+| 3.2 | Chaves: pessoa e ativo (**absorvida pela 3.0**) | Feita na 3.0, com a aprovação de 01/11. O que sobra dela é o acesso ao documento completo (`pessoas.ver_documento`), que é da 3.6 | Provada na 3.0 | - |
 | 3.3 | Vigências, CR e operação | posse, gestor (sem buraco), `cr` (com `codcencus`), `cr_do_ativo`, custódia, transferência; visão `operacao_do_ativo` e alerta de CR sem operação; `lib/dominio/vigencia.ts`; fim do `CR-0000` no Zod | Sobreposição recusada em cada tabela; buraco recusado em posse e gestor e alertado nos demais; limites `[)`; operação engatada, solta e sem operação | G |
-| 3.4 | Conjuntos | composição, `operacao_na_saida_id`, meta, `nome_do_conjunto`, conjunto misto. **Só começa depois que Alexandre responder a regra de bitrem, bitrezão e rodotrem** | Misto, quarto implemento, meta fora do cavalo e os nomes testados com a regra da equipe | M |
+| 3.4 | Conjuntos | composição, `operacao_na_saida_id`, meta, `nome_do_conjunto`, conjunto misto. **Só começa depois que Alexandre responder a regra de bitrem, bitrezão e rodotrem**. Trava nova: **o `tipo` do ativo não pode mudar enquanto houver vínculo vigente** (composição ou posse), com teste | Misto, quarto implemento, meta fora do cavalo e os nomes testados com a regra da equipe | M |
 | 3.5 | Eventos e situação | `evento_de_status` por camada, `situacao_em`, `situacao_atual`, impedimento do implemento engatado e do cavalo, linha do tempo. **Usa o Apêndice A conferido** | Camadas, atividade do cavalo, impedimento do conjunto por manutenção **e por SDo ou DOC** do implemento engatado, e só-inserção provados | M |
-| 3.6 | Acesso no banco | usuário, perfil, permissão, escopos (`tudo`, `minha_carteira`, `operacao`, `filial`), RLS em todas as tabelas; pgTAP da matriz por perfil | Cada perfil vê só o que deve; `anon` não vê nada; política sem teste falha | G |
+| 3.6 | Acesso no banco | usuário, perfil, permissão, escopos (`tudo`, `minha_carteira`, `operacao`, `filial`), RLS em todas as tabelas; pgTAP da matriz por perfil; **lista de exceções do teste de catálogo** com as funções de validação dos `CHECK` que o papel que grava passa a executar, **cada uma com a justificativa registrada** | Cada perfil vê só o que deve; `anon` não vê nada; política sem teste falha | G |
 | 3.7 | Cadastro com origem e escritas | correção de campo, auditoria, idempotência, versão e as funções atômicas (cadastrar ativo, disponibilizar, receber, desengatar, criar item) | Conflito de versão, chave de envio repetida e atomicidade provados | G |
 | 3.8 | Login real (Supabase Auth) e vínculo | Auth local, login e logout, `sessao.ts`, `exigirPermissao()` assíncrono, menu pela tabela, `vincular_usuario` | Um usuário de cada perfil entra e vê só o que deve (e2e); Server Actions sem perfil fixo | G |
 | 3.9 | Fonte do banco | `fonte-do-banco`, teste de contrato, lista por função SQL, seed de exemplo, modo `EIXO_DADOS=banco`, workflow de e2e em modo banco (agendado à noite e manual) | Contrato igual nas duas fontes; e2e de lista, ficha e assistentes passando em modo banco | G |
@@ -266,7 +268,7 @@ Ordem: o acesso no banco (3.6) vem antes das escritas (3.7), que precisam da RLS
 
 ## Fatia 3.0 em detalhes
 
-**Branch:** `fase-3-0-alicerce-do-banco`, a partir da `main` atualizada (depois dos merges do #21 e do #22). Tudo no Docker local; nenhum comando de nuvem.
+**Entregue (PR #23, branch `fase-3-0-fundacao`).** A lista abaixo é a original; o que mudou na execução: as chaves de pessoa, ativo e placa entraram na 3.0; `alter default privileges` virou `revoke` por função (a forma por schema não tira o EXECUTE de PUBLIC e a global apagaria o das extensões), conferido no catálogo pelo pgTAP; o auxiliar de teste tem a extensão `.psql`; a máscara do documento é mantida por gatilho. Tudo no Docker local; nenhum comando de nuvem.
 
 **O que a fatia cria (e nada além):**
 - `supabase/migrations/<timestamp>_alicerce_do_banco.sql` (por `supabase migration new alicerce_do_banco`):
@@ -300,6 +302,56 @@ Ordem: o acesso no banco (3.6) vem antes das escritas (3.7), que precisam da RLS
 
 **Checkpoint:** parar e mostrar a lista dos objetos criados, o resultado do pgTAP (quantidade de testes), o lint do banco e o diff do `config.toml`. Sem aprovação, a 3.1 não começa.
 
+## Fatia 3.1 em detalhes
+
+**Só leitura e plano por enquanto: nenhum código e nenhuma branch empilhada.** A fatia começa quando Alexandre avisar que a 3.0 (PR #23) está MERGED, numa branch `fase-3-1-catalogos-e-regua` a partir da `main` atualizada. Tudo no Docker local.
+
+**Objetivo:** os catálogos que as fatias seguintes referenciam (carroceria, marca, modelo, filial, garagem), a régua de 26 siglas com camadas, e o ajuste do Disponibilizar por tipo de ativo. Sem tabela de vínculo ainda.
+
+**O que a fatia cria (e nada além):**
+- `supabase/migrations/<timestamp>_catalogos_e_regua.sql` (por `supabase migration new catalogos_e_regua`):
+  - `config.carroceria` (nome único; versão, exclusão lógica com índice parcial, auditoria);
+  - `config.marca` (nome único) e `config.modelo` (`marca_id` → marca, nome, `carroceria_padrao_id` → carroceria, que só sugere, e `eixos`, inteiro maior que zero, **opcional**; único por `(marca_id, nome)`);
+  - `config.filial` (nome único) e `config.garagem` (`filial_id` → filial, nome; único por `(filial_id, nome)`);
+  - `config.camada_de_status`: as cinco camadas, com prioridade de 1 (vence) a 5;
+  - `config.status`: `sigla` (chave, com acento, como PÁT), `nome`, `chip` (em atividade, impedida, atenção, pátio, fora), `camada`, `baixada` (verdadeiro só em VND e SUC), `aplica_a` (`conjunto`, `solo` ou `ambos`), `tipos_validos` (lista de `nucleo.tipo_de_ativo`, nunca vazia) e `ordem`;
+  - `config.configuracao_de_conjunto` (`simples`, `bi`, `bitrezao`, `rodo`), com as colunas da regra de reconhecimento (quantidade de implementos, eixos mínimo e máximo) **nulas**: a regra é da equipe e não é inventada;
+  - `config.nomenclatura_de_conjunto (carroceria_id, configuracao, nome)`, com chave por `(carroceria_id, configuracao)`;
+  - em `nucleo.ativo`: `carroceria_id` → carroceria, com `CHECK` (obrigatória no implemento, proibida nos demais), e `modelo_id` → modelo (opcional, porque a v1 tem cavalos com modelo "A DEFINIR").
+  - Índice em toda chave estrangeira, índice parcial nas exclusões lógicas, RLS ligado em tudo e **nenhum grant** (as permissões do "+" são da 3.6).
+- `supabase/seed.sql` (só catálogos de produção): as cinco camadas, as 26 siglas, as carrocerias aprovadas, as quatro configurações e os nomes de conjunto. **Sem** marca, modelo, filial nem garagem: entram pelo "+" e, depois, pela ponte.
+- **Ajuste herdado da 2D (código, no mesmo PR):** `podeDisponibilizar` passa a ler o catálogo (sigla de origem em PÁT, VAz ou ETv **e** tipo em `tipos_validos` de DOp), usada na ficha, no assistente, no Ctrl+K, no armazém de exemplo e no esquema, com a mensagem "Só cavalo ou caminhão podem ser disponibilizados ao Operacional". `lib/dominio/status.ts` ganha `camada`, `aplicaA` e `tiposValidos` por sigla (espelho conferido contra o `seed.sql` por teste). O apoio perde o SMo na situação inicial.
+
+**Testes antes (vendo falhar):**
+- pgTAP `supabase/tests/20-catalogos-e-regua.test.sql`:
+  1. as tabelas existem;
+  2. existem exatamente as 26 siglas;
+  3. há cinco camadas, com prioridade de 1 a 5;
+  4. `baixada` é verdadeiro só em VND e SUC;
+  5. toda sigla tem camada, chip, `aplica_a` e `tipos_validos` não vazio;
+  6. as regras do Apêndice A, sigla por sigla (DOp, ETv e SMo `ambos` para cavalo e caminhão; ACe, CAr, CAn, ETc, ADe e DEs `conjunto` para cavalo e caminhão; MAc, MAt e MAv `conjunto` para cavalo e implemento; MAN e SIN `solo`; SDo e DOC `ambos`; VAz e PÁT `ambos`; FOg e FEr na camada "sem motorista");
+  7. nenhuma sigla de operação aceita `implemento` em `tipos_validos`;
+  8. existem os 12 nomes de conjunto (3 carrocerias × 4 configurações) e as colunas da regra de reconhecimento estão **nulas**;
+  9. unicidades (carroceria, marca, modelo por marca, garagem por filial) e `eixos` maior que zero;
+  10. implemento sem carroceria falha; carroceria em cavalo falha;
+  11. versão e auditoria nos catálogos editáveis;
+  12. RLS ligado e nenhum grant nas tabelas novas (o teste de catálogo da 3.0 já cobre).
+- Vitest: as 26 siglas, nomes e chips do `seed.sql` batem com o `docs/glossario.md`; a camada, `aplica_a` e os tipos do seed batem com o Apêndice A; o espelho em TS bate com o seed; `podeDisponibilizar` por tipo (carreta solta não; cavalo sozinho e caminhão sim; apoio e equipamento não); o armazém de exemplo recusa a carreta.
+- e2e: a ficha de uma carreta em PÁT não tem o botão "Disponibilizar ao Operacional"; o Ctrl+K não lista a carreta; um cavalo em PÁT disponibiliza.
+
+**Verificação e checkpoint:** `db reset` repetido, `supabase test db`, `db lint --fail-on warning`, `pnpm db:tipos` (arquivo em LF e sem diferença), lint, tipos e Vitest, mais o e2e do Disponibilizar. Parar e mostrar: o que foi criado, os testes vistos falhando e o resultado final, e as decisões que dependam de confirmação.
+
+**O que Alexandre precisa decidir antes da 3.1 (com a minha recomendação):**
+
+| # | Decisão | Recomendação |
+| --- | --- | --- |
+| 3.1-A | **VAz:** vale só para cavalo e caminhão (rascunho do Apêndice A) ou também para implemento? | Ficar com o rascunho (só cavalo e caminhão). O catálogo é dado de seed, então mudar depois é uma migration pequena |
+| 3.1-B | **Carroceria em catálogo:** quais entram de partida? O plano tem Graneleira, Sider e Basculante (as que têm nome de conjunto). O exemplo e a v1 também citam Baú frigorífico, Prancha e Tanque. E o nome: "Graneleira" ou "Graneleiro" (o exemplo usa "Graneleiro")? | As três com nome de conjunto, mais Baú frigorífico, Prancha e Tanque sem nome de conjunto; "Graneleira", como você escreveu |
+| 3.1-C | **Nomes de conjunto sem a regra da equipe:** semear os 12 nomes com a regra vazia e deixar `nome_do_conjunto()` devolvendo "sem nome" até a 3.4? E, para as carrocerias sem nome (Baú, Prancha, Tanque), mostrar só a carroceria e a quantidade de implementos? | Sim aos dois: a regra continua da equipe, e nada é inventado |
+| 3.1-D | **Colunas do ativo além das chaves:** `modelo_id` e `carroceria_id` entram na 3.1; `ano`, valor FIPE e valor manual entram na 3.7, junto com a origem por campo? | Sim |
+| 3.1-E | **Marca, modelo, filial e garagem:** sem semente de produção, entrando pelo "+" (e, mais tarde, pela ponte com o Sankhya)? | Sim, vazias |
+| 3.1-F | **Eixos no modelo:** opcional (nulo = não se sabe), exigido só quando a 3.4 precisar nomear o conjunto? | Sim |
+
 ## Armadilhas que nascem aqui
 
 | # | Onde nasce | Como fica provada |
@@ -326,6 +378,7 @@ Ordem: o acesso no banco (3.6) vem antes das escritas (3.7), que precisam da RLS
 | # | Pendência | Quem resolve | O que trava |
 | --- | --- | --- | --- |
 | 19 | **VAz:** vale só para cavalo e caminhão (rascunho do Apêndice A) ou também para implemento? Até a decisão, vale o rascunho | Alexandre | Decisão final na fatia 3.1 (o catálogo é configurável) |
+| 3.1-B a F | As decisões da 3.1 (carrocerias de partida e o nome "Graneleira", nomes de conjunto sem a regra, colunas do ativo, catálogos vazios e eixos opcionais): ver a tabela em "Fatia 3.1 em detalhes" | Alexandre | Fatia 3.1 |
 | 16 | Regra que reconhece bitrem, bitrezão e rodotrem (eixos, quantidade de implementos e tipo de engate; em geral 7 e 9 eixos, a confirmar). **Sem recomendação: não será inventada** | Equipe, por Alexandre | Fatia 3.4 |
 
 ## Apêndice A: as 26 siglas, para Alexandre conferir
