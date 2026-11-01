@@ -1,1 +1,5 @@
 * text=auto eol=lf
+
+# Arquivo gerado por `pnpm db:tipos`: sempre LF, para a conferencia de "tipos defasados" do CI (Linux)
+# comparar o mesmo texto que a geracao local produz.
+lib/dados/tipos-do-banco.ts text eol=lf linguist-generated=true

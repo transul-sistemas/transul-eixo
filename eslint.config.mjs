@@ -58,6 +58,7 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     // Fora do alcance das regras do app:
     ".agents/**",
+    "lib/dados/tipos-do-banco.ts",
     ".claude/**",
     "supabase/**",
     "workers/**",
