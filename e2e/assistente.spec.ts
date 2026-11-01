@@ -75,11 +75,11 @@ test.describe("assistente: passos, validação e resumo", () => {
     await expect(barra).toHaveAttribute("aria-valuetext", "Passo 1 de 4");
   });
 
-  test("Avançar com campo inválido não avança, mostra o erro e leva o foco ao campo", async ({
+  test("Continuar com campo inválido não avança, mostra o erro e leva o foco ao campo", async ({
     page,
   }) => {
     await abrirOAssistente(page);
-    await assistente(page).getByRole("button", { name: "Avançar" }).click();
+    await assistente(page).getByRole("button", { name: "Continuar" }).click();
     await expect(
       assistente(page).getByText("Informe o nome com pelo menos 3 letras."),
     ).toBeVisible();
@@ -198,7 +198,7 @@ test.describe("assistente: envio", () => {
     const aviso = assistente(page).getByRole("alert");
     await expect(aviso).toContainText("mudou");
     await expect(aviso).toContainText("Pneu 295/80 (versão nova)");
-    await aviso.getByRole("button", { name: "Revisar com os dados atuais" }).click();
+    await assistente(page).getByRole("button", { name: "Revisar com os dados atuais" }).click();
     await expect(assistente(page)).toContainText("Pneu 295/80"); // nada se perdeu
     await assistente(page).getByRole("button", { name: "Cadastrar item" }).click();
     await expect(assistente(page).getByTestId("assistente-concluido")).toBeVisible();

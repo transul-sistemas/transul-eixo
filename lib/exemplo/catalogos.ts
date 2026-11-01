@@ -42,3 +42,54 @@ export const FILIAIS: readonly FilialDeExemplo[] = ["A", "B", "C", "D"].map((let
   id: `filial-${letra.toLowerCase()}`,
   nome: `Filial Exemplo ${letra}`,
 }));
+
+export interface MarcaDeExemplo {
+  id: string;
+  nome: string;
+}
+export interface ModeloDeExemplo {
+  id: string;
+  nome: string;
+  marcaId: string;
+}
+export interface GaragemDeExemplo {
+  id: string;
+  nome: string;
+  filialId: string;
+}
+export interface MotoristaDeExemplo {
+  id: string;
+  nome: string;
+}
+
+export const MARCAS: readonly MarcaDeExemplo[] = [
+  { id: "marca-volvo", nome: "Volvo" },
+  { id: "marca-scania", nome: "Scania" },
+  { id: "marca-mercedes", nome: "Mercedes-Benz" },
+  { id: "marca-randon", nome: "Randon" },
+  { id: "marca-librelato", nome: "Librelato" },
+  { id: "marca-toyota", nome: "Toyota" },
+];
+
+export const MODELOS: readonly ModeloDeExemplo[] = [
+  { id: "modelo-fh-540", nome: "FH 540", marcaId: "marca-volvo" },
+  { id: "modelo-r-450", nome: "R 450", marcaId: "marca-scania" },
+  { id: "modelo-actros-2651", nome: "Actros 2651", marcaId: "marca-mercedes" },
+  { id: "modelo-atego-2426", nome: "Atego 2426", marcaId: "marca-mercedes" },
+  { id: "modelo-sider", nome: "Sider 3 eixos", marcaId: "marca-randon" },
+  { id: "modelo-graneleiro", nome: "Graneleiro 3 eixos", marcaId: "marca-librelato" },
+  { id: "modelo-hilux", nome: "Hilux", marcaId: "marca-toyota" },
+];
+
+export const GARAGENS: readonly GaragemDeExemplo[] = [
+  { id: "garagem-a1", nome: "Garagem A1", filialId: "filial-a" },
+  { id: "garagem-a2", nome: "Garagem A2", filialId: "filial-a" },
+  { id: "garagem-b1", nome: "Garagem B1", filialId: "filial-b" },
+  { id: "garagem-c1", nome: "Garagem C1", filialId: "filial-c" },
+  { id: "garagem-d1", nome: "Garagem D1", filialId: "filial-d" },
+];
+
+export const MOTORISTAS: readonly MotoristaDeExemplo[] = [1, 2, 3, 4, 5, 6].map((n) => ({
+  id: `motorista-${n}`,
+  nome: `Motorista Exemplo ${String(n).padStart(3, "0")}`,
+}));

@@ -3,7 +3,6 @@ import { agoraEmSaoPaulo, formatarData, formatarDataEHora } from "@/components/f
 import { formatarDuracao } from "@/components/formato/duracao";
 import { AbaEmBreve } from "@/components/ficha/aba-em-breve";
 import { AbasDaFichaNaUrl } from "@/components/ficha/abas-da-ficha-na-url";
-import { AcoesDaFicha } from "@/components/ficha/acoes-da-ficha";
 import { CabecalhoDaFicha } from "@/components/ficha/cabecalho-da-ficha";
 import { EventosDaFicha } from "@/components/ficha/eventos-da-ficha";
 import { FichaDaRaiz } from "@/components/ficha/ficha-da-raiz";
@@ -23,6 +22,8 @@ import { connection } from "next/server";
 import { type ParametrosDaBusca, paraParametros, simulacaoDe } from "../pagina-de-placas";
 import { PlacaNaoEncontradaNaFicha } from "./placa-nao-encontrada";
 import { VoltarALista } from "./voltar-a-lista";
+import { AssistentesDaFrota } from "../assistentes/assistentes-da-frota";
+import { carregarDadosDosAssistentes } from "../assistentes/carregar-dados";
 
 /** A janela da faixa colorida: os últimos 30 dias, até agora. */
 const DIAS_DA_JANELA = 30;
@@ -64,7 +65,16 @@ export async function FichaDaPlaca({
     }));
 
   const baixada = SIGLAS_DE_BAIXA.includes(ficha.sigla);
-  const acoes = idsDasAcoesDoMomento({ sigla: ficha.sigla })
+  const dadosDosAssistentes = await carregarDadosDosAssistentes({
+    assistente: parametros.get("assistente"),
+    placa: ficha.placa,
+    hoje,
+    carregarDaPlaca: true,
+  });
+  const acoes = idsDasAcoesDoMomento({
+    sigla: ficha.sigla,
+    pedidoPendente: dadosDosAssistentes?.pedido != null,
+  })
     .map((id) => ACOES.find((acao) => acao.id === id))
     .filter((acao) => acao !== undefined)
     .filter((acao) => podeVerAcao(perfilAtual(), acao))
@@ -135,7 +145,17 @@ export async function FichaDaPlaca({
               ? `Placa baixada: ${ficha.nomeDaSituacao} desde ${formatarData(ficha.desde)}. Fica aqui só para consulta.`
               : undefined
           }
-          acoes={acoes.length > 0 ? <AcoesDaFicha acoes={acoes} /> : undefined}
+          acoes={
+            // Sempre montado: depois de gravar, as ações do momento mudam (ou somem) e o assistente
+            // aberto não pode desmontar junto com elas.
+            dadosDosAssistentes ? (
+              <AssistentesDaFrota
+                dados={dadosDosAssistentes}
+                placaDaFicha={ficha.placa}
+                acoesDaFicha={acoes}
+              />
+            ) : undefined
+          }
         />
       }
       linhaDoTempo={

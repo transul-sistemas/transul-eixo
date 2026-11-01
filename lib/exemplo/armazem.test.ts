@@ -42,14 +42,16 @@ const entradaDeCadastro = (parcial: Record<string, unknown> = {}): EntradaCadast
     placa: "zzz-9z99",
     renavam: "00639884962",
     tipo: "cavalo",
-    marca: "Volvo",
-    modelo: "FH 540",
+    marcaId: "marca-volvo",
+    modeloId: "modelo-fh-540",
     ano: 2022,
     codigoFipe: "509035-0",
     valorFipeCentavos: 78_500_000,
     gestorId: "gestor-1",
     operacaoId: "op-1",
     crId: "cr-1001",
+    filialId: "filial-a",
+    garagemId: "garagem-a1",
     situacaoInicial: "PÁT",
     ...parcial,
   });
@@ -74,6 +76,14 @@ describe("cadastrar", () => {
       operacaoId: "op-1",
       operacao: "Operação Exemplo 1",
       crId: "cr-1001",
+      marcaId: "marca-volvo",
+      marca: "Volvo",
+      modeloId: "modelo-fh-540",
+      modelo: "FH 540",
+      filialId: "filial-a",
+      filial: "Filial Exemplo A",
+      garagemId: "garagem-a1",
+      garagem: "Garagem A1",
     });
     expect(a.obterPlaca("ZZZ9Z99")).toEqual(r.linha);
   });
@@ -87,7 +97,7 @@ describe("cadastrar", () => {
   it("a mesma chave de envio grava uma vez só e devolve a mesma linha (clique duplo, nova tentativa)", () => {
     const a = novo();
     const primeira = a.cadastrar(entradaDeCadastro(), CHAVE_A, AGORA);
-    const segunda = a.cadastrar(entradaDeCadastro({ modelo: "Outro" }), CHAVE_A, DEPOIS);
+    const segunda = a.cadastrar(entradaDeCadastro({ modeloId: "modelo-r-450" }), CHAVE_A, DEPOIS);
     expect(segunda).toEqual(primeira);
     expect(a.placasCadastradas()).toHaveLength(1);
     expect(a.eventosDaPlaca("ZZZ9Z99")).toHaveLength(1);
@@ -130,6 +140,32 @@ describe("cadastrar", () => {
     const r2 = a.cadastrar(entradaDeCadastro({ operacaoId: "op-9", crId: "cr-9" }), CHAVE_B, AGORA);
     expect(r2.ok).toBe(false);
     if (!r2.ok) expect(Object.keys(r2.erro.campos ?? {})).toContain("operacaoId");
+  });
+
+  it("o modelo tem de ser da marca escolhida, e a garagem, da filial escolhida", () => {
+    const a = novo();
+    const r1 = a.cadastrar(entradaDeCadastro({ modeloId: "modelo-r-450" }), CHAVE_A, AGORA); // R 450 é da Scania
+    expect(r1.ok).toBe(false);
+    if (!r1.ok) expect(Object.keys(r1.erro.campos ?? {})).toContain("modeloId");
+    const r2 = a.cadastrar(entradaDeCadastro({ garagemId: "garagem-b1" }), CHAVE_B, AGORA); // B1 é da filial B
+    expect(r2.ok).toBe(false);
+    if (!r2.ok) expect(Object.keys(r2.erro.campos ?? {})).toContain("garagemId");
+  });
+
+  it("marca, modelo, filial e garagem que não existem viram erro de campo", () => {
+    const a = novo();
+    const r = a.cadastrar(
+      entradaDeCadastro({ marcaId: "m-9", modeloId: "mo-9", filialId: "f-9", garagemId: "g-9" }),
+      CHAVE_A,
+      AGORA,
+    );
+    expect(r.ok).toBe(false);
+    if (!r.ok) {
+      const campos = Object.keys(r.erro.campos ?? {});
+      for (const campo of ["marcaId", "modeloId", "filialId", "garagemId"]) {
+        expect(campos).toContain(campo);
+      }
+    }
   });
 
   it("o CR tem de ser o da operação escolhida", () => {
@@ -392,11 +428,216 @@ describe("isolamento", () => {
   it("o armazém do processo é um só (sobrevive ao recarregar de módulo em desenvolvimento)", () => {
     expect(armazemDoProcesso(HOJE)).toBe(armazemDoProcesso(HOJE));
   });
+  it("cada sessão (cookie) tem o seu armazém, isolado dos outros e do padrão", () => {
+    const padrao = armazemDoProcesso(HOJE);
+    const a = armazemDoProcesso(HOJE, "sessao-de-teste-a");
+    const b = armazemDoProcesso(HOJE, "sessao-de-teste-b");
+    expect(a).not.toBe(padrao);
+    expect(a).not.toBe(b);
+    expect(armazemDoProcesso(HOJE, "sessao-de-teste-a")).toBe(a); // a mesma sessão, o mesmo armazém
+    a.criarItemDeCatalogo({ tipo: "marca", nome: "Marca só da sessão A" }, CHAVE_A);
+    expect(a.catalogos().marcas.some((m) => m.nome === "Marca só da sessão A")).toBe(true);
+    expect(b.catalogos().marcas.some((m) => m.nome === "Marca só da sessão A")).toBe(false);
+    expect(padrao.catalogos().marcas.some((m) => m.nome === "Marca só da sessão A")).toBe(false);
+  });
+  it("sessão com formato estranho cai no armazém padrão (nada de chave arbitrária na memória)", () => {
+    const padrao = armazemDoProcesso(HOJE);
+    for (const lixo of ["", "a", "ab cd", "../x", "x".repeat(80), "ÀÁ-sessão", undefined]) {
+      expect(armazemDoProcesso(HOJE, lixo), String(lixo)).toBe(padrao);
+    }
+  });
+  it("o número de sessões guardadas é limitado: as mais antigas saem", () => {
+    const primeira = armazemDoProcesso(HOJE, "sessao-limite-0000");
+    for (let i = 1; i <= 60; i++)
+      armazemDoProcesso(HOJE, `sessao-limite-${String(i).padStart(4, "0")}`);
+    expect(armazemDoProcesso(HOJE, "sessao-limite-0000")).not.toBe(primeira); // saiu e nasceu de novo
+  });
   it("uma chave de envio de uma ação não vale para outra", () => {
     const a = novo();
     a.cadastrar(entradaDeCadastro(), CHAVE_C, AGORA);
     const r = a.disponibilizar(entradaDeDisponibilizar(), CHAVE_C, AGORA);
     expect(r.ok).toBe(true);
     expect(a.obterPlaca(noPatio.placa)?.sigla).toBe("DOp");
+  });
+});
+
+describe("itens de catálogo (o que o + cria)", () => {
+  it("cria uma marca, que passa a existir no catálogo e a valer no cadastro", () => {
+    const a = novo();
+    const r = a.criarItemDeCatalogo({ tipo: "marca", nome: "DAF" }, CHAVE_A);
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.linha).toMatchObject({ tipo: "marca", nome: "DAF" });
+    expect(a.catalogos().marcas.some((m) => m.id === r.linha.id)).toBe(true);
+    const modelo = a.criarItemDeCatalogo(
+      { tipo: "modelo", nome: "XF 530", paiId: r.linha.id },
+      CHAVE_B,
+    );
+    expect(modelo.ok).toBe(true);
+    if (!modelo.ok) return;
+    const cadastro = a.cadastrar(
+      entradaDeCadastro({ marcaId: r.linha.id, modeloId: modelo.linha.id }),
+      CHAVE_C,
+      AGORA,
+    );
+    expect(cadastro.ok).toBe(true);
+    if (cadastro.ok) expect(cadastro.linha).toMatchObject({ marca: "DAF", modelo: "XF 530" });
+  });
+
+  it("cria gestor, operação, CR (de uma operação), filial e garagem (de uma filial)", () => {
+    const a = novo();
+    const operacao = a.criarItemDeCatalogo({ tipo: "operacao", nome: "Operação Nova" }, CHAVE_A);
+    const filial = a.criarItemDeCatalogo({ tipo: "filial", nome: "Filial Nova" }, CHAVE_B);
+    const gestor = a.criarItemDeCatalogo({ tipo: "gestor", nome: "Gestor Novo" }, CHAVE_C);
+    expect([operacao.ok, filial.ok, gestor.ok]).toEqual([true, true, true]);
+    if (!operacao.ok || !filial.ok) return;
+    const cr = a.criarItemDeCatalogo(
+      { tipo: "cr", nome: "CR-2001", paiId: operacao.linha.id },
+      "44444444-4444-4444-8444-444444444444",
+    );
+    const garagem = a.criarItemDeCatalogo(
+      { tipo: "garagem", nome: "Garagem Nova", paiId: filial.linha.id },
+      "55555555-5555-4555-8555-555555555555",
+    );
+    expect([cr.ok, garagem.ok]).toEqual([true, true]);
+    const c = a.catalogos();
+    expect(c.gestores.some((g) => g.nome === "Gestor Novo")).toBe(true);
+    expect(c.crs.some((x) => x.codigo === "CR-2001" && x.operacaoId === operacao.linha.id)).toBe(
+      true,
+    );
+    expect(
+      c.garagens.some((g) => g.nome === "Garagem Nova" && g.filialId === filial.linha.id),
+    ).toBe(true);
+  });
+
+  it("a mesma chave cria uma vez só", () => {
+    const a = novo();
+    const primeira = a.criarItemDeCatalogo({ tipo: "marca", nome: "DAF" }, CHAVE_A);
+    const segunda = a.criarItemDeCatalogo({ tipo: "marca", nome: "DAF" }, CHAVE_A);
+    expect(segunda).toEqual(primeira);
+    expect(a.catalogos().marcas.filter((m) => m.nome === "DAF")).toHaveLength(1);
+  });
+
+  it("nome repetido (sem olhar maiúscula nem espaço) é erro no campo nome, e o mesmo nome em outra marca vale", () => {
+    const a = novo();
+    const repetido = a.criarItemDeCatalogo({ tipo: "marca", nome: "  volvo " }, CHAVE_A);
+    expect(repetido.ok).toBe(false);
+    if (!repetido.ok) expect(Object.keys(repetido.erro.campos ?? {})).toContain("nome");
+    const emOutraMarca = a.criarItemDeCatalogo(
+      { tipo: "modelo", nome: "FH 540", paiId: "marca-scania" },
+      CHAVE_B,
+    );
+    expect(emOutraMarca.ok).toBe(true);
+    const mesmaMarca = a.criarItemDeCatalogo(
+      { tipo: "modelo", nome: "fh 540", paiId: "marca-volvo" },
+      CHAVE_C,
+    );
+    expect(mesmaMarca.ok).toBe(false);
+  });
+
+  it("pai que não existe é erro no campo paiId", () => {
+    const a = novo();
+    for (const [tipo, nome] of [
+      ["modelo", "Modelo Novo"],
+      ["garagem", "Garagem Nova"],
+      ["cr", "CR-2002"],
+    ] as const) {
+      const r = a.criarItemDeCatalogo({ tipo, nome, paiId: "nao-existe" }, CHAVE_A);
+      expect(r.ok, tipo).toBe(false);
+      if (!r.ok) expect(Object.keys(r.erro.campos ?? {}), tipo).toContain("paiId");
+    }
+  });
+
+  it("os catálogos de cada armazém são independentes", () => {
+    const a = novo();
+    const b = novo();
+    a.criarItemDeCatalogo({ tipo: "marca", nome: "DAF" }, CHAVE_A);
+    expect(b.catalogos().marcas.some((m) => m.nome === "DAF")).toBe(false);
+  });
+});
+
+describe("a lista e a ficha enxergam o que foi gravado", () => {
+  it("a placa cadastrada aparece na lista, com tipo, modelo, gestor, operação e a situação inicial", () => {
+    const a = novo();
+    const total = a.placasParaLista().length;
+    a.cadastrar(entradaDeCadastro(), CHAVE_A, AGORA);
+    const lista = a.placasParaLista();
+    expect(lista).toHaveLength(total + 1);
+    const nova = lista.find((p) => p.placa === "ZZZ9Z99");
+    expect(nova).toMatchObject({
+      tipo: "cavalo",
+      modelo: "FH 540",
+      sigla: "PÁT",
+      desde: AGORA,
+      gestor: "Gestor Exemplo 1",
+      operacao: "Operação Exemplo 1",
+      filial: "Filial Exemplo A",
+      valorFipeCentavos: 78_500_000,
+    });
+    expect(nova?.crs).toEqual([
+      { codigo: "CR-1001", nome: "Operação Exemplo 1", inicio: "2026-10-31", fim: null },
+    ]);
+  });
+
+  it("uma placa da base mudada (disponibilizar) aparece mudada na lista, sem duplicar", () => {
+    const a = novo();
+    const total = a.placasParaLista().length;
+    a.disponibilizar(entradaDeDisponibilizar(), CHAVE_A, AGORA);
+    const lista = a.placasParaLista();
+    expect(lista).toHaveLength(total);
+    const mudada = lista.find((p) => p.placa === noPatio.placa);
+    expect(mudada).toMatchObject({ sigla: "DOp", desde: AGORA, filial: "Filial Exemplo B" });
+    expect(mudada?.km).toBe(noPatio.km); // o que o assistente não mexe segue como era
+  });
+
+  it("receber troca o gestor e fecha o CR antigo no dia, abrindo o novo", () => {
+    const a = novo();
+    a.receber(entradaDeRecebimento(), CHAVE_A, AGORA, "gestor-2");
+    const mudada = a.placasParaLista().find((p) => p.placa === foraDoPatio.placa);
+    expect(mudada).toMatchObject({
+      gestor: "Gestor Exemplo 2",
+      sigla: "MAN",
+      operacao: "Operação Exemplo 2",
+    });
+    const crs = mudada?.crs ?? [];
+    expect(crs.at(-1)).toEqual({
+      codigo: "CR-1002",
+      nome: "Operação Exemplo 2",
+      inicio: "2026-10-31",
+      fim: null,
+    });
+    for (const anterior of crs.slice(0, -1)) expect(anterior.fim).not.toBeNull();
+  });
+
+  it("os eventos da ficha trazem a situação nova com a hora", () => {
+    const a = novo();
+    a.cadastrar(entradaDeCadastro(), CHAVE_A, AGORA);
+    expect(a.eventosDaPlaca("ZZZ9Z99").at(-1)).toEqual({ sigla: "PÁT", em: AGORA });
+  });
+});
+
+describe("candidatos do conjunto (para o Receber placa)", () => {
+  it("o cavalo escolhe entre implementos que não têm cavalo; o implemento, entre cavalos", () => {
+    const a = novo();
+    const cavalo = base.find((p) => p.tipo === "cavalo")!;
+    const implemento = base.find((p) => p.tipo === "implemento")!;
+    const paraCavalo = a.candidatosDoConjunto(cavalo.placa);
+    expect(paraCavalo.length).toBeGreaterThan(0);
+    for (const c of paraCavalo) {
+      const p = base.find((x) => x.id === c.id)!;
+      expect(p.tipo).toBe("implemento");
+    }
+    const paraImplemento = a.candidatosDoConjunto(implemento.placa);
+    expect(paraImplemento.length).toBeGreaterThan(0);
+    for (const c of paraImplemento) {
+      expect(base.find((x) => x.id === c.id)!.tipo).toBe("cavalo");
+    }
+  });
+  it("equipamento, caminhão e apoio não têm conjunto", () => {
+    const a = novo();
+    for (const tipo of ["equipamento", "caminhao", "apoio"] as const) {
+      const p = base.find((x) => x.tipo === tipo)!;
+      expect(a.candidatosDoConjunto(p.placa), tipo).toEqual([]);
+    }
   });
 });

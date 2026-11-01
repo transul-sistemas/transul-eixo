@@ -1,12 +1,14 @@
+import { cookies } from "next/headers";
 import { normalizarPlaca } from "@/lib/dominio/placa";
 import { alertasDaPlaca } from "@/lib/dominio/alertas";
 import { diasEntre } from "@/lib/dominio/dias";
 import { grupoDaSigla, NOMES_DAS_SIGLAS, SIGLAS_DE_BAIXA } from "@/lib/dominio/status";
-import { eventosDeExemplo } from "@/lib/exemplo/eventos";
-import { placasDeExemplo, type PlacaDeExemplo } from "@/lib/exemplo/placas";
+import { type Armazem, armazemDoProcesso } from "@/lib/exemplo/armazem";
+import type { PlacaDeExemplo } from "@/lib/exemplo/placas";
 import type { ConsultaDeTabela } from "@/lib/navegacao/tabela";
 import { STATUS } from "@/lib/visual/tons";
-import { type FonteDePlacas, MENSAGEM_SO_COM_EXEMPLO } from "./fonte";
+import { podeDisponibilizar } from "@/lib/dominio/custodia";
+import { type FonteDeEscrita, type FonteDePlacas, MENSAGEM_SO_COM_EXEMPLO } from "./fonte";
 import {
   CAMPOS_ORDENAVEIS_DE_PLACAS,
   type DetalheDaPlaca,
@@ -21,6 +23,18 @@ import {
 // em memória, mas com as mesmas regras que a consulta ao banco terá: filtros, ordem estável com
 // desempate pelo id, página limitada e contagens por grupo de chips. Só funciona com
 // EIXO_DADOS=exemplo, que nunca é definida na Vercel.
+
+/** O cookie que separa o armazém de uma sessão (os testes de tela usam um por teste). */
+export const COOKIE_DA_SESSAO_DE_EXEMPLO = "eixo-sessao-exemplo";
+
+/** A sessão do pedido atual; fora de um pedido (os testes unitários) não há cookie e vale o padrão. */
+async function sessaoDeExemplo(): Promise<string | undefined> {
+  try {
+    return (await cookies()).get(COOKIE_DA_SESSAO_DE_EXEMPLO)?.value;
+  } catch {
+    return undefined;
+  }
+}
 
 const TAM_PADRAO = 25;
 const TAM_MAXIMO = 100;
@@ -145,8 +159,8 @@ export function comparar(campo: string, sentido: "asc" | "desc") {
   };
 }
 
-function consultar(consulta: ConsultaDeTabela, hoje: string): PaginaDePlacas {
-  const linhas = paraLinhas(placasDeExemplo(hoje), hoje);
+function consultar(consulta: ConsultaDeTabela, hoje: string, armazem: Armazem): PaginaDePlacas {
+  const linhas = paraLinhas(armazem.placasParaLista(), hoje);
 
   const busca = simples(consulta.busca.trim());
   const placaBuscada = normalizarPlaca(consulta.busca);
@@ -206,8 +220,9 @@ function consultar(consulta: ConsultaDeTabela, hoje: string): PaginaDePlacas {
 function detalheDe(
   placa: string,
   hoje: string,
+  armazem: Armazem,
 ): { detalhe: DetalheDaPlaca; exemplo: PlacaDeExemplo } | null {
-  const todas = placasDeExemplo(hoje);
+  const todas = armazem.placasParaLista();
   const exemplo = todas.find((p) => p.placa === placa);
   if (!exemplo) return null;
   const [linha] = paraLinhas(todas, hoje).filter((l) => l.id === exemplo.id);
@@ -234,21 +249,52 @@ export const fonteDeExemplo: FonteDePlacas = {
     const { lentoMs, falha } = opcoes.simulacao ?? {};
     if (lentoMs && lentoMs > 0) await new Promise((r) => setTimeout(r, Math.min(lentoMs, 10_000)));
     if (falha) throw new Error("Falha simulada pela fonte de exemplo.");
-    return consultar(consulta, hoje);
+    return consultar(consulta, hoje, armazemDoProcesso(hoje, await sessaoDeExemplo()));
   },
   async obter(placa, hoje, opcoes: OpcoesDaConsulta): Promise<DetalheDaPlaca | null> {
     if (process.env.EIXO_DADOS !== "exemplo") throw new Error(MENSAGEM_SO_COM_EXEMPLO);
     const { lentoMs, falhaNoPainel } = opcoes.simulacao ?? {};
     if (lentoMs && lentoMs > 0) await new Promise((r) => setTimeout(r, Math.min(lentoMs, 10_000)));
     if (falhaNoPainel) throw new Error("Falha simulada pela fonte de exemplo, no painel.");
-    return detalheDe(placa, hoje)?.detalhe ?? null;
+    return (
+      detalheDe(placa, hoje, armazemDoProcesso(hoje, await sessaoDeExemplo()))?.detalhe ?? null
+    );
   },
   async obterFicha(placa, hoje, opcoes: OpcoesDaConsulta): Promise<FichaDaPlaca | null> {
     if (process.env.EIXO_DADOS !== "exemplo") throw new Error(MENSAGEM_SO_COM_EXEMPLO);
     const { lentoMs, falha } = opcoes.simulacao ?? {};
     if (lentoMs && lentoMs > 0) await new Promise((r) => setTimeout(r, Math.min(lentoMs, 10_000)));
     if (falha) throw new Error("Falha simulada pela fonte de exemplo.");
-    const achado = detalheDe(placa, hoje);
-    return achado ? { ...achado.detalhe, eventos: eventosDeExemplo(achado.exemplo) } : null;
+    const armazem = armazemDoProcesso(hoje, await sessaoDeExemplo());
+    const achado = detalheDe(placa, hoje, armazem);
+    return achado ? { ...achado.detalhe, eventos: armazem.eventosDaPlaca(placa) } : null;
   },
 };
+
+/** A escrita sobre um armazém qualquer (a de verdade usa o do processo; os testes passam o seu). */
+export function escritaDoArmazem(armazem: Armazem): FonteDeEscrita {
+  return {
+    cadastrarPlaca: async (entrada, chave, agora) => armazem.cadastrar(entrada, chave, agora),
+    disponibilizarPlaca: async (entrada, chave, agora) =>
+      armazem.disponibilizar(entrada, chave, agora),
+    receberPlaca: async (entrada, chave, agora, gestorId) =>
+      armazem.receber(entrada, chave, agora, gestorId),
+    criarItemDeCatalogo: async (entrada, chave) => armazem.criarItemDeCatalogo(entrada, chave),
+    catalogos: async () => armazem.catalogos(),
+    placaParaAssistente: async (placa) => armazem.obterPlaca(placa),
+    pedidoPendenteDa: async (placa) => armazem.pedidoPendenteDa(placa),
+    pedidosPendentes: async () => armazem.pedidosPendentes(),
+    candidatosDoConjunto: async (placa) => armazem.candidatosDoConjunto(placa),
+    placasQuePodemSerDisponibilizadas: async () =>
+      armazem
+        .placasParaLista()
+        .filter((p) => podeDisponibilizar(p.sigla))
+        .map((p) => ({ placa: p.placa, nome: `${p.placa} · ${p.modelo}` }))
+        .sort((a, b) => (a.placa < b.placa ? -1 : 1)),
+  };
+}
+
+export async function escritaDeExemplo(hoje: string): Promise<FonteDeEscrita> {
+  if (process.env.EIXO_DADOS !== "exemplo") throw new Error(MENSAGEM_SO_COM_EXEMPLO);
+  return escritaDoArmazem(armazemDoProcesso(hoje, await sessaoDeExemplo()));
+}

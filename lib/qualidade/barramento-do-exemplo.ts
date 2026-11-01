@@ -39,6 +39,10 @@ function apontaParaAFonte(especificador: string): boolean {
 
 const DIRETIVA_DO_CLIENTE = /^\s*(?:\/\/[^\n]*\n\s*)*["']use client["']/;
 
+// Módulo `"use server"`: o navegador só recebe uma referência a cada ação, nunca o código (nem o que
+// ele importa). A cadeia de importações de um client termina nele.
+const DIRETIVA_DO_SERVIDOR = /^\s*(?:\/\/[^\n]*\n\s*)*["']use server["']/;
+
 const normalizar = (caminho: string) => caminho.replaceAll("\\", "/");
 
 /** Resolve um especificador (alias `@/` ou relativo) para um arquivo conhecido; pacotes de fora dão `undefined`. */
@@ -79,6 +83,7 @@ export function clienteImportaAFonte(arquivos: { caminho: string; texto: string 
     visitados.add(caminho);
     const arquivo = porCaminho.get(caminho);
     if (!arquivo) continue;
+    if (DIRETIVA_DO_SERVIDOR.test(arquivo.texto)) continue;
     const especificadores = [...arquivo.texto.matchAll(ESPECIFICADOR)].map((m) => m[1] as string);
     if (especificadores.some(apontaParaAFonte)) {
       acusados.add(arquivo.caminho);

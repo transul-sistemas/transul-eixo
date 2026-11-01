@@ -39,6 +39,8 @@ import {
   type PadraoDaTabela,
 } from "@/lib/navegacao/tabela";
 import { STATUS } from "@/lib/visual/tons";
+import { AssistentesDaFrota } from "./assistentes/assistentes-da-frota";
+import { carregarDadosDosAssistentes } from "./assistentes/carregar-dados";
 
 export type ParametrosDaBusca = Promise<Record<string, string | string[] | undefined>>;
 
@@ -161,9 +163,14 @@ export async function PaginaDePlacas({ searchParams }: { searchParams: Parametro
   const hoje = hojeEmSaoPaulo(new Date());
   const opcoes = { simulacao: simulacaoDe(parametros) };
   // O painel busca em paralelo com a lista e nunca a derruba: se falha, o erro fica no painel.
-  const [pagina, dadosDoPainelDaUrl] = await Promise.all([
+  const [pagina, dadosDoPainelDaUrl, dadosDosAssistentes] = await Promise.all([
     listarPlacas(consulta, hoje, opcoes),
     dadosDoPainel(lerEspiar(parametros), hoje, opcoes),
+    carregarDadosDosAssistentes({
+      assistente: parametros.get("assistente"),
+      placa: parametros.get("placa"),
+      hoje,
+    }),
   ]);
   const { titulo, descricao } = cabecalho();
   const filtrosAtivos = comFiltros(consulta);
@@ -176,6 +183,11 @@ export async function PaginaDePlacas({ searchParams }: { searchParams: Parametro
         emFoco={emFoco}
         titulo={titulo}
         descricao={descricao}
+        acoes={
+          dadosDosAssistentes ? (
+            <AssistentesDaFrota dados={dadosDosAssistentes} comBotaoDeCadastrar />
+          ) : undefined
+        }
         consulta={
           <BarraDeConsultaDaPagina
             rotulo="Buscar placa"
