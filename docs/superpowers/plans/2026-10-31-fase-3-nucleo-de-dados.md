@@ -2,7 +2,7 @@
 
 > **Para quem for executar:** use a skill `executing-plans` (ou `subagent-driven-development`) fatia por fatia. Cada fatia tem teste antes, checkpoint e pull request próprio. **Este documento é só plano: nenhum código, nenhuma migration e nenhum comando de banco foram escritos ou rodados.**
 
-**Status:** versão 6, 01/11/2026. Plano **aprovado por Alexandre**, com as respostas registradas na seção "Decisões de Alexandre"; o **Apêndice A está aprovado**. A **fatia 3.0 foi aprovada no checkpoint e está no PR #23** (o alicerce **e** as chaves de pessoa, ativo e placa). **A 3.1 só começa depois que Alexandre avisar que a 3.0 está MERGED**; a seção "Fatia 3.1 em detalhes" lista o que ele precisa decidir antes. Continuam abertas: a **regra de reconhecimento de bitrem, bitrezão e rodotrem** (da equipe; trava a 3.4) e a **decisão final sobre o VAz** (entra na 3.1).
+**Status:** versão 7, 01/11/2026. Plano **aprovado por Alexandre**, com as respostas registradas na seção "Decisões de Alexandre"; o **Apêndice A está aprovado** e as **decisões da 3.1 (A a F) também**. A **fatia 3.0 foi aprovada no checkpoint e está no PR #23** (o alicerce **e** as chaves de pessoa, ativo e placa). **A 3.1 só começa depois que Alexandre avisar que a 3.0 está MERGED.** Continuam abertas: a **regra de reconhecimento de bitrem, bitrezão e rodotrem** (da equipe; trava a 3.4) e a **confirmação do VAz com a equipe** (até lá vale o rascunho: só cavalo e caminhão).
 **Base:** `main` em `a476641`. O PR #21 ainda está aberto: `FonteDeEscrita`, `lib/dados/escrita.ts`, as Server Actions de `app/(sistema)/frota/placas/acoes.ts` e `lib/dominio/conjunto.ts` só existem nele.
 **Modelo:** o mais forte nesta fase (constraints, `EXCLUDE`, triggers de regra e RLS no banco; a tela só espelha).
 
@@ -47,6 +47,7 @@
 | 19 | **VAz (pendência de Alexandre):** até ele decidir, vale o rascunho do Apêndice A (só cavalo e caminhão); o catálogo é configurável e a decisão final entra na fatia 3.1 | Apêndice A; fatia 3.1 |
 | 20 | **Checkpoint 3.0 aprovado (01/11):** as chaves de pessoa, ativo e placa ficam na 3.0 (a 3.2 do plano foi absorvida); privilégio por função (`revoke ... from public`) em vez de `alter default privileges`; máscara do documento por gatilho; `SECURITY DEFINER` em duas funções (`registrar_mudanca` e `consumir_envio`); equipamento com número de série obrigatório e sem RENAVAM; **a restrição de chassi único não se enfraquece para a importação passar** (duplicata do Sankhya é saneamento antes de importar) | Fatia 3.0 (PR #23); `docs/decisoes.md` |
 | 21 | **Tipo do ativo imutável com vínculo vigente (3.4):** o `tipo` não pode mudar enquanto houver composição ou posse vigente. **Funções de validação dos `CHECK` (3.6):** entram numa lista de exceções do teste de catálogo, **cada uma com a justificativa registrada** | Fatias 3.4 e 3.6 |
+| 22 | **Decisões da 3.1 aprovadas (01/11):** A) VAz fica com o rascunho (só cavalo e caminhão), pendência de Alexandre com a equipe; B) carrocerias de partida Graneleira, Sider e Basculante (com nome de conjunto) e Baú frigorífico, Prancha e Tanque (sem nome de conjunto), no feminino "Graneleira"; C) os 12 nomes de conjunto semeados com a regra vazia e `nome_do_conjunto()` devolvendo "sem nome" até a 3.4, e, para as carrocerias sem nome, só a carroceria e a quantidade de implementos; D) `modelo_id` e `carroceria_id` na 3.1, `ano` e valores do ativo na 3.7 com origem por campo; E) marca, modelo, filial e garagem sem semente de produção; F) `eixos` do modelo opcional, exigido só quando a 3.4 precisar nomear o conjunto | Fatia 3.1 |
 
 **Interpretações aceitas:** a operação do implemento solto é a do cavalo no desengate, gravada **uma vez**, no fechamento da composição; o custo fica no CR da própria placa; só a atividade é herdada; o CPF fica em duas tabelas mais uma visão mascarada.
 
@@ -317,9 +318,10 @@ Ordem: o acesso no banco (3.6) vem antes das escritas (3.7), que precisam da RLS
   - `config.status`: `sigla` (chave, com acento, como PÁT), `nome`, `chip` (em atividade, impedida, atenção, pátio, fora), `camada`, `baixada` (verdadeiro só em VND e SUC), `aplica_a` (`conjunto`, `solo` ou `ambos`), `tipos_validos` (lista de `nucleo.tipo_de_ativo`, nunca vazia) e `ordem`;
   - `config.configuracao_de_conjunto` (`simples`, `bi`, `bitrezao`, `rodo`), com as colunas da regra de reconhecimento (quantidade de implementos, eixos mínimo e máximo) **nulas**: a regra é da equipe e não é inventada;
   - `config.nomenclatura_de_conjunto (carroceria_id, configuracao, nome)`, com chave por `(carroceria_id, configuracao)`;
+  - `config.nome_do_conjunto(carroceria, quantidade_de_implementos, eixos)`: **devolve "sem nome"** para carroceria que tem nomes de conjunto enquanto a regra de reconhecimento estiver vazia (até a 3.4, que a preenche com a regra da equipe e a liga à composição em `nucleo.nome_do_conjunto(cavalo_id)`); para carroceria **sem** nome de conjunto (Baú frigorífico, Prancha, Tanque) devolve só a carroceria e a quantidade de implementos, como "Prancha, 2 implementos";
   - em `nucleo.ativo`: `carroceria_id` → carroceria, com `CHECK` (obrigatória no implemento, proibida nos demais), e `modelo_id` → modelo (opcional, porque a v1 tem cavalos com modelo "A DEFINIR").
   - Índice em toda chave estrangeira, índice parcial nas exclusões lógicas, RLS ligado em tudo e **nenhum grant** (as permissões do "+" são da 3.6).
-- `supabase/seed.sql` (só catálogos de produção): as cinco camadas, as 26 siglas, as carrocerias aprovadas, as quatro configurações e os nomes de conjunto. **Sem** marca, modelo, filial nem garagem: entram pelo "+" e, depois, pela ponte.
+- `supabase/seed.sql` (só catálogos de produção): as cinco camadas, as 26 siglas, as seis carrocerias (Graneleira, Sider e Basculante, com nome de conjunto; Baú frigorífico, Prancha e Tanque, sem nome de conjunto), as quatro configurações e os 12 nomes de conjunto (3 carrocerias × 4 configurações). **Sem** marca, modelo, filial nem garagem: entram pelo "+" e, depois, pela ponte.
 - **Ajuste herdado da 2D (código, no mesmo PR):** `podeDisponibilizar` passa a ler o catálogo (sigla de origem em PÁT, VAz ou ETv **e** tipo em `tipos_validos` de DOp), usada na ficha, no assistente, no Ctrl+K, no armazém de exemplo e no esquema, com a mensagem "Só cavalo ou caminhão podem ser disponibilizados ao Operacional". `lib/dominio/status.ts` ganha `camada`, `aplicaA` e `tiposValidos` por sigla (espelho conferido contra o `seed.sql` por teste). O apoio perde o SMo na situação inicial.
 
 **Testes antes (vendo falhar):**
@@ -335,22 +337,23 @@ Ordem: o acesso no banco (3.6) vem antes das escritas (3.7), que precisam da RLS
   9. unicidades (carroceria, marca, modelo por marca, garagem por filial) e `eixos` maior que zero;
   10. implemento sem carroceria falha; carroceria em cavalo falha;
   11. versão e auditoria nos catálogos editáveis;
+  11b. `config.nome_do_conjunto` devolve "sem nome" para Graneleira, Sider e Basculante com qualquer quantidade, e "Prancha, 2 implementos" (ou "Baú frigorífico, 1 implemento") para as carrocerias sem nome;
   12. RLS ligado e nenhum grant nas tabelas novas (o teste de catálogo da 3.0 já cobre).
 - Vitest: as 26 siglas, nomes e chips do `seed.sql` batem com o `docs/glossario.md`; a camada, `aplica_a` e os tipos do seed batem com o Apêndice A; o espelho em TS bate com o seed; `podeDisponibilizar` por tipo (carreta solta não; cavalo sozinho e caminhão sim; apoio e equipamento não); o armazém de exemplo recusa a carreta.
 - e2e: a ficha de uma carreta em PÁT não tem o botão "Disponibilizar ao Operacional"; o Ctrl+K não lista a carreta; um cavalo em PÁT disponibiliza.
 
 **Verificação e checkpoint:** `db reset` repetido, `supabase test db`, `db lint --fail-on warning`, `pnpm db:tipos` (arquivo em LF e sem diferença), lint, tipos e Vitest, mais o e2e do Disponibilizar. Parar e mostrar: o que foi criado, os testes vistos falhando e o resultado final, e as decisões que dependam de confirmação.
 
-**O que Alexandre precisa decidir antes da 3.1 (com a minha recomendação):**
+**Decisões da 3.1, aprovadas por Alexandre em 01/11/2026:**
 
-| # | Decisão | Recomendação |
+| # | Decisão | Resultado |
 | --- | --- | --- |
-| 3.1-A | **VAz:** vale só para cavalo e caminhão (rascunho do Apêndice A) ou também para implemento? | Ficar com o rascunho (só cavalo e caminhão). O catálogo é dado de seed, então mudar depois é uma migration pequena |
-| 3.1-B | **Carroceria em catálogo:** quais entram de partida? O plano tem Graneleira, Sider e Basculante (as que têm nome de conjunto). O exemplo e a v1 também citam Baú frigorífico, Prancha e Tanque. E o nome: "Graneleira" ou "Graneleiro" (o exemplo usa "Graneleiro")? | As três com nome de conjunto, mais Baú frigorífico, Prancha e Tanque sem nome de conjunto; "Graneleira", como você escreveu |
-| 3.1-C | **Nomes de conjunto sem a regra da equipe:** semear os 12 nomes com a regra vazia e deixar `nome_do_conjunto()` devolvendo "sem nome" até a 3.4? E, para as carrocerias sem nome (Baú, Prancha, Tanque), mostrar só a carroceria e a quantidade de implementos? | Sim aos dois: a regra continua da equipe, e nada é inventado |
-| 3.1-D | **Colunas do ativo além das chaves:** `modelo_id` e `carroceria_id` entram na 3.1; `ano`, valor FIPE e valor manual entram na 3.7, junto com a origem por campo? | Sim |
-| 3.1-E | **Marca, modelo, filial e garagem:** sem semente de produção, entrando pelo "+" (e, mais tarde, pela ponte com o Sankhya)? | Sim, vazias |
-| 3.1-F | **Eixos no modelo:** opcional (nulo = não se sabe), exigido só quando a 3.4 precisar nomear o conjunto? | Sim |
+| 3.1-A | VAz | Fica com o rascunho do Apêndice A (só cavalo e caminhão). **Pendência dele com a equipe**; o catálogo é dado de seed, então mudar depois é uma migration pequena |
+| 3.1-B | Carrocerias de partida | Graneleira, Sider e Basculante (com nome de conjunto) e Baú frigorífico, Prancha e Tanque (sem nome de conjunto). No feminino: "Graneleira" |
+| 3.1-C | Nomes de conjunto sem a regra | Os 12 nomes são semeados com a regra vazia; `nome_do_conjunto()` devolve "sem nome" até a 3.4; para Baú, Prancha e Tanque, mostra só a carroceria e a quantidade de implementos |
+| 3.1-D | Colunas do ativo | `modelo_id` e `carroceria_id` na 3.1; `ano`, valor FIPE e valor manual na 3.7, com origem por campo |
+| 3.1-E | Marca, modelo, filial e garagem | Sem semente de produção: entram pelo "+" e, mais tarde, pela ponte |
+| 3.1-F | `eixos` do modelo | Opcional; exigido só quando a 3.4 precisar nomear o conjunto |
 
 ## Armadilhas que nascem aqui
 
@@ -378,7 +381,7 @@ Ordem: o acesso no banco (3.6) vem antes das escritas (3.7), que precisam da RLS
 | # | Pendência | Quem resolve | O que trava |
 | --- | --- | --- | --- |
 | 19 | **VAz:** vale só para cavalo e caminhão (rascunho do Apêndice A) ou também para implemento? Até a decisão, vale o rascunho | Alexandre | Decisão final na fatia 3.1 (o catálogo é configurável) |
-| 3.1-B a F | As decisões da 3.1 (carrocerias de partida e o nome "Graneleira", nomes de conjunto sem a regra, colunas do ativo, catálogos vazios e eixos opcionais): ver a tabela em "Fatia 3.1 em detalhes" | Alexandre | Fatia 3.1 |
+| 3.1 | Decisões A a F **aprovadas em 01/11** (ver "Fatia 3.1 em detalhes"). Sobra só o VAz, que é pendência dele com a equipe | Alexandre | Nada trava a 3.1 |
 | 16 | Regra que reconhece bitrem, bitrezão e rodotrem (eixos, quantidade de implementos e tipo de engate; em geral 7 e 9 eixos, a confirmar). **Sem recomendação: não será inventada** | Equipe, por Alexandre | Fatia 3.4 |
 
 ## Apêndice A: as 26 siglas, para Alexandre conferir
