@@ -1,3 +1,4 @@
+import type { TipoDeAtivo } from "@/lib/dados/placas-tipos";
 import type { Status } from "@/lib/visual/tons";
 
 /** A régua única de status (CLAUDE.md), com a sigla exata de cada situação da placa. */
@@ -110,3 +111,79 @@ export const NOMES_DOS_CHIPS: Record<Status, string> = {
   patio: "Pátio",
   fora: "Fora",
 };
+
+/**
+ * As cinco camadas da régua, da que vence à que perde (decisão 7, 31/10/2026). O espelho do
+ * catálogo `config.camada_de_status` do banco (o teste confere os dois).
+ */
+export const CAMADAS_DE_STATUS = [
+  "baixada",
+  "fora-da-frota",
+  "impedida",
+  "sem-motorista",
+  "atividade",
+] as const;
+export type CamadaDeStatus = (typeof CAMADAS_DE_STATUS)[number];
+
+/**
+ * A marca "válida para conjunto, solo ou ambos" do CLAUDE.md: descreve a placa mestre em relação ao
+ * implemento. `conjunto` = cavalo com implemento engatado (ou o próprio implemento engatado);
+ * `solo` = placa sem composição; `ambos` = com ou sem.
+ */
+export type AplicaA = "conjunto" | "solo" | "ambos";
+
+export interface RegraDaSigla {
+  camada: CamadaDeStatus;
+  aplicaA: AplicaA;
+  /** Os tipos de ativo que podem receber a sigla. O caminhão (que nunca tem composição) só depende disto. */
+  tiposValidos: readonly TipoDeAtivo[];
+}
+
+const TODOS_OS_TIPOS: readonly TipoDeAtivo[] = [
+  "cavalo",
+  "implemento",
+  "equipamento",
+  "caminhao",
+  "apoio",
+];
+const CAVALO_E_CAMINHAO: readonly TipoDeAtivo[] = ["cavalo", "caminhao"];
+const CAVALO_E_IMPLEMENTO: readonly TipoDeAtivo[] = ["cavalo", "implemento"];
+
+/**
+ * O Apêndice A do plano da Fase 3, aprovado por Alexandre em 31/10/2026: camada, `aplica_a` e tipos
+ * válidos de cada uma das 26 siglas. VAz é rascunho até a equipe confirmar (só cavalo e caminhão).
+ * É o espelho do `supabase/seed.sql`: `lib/qualidade/catalogo-de-status.test.ts` confere os dois.
+ */
+export const REGRAS_DAS_SIGLAS: Record<Sigla, RegraDaSigla> = {
+  VND: { camada: "baixada", aplicaA: "solo", tiposValidos: TODOS_OS_TIPOS },
+  SUC: { camada: "baixada", aplicaA: "solo", tiposValidos: TODOS_OS_TIPOS },
+  ALU: { camada: "fora-da-frota", aplicaA: "solo", tiposValidos: TODOS_OS_TIPOS },
+  EMP: { camada: "fora-da-frota", aplicaA: "solo", tiposValidos: TODOS_OS_TIPOS },
+  VEN: { camada: "fora-da-frota", aplicaA: "solo", tiposValidos: TODOS_OS_TIPOS },
+  SIN: { camada: "impedida", aplicaA: "solo", tiposValidos: TODOS_OS_TIPOS },
+  MAc: { camada: "impedida", aplicaA: "conjunto", tiposValidos: CAVALO_E_IMPLEMENTO },
+  MAt: { camada: "impedida", aplicaA: "conjunto", tiposValidos: CAVALO_E_IMPLEMENTO },
+  MAv: { camada: "impedida", aplicaA: "conjunto", tiposValidos: CAVALO_E_IMPLEMENTO },
+  MAN: { camada: "impedida", aplicaA: "solo", tiposValidos: TODOS_OS_TIPOS },
+  REF: { camada: "impedida", aplicaA: "solo", tiposValidos: TODOS_OS_TIPOS },
+  SDo: { camada: "impedida", aplicaA: "ambos", tiposValidos: TODOS_OS_TIPOS },
+  DOC: { camada: "impedida", aplicaA: "ambos", tiposValidos: TODOS_OS_TIPOS },
+  SMo: { camada: "sem-motorista", aplicaA: "ambos", tiposValidos: CAVALO_E_CAMINHAO },
+  FOg: { camada: "sem-motorista", aplicaA: "ambos", tiposValidos: CAVALO_E_CAMINHAO },
+  FEr: { camada: "sem-motorista", aplicaA: "ambos", tiposValidos: CAVALO_E_CAMINHAO },
+  DOp: { camada: "atividade", aplicaA: "ambos", tiposValidos: CAVALO_E_CAMINHAO },
+  ETv: { camada: "atividade", aplicaA: "ambos", tiposValidos: CAVALO_E_CAMINHAO },
+  VAz: { camada: "atividade", aplicaA: "ambos", tiposValidos: CAVALO_E_CAMINHAO },
+  ACe: { camada: "atividade", aplicaA: "conjunto", tiposValidos: CAVALO_E_CAMINHAO },
+  CAr: { camada: "atividade", aplicaA: "conjunto", tiposValidos: CAVALO_E_CAMINHAO },
+  CAn: { camada: "atividade", aplicaA: "conjunto", tiposValidos: CAVALO_E_CAMINHAO },
+  ETc: { camada: "atividade", aplicaA: "conjunto", tiposValidos: CAVALO_E_CAMINHAO },
+  ADe: { camada: "atividade", aplicaA: "conjunto", tiposValidos: CAVALO_E_CAMINHAO },
+  DEs: { camada: "atividade", aplicaA: "conjunto", tiposValidos: CAVALO_E_CAMINHAO },
+  PÁT: { camada: "atividade", aplicaA: "ambos", tiposValidos: TODOS_OS_TIPOS },
+};
+
+/** A sigla pode ser registrada num ativo deste tipo? */
+export function siglaAceitaOTipo(sigla: Sigla, tipo: TipoDeAtivo): boolean {
+  return REGRAS_DAS_SIGLAS[sigla].tiposValidos.includes(tipo);
+}

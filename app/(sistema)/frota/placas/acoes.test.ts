@@ -32,10 +32,9 @@ import {
 
 const HOJE_REAL = new Date().toISOString().slice(0, 10);
 const base = placasDeExemplo(HOJE_REAL);
-const noPatio = base.find((p) => podeDisponibilizar(p.sigla))!;
-const foraDoPatio = base.find(
-  (p) => !podeDisponibilizar(p.sigla) && p.sigla !== "VND" && p.sigla !== "SUC",
-)!;
+const emOrigem = (sigla: string) => ["PÁT", "VAz", "ETv"].includes(sigla);
+const noPatio = base.find((p) => podeDisponibilizar(p.sigla, p.tipo))!;
+const foraDoPatio = base.find((p) => !emOrigem(p.sigla) && p.sigla !== "VND" && p.sigla !== "SUC")!;
 const CHAVE = "11111111-1111-4111-8111-111111111111";
 const pedido: PedidoDeTransferencia = {
   id: "ped-1",

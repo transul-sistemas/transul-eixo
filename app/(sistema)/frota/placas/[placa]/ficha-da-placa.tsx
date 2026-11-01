@@ -73,6 +73,7 @@ export async function FichaDaPlaca({
   });
   const acoes = idsDasAcoesDoMomento({
     sigla: ficha.sigla,
+    tipo: ficha.tipo,
     pedidoPendente: dadosDosAssistentes?.pedido != null,
   })
     .map((id) => ACOES.find((acao) => acao.id === id))

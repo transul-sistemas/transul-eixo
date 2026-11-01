@@ -1,5 +1,5 @@
 import {
-  podeDisponibilizar,
+  motivoDeNaoDisponibilizar,
   podeReceberPedido,
   type PedidoDeTransferencia,
 } from "@/lib/dominio/custodia";
@@ -482,10 +482,9 @@ export function criarArmazem({
         const atual = obterPlaca(placa);
         if (!atual) return erroDaAcao<Atual>("nao_encontrado");
         if (atual.versao !== entrada.versaoDaPlaca) return emConflito(atual);
-        if (!podeDisponibilizar(atual.sigla)) {
-          return erroDaAcao<Atual>("entrada_invalida", {
-            campos: { placa: ["Só dá para disponibilizar placa em PÁT, VAz ou ETv."] },
-          });
+        const motivo = motivoDeNaoDisponibilizar({ sigla: atual.sigla, tipo: atual.tipo });
+        if (motivo !== null) {
+          return erroDaAcao<Atual>("entrada_invalida", { campos: { placa: [motivo] } });
         }
         const filial = cat.filiais.find((f) => f.id === entrada.filialId);
         if (!filial) {

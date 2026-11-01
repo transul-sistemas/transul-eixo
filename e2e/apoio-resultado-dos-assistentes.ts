@@ -46,7 +46,7 @@ async function conferirTela(painel: Locator, botoes: Locator[], emGrupo = false)
 }
 
 async function abrirDisponibilizar(page: Page) {
-  await abrirHidratada(page, `${LISTA}?chip=patio`);
+  await abrirHidratada(page, `${LISTA}?chip=patio&chip=cavalo`);
   const placa = (await page
     .locator("[data-espiar-placa]")
     .first()

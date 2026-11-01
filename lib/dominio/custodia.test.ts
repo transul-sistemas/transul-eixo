@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { SIGLAS, SIGLAS_DE_BAIXA } from "./status";
 import {
+  MENSAGEM_DE_TIPO_QUE_NAO_DISPONIBILIZA,
+  motivoDeNaoDisponibilizar,
   podeDisponibilizar,
   podeReceberPedido,
   SIGLAS_QUE_PODEM_DISPONIBILIZAR,
@@ -19,15 +21,51 @@ const pedido = (parcial: Partial<PedidoDeTransferencia> = {}): PedidoDeTransfere
   ...parcial,
 });
 
-describe("podeDisponibilizar: PÁT, VAz e ETv levam ao Operacional (DOp)", () => {
-  it("só essas três situações", () => {
-    const sim = SIGLAS.filter((s) => podeDisponibilizar(s));
-    expect([...sim].sort()).toEqual(["ETv", "PÁT", "VAz"].sort());
+describe("podeDisponibilizar: PÁT, VAz e ETv levam ao Operacional (DOp), e só cavalo ou caminhão", () => {
+  it("para cavalo e para caminhão, só essas três situações", () => {
+    for (const tipo of ["cavalo", "caminhao"] as const) {
+      const sim = SIGLAS.filter((s) => podeDisponibilizar(s, tipo));
+      expect([...sim].sort(), tipo).toEqual(["ETv", "PÁT", "VAz"].sort());
+    }
     expect([...SIGLAS_QUE_PODEM_DISPONIBILIZAR].sort()).toEqual(["ETv", "PÁT", "VAz"].sort());
   });
+  it("carreta (implemento), apoio e equipamento nunca, em nenhuma situação", () => {
+    for (const tipo of ["implemento", "apoio", "equipamento"] as const) {
+      for (const sigla of SIGLAS) {
+        expect(podeDisponibilizar(sigla, tipo), `${tipo} ${sigla}`).toBe(false);
+      }
+    }
+  });
   it("DOp (já no Operacional) e as baixas não", () => {
-    expect(podeDisponibilizar("DOp")).toBe(false);
-    for (const s of SIGLAS_DE_BAIXA) expect(podeDisponibilizar(s), s).toBe(false);
+    expect(podeDisponibilizar("DOp", "cavalo")).toBe(false);
+    for (const s of SIGLAS_DE_BAIXA) expect(podeDisponibilizar(s, "cavalo"), s).toBe(false);
+  });
+});
+
+describe("motivoDeNaoDisponibilizar: diz por que a placa não vai ao Operacional", () => {
+  it("carreta solta em PÁT: a mensagem do tipo", () => {
+    expect(motivoDeNaoDisponibilizar({ sigla: "PÁT", tipo: "implemento" })).toBe(
+      MENSAGEM_DE_TIPO_QUE_NAO_DISPONIBILIZA,
+    );
+    expect(MENSAGEM_DE_TIPO_QUE_NAO_DISPONIBILIZA).toContain(
+      "Só cavalo ou caminhão podem ser disponibilizados ao Operacional",
+    );
+  });
+  it("apoio e equipamento também recebem a mensagem do tipo", () => {
+    for (const tipo of ["apoio", "equipamento"] as const) {
+      expect(motivoDeNaoDisponibilizar({ sigla: "VAz", tipo }), tipo).toBe(
+        MENSAGEM_DE_TIPO_QUE_NAO_DISPONIBILIZA,
+      );
+    }
+  });
+  it("cavalo ou caminhão fora de PÁT, VAz e ETv: a mensagem da situação", () => {
+    const motivo = motivoDeNaoDisponibilizar({ sigla: "MAN", tipo: "cavalo" });
+    expect(motivo).toMatch(/PÁT, VAz ou ETv/);
+    expect(motivo).not.toBe(MENSAGEM_DE_TIPO_QUE_NAO_DISPONIBILIZA);
+  });
+  it("cavalo ou caminhão em PÁT, VAz ou ETv: sem motivo (pode)", () => {
+    expect(motivoDeNaoDisponibilizar({ sigla: "PÁT", tipo: "cavalo" })).toBeNull();
+    expect(motivoDeNaoDisponibilizar({ sigla: "ETv", tipo: "caminhao" })).toBeNull();
   });
 });
 

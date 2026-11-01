@@ -291,7 +291,7 @@ test.describe("ficha da placa: o conteúdo", () => {
   }) => {
     // Uma placa no pátio (PÁT): disponibilizar ao Operacional. Receber placa só com pedido de
     // transferência pendente (o de exemplo está na AAA0A00).
-    await abrirHidratada(page, `${LISTA}?chip=patio`);
+    await abrirHidratada(page, `${LISTA}?chip=patio&chip=cavalo`);
     const placaNoPatio = (await page
       .locator("[data-espiar-placa]")
       .first()

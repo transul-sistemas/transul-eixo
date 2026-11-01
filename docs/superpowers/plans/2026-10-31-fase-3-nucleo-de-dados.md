@@ -123,9 +123,9 @@ Todas em `nucleo`, todas com a `EXCLUDE` da convenção 2, origem da data e excl
 
 ## 3. Tipos de ativo, carroceria, conjuntos e nomenclatura
 
-- **Tipo:** enumeração `nucleo.tipo_de_ativo` com os cinco valores. O que depende do tipo vira `CHECK`: RENAVAM e número de série (seção 1), carroceria só em implemento, motorista só em cavalo, caminhão e apoio. Um sexto tipo exigiria migration, aceitável para algo tão estável.
+- **Tipo:** enumeração `nucleo.tipo_de_ativo` com os cinco valores. O que depende do tipo vira `CHECK`: RENAVAM e número de série (seção 1), carroceria só em implemento e caminhão, motorista só em cavalo, caminhão e apoio. Um sexto tipo exigiria migration, aceitável para algo tão estável.
 - **Composição tipada pelo banco:** `ativo` tem `unique (id, tipo)`; `composicao` guarda `cavalo_tipo` e `implemento_tipo` como colunas geradas constantes, com chaves estrangeiras compostas: só cavalo é mestre e só implemento é servo, sem trigger.
-- **Carroceria em catálogo próprio:** `config.carroceria`, com `Graneleira`, `Sider` e `Basculante` de partida (mais Baú, Prancha e Tanque quando a equipe pedir). `nucleo.ativo.carroceria_id` é obrigatório para implemento e proibido nos demais; `config.modelo.carroceria_padrao_id` só sugere. Isso substitui o provisório de hoje (carroceria tirada do nome do modelo). O Sankhya tem `TIPOCAR` e `CODTIPCAR` em `TGFVEI`, então o campo tem origem do Sankhya e aceita correção local.
+- **Carroceria em catálogo próprio:** `config.carroceria`, com `Graneleira`, `Sider` e `Basculante` de partida (mais Baú, Prancha e Tanque quando a equipe pedir). `nucleo.ativo.carroceria_id` é obrigatório no implemento, opcional no caminhão e proibido em cavalo, equipamento e apoio; `config.modelo.carroceria_padrao_id` só sugere. Isso substitui o provisório de hoje (carroceria tirada do nome do modelo). O Sankhya tem `TIPOCAR` e `CODTIPCAR` em `TGFVEI`, então o campo tem origem do Sankhya e aceita correção local.
 - **Conjunto misto bloqueado:** trigger de restrição adiado (`initially deferred`) em `composicao`: ao fim da transação, todos os implementos vigentes de um cavalo têm a mesma `carroceria_id`. O assistente pode trocar vários de uma vez.
 - **"Meta do conjunto" só no cavalo:** `meta_do_conjunto.cavalo_id` referencia `(id, tipo)` fixando `'cavalo'`. Os implementos herdam a meta pela composição (função, não coluna copiada).
 - **Nomenclatura (decisão 8):** duas tabelas configuráveis e renomeáveis pelo Cadastros.
@@ -140,7 +140,7 @@ Todas em `nucleo`, todas com a `EXCLUDE` da convenção 2, origem da data e excl
 
   - `nucleo.nome_do_conjunto(cavalo_id)` calcula o nome na hora, **nunca gravado na placa**. Renomear uma linha muda o nome em todo lugar. Conjunto misto não tem nome (é bloqueado).
 
-**Testes antes:** carroceria em não-implemento falha; implemento sem carroceria falha; composição com cavalo que é implemento falha; Sider e Graneleira no mesmo cavalo falha **no fim da transação**, e trocar dois Sider por dois Graneleira na mesma transação passa; quarto implemento falha; meta em implemento falha; o nome do conjunto muda ao renomear a nomenclatura sem tocar na placa; os 12 nomes existem no catálogo, por carroceria e configuração (3.1), e o cálculo de qual configuração vale para cada conjunto só é testado na 3.4, com a regra da equipe; implemento herda a meta do cavalo pela composição e a perde ao sair.
+**Testes antes:** carroceria em cavalo, equipamento ou apoio falha (em caminhão passa); implemento sem carroceria falha; composição com cavalo que é implemento falha; Sider e Graneleira no mesmo cavalo falha **no fim da transação**, e trocar dois Sider por dois Graneleira na mesma transação passa; quarto implemento falha; meta em implemento falha; o nome do conjunto muda ao renomear a nomenclatura sem tocar na placa; os 12 nomes existem no catálogo, por carroceria e configuração (3.1), e o cálculo de qual configuração vale para cada conjunto só é testado na 3.4, com a regra da equipe; implemento herda a meta do cavalo pela composição e a perde ao sair.
 
 ## 4. Régua de status
 
@@ -319,7 +319,7 @@ Ordem: o acesso no banco (3.6) vem antes das escritas (3.7), que precisam da RLS
   - `config.configuracao_de_conjunto` (`simples`, `bi`, `bitrezao`, `rodo`), com as colunas da regra de reconhecimento (quantidade de implementos, eixos mínimo e máximo) **nulas**: a regra é da equipe e não é inventada;
   - `config.nomenclatura_de_conjunto (carroceria_id, configuracao, nome)`, com chave por `(carroceria_id, configuracao)`;
   - `config.nome_do_conjunto(carroceria, quantidade_de_implementos, eixos)`: **devolve "sem nome"** para carroceria que tem nomes de conjunto enquanto a regra de reconhecimento estiver vazia (até a 3.4, que a preenche com a regra da equipe e a liga à composição em `nucleo.nome_do_conjunto(cavalo_id)`); para carroceria **sem** nome de conjunto (Baú frigorífico, Prancha, Tanque) devolve só a carroceria e a quantidade de implementos, como "Prancha, 2 implementos";
-  - em `nucleo.ativo`: `carroceria_id` → carroceria, com `CHECK` (obrigatória no implemento, proibida nos demais), e `modelo_id` → modelo (opcional, porque a v1 tem cavalos com modelo "A DEFINIR").
+  - em `nucleo.ativo`: `carroceria_id` → carroceria, com dois `CHECK` (obrigatória no implemento; proibida em cavalo, equipamento e apoio; opcional no caminhão), e `modelo_id` → modelo (opcional, porque a v1 tem cavalos com modelo "A DEFINIR").
   - Índice em toda chave estrangeira, índice parcial nas exclusões lógicas, RLS ligado em tudo e **nenhum grant** (as permissões do "+" são da 3.6).
 - `supabase/seed.sql` (só catálogos de produção): as cinco camadas, as 26 siglas, as seis carrocerias (Graneleira, Sider e Basculante, com nome de conjunto; Baú frigorífico, Prancha e Tanque, sem nome de conjunto), as quatro configurações e os 12 nomes de conjunto (3 carrocerias × 4 configurações). **Sem** marca, modelo, filial nem garagem: entram pelo "+" e, depois, pela ponte.
 - **Ajuste herdado da 2D (código, no mesmo PR):** `podeDisponibilizar` passa a ler o catálogo (sigla de origem em PÁT, VAz ou ETv **e** tipo em `tipos_validos` de DOp), usada na ficha, no assistente, no Ctrl+K, no armazém de exemplo e no esquema, com a mensagem "Só cavalo ou caminhão podem ser disponibilizados ao Operacional". `lib/dominio/status.ts` ganha `camada`, `aplicaA` e `tiposValidos` por sigla (espelho conferido contra o `seed.sql` por teste). O apoio perde o SMo na situação inicial.
@@ -335,7 +335,7 @@ Ordem: o acesso no banco (3.6) vem antes das escritas (3.7), que precisam da RLS
   7. nenhuma sigla de operação aceita `implemento` em `tipos_validos`;
   8. existem os 12 nomes de conjunto (3 carrocerias × 4 configurações) e as colunas da regra de reconhecimento estão **nulas**;
   9. unicidades (carroceria, marca, modelo por marca, garagem por filial) e `eixos` maior que zero;
-  10. implemento sem carroceria falha; carroceria em cavalo falha;
+  10. implemento sem carroceria falha; carroceria em cavalo, equipamento e apoio falha; caminhão com e sem carroceria passa;
   11. versão e auditoria nos catálogos editáveis;
   11b. `config.nome_do_conjunto` devolve "sem nome" para Graneleira, Sider e Basculante com qualquer quantidade, e "Prancha, 2 implementos" (ou "Baú frigorífico, 1 implemento") para as carrocerias sem nome;
   12. RLS ligado e nenhum grant nas tabelas novas (o teste de catálogo da 3.0 já cobre).

@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { podeDisponibilizar, type PedidoDeTransferencia } from "@/lib/dominio/custodia";
+import {
+  MENSAGEM_DE_TIPO_QUE_NAO_DISPONIBILIZA,
+  podeDisponibilizar,
+  SIGLAS_QUE_PODEM_DISPONIBILIZAR,
+  type PedidoDeTransferencia,
+} from "@/lib/dominio/custodia";
 import {
   esquemaCadastrarPlaca,
   type EntradaCadastrarPlaca,
@@ -17,10 +22,11 @@ const CHAVE_B = "22222222-2222-4222-8222-222222222222";
 const CHAVE_C = "33333333-3333-4333-8333-333333333333";
 
 const base = placasDeExemplo(HOJE);
-const noPatio = base.find((p) => podeDisponibilizar(p.sigla))!;
-const foraDoPatio = base.find(
-  (p) => !podeDisponibilizar(p.sigla) && p.sigla !== "VND" && p.sigla !== "SUC",
-)!;
+const emOrigem = (sigla: string) =>
+  (SIGLAS_QUE_PODEM_DISPONIBILIZAR as readonly string[]).includes(sigla);
+const noPatio = base.find((p) => podeDisponibilizar(p.sigla, p.tipo))!;
+const carretaNoPatio = base.find((p) => p.tipo === "implemento" && emOrigem(p.sigla))!;
+const foraDoPatio = base.find((p) => !emOrigem(p.sigla) && p.sigla !== "VND" && p.sigla !== "SUC")!;
 
 const pedidoBase = (placa: string): PedidoDeTransferencia => ({
   id: "ped-1",
@@ -236,6 +242,21 @@ describe("disponibilizar ao Operacional", () => {
       expect(r.erro.codigo).toBe("entrada_invalida");
       expect(Object.keys(r.erro.campos ?? {})).toContain("placa");
     }
+  });
+
+  it("carreta em PÁT, VAz ou ETv é recusada com a mensagem do tipo no campo da placa, sem gravar", () => {
+    const a = novo();
+    const r = a.disponibilizar(
+      entradaDeDisponibilizar({ placa: carretaNoPatio.placa }),
+      CHAVE_A,
+      AGORA,
+    );
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.erro.codigo).toBe("entrada_invalida");
+    expect(r.erro.campos?.placa?.[0]).toBe(MENSAGEM_DE_TIPO_QUE_NAO_DISPONIBILIZA);
+    expect(a.obterPlaca(carretaNoPatio.placa)?.sigla).toBe(carretaNoPatio.sigla);
+    expect(a.obterPlaca(carretaNoPatio.placa)?.versao).toBe(1);
   });
 
   it("placa que não existe é nao_encontrado; filial que não existe é erro de campo", () => {

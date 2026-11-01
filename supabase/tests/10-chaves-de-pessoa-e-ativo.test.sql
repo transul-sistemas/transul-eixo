@@ -139,7 +139,7 @@ select is(
   'o RENAVAM de 9 ou 10 dígitos é completado com zeros à esquerda'
 );
 select throws_ok(
-  $$insert into nucleo.ativo (tipo, renavam) values ('implemento', '00639884962')$$,
+  $$insert into nucleo.ativo (tipo, renavam, carroceria_id) values ('implemento', '00639884962', (select id from config.carroceria where nome = 'Sider'))$$,
   '23505',
   null,
   'RENAVAM repetido é recusado'
@@ -182,7 +182,7 @@ select throws_ok(
   'número de série repetido no mesmo tipo é recusado'
 );
 select lives_ok(
-  $$insert into nucleo.ativo (tipo, renavam, numero_de_serie) values ('implemento', pg_temp.renavam(600), 'S-100')$$,
+  $$insert into nucleo.ativo (tipo, renavam, numero_de_serie, carroceria_id) values ('implemento', pg_temp.renavam(600), 'S-100', (select id from config.carroceria where nome = 'Sider'))$$,
   'a mesma série em outro tipo passa (a série é única por tipo)'
 );
 select throws_ok(

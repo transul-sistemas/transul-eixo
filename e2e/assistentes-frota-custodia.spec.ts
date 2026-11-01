@@ -31,7 +31,7 @@ async function irAteAConferir(page: import("@playwright/test").Page) {
 
 test.describe("disponibilizar ao Operacional", () => {
   test("pela ficha: escolhe a filial e a placa vai a DOp", async ({ page }) => {
-    await abrirLista(page, "?chip=patio");
+    await abrirLista(page, "?chip=patio&chip=cavalo");
     const placa = (await page
       .locator("[data-espiar-placa]")
       .first()
@@ -57,7 +57,7 @@ test.describe("disponibilizar ao Operacional", () => {
   });
 
   test("sem escolher a filial, avisa no campo e fica no passo", async ({ page }) => {
-    await abrirLista(page, "?chip=patio");
+    await abrirLista(page, "?chip=patio&chip=cavalo");
     const placa = (await page
       .locator("[data-espiar-placa]")
       .first()
@@ -95,7 +95,7 @@ test.describe("disponibilizar ao Operacional", () => {
     page,
     context,
   }) => {
-    await abrirLista(page, "?chip=patio");
+    await abrirLista(page, "?chip=patio&chip=cavalo");
     const placa = (await page
       .locator("[data-espiar-placa]")
       .first()
@@ -192,5 +192,53 @@ test.describe("receber placa", () => {
     await expect(recebimento(page)).toBeHidden();
     await expect(botao).toBeFocused();
     await expect(page).toHaveURL(new RegExp(`${FICHA(PLACA_COM_PEDIDO)}$`));
+  });
+});
+
+// Só cavalo ou caminhão vão ao Operacional: carreta (implemento), apoio e equipamento nunca, mesmo
+// em PÁT, VAz ou ETv (o catálogo da régua diz em `tipos_validos` de DOp).
+const MENSAGEM_DO_TIPO = "Só cavalo ou caminhão podem ser disponibilizados ao Operacional";
+
+async function primeiraPlacaDe(page: import("@playwright/test").Page, consulta: string) {
+  await abrirLista(page, consulta);
+  return (await page.locator("[data-espiar-placa]").first().getAttribute("data-espiar-placa"))!;
+}
+
+test.describe("disponibilizar ao Operacional: só cavalo ou caminhão", () => {
+  test("a ficha de uma carreta em PÁT não tem o botão", async ({ page }) => {
+    const carreta = await primeiraPlacaDe(page, "?chip=patio&chip=implemento");
+    await abrirHidratada(page, FICHA(carreta));
+    await expect(page.getByRole("heading", { level: 1, name: carreta })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Disponibilizar ao Operacional" })).toHaveCount(
+      0,
+    );
+  });
+
+  test("a ficha de um cavalo em PÁT tem o botão", async ({ page }) => {
+    const cavalo = await primeiraPlacaDe(page, "?chip=patio&chip=cavalo");
+    await abrirHidratada(page, FICHA(cavalo));
+    await expect(page.getByRole("button", { name: "Disponibilizar ao Operacional" })).toBeVisible();
+  });
+
+  test("pelo Ctrl+K, a carreta não aparece na lista de placas a escolher", async ({ page }) => {
+    const carreta = await primeiraPlacaDe(page, "?chip=patio&chip=implemento");
+    await abrirHidratada(page, "/inicio/tarefas");
+    await page.keyboard.press("Control+k");
+    await page.getByRole("combobox", { name: /Buscar tela, modo ou ação/ }).fill("disponibilizar");
+    await page.getByRole("option", { name: /Frota › Disponibilizar ao Operacional/ }).click();
+    const escolher = page.getByRole("dialog", { name: "Disponibilizar ao Operacional" });
+    const opcoes = escolher.getByLabel("Escolher a placa").locator("option");
+    await expect(opcoes.nth(1)).toBeAttached(); // a lista chegou: além do "Escolha…", há placas
+    const textos = await opcoes.allTextContents();
+    expect(textos.length).toBeGreaterThan(1);
+    expect(textos.join("|")).not.toContain(carreta);
+  });
+
+  test("pela URL, a carreta é recusada com a mensagem do tipo, e nada abre", async ({ page }) => {
+    const carreta = await primeiraPlacaDe(page, "?chip=patio&chip=implemento");
+    await abrirHidratada(page, `${LISTA}?assistente=disponibilizar&placa=${carreta}`);
+    const aviso = page.getByRole("dialog", { name: "Disponibilizar ao Operacional" });
+    await expect(aviso).toContainText(MENSAGEM_DO_TIPO);
+    await expect(aviso.getByLabel("Filial", { exact: true })).toHaveCount(0);
   });
 });

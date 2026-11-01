@@ -2,7 +2,8 @@ import { z } from "zod";
 import { TIPOS_DE_ATIVO, type TipoDeAtivo } from "@/lib/dados/placas-tipos";
 import { conjuntoMisto } from "../conjunto";
 import { normalizarPlaca, placaNormalizadaValida } from "../placa";
-import { SIGLAS, type Sigla } from "../status";
+import { motivoDeNaoDisponibilizar } from "../custodia";
+import { SIGLAS, siglaAceitaOTipo, type Sigla } from "../status";
 
 // Esquemas Zod dos assistentes de placa: o MESMO arquivo valida na tela (React Hook Form) e no
 // servidor (Server Action). Dinheiro sempre em centavos inteiros (no banco: numeric(15,2)).
@@ -68,8 +69,13 @@ const renavam = z
 
 // ---------- situação inicial por tipo ----------
 
-/** Situações que uma placa nova pode ter, por tipo. Nunca baixa (SUC, VND), situação de operação nem folga e férias. */
-const SITUACOES_INICIAIS_BASE: readonly Sigla[] = [
+/**
+ * As situações que uma placa nova pode ter são as desta lista que o catálogo da régua aceita para o
+ * tipo. Nunca baixa (SUC, VND), situação de operação nem folga e férias (decisão de 31/10/2026). O
+ * SMo só vale para cavalo e caminhão: o apoio perdeu o SMo quando o catálogo substituiu a tabela
+ * provisória (efeito aceito em 01/11/2026).
+ */
+const CANDIDATAS_A_SITUACAO_INICIAL: readonly Sigla[] = [
   "PÁT",
   "MAN",
   "REF",
@@ -79,14 +85,12 @@ const SITUACOES_INICIAIS_BASE: readonly Sigla[] = [
   "ALU",
   "EMP",
   "VEN",
+  "SMo",
 ];
-const TIPOS_COM_MOTORISTA: readonly TipoDeAtivo[] = ["cavalo", "caminhao", "apoio"];
 
 /** O padrão (PÁT) vem primeiro. */
 export function siglasIniciaisDoTipo(tipo: TipoDeAtivo): Sigla[] {
-  return TIPOS_COM_MOTORISTA.includes(tipo)
-    ? [...SITUACOES_INICIAIS_BASE, "SMo"]
-    : [...SITUACOES_INICIAIS_BASE];
+  return CANDIDATAS_A_SITUACAO_INICIAL.filter((sigla) => siglaAceitaOTipo(sigla, tipo));
 }
 
 const siglaConhecida = z.enum(SIGLAS, { error: "Escolha uma situação da lista." });
@@ -207,6 +211,18 @@ export const esquemaDisponibilizacao = z.object({
   versaoDaPlaca: versao,
 });
 export type EntradaDisponibilizacao = z.infer<typeof esquemaDisponibilizacao>;
+
+/**
+ * O mesmo esquema, mais a regra do tipo (e, se vier a sigla, da situação de origem): só cavalo ou
+ * caminhão vão ao Operacional, vindos de PÁT, VAz ou ETv. O servidor passa só o tipo (a situação, que
+ * muda, é conferida pelo armazém depois da versão, para o conflito vir primeiro); a tela passa os dois.
+ */
+export function esquemaDisponibilizacaoDe({ tipo, sigla }: { tipo: TipoDeAtivo; sigla?: Sigla }) {
+  return esquemaDisponibilizacao.superRefine((_dados, ctx) => {
+    const motivo = motivoDeNaoDisponibilizar({ sigla: sigla ?? "PÁT", tipo });
+    if (motivo !== null) ctx.addIssue({ code: "custom", path: ["placa"], message: motivo });
+  });
+}
 
 // ---------- transferência entre gestores ----------
 

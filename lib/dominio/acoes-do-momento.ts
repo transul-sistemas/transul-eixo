@@ -1,3 +1,4 @@
+import type { TipoDeAtivo } from "@/lib/dados/placas-tipos";
 import { podeDisponibilizar } from "./custodia";
 import { SIGLAS_DE_BAIXA, type Sigla } from "./status";
 
@@ -12,15 +13,18 @@ import { SIGLAS_DE_BAIXA, type Sigla } from "./status";
 // - Placa baixada (VND e SUC): nenhuma ação.
 export function idsDasAcoesDoMomento({
   sigla,
+  tipo,
   pedidoPendente = false,
 }: {
   sigla: Sigla;
+  /** O tipo do ativo: só cavalo e caminhão são disponibilizados ao Operacional. */
+  tipo: TipoDeAtivo;
   /** Há um pedido de transferência pendente para esta placa (Receber placa). */
   pedidoPendente?: boolean;
 }): string[] {
   if (SIGLAS_DE_BAIXA.includes(sigla)) return [];
   const ids: string[] = [];
   if (pedidoPendente) ids.push("frota.receber-placa");
-  if (podeDisponibilizar(sigla)) ids.push("frota.disponibilizar-ao-operacional");
+  if (podeDisponibilizar(sigla, tipo)) ids.push("frota.disponibilizar-ao-operacional");
   return ids;
 }

@@ -7,33 +7,64 @@ const DISPONIBILIZAR = "frota.disponibilizar-ao-operacional";
 const RECEBER = "frota.receber-placa";
 
 describe("idsDasAcoesDoMomento: quais ações de ACOES combinam com a placa (regra provisória)", () => {
+  it("carreta (implemento) em PÁT, VAz ou ETv não tem o botão Disponibilizar ao Operacional", () => {
+    for (const sigla of ["PÁT", "VAz", "ETv"] as const) {
+      expect(idsDasAcoesDoMomento({ sigla, tipo: "implemento" }), sigla).not.toContain(
+        DISPONIBILIZAR,
+      );
+    }
+  });
+
+  it("apoio e equipamento também não; cavalo e caminhão têm", () => {
+    for (const tipo of ["apoio", "equipamento"] as const) {
+      expect(idsDasAcoesDoMomento({ sigla: "PÁT", tipo }), tipo).not.toContain(DISPONIBILIZAR);
+    }
+    for (const tipo of ["cavalo", "caminhao"] as const) {
+      expect(idsDasAcoesDoMomento({ sigla: "PÁT", tipo }), tipo).toContain(DISPONIBILIZAR);
+    }
+  });
+
+  it("a carreta com pedido pendente ainda recebe a ação Receber placa", () => {
+    expect(
+      idsDasAcoesDoMomento({ sigla: "PÁT", tipo: "implemento", pedidoPendente: true }),
+    ).toEqual([RECEBER]);
+  });
+
   it("Disponibilizar ao Operacional só em PÁT, VAz e ETv", () => {
     const comDisponibilizar = SIGLAS.filter((sigla) =>
-      idsDasAcoesDoMomento({ sigla }).includes(DISPONIBILIZAR),
+      idsDasAcoesDoMomento({ sigla, tipo: "cavalo" }).includes(DISPONIBILIZAR),
     );
     expect([...comDisponibilizar].sort()).toEqual(["ETv", "PÁT", "VAz"].sort());
   });
 
   it("DOp (já disponível no Operacional) não tem ação: DOp para ACe é do módulo Operacional", () => {
-    expect(idsDasAcoesDoMomento({ sigla: "DOp" })).toEqual([]);
-    expect(idsDasAcoesDoMomento({ sigla: "DOp", pedidoPendente: false })).toEqual([]);
+    expect(idsDasAcoesDoMomento({ sigla: "DOp", tipo: "cavalo" })).toEqual([]);
+    expect(idsDasAcoesDoMomento({ sigla: "DOp", tipo: "cavalo", pedidoPendente: false })).toEqual(
+      [],
+    );
   });
 
   it("sem pedido de transferência pendente, Receber placa nunca aparece, em nenhuma situação", () => {
     for (const sigla of SIGLAS) {
-      expect(idsDasAcoesDoMomento({ sigla }), sigla).not.toContain(RECEBER);
-      expect(idsDasAcoesDoMomento({ sigla, pedidoPendente: false }), sigla).not.toContain(RECEBER);
+      expect(idsDasAcoesDoMomento({ sigla, tipo: "cavalo" }), sigla).not.toContain(RECEBER);
+      expect(
+        idsDasAcoesDoMomento({ sigla, tipo: "cavalo", pedidoPendente: false }),
+        sigla,
+      ).not.toContain(RECEBER);
     }
   });
 
   it("com pedido pendente, Receber placa aparece em qualquer situação que não seja baixa, qualquer que seja ela", () => {
     for (const sigla of SIGLAS.filter((s) => !SIGLAS_DE_BAIXA.includes(s))) {
-      expect(idsDasAcoesDoMomento({ sigla, pedidoPendente: true }), sigla).toContain(RECEBER);
+      expect(
+        idsDasAcoesDoMomento({ sigla, tipo: "cavalo", pedidoPendente: true }),
+        sigla,
+      ).toContain(RECEBER);
     }
   });
 
   it("PÁT com pedido pendente: as duas ações, Receber primeiro (a pendência vem antes)", () => {
-    expect(idsDasAcoesDoMomento({ sigla: "PÁT", pedidoPendente: true })).toEqual([
+    expect(idsDasAcoesDoMomento({ sigla: "PÁT", tipo: "cavalo", pedidoPendente: true })).toEqual([
       RECEBER,
       DISPONIBILIZAR,
     ]);
@@ -41,8 +72,10 @@ describe("idsDasAcoesDoMomento: quais ações de ACOES combinam com a placa (reg
 
   it("baixada (VND e SUC): nenhuma ação, nem com pedido pendente", () => {
     for (const sigla of SIGLAS_DE_BAIXA) {
-      expect(idsDasAcoesDoMomento({ sigla }), sigla).toEqual([]);
-      expect(idsDasAcoesDoMomento({ sigla, pedidoPendente: true }), sigla).toEqual([]);
+      expect(idsDasAcoesDoMomento({ sigla, tipo: "cavalo" }), sigla).toEqual([]);
+      expect(idsDasAcoesDoMomento({ sigla, tipo: "cavalo", pedidoPendente: true }), sigla).toEqual(
+        [],
+      );
     }
   });
 
@@ -50,7 +83,7 @@ describe("idsDasAcoesDoMomento: quais ações de ACOES combinam com a placa (reg
     const existentes = new Set(ACOES.map((a) => a.id));
     for (const sigla of SIGLAS) {
       for (const pedidoPendente of [false, true]) {
-        for (const id of idsDasAcoesDoMomento({ sigla, pedidoPendente })) {
+        for (const id of idsDasAcoesDoMomento({ sigla, tipo: "cavalo", pedidoPendente })) {
           expect(existentes.has(id), `${sigla}: ${id}`).toBe(true);
         }
       }
@@ -60,9 +93,9 @@ describe("idsDasAcoesDoMomento: quais ações de ACOES combinam com a placa (reg
   it("nunca repete um id e a ordem é estável", () => {
     for (const sigla of SIGLAS) {
       for (const pedidoPendente of [false, true]) {
-        const ids = idsDasAcoesDoMomento({ sigla, pedidoPendente });
+        const ids = idsDasAcoesDoMomento({ sigla, tipo: "cavalo", pedidoPendente });
         expect(new Set(ids).size).toBe(ids.length);
-        expect(idsDasAcoesDoMomento({ sigla, pedidoPendente })).toEqual(ids);
+        expect(idsDasAcoesDoMomento({ sigla, tipo: "cavalo", pedidoPendente })).toEqual(ids);
       }
     }
   });

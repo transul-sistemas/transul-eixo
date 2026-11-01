@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { podeDisponibilizar, type PedidoDeTransferencia } from "@/lib/dominio/custodia";
+import {
+  MENSAGEM_DE_TIPO_QUE_NAO_DISPONIBILIZA,
+  podeDisponibilizar,
+  SIGLAS_QUE_PODEM_DISPONIBILIZAR,
+  type PedidoDeTransferencia,
+} from "@/lib/dominio/custodia";
 import { criarArmazem } from "@/lib/exemplo/armazem";
 import { placasDeExemplo } from "@/lib/exemplo/placas";
 import {
@@ -17,10 +22,11 @@ const CHAVE_A = "11111111-1111-4111-8111-111111111111";
 const CHAVE_B = "22222222-2222-4222-8222-222222222222";
 
 const base = placasDeExemplo(HOJE);
-const noPatio = base.find((p) => podeDisponibilizar(p.sigla))!;
-const foraDoPatio = base.find(
-  (p) => !podeDisponibilizar(p.sigla) && p.sigla !== "VND" && p.sigla !== "SUC",
-)!;
+const emOrigem = (sigla: string) =>
+  (SIGLAS_QUE_PODEM_DISPONIBILIZAR as readonly string[]).includes(sigla);
+const noPatio = base.find((p) => podeDisponibilizar(p.sigla, p.tipo))!;
+const carretaNoPatio = base.find((p) => p.tipo === "implemento" && emOrigem(p.sigla))!;
+const foraDoPatio = base.find((p) => !emOrigem(p.sigla) && p.sigla !== "VND" && p.sigla !== "SUC")!;
 const implemento = base.find(
   (p) => p.tipo === "implemento" && p.sigla !== "VND" && p.sigla !== "SUC",
 )!;
@@ -165,6 +171,18 @@ describe("executarDisponibilizar", () => {
     const r = await executarDisponibilizar(CHAVE_B, entrada({ filialId: "filial-c" }), ctx);
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.erro.codigo).toBe("conflito");
+  });
+  it("carreta em PÁT, VAz ou ETv é recusada no servidor, com a mensagem do tipo no campo da placa, e nada muda", async () => {
+    const ctx = contexto();
+    const r = await executarDisponibilizar(CHAVE_A, entrada({ placa: carretaNoPatio.placa }), ctx);
+    expect(r.ok).toBe(false);
+    if (!r.ok) {
+      expect(r.erro.codigo).toBe("entrada_invalida");
+      expect(r.erro.campos?.placa?.[0]).toBe(MENSAGEM_DE_TIPO_QUE_NAO_DISPONIBILIZA);
+    }
+    const depois = await ctx.fonte.placaParaAssistente(carretaNoPatio.placa);
+    expect(depois?.sigla).toBe(carretaNoPatio.sigla);
+    expect(depois?.versao).toBe(1);
   });
   it("placa que não existe é nao_encontrado", async () => {
     const ctx = contexto();
