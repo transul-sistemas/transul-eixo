@@ -8,6 +8,24 @@ Modelo de entrada:
 
 ---
 
+## 01/11/2026 — Conformidade da composição (backlog), princípios e a correção sobre o Sankhya
+
+Registro de direção, só em texto: nenhum código nem migration. Não muda a fatia 3.1 em andamento.
+
+- **Backlog: "Conformidade da composição (peso por eixo, CMT, AET por rota, dimensões)".** Entra **depois do Acompanhamento da Frota**, com **prioridade alta de negócio**. **Todo limite legal só entra com fonte, vigência e conferência no texto consolidado da Resolução CONTRAN 882/2021 e alterações.** Sites do setor e o material de estudo servem de pista, nunca de fonte: nada vira regra sem essa conferência.
+- **Princípios** (valem para tudo que vier da conformidade):
+  1. **Massas em kg e distâncias em mm, sempre inteiros** (nunca ponto flutuante; sem toneladas nem metros no banco).
+  2. **Quando faltar dado, o estado é "pendente" ou "inconclusivo": nunca se presume.** Conjunto sem eixos, sem tara ou sem limite com fonte não é "conforme" nem "irregular": é inconclusivo, e a tela diz o que falta.
+  3. **A capacidade do fabricante fica separada do limite legal**: são dois dados, com origens diferentes, e a conformidade compara um com o outro, sem misturar.
+- **CORREÇÃO sobre o Sankhya.** O Sankhya **descreve a peça**: o modelo da placa, como "Carreta 3 eixos". O Eixo vai **além e entende o conjunto**: dois implementos de 3 eixos, sem dolly, formam um bitrezão. **O Sankhya não é tratado como errado**: ele e o Eixo respondem a perguntas diferentes (a peça e o conjunto), e a importação lê o primeiro para alimentar o segundo.
+- **Fatia 3.7 (acréscimo):** o ativo ganha **carroceria** (do catálogo do Eixo), **eixos por implemento** (número inteiro), **tara**, **PBT** e **CMT**, **cada campo com origem** (do Sankhya, derivada, informada, correção local, ou pendente). **Na importação**, os eixos saem do **texto do modelo** com origem **"derivada"**; **texto ambíguo ou sem eixos vira "pendente"**.
+- **Fila de exceções para a equipe revisar**, no lugar de uma planilha de todos os implementos: entra na fila o que **não foi deduzido** e o caso em que o **texto do modelo discorda do catálogo**. O que foi deduzido e confere não aparece.
+- **O catálogo de carrocerias é do Eixo:** seis de partida (Graneleira, Sider, Basculante, Baú frigorífico, Prancha e Tanque), **ampliado com a confirmação da equipe**. A lista de uns 40 do estudo serve **só de candidatos**. **A confirmar:** se o tipo de carroceria vem em **campo próprio do Sankhya** ou **só dentro do nome do modelo**; a resposta sai da **lista de nomes de modelo dos implementos**.
+- **AET** (autorização especial de trânsito) entra como **tipo de documento no motor único de documentos** (vencimento e alerta). **Sem criar módulo.**
+- **Plano da 3.4 (nome do conjunto):** o nome olha a **estrutura** (número de implementos, dolly e eixos por implemento), **não o total de eixos**. Isso **substitui a leitura anterior** ("bitrem e bitrezão se distinguem pelo total, em geral 7 e 9 eixos"). **A confirmar com a equipe:** bitrem = dois semirreboques de 2 eixos engatados direto; bitrezão = dois de 3 eixos; rodotrem = com dolly entre os dois; quantos eixos tem o dolly; se existem conjuntos com implementos de eixos diferentes; se a TranSul opera treminhão ou tritrem. **Fontes: sites do setor, não a norma; tudo marcado "a confirmar".** As colunas da regra de reconhecimento em `config.configuracao_de_conjunto` (nulas, na 3.1) passam a ser `quantidade_de_implementos`, `com_dolly` e `eixos_por_implemento`, em vez de `eixos_minimo` e `eixos_maximo`.
+- **Fora do repositório:** o ZIP do estudo **não entra** no repositório.
+- **Quem decidiu:** Alexandre.
+
 ## 01/11/2026 — Higiene do EIXO_DADOS: todo plano é liberado por padrão
 
 - **Decisão:** o teste de higiene que barra a variável `EIXO_DADOS` fora dos arquivos liberados passa a usar uma regra, em `lib/qualidade/eixo-dados.ts` (`liberadoParaEixoDados`): **qualquer arquivo em `docs/superpowers/plans/` é liberado por padrão**, inclusive plano que ainda não existe. A **lista fixa continua valendo para o resto do repositório** (`.env.development`, `.env.example`, `playwright.config.ts`, `docs/decisoes.md`, o código da fonte de exemplo, os arquivos `.test.ts(x)` e o workflow do pull request). Os planos saíram da lista fixa. Um caminho que sobe de pasta (`..`) não herda a liberação.
