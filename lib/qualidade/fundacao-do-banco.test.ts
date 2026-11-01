@@ -61,6 +61,17 @@ describe("tipos do banco gerados", () => {
     expect(existsSync("lib/dados/tipos-do-banco.ts")).toBe(true);
     expect(lerArquivo("lib/dados/tipos-do-banco.ts")).toMatch(/Arquivo gerado/);
   });
+  it("o arquivo é sempre LF: o .gitattributes fixa e o conteúdo não tem CR", () => {
+    expect(lerArquivo(".gitattributes")).toMatch(
+      /^lib\/dados\/tipos-do-banco\.ts\s+text\s+eol=lf/m,
+    );
+    expect(lerArquivo("lib/dados/tipos-do-banco.ts")).not.toContain("\r");
+  });
+  it("o script grava o arquivo já normalizado para LF (a conferência do CI compara o mesmo texto)", () => {
+    const script = lerArquivo("scripts/db-tipos.mjs");
+    expect(script).toMatch(/replace\(\/\\r\\n\/g, "\\n"\)/);
+    expect(script).toContain("writeFileSync");
+  });
   it("o script db:tipos existe no package.json", () => {
     const pacote = JSON.parse(lerArquivo("package.json")) as { scripts: Record<string, string> };
     expect(pacote.scripts["db:tipos"]).toBeTruthy();
