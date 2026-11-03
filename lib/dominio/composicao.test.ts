@@ -41,10 +41,13 @@ describe("estrutura do conjunto (regra da equipe, 03/11/2026)", () => {
     );
   });
 
-  it("recusa rodo com semirreboques de 3 eixos", () => {
-    expect(motivoDeComposicaoInvalida([semi(1, 3), dolly(2), semi(3, 3)])).toBe(
-      MENSAGENS_DA_COMPOSICAO.semConfiguracao,
-    );
+  it("estrutura sem configuração conhecida não é recusada (ajuste 3.4b): fica sem nome definido", () => {
+    expect(motivoDeComposicaoInvalida([semi(1, 3), dolly(2), semi(3, 3)])).toBeNull();
+    expect(motivoDeComposicaoInvalida([semi(1, 4), semi(2, 4)])).toBeNull();
+    expect(
+      motivoDeComposicaoInvalida([semi(1, 2), { ...dolly(2), eixos: 3 }, semi(3, 2)]),
+    ).toBeNull();
+    expect(Object.keys(MENSAGENS_DA_COMPOSICAO)).not.toContain("semConfiguracao");
   });
 
   it("o dolly só entra entre dois semirreboques", () => {
@@ -96,6 +99,12 @@ describe("configuracaoDoConjunto: a configuração pela estrutura, nunca pelo to
     expect(configuracaoDoConjunto([semi(1, null), semi(2, 2)])).toBe("pendente");
     expect(configuracaoDoConjunto([])).toBeNull();
   });
+
+  it("estrutura sem configuração conhecida fica sem nome definido", () => {
+    expect(configuracaoDoConjunto([semi(1, 4), semi(2, 4)])).toBe("sem_nome_definido");
+    expect(configuracaoDoConjunto([semi(1, 3), dolly(2), semi(3, 3)])).toBe("sem_nome_definido");
+    expect(configuracaoDoConjunto([semi(1, 6)])).toBe("sem_nome_definido");
+  });
 });
 
 describe("o espelho das configurações é o mesmo do seed", () => {
@@ -120,13 +129,14 @@ describe("o espelho das configurações é o mesmo do seed", () => {
 });
 
 describe("as mensagens do domínio são as mesmas do banco", () => {
-  it("cada mensagem aparece na migration da composição", () => {
+  it("cada mensagem aparece na migration que redefine a conferência do conjunto (3.4b)", () => {
     const migration = readFileSync(
-      "supabase/migrations/20261103130413_composicao_e_conjunto.sql",
+      "supabase/migrations/20261103141604_eixos_e_conjunto_sem_nome.sql",
       "utf-8",
     );
     for (const mensagem of Object.values(MENSAGENS_DA_COMPOSICAO)) {
       expect(migration, mensagem).toContain(mensagem);
     }
+    expect(migration).not.toContain("não corresponde a nenhuma configuração de conjunto");
   });
 });

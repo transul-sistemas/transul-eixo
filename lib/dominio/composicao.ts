@@ -47,8 +47,6 @@ export const MENSAGENS_DA_COMPOSICAO = {
   tresSemirreboques: "Três semirreboques sem dolly não formam um conjunto operado pela TranSul.",
   misto: "Conjunto misto não pode: os semirreboques têm de ter a mesma carroceria.",
   eixosDiferentes: "Os semirreboques do conjunto têm de ter o mesmo número de eixos.",
-  semConfiguracao:
-    "Esta estrutura não corresponde a nenhuma configuração de conjunto: o rodotrem só leva semirreboques de 2 eixos e dolly de 2.",
 } as const;
 
 interface Estrutura {
@@ -90,11 +88,11 @@ function configuracaoDa(e: Estrutura, configuracoes: readonly ConfiguracaoDeConj
   );
 }
 
-/** O espelho de `nucleo.conferir_conjunto`: a mensagem do que está errado, ou nulo. */
-export function motivoDeComposicaoInvalida(
-  unidades: readonly UnidadeDoConjunto[],
-  configuracoes: readonly ConfiguracaoDeConjunto[] = CONFIGURACOES_DE_CONJUNTO,
-): string | null {
+/**
+ * O espelho de `nucleo.conferir_conjunto`: a mensagem do que está errado, ou nulo. Estrutura sem
+ * configuração conhecida não é erro (ajuste 3.4b): o conjunto fica "sem nome definido".
+ */
+export function motivoDeComposicaoInvalida(unidades: readonly UnidadeDoConjunto[]): string | null {
   const e = estrutura(unidades);
   if (e.n === 0) return null;
   if (e.n > 3) return MENSAGENS_DA_COMPOSICAO.maisDeTres;
@@ -102,12 +100,13 @@ export function motivoDeComposicaoInvalida(
   if (e.dollies === 0 && e.n === 3) return MENSAGENS_DA_COMPOSICAO.tresSemirreboques;
   if (e.carrocerias > 1) return MENSAGENS_DA_COMPOSICAO.misto;
   if (e.eixosDistintos > 1) return MENSAGENS_DA_COMPOSICAO.eixosDiferentes;
-  if (!e.eixosFaltando && !configuracaoDa(e, configuracoes))
-    return MENSAGENS_DA_COMPOSICAO.semConfiguracao;
   return null;
 }
 
-/** A configuração do conjunto pela estrutura; "pendente" sem os eixos de algum semirreboque. */
+/**
+ * A configuração do conjunto pela estrutura; "pendente" sem os eixos de algum semirreboque e
+ * "sem_nome_definido" quando a estrutura não bate com nenhuma configuração conhecida.
+ */
 export function configuracaoDoConjunto(
   unidades: readonly UnidadeDoConjunto[],
   configuracoes: readonly ConfiguracaoDeConjunto[] = CONFIGURACOES_DE_CONJUNTO,
@@ -115,5 +114,5 @@ export function configuracaoDoConjunto(
   const e = estrutura(unidades);
   if (e.n === 0) return null;
   if (e.eixosFaltando) return "pendente";
-  return configuracaoDa(e, configuracoes)?.codigo ?? null;
+  return configuracaoDa(e, configuracoes)?.codigo ?? "sem_nome_definido";
 }

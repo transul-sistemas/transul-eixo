@@ -842,3 +842,19 @@ Registro de direção, só em texto: nenhum código nem migration. Não muda a f
 - **Regra permanente da composição** registrada no `CLAUDE.md` (Modelo de domínio): estrutura, as quatro configurações, eixos iguais entre semirreboques, dolly só no meio do rodotrem, configurações que a TranSul não opera, posição como ordem, "pendente" sem eixos, e referência normativa com conferência.
 - **Registrado no plano:** o "Cadastrar placa" precisa dos campos Função, Carroceria e Eixos do implemento antes da 3.9 (entram na 3.7); a posição é ordem, não contígua.
 - **Quem decidiu:** Alexandre.
+
+## 04/11/2026 — Ajuste 3.4b: eixos do implemento de 1 a 6 e conjunto "sem nome definido"
+
+- **Informação de Alexandre (04/11/2026):** o implemento pode ter de 1 a 6 eixos por placa, classificado por carroceria; no Sankhya aparecem modelos de 4 eixos (por exemplo, "SR/LIBRELATO SRCA 4E").
+- **O que mudou (migration nova `eixos_e_conjunto_sem_nome`; as anteriores não foram editadas):**
+  - `nucleo.ativo.eixos` do implemento aceita **1 a 6**, o dolly incluído. A exigência de dolly com 2 eixos saiu do cadastro do ativo e vale só dentro do rodo, como parte da configuração `rodo`.
+  - **Estrutura que não bate com nenhuma configuração conhecida deixa de ser recusada:** o conjunto fica com o nome **"sem nome definido"** e gera o alerta **`conjunto_sem_nome`** (no cavalo).
+  - **Continuam recusados, com as mensagens exatas:** mais de três unidades; dolly fora do meio entre dois semirreboques; três semirreboques sem dolly; conjunto misto de carroceria; semirreboques de eixos diferentes entre si. O espelho em TypeScript (`lib/dominio/composicao.ts`) perdeu a mensagem de estrutura desconhecida e `configuracaoDoConjunto` devolve `sem_nome_definido`.
+- **Lista fechada dos nomes de alerta, atualizada:** `sem_cr`, `cr_sem_operacao`, `buraco_em_cr`, `buraco_em_custodia`, `implemento_sem_eixos`, `conjunto_sem_nome` (teste em `31-pendencias-alertas-e-baixa.test.sql`).
+- **Decisões minhas a confirmar:**
+  1. **Dolly com eixos diferentes de 2 dentro do rodo** não é recusado: o conjunto fica "sem nome definido", como qualquer estrutura sem configuração (li "a exigência de dolly com 2 eixos vale só dentro do rodo" como exigência para o nome Rodotrem, não como recusa).
+  2. **O alerta `conjunto_sem_nome` aparece no cavalo** (o mestre), não em cada implemento.
+  3. **"Sem nome definido" só quando os eixos são conhecidos:** se faltar o eixo de algum semirreboque, o nome continua "pendente" (com o alerta `implemento_sem_eixos`).
+  4. **Simples de 1, 4, 5 ou 6 eixos** também fica "sem nome definido" (a configuração `simples` aceita só 2 ou 3).
+- **Testes vistos falhando antes:** o novo `36-eixos-e-conjunto-sem-nome` (14) falhou nos CHECKs antigos de eixos; o `35` (74) falhou no dolly de 3 eixos e no rodo de 3 eixos recusado; o `31` falhou sem o nome `conjunto_sem_nome`; o Vitest de `composicao` falhou sem a migration nova e com a recusa antiga.
+- **Quem decidiu:** Alexandre (a faixa de eixos e o "sem nome definido"); os itens numerados aguardam o checkpoint.

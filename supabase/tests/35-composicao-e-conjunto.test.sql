@@ -6,7 +6,7 @@
 -- `set constraints all immediate`, que confere tudo o que está pendente.
 begin;
 
-select plan(73);
+select plan(74);
 
 create temp table ids (nome text primary key, id uuid not null);
 
@@ -149,13 +149,16 @@ select throws_ok(
   $$insert into nucleo.ativo (tipo, funcao, renavam, eixos) values ('implemento', 'semirreboque', pg_temp.renavam(904), 2)$$,
   '23514', null, 'semirreboque sem carroceria é recusado'
 );
-select throws_ok(
-  $$insert into nucleo.ativo (tipo, funcao, renavam, eixos) values ('implemento', 'dolly', pg_temp.renavam(905), 3)$$,
-  '23514', null, 'dolly com 3 eixos é recusado (o dolly tem 2)'
+select lives_ok(
+  $q$do $b$ declare v uuid; begin
+      insert into nucleo.ativo (tipo, funcao, renavam, eixos) values ('implemento', 'dolly', pg_temp.renavam(905), 3) returning id into v;
+      perform pg_temp.completar(v);
+    end $b$$q$,
+  'dolly com 3 eixos passa no cadastro (os 2 eixos do dolly valem só dentro do rodo)'
 );
 select throws_ok(
-  $$insert into nucleo.ativo (tipo, funcao, renavam, eixos, carroceria_id) values ('implemento', 'semirreboque', pg_temp.renavam(906), 4, (select id from config.carroceria where nome = 'Sider'))$$,
-  '23514', null, 'implemento com 4 eixos é recusado (os operados têm 2 ou 3)'
+  $$insert into nucleo.ativo (tipo, funcao, renavam, eixos, carroceria_id) values ('implemento', 'semirreboque', pg_temp.renavam(906), 7, (select id from config.carroceria where nome = 'Sider'))$$,
+  '23514', null, 'implemento com 7 eixos é recusado (vai de 1 a 6)'
 );
 select lives_ok(
   $q$do $b$ declare v uuid; begin
@@ -166,14 +169,14 @@ select lives_ok(
 );
 
 -- ---- os ativos dos conjuntos ----
-select pg_temp.cavalo(c, n) from (values ('c1', 1), ('c2', 2), ('c3', 3), ('c4', 4), ('c5', 5), ('c6', 6), ('c7', 7), ('c8', 8), ('c9', 9), ('c10', 10)) as v (c, n);
+select pg_temp.cavalo(c, n) from (values ('c1', 1), ('c2', 2), ('c3', 3), ('c4', 4), ('c5', 5), ('c6', 6), ('c7', 7), ('c8', 8), ('c9', 9), ('c10', 10), ('c11', 11)) as v (c, n);
 select pg_temp.semi(s, n, carroceria, eixos::smallint) from (values
   ('g2a', 21, 'Graneleira', 2), ('g2b', 22, 'Graneleira', 2), ('g2c', 23, 'Graneleira', 2), ('g2d', 24, 'Graneleira', 2),
   ('g2e', 25, 'Graneleira', 2), ('g2f', 26, 'Graneleira', 2), ('g2g', 27, 'Graneleira', 2), ('g2h', 28, 'Graneleira', 2),
   ('g3a', 31, 'Graneleira', 3), ('g3b', 32, 'Graneleira', 3), ('g3c', 33, 'Graneleira', 3), ('g3d', 34, 'Graneleira', 3),
   ('g3e', 35, 'Graneleira', 3), ('s2a', 41, 'Sider', 2), ('s2b', 42, 'Sider', 2), ('p2a', 51, 'Prancha', 2), ('p2b', 52, 'Prancha', 2),
-  ('gxa', 61, 'Graneleira', null)) as v (s, n, carroceria, eixos);
-select pg_temp.dolly(d, n) from (values ('d1', 71), ('d2', 72)) as v (d, n);
+  ('g3f', 36, 'Graneleira', 3), ('g3g', 37, 'Graneleira', 3), ('gxa', 61, 'Graneleira', null)) as v (s, n, carroceria, eixos);
+select pg_temp.dolly(d, n) from (values ('d1', 71), ('d2', 72), ('d3', 73)) as v (d, n);
 select pg_temp.conferir();
 
 -- ---- composição tipada ----
@@ -218,13 +221,13 @@ select throws_ok(
     end $b$$q$,
   '23514', 'Os semirreboques do conjunto têm de ter o mesmo número de eixos.', 'semirreboques de eixos diferentes entre si são recusados'
 );
-select throws_ok(
+select lives_ok(
   $q$do $b$ begin
-      perform pg_temp.engatar('c4', 'g3d', 1::smallint); perform pg_temp.engatar('c4', 'd2', 2::smallint);
-      perform pg_temp.engatar('c4', 'g3e', 3::smallint);
-      set constraints all immediate;
+      perform pg_temp.engatar('c11', 'g3f', 1::smallint); perform pg_temp.engatar('c11', 'd3', 2::smallint);
+      perform pg_temp.engatar('c11', 'g3g', 3::smallint);
+      set constraints all immediate; set constraints all deferred;
     end $b$$q$,
-  '23514', 'Esta estrutura não corresponde a nenhuma configuração de conjunto: o rodotrem só leva semirreboques de 2 eixos e dolly de 2.', 'rodo com semirreboques de 3 eixos é recusado (o rodotrem de 11 eixos não existe na TranSul)'
+  'rodo com semirreboques de 3 eixos não é recusado (fica sem nome definido)'
 );
 select throws_ok(
   $q$do $b$ begin
@@ -305,6 +308,7 @@ select is(nucleo.nome_do_conjunto(pg_temp.id('c3')), 'Rodotrem', 'nome: Rodotrem
 select is(nucleo.nome_do_conjunto(pg_temp.id('c6')), 'Sider', 'nome: simples Sider');
 select is(nucleo.nome_do_conjunto(pg_temp.id('c8')), 'Prancha, 2 implementos', 'carroceria sem nome de conjunto: a carroceria e a quantidade de semirreboques');
 select is(nucleo.nome_do_conjunto(pg_temp.id('c5')), 'pendente', 'semirreboque sem eixos informados: nome pendente, nunca presumido');
+select is(nucleo.nome_do_conjunto(pg_temp.id('c11')), 'sem nome definido', 'rodo com semirreboques de 3 eixos: sem nome definido');
 select is(nucleo.nome_do_conjunto(pg_temp.id('c7')), null, 'cavalo sem implemento não tem nome de conjunto');
 select ok(
   exists (select 1 from nucleo.alerta_de_vinculo where ativo_id = pg_temp.id('gxa') and alerta = 'implemento_sem_eixos')
