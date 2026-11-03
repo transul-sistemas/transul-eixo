@@ -441,6 +441,13 @@ Hoje o banco exige carroceria em todo implemento (`ativo_carroceria_obrigatoria_
 | Testes | Todos os testes que enumeram os cinco tipos mudam; e2e de lista e filtros |
 | Custo | Alto e com efeito em telas prontas; só compensa se o dolly precisar de tratamento muito diferente do implemento (o que a equipe não indicou) |
 
+**Ajustes do checkpoint 3.4 (Alexandre, 03/11/2026):**
+- **O assistente "Cadastrar placa" precisa dos campos Função, Carroceria e Eixos do implemento antes da 3.9**: entram na **3.7** (cadastro com origem por campo), junto do seletor de implementos que recusa dolly fora do rodotrem. Sem eles, a fonte do banco (3.9) não consegue cadastrar implemento.
+- **A posição na composição é ordem, não precisa ser contígua**: desengatar o primeiro semirreboque de um bitrem deixa o outro na posição 2; o dolly vale se for o do meio pela ordem das posições.
+- **Trava do tipo:** vale só com composição vigente (como mestre ou servo); o tipo muda só pela função `nucleo.mudar_tipo_do_ativo` com motivo e auditoria, nunca por `UPDATE` solto. A **3.5** acrescenta a trava por evento de status incompatível com o novo tipo.
+- **Alerta `implemento_sem_eixos`** na visão de alertas de vínculo.
+- **Configuração de conjunto** com referência normativa e estado da conferência (a conferir, ou conferida em data e por quem).
+
 **Recomendação:** A (de Alexandre, e eu também recomendo). O dolly é uma peça rebocada como o semirreboque, sem carroceria; a diferença é a função dentro do conjunto, não a natureza do ativo.
 
 ## Armadilhas que nascem aqui

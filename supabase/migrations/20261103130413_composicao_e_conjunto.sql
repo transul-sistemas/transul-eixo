@@ -13,7 +13,8 @@
 --    uma configuração.
 --  * Operação: engatado usa a do cavalo; solto mantém a gravada na saída (uma vez, ao desengatar);
 --    nunca engatado usa a do próprio CR. A meta do conjunto é só do cavalo; o implemento herda.
---  * O tipo do ativo não muda com vínculo vigente, e a função não muda com o implemento engatado.
+--  * O tipo do ativo só muda pela função com motivo e nunca com composição vigente; a função do
+--    implemento não muda com ele engatado.
 --
 -- Tudo nasce fechado: RLS ligado, nenhum grant, nenhuma função SECURITY DEFINER.
 
@@ -72,6 +73,23 @@ alter table config.configuracao_de_conjunto
   add constraint configuracao_unidades check (unidades between 1 and 3),
   add constraint configuracao_eixos_dos_semirreboques check (cardinality(eixos_dos_semirreboques) > 0),
   add constraint configuracao_dolly_com_eixos check (com_dolly = (eixos_do_dolly is not null));
+-- De onde vem a regra e se alguém já a conferiu. A regra é da equipe (03/11/2026), não da norma: nasce
+-- "a conferir" e sem referência normativa. Conferir é dizer quando e quem (princípio da conformidade:
+-- existir no catálogo não é autorização de circular).
+alter table config.configuracao_de_conjunto
+  add column referencia_normativa text,
+  add column conferencia text not null default 'a_conferir',
+  add column conferida_em date,
+  add column conferida_por uuid references nucleo.pessoa (id),
+  add constraint configuracao_conferencia_valida check (conferencia in ('a_conferir', 'conferida')),
+  add constraint configuracao_conferida_com_data check ((conferencia = 'conferida') = (conferida_em is not null)),
+  add constraint configuracao_conferida_com_quem check ((conferida_em is null) = (conferida_por is null));
+create index configuracao_de_conjunto_conferida_por_idx on config.configuracao_de_conjunto (conferida_por);
+comment on column config.configuracao_de_conjunto.referencia_normativa is
+  'A norma que embasa a configuração (texto consolidado da Resolução CONTRAN e alterações), quando houver. Nula: a regra é só da equipe.';
+comment on column config.configuracao_de_conjunto.conferencia is
+  'a_conferir ou conferida. Conferida exige a data (conferida_em) e quem conferiu (conferida_por).';
+
 comment on table config.configuracao_de_conjunto is
   'Simples, bi, bitrezão e rodo, reconhecidos pela estrutura (regra da equipe, 03/11/2026): unidades engatadas (o dolly conta), presença de dolly, eixos aceitos nos semirreboques (todos iguais entre si) e eixos do dolly. Nunca pelo total de eixos.';
 
@@ -313,7 +331,10 @@ create constraint trigger t96_estrutura_do_conjunto after update of eixos, carro
   for each row execute function nucleo.conferir_conjuntos_do_implemento();
 
 -- ---------------------------------------------------------------------------------------------
--- Trava: o tipo não muda com vínculo vigente; a função não muda com o implemento engatado.
+-- Trava (ajuste do checkpoint 3.4): o tipo só muda pela função `mudar_tipo_do_ativo`, com motivo, e
+-- nunca com composição vigente (como mestre ou servo). Posse e gestor não dependem do tipo. A função
+-- do implemento não muda enquanto ele estiver engatado. A 3.5 acrescenta a trava por evento de status
+-- incompatível com o novo tipo.
 -- ---------------------------------------------------------------------------------------------
 create function nucleo.travar_tipo_com_vinculo()
 returns trigger
@@ -321,14 +342,16 @@ language plpgsql
 set search_path = ''
 as $$
 begin
-  if new.tipo is distinct from old.tipo and (
-       exists (select 1 from nucleo.posse_do_ativo where ativo_id = new.id and excluido_em is null and (fim is null or fim > now()))
-    or exists (select 1 from nucleo.gestor_da_carteira where ativo_id = new.id and excluido_em is null and (fim is null or fim > now()))
-    or exists (select 1 from nucleo.composicao where (cavalo_id = new.id or implemento_id = new.id)
-                  and excluido_em is null and (fim is null or fim > now()))
-  ) then
-    raise exception 'O tipo do ativo não muda enquanto houver vínculo vigente (posse, gestor ou conjunto).'
-      using errcode = '23514';
+  if new.tipo is distinct from old.tipo then
+    if coalesce(current_setting('eixo.mudanca_de_tipo', true), '') <> 'sim' then
+      raise exception 'O tipo do ativo só muda pela função de mudança de tipo, com o motivo.'
+        using errcode = '23514';
+    end if;
+    if exists (select 1 from nucleo.composicao where (cavalo_id = new.id or implemento_id = new.id)
+                  and excluido_em is null and (fim is null or fim > now())) then
+      raise exception 'O tipo do ativo não muda enquanto ele estiver num conjunto: desengate antes.'
+        using errcode = '23514';
+    end if;
   end if;
   if new.funcao is distinct from old.funcao and exists (
        select 1 from nucleo.composicao where implemento_id = new.id and excluido_em is null and (fim is null or fim > now())
@@ -343,6 +366,31 @@ revoke all on function nucleo.travar_tipo_com_vinculo() from public;
 
 create trigger t15_trava_com_vinculo before update on nucleo.ativo
   for each row execute function nucleo.travar_tipo_com_vinculo();
+
+-- Mudar o tipo do ativo: só com motivo, que vai para a auditoria. Roda com o usuário (a RLS vale).
+create function nucleo.mudar_tipo_do_ativo(p_ativo_id uuid, p_tipo nucleo.tipo_de_ativo, p_motivo text)
+returns void
+language plpgsql
+set search_path = ''
+as $$
+declare
+  v_achou boolean;
+begin
+  if nullif(btrim(coalesce(p_motivo, '')), '') is null then
+    raise exception 'Mudar o tipo do ativo exige o motivo.' using errcode = '23514';
+  end if;
+  perform set_config('eixo.motivo', p_motivo, true);
+  perform set_config('eixo.mudanca_de_tipo', 'sim', true);
+  update nucleo.ativo set tipo = p_tipo where id = p_ativo_id;
+  v_achou := found;
+  perform set_config('eixo.mudanca_de_tipo', '', true);
+  perform set_config('eixo.motivo', '', true);
+  if not v_achou then
+    raise exception 'O ativo % não existe.', p_ativo_id;
+  end if;
+end;
+$$;
+revoke all on function nucleo.mudar_tipo_do_ativo(uuid, nucleo.tipo_de_ativo, text) from public;
 
 -- ---------------------------------------------------------------------------------------------
 -- Meta do conjunto: só no cavalo. O implemento herda pela composição (função, não coluna copiada).
@@ -474,3 +522,54 @@ create or replace view nucleo.operacao_do_ativo with (security_invoker = true) a
    where a.excluido_em is null;
 comment on view nucleo.operacao_do_ativo is
   'A operação de cada ativo: engatado, a do cavalo; solto, a gravada na saída; nunca engatado, a do próprio CR. O CR (cr_id) é sempre o da própria placa.';
+
+-- ---------------------------------------------------------------------------------------------
+-- Alertas: acrescenta implemento_sem_eixos (o nome do conjunto fica pendente sem esse dado).
+-- A lista fechada dos nomes está em docs/decisoes.md e tem teste.
+-- ---------------------------------------------------------------------------------------------
+create or replace view nucleo.alerta_de_vinculo with (security_invoker = true) as
+  with na_frota as (
+    select a.id, a.tipo, a.eixos
+      from nucleo.ativo a
+     where a.excluido_em is null
+       and not exists (
+         select 1 from nucleo.baixa_do_ativo b
+          where b.ativo_id = a.id and b.excluido_em is null and b.em <= now()
+       )
+  )
+  select f.id as ativo_id, 'sem_cr'::text as alerta
+    from na_frota f
+   where not exists (
+     select 1 from nucleo.cr_do_ativo v
+      where v.ativo_id = f.id and v.excluido_em is null and v.periodo @> now()
+   )
+  union all
+  select f.id, 'cr_sem_operacao'
+    from na_frota f
+    join nucleo.cr_do_ativo v on v.ativo_id = f.id and v.excluido_em is null and v.periodo @> now()
+    join nucleo.cr c on c.id = v.cr_id
+   where c.operacao_id is null
+  union all
+  select distinct f.id, 'buraco_em_cr'
+    from na_frota f
+    join (
+      select ativo_id, fim, lead(inicio) over (partition by ativo_id order by inicio) as prox
+        from nucleo.cr_do_ativo
+       where excluido_em is null
+    ) v on v.ativo_id = f.id
+   where v.prox > v.fim
+  union all
+  select distinct f.id, 'buraco_em_custodia'
+    from na_frota f
+    join (
+      select ativo_id, fim, lead(inicio) over (partition by ativo_id order by inicio) as prox
+        from nucleo.custodia
+       where excluido_em is null
+    ) v on v.ativo_id = f.id
+   where v.prox > v.fim
+  union all
+  select f.id, 'implemento_sem_eixos'
+    from na_frota f
+   where f.tipo = 'implemento' and f.eixos is null;
+comment on view nucleo.alerta_de_vinculo is
+  'Pendências dos vínculos e do cadastro: sem_cr, cr_sem_operacao, buraco_em_cr, buraco_em_custodia e implemento_sem_eixos. Ativo baixado não entra. Posse e gestor não aparecem aqui porque o banco proíbe o buraco neles.';

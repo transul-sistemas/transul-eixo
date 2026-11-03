@@ -38,14 +38,14 @@ export type Database = {
                   ]
                 },"configuracao_de_conjunto": {
                   Row: {
-                    "codigo": string,"com_dolly": boolean,"eixos_do_dolly": number | null,"eixos_dos_semirreboques": (number)[],"nome": string,"unidades": number,"versao": number
+                    "codigo": string,"com_dolly": boolean,"conferencia": string,"conferida_em": string | null,"conferida_por": string | null,"eixos_do_dolly": number | null,"eixos_dos_semirreboques": (number)[],"nome": string,"referencia_normativa": string | null,"unidades": number,"versao": number
                   }
                   ComputedFields: never
                   Insert: {
-                    "codigo": string,"com_dolly": boolean,"eixos_do_dolly"?: number | null,"eixos_dos_semirreboques": (number)[],"nome": string,"unidades": number,"versao"?: number
+                    "codigo": string,"com_dolly": boolean,"conferencia"?: string,"conferida_em"?: string | null,"conferida_por"?: string | null,"eixos_do_dolly"?: number | null,"eixos_dos_semirreboques": (number)[],"nome": string,"referencia_normativa"?: string | null,"unidades": number,"versao"?: number
                   }
                   Update: {
-                    "codigo"?: string,"com_dolly"?: boolean,"eixos_do_dolly"?: number | null,"eixos_dos_semirreboques"?: (number)[],"nome"?: string,"unidades"?: number,"versao"?: number
+                    "codigo"?: string,"com_dolly"?: boolean,"conferencia"?: string,"conferida_em"?: string | null,"conferida_por"?: string | null,"eixos_do_dolly"?: number | null,"eixos_dos_semirreboques"?: (number)[],"nome"?: string,"referencia_normativa"?: string | null,"unidades"?: number,"versao"?: number
                   }
                   Relationships: [
                     
@@ -646,6 +646,9 @@ isOneToOne: false
                            },
 "meta_do_conjunto_de":
 { Args: { "p_ativo_id": string,"p_em"?: string }; Returns: number
+                           },
+"mudar_tipo_do_ativo":
+{ Args: { "p_ativo_id": string,"p_motivo": string,"p_tipo": Database["nucleo"]['Enums']["tipo_de_ativo"] }; Returns: undefined
                            },
 "nome_do_conjunto":
 { Args: { "p_cavalo_id": string,"p_em"?: string }; Returns: string

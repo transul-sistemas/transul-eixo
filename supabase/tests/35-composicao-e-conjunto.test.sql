@@ -6,7 +6,7 @@
 -- `set constraints all immediate`, que confere tudo o que está pendente.
 begin;
 
-select plan(64);
+select plan(73);
 
 create temp table ids (nome text primary key, id uuid not null);
 
@@ -96,6 +96,21 @@ select bag_eq(
   'a regra da equipe (03/11/2026) está semeada: unidades, dolly, eixos dos semirreboques e do dolly'
 );
 select ok(
+  (select count(*) from information_schema.columns
+    where table_schema = 'config' and table_name = 'configuracao_de_conjunto'
+      and column_name in ('referencia_normativa', 'conferencia', 'conferida_em', 'conferida_por')) = 4,
+  'a configuração de conjunto tem a referência normativa e o estado da conferência'
+);
+select is(
+  (select count(*) from config.configuracao_de_conjunto where conferencia <> 'a_conferir' or referencia_normativa is not null),
+  0::bigint,
+  'as quatro configurações nascem "a conferir", sem referência normativa (a regra é da equipe, não da norma)'
+);
+select throws_ok(
+  $$update config.configuracao_de_conjunto set conferencia = 'conferida' where codigo = 'bi'$$,
+  '23514', null, 'conferida exige a data e quem conferiu'
+);
+select ok(
   (select relrowsecurity from pg_class where oid = 'nucleo.composicao'::regclass)
   and (select relrowsecurity from pg_class where oid = 'nucleo.meta_do_conjunto'::regclass),
   'composicao e meta_do_conjunto têm RLS ligado'
@@ -151,7 +166,7 @@ select lives_ok(
 );
 
 -- ---- os ativos dos conjuntos ----
-select pg_temp.cavalo(c, n) from (values ('c1', 1), ('c2', 2), ('c3', 3), ('c4', 4), ('c5', 5), ('c6', 6), ('c7', 7), ('c8', 8), ('c9', 9)) as v (c, n);
+select pg_temp.cavalo(c, n) from (values ('c1', 1), ('c2', 2), ('c3', 3), ('c4', 4), ('c5', 5), ('c6', 6), ('c7', 7), ('c8', 8), ('c9', 9), ('c10', 10)) as v (c, n);
 select pg_temp.semi(s, n, carroceria, eixos::smallint) from (values
   ('g2a', 21, 'Graneleira', 2), ('g2b', 22, 'Graneleira', 2), ('g2c', 23, 'Graneleira', 2), ('g2d', 24, 'Graneleira', 2),
   ('g2e', 25, 'Graneleira', 2), ('g2f', 26, 'Graneleira', 2), ('g2g', 27, 'Graneleira', 2), ('g2h', 28, 'Graneleira', 2),
@@ -291,6 +306,11 @@ select is(nucleo.nome_do_conjunto(pg_temp.id('c6')), 'Sider', 'nome: simples Sid
 select is(nucleo.nome_do_conjunto(pg_temp.id('c8')), 'Prancha, 2 implementos', 'carroceria sem nome de conjunto: a carroceria e a quantidade de semirreboques');
 select is(nucleo.nome_do_conjunto(pg_temp.id('c5')), 'pendente', 'semirreboque sem eixos informados: nome pendente, nunca presumido');
 select is(nucleo.nome_do_conjunto(pg_temp.id('c7')), null, 'cavalo sem implemento não tem nome de conjunto');
+select ok(
+  exists (select 1 from nucleo.alerta_de_vinculo where ativo_id = pg_temp.id('gxa') and alerta = 'implemento_sem_eixos')
+  and not exists (select 1 from nucleo.alerta_de_vinculo where ativo_id = pg_temp.id('g2h') and alerta = 'implemento_sem_eixos'),
+  'implemento sem eixos informados gera o alerta implemento_sem_eixos'
+);
 update config.nomenclatura_de_conjunto set nome = 'Bitrem graneleiro'
  where configuracao = 'bi' and carroceria_id = (select id from config.carroceria where nome = 'Graneleira');
 select is(nucleo.nome_do_conjunto(pg_temp.id('c1')), 'Bitrem graneleiro', 'renomear a nomenclatura muda o nome sem tocar na placa');
@@ -380,8 +400,27 @@ select is(nucleo.meta_do_conjunto_de(pg_temp.id('g3a')), null::numeric(15,2), 'a
 
 -- ---- trava do tipo e da função com vínculo vigente ----
 select throws_ok(
-  $$update nucleo.ativo set tipo = 'caminhao' where id = pg_temp.id('c7')$$,
-  '23514', null, 'o tipo não muda com vínculo vigente (posse)'
+  $$update nucleo.ativo set tipo = 'caminhao' where id = pg_temp.id('c10')$$,
+  '23514', 'O tipo do ativo só muda pela função de mudança de tipo, com o motivo.', 'UPDATE direto do tipo é recusado (o tipo muda só pela função, com motivo)'
+);
+select throws_ok(
+  $$select nucleo.mudar_tipo_do_ativo(pg_temp.id('c3'), 'caminhao', 'Cadastrado como cavalo por engano')$$,
+  '23514', 'O tipo do ativo não muda enquanto ele estiver num conjunto: desengate antes.', 'o tipo não muda com composição vigente (como mestre)'
+);
+select throws_ok(
+  $$select nucleo.mudar_tipo_do_ativo(pg_temp.id('c10'), 'caminhao', '   ')$$,
+  '23514', null, 'mudar o tipo exige o motivo'
+);
+select lives_ok(
+  $$select nucleo.mudar_tipo_do_ativo(pg_temp.id('c10'), 'caminhao', 'Cadastrado como cavalo por engano')$$,
+  'sem composição, o tipo muda pela função com motivo (posse e gestor não dependem do tipo)'
+);
+select is((select tipo from nucleo.ativo where id = pg_temp.id('c10')), 'caminhao'::nucleo.tipo_de_ativo, 'o tipo mudou');
+select ok(
+  exists (select 1 from auditoria.evento
+           where tabela = 'nucleo.ativo' and operacao = 'UPDATE' and registro_id = pg_temp.id('c10')::text
+             and motivo = 'Cadastrado como cavalo por engano'),
+  'a mudança de tipo fica na auditoria com o motivo'
 );
 select throws_ok(
   $$update nucleo.ativo set funcao = 'semirreboque', carroceria_id = (select id from config.carroceria where nome = 'Graneleira')
