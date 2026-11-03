@@ -2,7 +2,7 @@
 -- existe, a lista fechada dos nomes de alerta e as siglas de baixa do catálogo.
 begin;
 
-select plan(20);
+select plan(36);
 
 create temp table ids (nome text primary key, id uuid not null);
 
@@ -104,11 +104,11 @@ select lives_ok(
   'baixa com posse e gestor terminando exatamente no instante dela passa'
 );
 
--- ---- pendências do pedido ----
-with a as (
-  insert into nucleo.ativo (tipo, renavam) values ('cavalo', pg_temp.renavam(500)) returning id
-)
-insert into ids select 'cav', id from a;
+-- ---- pendências do pedido: cada uma precisa de resposta para concluir ----
+insert into ids select 'cav', pg_temp.ativo_completo(500);
+insert into ids select 'cav2', pg_temp.ativo_completo(501);
+set constraints all immediate;
+set constraints all deferred;
 with t as (
   insert into nucleo.transferencia (ativo_id, de_gestor_id, para_gestor_id, motivo)
   values ((select id from ids where nome = 'cav'), (select id from ids where nome = 'ana'),
@@ -118,9 +118,10 @@ with t as (
 insert into ids select 'pedido', id from t;
 
 select lives_ok(
-  $$insert into nucleo.transferencia_pendencia (transferencia_id, texto)
-    values ((select id from ids where nome = 'pedido'), 'Documento do CRLV vencido')$$,
-  'pendência em aberto, só com o texto'
+  $$insert into nucleo.transferencia_pendencia (transferencia_id, texto) values
+      ((select id from ids where nome = 'pedido'), 'Documento do CRLV vencido'),
+      ((select id from ids where nome = 'pedido'), 'Pneu dianteiro gasto')$$,
+  'pendências em aberto, só com o texto'
 );
 select throws_ok(
   $$insert into nucleo.transferencia_pendencia (transferencia_id, texto)
@@ -128,17 +129,62 @@ select throws_ok(
   '23514', null, 'pendência sem texto é recusada'
 );
 select throws_ok(
-  $$update nucleo.transferencia_pendencia set resolvida_por = (select id from ids where nome = 'bia')
-     where transferencia_id = (select id from ids where nome = 'pedido')$$,
-  '23514', null, 'resolver sem dizer quando é recusado'
+  $$update nucleo.transferencia_pendencia
+       set resposta = 'resolvida', respondida_por = (select id from ids where nome = 'bia'), respondida_em = '2026-05-01 00:00-03'
+     where texto = 'Documento do CRLV vencido'$$,
+  '23514', null, 'responder antes de receber a placa é recusado (a resposta é da conferência)'
+);
+select lives_ok(
+  $$select nucleo.receber_transferencia((select id from ids where nome = 'pedido'), '2026-05-01 00:00-03')$$,
+  'receber não fica bloqueado por pendência em aberto'
+);
+select throws_ok(
+  $$select nucleo.concluir_transferencia((select id from ids where nome = 'pedido'), '2026-05-02 00:00-03')$$,
+  'P0001', null, 'pendência sem resposta impede concluir'
+);
+select throws_ok(
+  $$update nucleo.transferencia_pendencia set resposta = 'resolvida' where texto = 'Documento do CRLV vencido'$$,
+  '23514', null, 'resposta sem quem e quando é recusada'
+);
+select throws_ok(
+  $$update nucleo.transferencia_pendencia
+       set resposta = 'talvez', respondida_por = (select id from ids where nome = 'bia'), respondida_em = '2026-05-01 00:00-03'
+     where texto = 'Documento do CRLV vencido'$$,
+  '23514', null, 'só valem as respostas resolvida, aceita_com_nota e contestada'
+);
+select throws_ok(
+  $$update nucleo.transferencia_pendencia
+       set resposta = 'aceita_com_nota', respondida_por = (select id from ids where nome = 'bia'), respondida_em = '2026-05-01 00:00-03'
+     where texto = 'Pneu dianteiro gasto'$$,
+  '23514', null, 'aceitar exige a nota'
 );
 select lives_ok(
   $$update nucleo.transferencia_pendencia
-       set resolvida_por = (select id from ids where nome = 'bia'),
-           resolvida_em = '2026-05-01 00:00-03',
-           nota = 'CRLV renovado'
-     where transferencia_id = (select id from ids where nome = 'pedido')$$,
-  'resolver com quem e quando, e a nota opcional'
+       set resposta = 'resolvida', respondida_por = (select id from ids where nome = 'bia'), respondida_em = '2026-05-01 10:00-03'
+     where texto = 'Documento do CRLV vencido'$$,
+  'resolvida, com quem e quando'
+);
+select lives_ok(
+  $$update nucleo.transferencia_pendencia
+       set resposta = 'aceita_com_nota', respondida_por = (select id from ids where nome = 'bia'),
+           respondida_em = '2026-05-01 10:05-03', nota = 'Troca na próxima revisão'
+     where texto = 'Pneu dianteiro gasto'$$,
+  'aceita com nota'
+);
+select lives_ok(
+  $$select nucleo.concluir_transferencia((select id from ids where nome = 'pedido'), '2026-05-02 00:00-03')$$,
+  'com todas as pendências respondidas, concluir troca o gestor'
+);
+select is(
+  (select gestor_id from nucleo.gestor_da_carteira
+    where ativo_id = (select id from ids where nome = 'cav') and fim is null and excluido_em is null),
+  (select id from ids where nome = 'bia'),
+  'depois de concluir, o gestor vigente é o de destino'
+);
+select throws_ok(
+  $$insert into nucleo.transferencia_pendencia (transferencia_id, texto)
+    values ((select id from ids where nome = 'pedido'), 'Achei mais uma')$$,
+  '23514', null, 'pedido concluído não aceita pendência nova'
 );
 select ok(
   exists (select 1 from auditoria.evento where tabela = 'nucleo.transferencia_pendencia' and operacao = 'UPDATE'),
@@ -152,6 +198,57 @@ select throws_ok(
   $$insert into nucleo.transferencia_pendencia (transferencia_id, texto)
     values (gen_random_uuid(), 'Pedido que não existe')$$,
   '23503', null, 'pendência só existe num pedido de transferência'
+);
+
+-- ---- contestar devolve o pedido ao remetente; o gestor nunca muda ----
+with t as (
+  insert into nucleo.transferencia (ativo_id, de_gestor_id, para_gestor_id, motivo)
+  values ((select id from ids where nome = 'cav2'), (select id from ids where nome = 'ana'),
+          (select id from ids where nome = 'bia'), 'Troca de carteira')
+  returning id
+)
+insert into ids select 'pedido2', id from t;
+insert into nucleo.transferencia_pendencia (transferencia_id, texto)
+  values ((select id from ids where nome = 'pedido2'), 'Avaria na lateral não informada');
+select nucleo.receber_transferencia((select id from ids where nome = 'pedido2'), '2026-05-01 00:00-03');
+
+select throws_ok(
+  $$update nucleo.transferencia_pendencia
+       set resposta = 'contestada', respondida_por = (select id from ids where nome = 'bia'), respondida_em = '2026-05-01 10:00-03'
+     where transferencia_id = (select id from ids where nome = 'pedido2')$$,
+  '23514', null, 'contestar exige a nota (o motivo da contestação)'
+);
+select lives_ok(
+  $$update nucleo.transferencia_pendencia
+       set resposta = 'contestada', respondida_por = (select id from ids where nome = 'bia'),
+           respondida_em = '2026-05-01 10:00-03', nota = 'A avaria é maior do que o informado'
+     where transferencia_id = (select id from ids where nome = 'pedido2')$$,
+  'contestar com nota'
+);
+select is(
+  (select situacao from nucleo.transferencia where id = (select id from ids where nome = 'pedido2')),
+  'devolvida',
+  'pendência contestada devolve o pedido ao remetente'
+);
+select is(
+  (select gestor_id from nucleo.gestor_da_carteira
+    where ativo_id = (select id from ids where nome = 'cav2') and fim is null and excluido_em is null),
+  (select id from ids where nome = 'ana'),
+  'o gestor nunca muda num pedido devolvido'
+);
+select is(
+  (select count(*) from nucleo.gestor_da_carteira where ativo_id = (select id from ids where nome = 'cav2')),
+  1::bigint,
+  'nenhuma vigência de gestor foi criada para o pedido devolvido (sem vigência de volta)'
+);
+select throws_ok(
+  $$select nucleo.concluir_transferencia((select id from ids where nome = 'pedido2'), '2026-05-02 00:00-03')$$,
+  'P0001', null, 'pedido devolvido não se conclui'
+);
+select lives_ok(
+  $$insert into nucleo.transferencia (ativo_id, de_gestor_id, para_gestor_id, motivo)
+    values ((select id from ids where nome = 'cav2'), (select id from ids where nome = 'ana'), (select id from ids where nome = 'bia'), 'Reenvio com a avaria descrita')$$,
+  'depois de devolvido, o remetente pode abrir um pedido novo'
 );
 
 -- ---- CODCENCUS: único quando existe ----

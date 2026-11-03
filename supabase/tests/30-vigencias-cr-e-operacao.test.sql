@@ -7,7 +7,7 @@
 -- ativos sem posse nem gestor de propósito, vêm por último.
 begin;
 
-select plan(86);
+select plan(91);
 
 create temp table ids (nome text primary key, id uuid not null);
 
@@ -356,13 +356,41 @@ select lives_ok(
   $$select nucleo.receber_transferencia(
       (select id from nucleo.transferencia where ativo_id = (select id from ids where nome = 'cav30') and situacao = 'pendente'),
       '2026-05-01 00:00-03')$$,
-  'receber a placa fecha o gestor antigo e abre o novo na mesma transação'
+  'receber a placa registra a chegada e abre a conferência'
+);
+select is(
+  (select gestor_id from nucleo.gestor_da_carteira
+    where ativo_id = (select id from ids where nome = 'cav30') and fim is null),
+  (select id from ids where nome = 'ana'),
+  'receber não troca o gestor (a troca é na conclusão)'
+);
+select is(
+  (select situacao from nucleo.transferencia where ativo_id = (select id from ids where nome = 'cav30')),
+  'em_conferencia',
+  'o pedido fica em conferência'
+);
+select throws_ok(
+  $$insert into nucleo.transferencia (ativo_id, de_gestor_id, para_gestor_id, motivo)
+    values ((select id from ids where nome = 'cav30'), (select id from ids where nome = 'ana'), (select id from ids where nome = 'bia'), 'Outro durante a conferência')$$,
+  '23505', null, 'pedido em conferência ainda está aberto: não cabe outro para o mesmo ativo'
+);
+select throws_ok(
+  $$select nucleo.receber_transferencia(
+      (select id from nucleo.transferencia where ativo_id = (select id from ids where nome = 'cav30')),
+      '2026-05-02 00:00-03')$$,
+  'P0001', null, 'receber de novo um pedido já recebido falha'
+);
+select lives_ok(
+  $$select nucleo.concluir_transferencia(
+      (select id from nucleo.transferencia where ativo_id = (select id from ids where nome = 'cav30') and situacao = 'em_conferencia'),
+      '2026-05-02 00:00-03')$$,
+  'concluir fecha o gestor antigo e abre o novo na mesma transação'
 );
 select is(
   (select fim from nucleo.gestor_da_carteira
     where ativo_id = (select id from ids where nome = 'cav30') and gestor_id = (select id from ids where nome = 'ana')),
-  '2026-05-01 00:00-03'::timestamptz,
-  'o gestor antigo termina no instante do recebimento'
+  '2026-05-02 00:00-03'::timestamptz,
+  'o gestor antigo termina no instante da conclusão'
 );
 select is(
   (select gestor_id from nucleo.gestor_da_carteira
@@ -372,20 +400,20 @@ select is(
 );
 select is(
   (select situacao from nucleo.transferencia where ativo_id = (select id from ids where nome = 'cav30')),
-  'recebida',
-  'o pedido fica recebido'
+  'concluida',
+  'o pedido fica concluído'
 );
-select lives_ok($$select pg_temp.conferir()$$, 'depois do recebimento o gestor segue sem buraco');
+select lives_ok($$select pg_temp.conferir()$$, 'depois da conclusão o gestor segue sem buraco');
 select throws_ok(
-  $$select nucleo.receber_transferencia(
+  $$select nucleo.concluir_transferencia(
       (select id from nucleo.transferencia where ativo_id = (select id from ids where nome = 'cav30')),
-      '2026-05-02 00:00-03')$$,
-  'P0001', null, 'receber de novo um pedido já recebido falha'
+      '2026-05-03 00:00-03')$$,
+  'P0001', null, 'concluir de novo um pedido já concluído falha'
 );
 select lives_ok(
   $$insert into nucleo.transferencia (ativo_id, de_gestor_id, para_gestor_id, motivo)
     values ((select id from ids where nome = 'cav30'), (select id from ids where nome = 'bia'), (select id from ids where nome = 'ana'), 'Volta')$$,
-  'depois de recebido, pode haver novo pedido'
+  'depois de concluído, pode haver novo pedido'
 );
 select lives_ok(
   $$insert into nucleo.transferencia (ativo_id, de_gestor_id, para_gestor_id, motivo)

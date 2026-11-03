@@ -470,14 +470,14 @@ isOneToOne: false
                   ]
                 },"transferencia": {
                   Row: {
-                    "ativo_id": string,"criado_em": string,"de_gestor_id": string,"excluido_em": string | null,"excluido_por": string | null,"id": string,"motivo": string,"motivo_da_exclusao": string | null,"para_gestor_id": string,"recebida_em": string | null,"situacao": string,"versao": number
+                    "ativo_id": string,"concluida_em": string | null,"criado_em": string,"de_gestor_id": string,"devolvida_em": string | null,"excluido_em": string | null,"excluido_por": string | null,"id": string,"motivo": string,"motivo_da_exclusao": string | null,"para_gestor_id": string,"recebida_em": string | null,"situacao": string,"versao": number
                   }
                   ComputedFields: never
                   Insert: {
-                    "ativo_id": string,"criado_em"?: string,"de_gestor_id": string,"excluido_em"?: string | null,"excluido_por"?: string | null,"id"?: string,"motivo": string,"motivo_da_exclusao"?: string | null,"para_gestor_id": string,"recebida_em"?: string | null,"situacao"?: string,"versao"?: number
+                    "ativo_id": string,"concluida_em"?: string | null,"criado_em"?: string,"de_gestor_id": string,"devolvida_em"?: string | null,"excluido_em"?: string | null,"excluido_por"?: string | null,"id"?: string,"motivo": string,"motivo_da_exclusao"?: string | null,"para_gestor_id": string,"recebida_em"?: string | null,"situacao"?: string,"versao"?: number
                   }
                   Update: {
-                    "ativo_id"?: string,"criado_em"?: string,"de_gestor_id"?: string,"excluido_em"?: string | null,"excluido_por"?: string | null,"id"?: string,"motivo"?: string,"motivo_da_exclusao"?: string | null,"para_gestor_id"?: string,"recebida_em"?: string | null,"situacao"?: string,"versao"?: number
+                    "ativo_id"?: string,"concluida_em"?: string | null,"criado_em"?: string,"de_gestor_id"?: string,"devolvida_em"?: string | null,"excluido_em"?: string | null,"excluido_por"?: string | null,"id"?: string,"motivo"?: string,"motivo_da_exclusao"?: string | null,"para_gestor_id"?: string,"recebida_em"?: string | null,"situacao"?: string,"versao"?: number
                   }
                   Relationships: [
                     {
@@ -508,19 +508,19 @@ isOneToOne: false
                   ]
                 },"transferencia_pendencia": {
                   Row: {
-                    "criado_em": string,"excluido_em": string | null,"excluido_por": string | null,"id": string,"motivo_da_exclusao": string | null,"nota": string | null,"resolvida_em": string | null,"resolvida_por": string | null,"texto": string,"transferencia_id": string,"versao": number
+                    "criado_em": string,"excluido_em": string | null,"excluido_por": string | null,"id": string,"motivo_da_exclusao": string | null,"nota": string | null,"respondida_em": string | null,"respondida_por": string | null,"resposta": string | null,"texto": string,"transferencia_id": string,"versao": number
                   }
                   ComputedFields: never
                   Insert: {
-                    "criado_em"?: string,"excluido_em"?: string | null,"excluido_por"?: string | null,"id"?: string,"motivo_da_exclusao"?: string | null,"nota"?: string | null,"resolvida_em"?: string | null,"resolvida_por"?: string | null,"texto": string,"transferencia_id": string,"versao"?: number
+                    "criado_em"?: string,"excluido_em"?: string | null,"excluido_por"?: string | null,"id"?: string,"motivo_da_exclusao"?: string | null,"nota"?: string | null,"respondida_em"?: string | null,"respondida_por"?: string | null,"resposta"?: string | null,"texto": string,"transferencia_id": string,"versao"?: number
                   }
                   Update: {
-                    "criado_em"?: string,"excluido_em"?: string | null,"excluido_por"?: string | null,"id"?: string,"motivo_da_exclusao"?: string | null,"nota"?: string | null,"resolvida_em"?: string | null,"resolvida_por"?: string | null,"texto"?: string,"transferencia_id"?: string,"versao"?: number
+                    "criado_em"?: string,"excluido_em"?: string | null,"excluido_por"?: string | null,"id"?: string,"motivo_da_exclusao"?: string | null,"nota"?: string | null,"respondida_em"?: string | null,"respondida_por"?: string | null,"resposta"?: string | null,"texto"?: string,"transferencia_id"?: string,"versao"?: number
                   }
                   Relationships: [
                     {
-      foreignKeyName: "transferencia_pendencia_resolvida_por_fkey"
-      columns: ["resolvida_por"]
+      foreignKeyName: "transferencia_pendencia_respondida_por_fkey"
+      columns: ["respondida_por"]
 isOneToOne: false
       referencedRelation: "pessoa"
       referencedColumns: ["id"]
@@ -586,7 +586,10 @@ isOneToOne: false
                 }
           }
           Functions: {
-            "documento_valido":
+            "concluir_transferencia":
+{ Args: { "p_em": string,"p_transferencia_id": string }; Returns: string
+                           },
+"documento_valido":
 { Args: { "p_texto": string }; Returns: boolean
                            },
 "mascarar_documento":
@@ -605,7 +608,7 @@ isOneToOne: false
 { Args: { "p_texto": string }; Returns: boolean
                            },
 "receber_transferencia":
-{ Args: { "p_em": string,"p_transferencia_id": string }; Returns: string
+{ Args: { "p_em": string,"p_transferencia_id": string }; Returns: undefined
                            },
 "renavam_valido":
 { Args: { "p_texto": string }; Returns: boolean
