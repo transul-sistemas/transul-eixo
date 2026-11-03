@@ -81,11 +81,12 @@ describe("seed.sql: as camadas e os nomes de conjunto", () => {
     ]);
   });
 
-  it("as quatro configurações de conjunto, sem regra de reconhecimento (a regra é da equipe)", () => {
+  it("as quatro configurações de conjunto, com a regra da equipe (03/11/2026) pela estrutura", () => {
     const texto = bloco("config.configuracao_de_conjunto");
-    const codigos = [...texto.matchAll(/\('([^']+)',\s*'([^']+)'\)/g)].map((m) => m[1]);
+    const codigos = [...texto.matchAll(/\('([^']+)',\s*'([^']+)',/g)].map((m) => m[1]);
     expect(codigos).toEqual(["simples", "bi", "bitrezao", "rodo"]);
-    expect(texto).not.toMatch(/quantidade_de_implementos|com_dolly|eixos_por_implemento/);
+    expect(texto).toMatch(/unidades, com_dolly, eixos_dos_semirreboques, eixos_do_dolly/);
+    expect(texto).not.toMatch(/quantidade_de_implementos|eixos_por_implemento/);
   });
 
   it("os 12 nomes de conjunto semeados são os aprovados", () => {

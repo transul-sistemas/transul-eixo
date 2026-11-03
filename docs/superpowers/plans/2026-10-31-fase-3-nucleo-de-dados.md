@@ -251,7 +251,7 @@ Tamanhos: P (cerca de um dia), M (dois a três), G (quatro ou mais). Cada fatia 
 | 3.1 | Catálogos e régua | `config.*`: tipo, carroceria, marca, modelo (com `eixos`), filial, garagem, `status` (26 siglas, camadas, `aplica_a`, `tipos_validos`), configurações e nomes de conjunto (sem regra de reconhecimento). **Usa o Apêndice A conferido por Alexandre.** Inclui o ajuste herdado da 2D (Disponibilizar por tipo de ativo) | As 26 siglas conferidas contra o glossário e contra o Apêndice A aprovado; os 12 nomes de conjunto; seed de produção | M |
 | 3.2 | Chaves: pessoa e ativo (**absorvida pela 3.0**) | Feita na 3.0, com a aprovação de 01/11. O que sobra dela é o acesso ao documento completo (`pessoas.ver_documento`), que é da 3.6 | Provada na 3.0 | - |
 | 3.3 | Vigências, CR e operação | posse, gestor (sem buraco), `cr` (com `codcencus`), `cr_do_ativo`, custódia, transferência; visão `operacao_do_ativo` e alerta de CR sem operação; `lib/dominio/vigencia.ts`; fim do `CR-0000` no Zod | Sobreposição recusada em cada tabela; buraco recusado em posse e gestor e alertado nos demais; limites `[)`; operação engatada, solta e sem operação | G |
-| 3.4 | Conjuntos | composição, `operacao_na_saida_id`, meta, `nome_do_conjunto`, conjunto misto. **Só começa depois que Alexandre responder a regra de bitrem, bitrezão e rodotrem**, que olha a estrutura (número de implementos, dolly e eixos por implemento): ver a seção "Conformidade da composição" (01/11/2026). Trava nova: **o `tipo` do ativo não pode mudar enquanto houver vínculo vigente** (composição ou posse), com teste | Misto, quarto implemento, meta fora do cavalo e os nomes testados com a regra da equipe | M |
+| 3.4 | Conjuntos | composição, `operacao_na_saida_id`, meta, `nome_do_conjunto`, conjunto misto. A regra de bitrem, bitrezão e rodotrem foi **respondida em 03/11/2026** (estrutura: unidades, dolly, eixos dos semirreboques e do dolly): ver "Fatia 3.4 em detalhes". **Dolly: opção A (função do implemento), escolhida em 03/11/2026.** Trava nova: **o `tipo` do ativo não pode mudar enquanto houver vínculo vigente** (composição ou posse), com teste | Misto, quarto implemento, meta fora do cavalo e os nomes testados com a regra da equipe | M |
 | 3.5 | Eventos e situação | `evento_de_status` por camada, `situacao_em`, `situacao_atual`, impedimento do implemento engatado e do cavalo, linha do tempo. **Usa o Apêndice A conferido** | Camadas, atividade do cavalo, impedimento do conjunto por manutenção **e por SDo ou DOC** do implemento engatado, e só-inserção provados | M |
 | 3.6 | Acesso no banco | usuário, perfil, permissão, escopos (`tudo`, `minha_carteira`, `operacao`, `filial`), RLS em todas as tabelas; pgTAP da matriz por perfil; **lista de exceções do teste de catálogo** com as funções de validação dos `CHECK` que o papel que grava passa a executar, **cada uma com a justificativa registrada** | Cada perfil vê só o que deve; `anon` não vê nada; política sem teste falha | G |
 | 3.7 | Cadastro com origem e escritas | correção de campo, **carroceria, eixos por implemento, tara, PBT e CMT no ativo, cada campo com origem (ver a seção "Conformidade da composição" (01/11/2026))**, auditoria, idempotência, versão e as funções atômicas (cadastrar ativo, disponibilizar, receber, desengatar, criar item) | Conflito de versão, chave de envio repetida e atomicidade provados | G |
@@ -383,7 +383,72 @@ Registro de direção, sem código. O texto completo está em `docs/decisoes.md`
 | Eixos diferentes | Se existem conjuntos com implementos de eixos diferentes |
 | Treminhão ou tritrem | Se a TranSul opera |
 
+**Respostas da equipe (Alexandre, 03/11/2026):** a tabela acima está **confirmada**, com os acréscimos da seção "Fatia 3.4 em detalhes": o dolly tem 2 eixos; não existe conjunto com semirreboques de eixos diferentes entre si; a TranSul não opera treminhão nem tritrem.
+
 **AET:** tipo de documento no motor único de documentos (vencimento e alerta), sem criar módulo.
+
+## Fatia 3.4 em detalhes (03/11/2026)
+
+### Respostas da equipe (Alexandre, 03/11/2026)
+
+- **Bitrem:** dois semirreboques de 2 eixos, engatados direto.
+- **Bitrezão:** dois semirreboques de 3 eixos, engatados direto.
+- **Rodotrem:** três unidades engatadas: dois semirreboques de 2 eixos e um dolly de 2 eixos entre eles. Com cavalo de 3 eixos dá 9 eixos. **O rodotrem de 11 eixos não existe na TranSul.**
+- **Não existe conjunto com semirreboques de eixos diferentes entre si.**
+- **A TranSul não opera treminhão nem tritrem.**
+- **Os implementos operados têm 2 ou 3 eixos.**
+- **Carrocerias:** as seis de partida, ampliadas pelo "+".
+
+### Regra do nome pela estrutura
+
+O nome do conjunto olha quatro coisas, nunca o total de eixos: **unidades engatadas** (o dolly conta como unidade), **presença de dolly**, **eixos dos semirreboques** e **eixos do dolly**.
+
+| Configuração | Unidades | Semirreboques | Dolly | Eixos de cada semirreboque | Eixos do dolly |
+| --- | --- | --- | --- | --- | --- |
+| `simples` | 1 | 1 | não | 2 ou 3 | - |
+| `bi` | 2 | 2 | não | 2 | - |
+| `bitrezao` | 2 | 2 | não | 3 | - |
+| `rodo` | 3 | 2 | sim, entre os dois | 2 | 2 |
+
+- **Eixos iguais só entre os semirreboques.** Semirreboques de eixos diferentes entre si são recusados; rodo com semirreboques de 3 eixos é recusado. A recusa usa a mensagem de erro de cadastro ou de composição (o que a tela mostra), nunca um código técnico.
+- **O dolly só aparece em rodo, entre os dois semirreboques.** Dolly sozinho, dolly com um só semirreboque, dois dollies ou dolly em outra posição são recusados. Por isso a composição passa a guardar a **posição** de cada unidade (1, 2, 3, a partir do cavalo).
+- **Seed de `config.configuracao_de_conjunto`** com as quatro linhas da tabela. As colunas da 3.1 (`quantidade_de_implementos`, `com_dolly`, `eixos_por_implemento`) não cabem na regra (simples aceita 2 **ou** 3; o dolly tem eixos próprios). Proposta: migration nova que as troca por `unidades`, `com_dolly`, `eixos_dos_semirreboques smallint[]` (os aceitos) e `eixos_do_dolly`, com `CHECK` de coerência (`com_dolly` implica `eixos_do_dolly`).
+- **Eixos do implemento:** o valor vale no **ativo** (seção "Conformidade da composição"). Até a 3.7 trazer o campo com origem, a 3.4 cria `nucleo.ativo.eixos` (inteiro, 2 ou 3 no implemento, opcional nos demais tipos) e usa o `eixos` do modelo só como sugestão. Implemento sem eixos informados deixa o nome do conjunto **pendente** (nunca presumido).
+
+### O dolly no banco: duas opções (Alexandre escolheu a A em 03/11/2026)
+
+Hoje o banco exige carroceria em todo implemento (`ativo_carroceria_obrigatoria_no_implemento`) e recusaria o dolly, que tem placa, RENAVAM e 2 eixos, mas não tem carroceria.
+
+**Opção A, recomendação de Alexandre: atributo "função" do implemento** (`semirreboque` ou `dolly`).
+
+| Onde | Impacto |
+| --- | --- |
+| Banco | Enum `nucleo.funcao_do_implemento` e coluna `nucleo.ativo.funcao`: obrigatória no implemento, proibida nos demais tipos. A carroceria passa a ser obrigatória só no semirreboque e **proibida no dolly**. O dolly tem 2 eixos (`CHECK`). A composição continua "só implemento é servo" (as chaves compostas não mudam); a regra do dolly entre dois semirreboques é do gatilho de restrição adiado da composição. A trava de tipo da 3.4 também trava a função com vínculo vigente |
+| Catálogo | Nada novo em `config.status`: o dolly é implemento e herda os `tipos_validos` do implemento. `config.carroceria` não muda. `config.modelo` pode sugerir a função (opcional) |
+| Assistentes (2D) | "Cadastrar placa" de implemento ganha o campo **Função** (semirreboque ou dolly); dolly esconde a carroceria e fixa 2 eixos. O seletor de implementos do conjunto mostra a função e recusa dolly fora de rodo. Ficha e lista mostram "Implemento · dolly" |
+| Siglas | Nenhuma mudança: as siglas de implemento valem para o dolly (MAc, MAt, MAv, MAN, SIN, DOC, SDo, PÁT…) |
+| Testes | pgTAP: dolly sem carroceria passa; dolly com carroceria falha; semirreboque sem carroceria falha; função em cavalo falha. Vitest no espelho TS da função. e2e quando a tela mudar |
+| Custo | Uma coluna e dois `CHECK` trocados; o tipo de ativo (`TipoDeAtivo`, 5 valores) não muda em lugar nenhum |
+
+**Opção B: sexto tipo de ativo "Dolly".**
+
+| Onde | Impacto |
+| --- | --- |
+| Banco | `alter type nucleo.tipo_de_ativo add value 'dolly'` (não se desfaz numa migration). Todo `CHECK` por tipo é revisto: RENAVAM (sim), carroceria (proibida), motorista (proibido). A composição passa a aceitar dois tipos de servo: as chaves compostas `(id, tipo)` que fixam `'implemento'` viram regra por gatilho |
+| Catálogo | `config.status.tipos_validos` ganha `dolly` em cada sigla que vale para ele; o teste do catálogo contra o glossário e o Apêndice A muda (o Apêndice A precisa de nova conferência) |
+| Assistentes (2D) | `TIPOS_DE_ATIVO` (`lib/dados/placas-tipos.ts`) e `lib/exemplo/tipos.ts` ganham um valor: toda tela que lista ou filtra por tipo (chips da lista, filtros, Ctrl+K, ficha, cadastrar placa, situação inicial por tipo, Disponibilizar) precisa de revisão, e uns 18 arquivos tratam os tipos um a um |
+| Siglas | Revisar uma a uma quais valem para o dolly (o mesmo trabalho do Apêndice A) |
+| Testes | Todos os testes que enumeram os cinco tipos mudam; e2e de lista e filtros |
+| Custo | Alto e com efeito em telas prontas; só compensa se o dolly precisar de tratamento muito diferente do implemento (o que a equipe não indicou) |
+
+**Ajustes do checkpoint 3.4 (Alexandre, 03/11/2026):**
+- **O assistente "Cadastrar placa" precisa dos campos Função, Carroceria e Eixos do implemento antes da 3.9**: entram na **3.7** (cadastro com origem por campo), junto do seletor de implementos que recusa dolly fora do rodotrem. Sem eles, a fonte do banco (3.9) não consegue cadastrar implemento.
+- **A posição na composição é ordem, não precisa ser contígua**: desengatar o primeiro semirreboque de um bitrem deixa o outro na posição 2; o dolly vale se for o do meio pela ordem das posições.
+- **Trava do tipo:** vale só com composição vigente (como mestre ou servo); o tipo muda só pela função `nucleo.mudar_tipo_do_ativo` com motivo e auditoria, nunca por `UPDATE` solto. A **3.5** acrescenta a trava por evento de status incompatível com o novo tipo.
+- **Alerta `implemento_sem_eixos`** na visão de alertas de vínculo.
+- **Configuração de conjunto** com referência normativa e estado da conferência (a conferir, ou conferida em data e por quem).
+
+**Recomendação:** A (de Alexandre, e eu também recomendo). O dolly é uma peça rebocada como o semirreboque, sem carroceria; a diferença é a função dentro do conjunto, não a natureza do ativo.
 
 ## Armadilhas que nascem aqui
 
@@ -400,7 +465,7 @@ Registro de direção, sem código. O texto completo está em `docs/decisoes.md`
 ## Revisão do plano (riscos)
 
 1. **Regra de camadas:** é a mais abstrata do plano; errar a atividade herdada do cavalo ou o impedimento do conjunto muda o número que a diretoria vê. O Apêndice A está aprovado; fica a decisão sobre o VAz.
-2. **Regra de bitrem, bitrezão e rodotrem:** é da equipe e não está definida; sem ela, o nome do conjunto não calcula. A 3.4 só começa depois da resposta de Alexandre; as demais fatias não dependem dela.
+2. **Regra de bitrem, bitrezão e rodotrem:** respondida pela equipe em 03/11/2026 (ver "Fatia 3.4 em detalhes"). Sobra decidir como o dolly existe no banco (pendência 20).
 3. **Performance da RLS:** política que calcula carteira e operação por linha pode custar caro numa lista de 1.000 bens; medir com `EXPLAIN` na 3.6 e, se preciso, materializar o escopo por usuário.
 4. **Acesso do app ao banco:** o PostgREST só enxerga os schemas de `[api] schemas`. Expor `nucleo` e `config` (com grant e RLS) é a proposta; a alternativa (visões num schema `api`) dobra o trabalho. Na nuvem, "não expor tabelas novas" está ligado: cada grant é decisão explícita.
 5. **Operação gravada na saída do conjunto:** é o único dado derivado que vira fato; o trigger que o torna imutável precisa de teste de borda (desengatar e reengatar no mesmo instante).
@@ -412,7 +477,8 @@ Registro de direção, sem código. O texto completo está em `docs/decisoes.md`
 | --- | --- | --- | --- |
 | 19 | **VAz:** vale só para cavalo e caminhão (rascunho do Apêndice A) ou também para implemento? Até a decisão, vale o rascunho | Alexandre | Decisão final na fatia 3.1 (o catálogo é configurável) |
 | 3.1 | Decisões A a F **aprovadas em 01/11** (ver "Fatia 3.1 em detalhes"). Sobra só o VAz, que é pendência dele com a equipe | Alexandre | Nada trava a 3.1 |
-| 16 | Regra que reconhece bitrem, bitrezão e rodotrem (eixos, quantidade de implementos e tipo de engate; em geral 7 e 9 eixos, a confirmar). **Sem recomendação: não será inventada** | Equipe, por Alexandre | Fatia 3.4 |
+| 16 | ~~Regra que reconhece bitrem, bitrezão e rodotrem~~ **Respondida pela equipe em 03/11/2026** (ver "Fatia 3.4 em detalhes") | Equipe, por Alexandre | Resolvida |
+| 20 | ~~Dolly no banco~~ **Opção A escolhida por Alexandre em 03/11/2026** (função do implemento) | Alexandre | Resolvida |
 
 ## Apêndice A: as 26 siglas, para Alexandre conferir
 
