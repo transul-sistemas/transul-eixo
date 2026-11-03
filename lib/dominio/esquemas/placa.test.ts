@@ -422,11 +422,19 @@ describe("esquemaItemDeCatalogo: o que o mini-wizard do + cria", () => {
       esquemaItemDeCatalogo.safeParse({ tipo: "cr", nome: "CR-1006", paiId: "op-1" }).success,
     ).toBe(true);
   });
-  it("o CR segue o formato CR-0000", () => {
-    for (const nome of ["1006", "CR1006", "CR-100", "CR-10066", "cr-1006"]) {
+  it("o código do CR é texto livre: nenhum formato é imposto (fim do CR-0000)", () => {
+    for (const nome of ["1006", "CR1006", "CR-100", "CR-10066", "cr-1006", "CC 300-A"]) {
       const r = esquemaItemDeCatalogo.safeParse({ tipo: "cr", nome, paiId: "op-1" });
-      expect(r.success, nome).toBe(false);
+      expect(r.success, nome).toBe(true);
     }
+  });
+  it("o código do CR continua com 2 a 60 caracteres, sem espaços sobrando", () => {
+    for (const nome of ["", " ", "A", "x".repeat(61)]) {
+      const r = esquemaItemDeCatalogo.safeParse({ tipo: "cr", nome, paiId: "op-1" });
+      expect(r.success, JSON.stringify(nome)).toBe(false);
+    }
+    const r = esquemaItemDeCatalogo.safeParse({ tipo: "cr", nome: "  1006  ", paiId: "op-1" });
+    expect(r.success && r.data.nome).toBe("1006");
   });
   it("o nome é obrigatório, sem espaços sobrando, de 2 a 60 caracteres", () => {
     expect(esquemaItemDeCatalogo.safeParse({ ...ok, nome: " " }).success).toBe(false);
