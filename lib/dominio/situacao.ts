@@ -39,7 +39,7 @@ export function assinaturaDaValidade(): string {
 }
 
 /** O md5 de `assinaturaDaValidade()`: a mesma constante que o pgTAP confere no banco. */
-export const ASSINATURA_DA_VALIDADE = "6f838f3c16c75615ab050c9493d0efc9";
+export const ASSINATURA_DA_VALIDADE = "13630926e1d4e60aa695ae90d0e64db2";
 
 /** O estado vigente de cada camada de um ativo (a sigla, ou nada). */
 export type EstadosPorCamada = Partial<Record<CamadaDeStatus, Sigla>>;

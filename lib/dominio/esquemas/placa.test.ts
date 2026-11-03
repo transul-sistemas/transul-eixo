@@ -526,7 +526,6 @@ describe("siglasIniciaisDoTipo: sai do catálogo da régua", () => {
         "ADe",
         "DEs",
         "ETv",
-        "VAz",
         "FOg",
         "FEr",
         "MAc",
@@ -541,9 +540,9 @@ describe("siglasIniciaisDoTipo: sai do catálogo da régua", () => {
 
 describe("esquemaDisponibilizacaoDe: o tipo e a situação da placa decidem", () => {
   const entrada = { placa: "AAA0A00", filialId: "filial-a", versaoDaPlaca: 1 };
-  it("cavalo e caminhão em PÁT, VAz ou ETv passam", () => {
+  it("cavalo e caminhão em PÁT ou ETv passam", () => {
     for (const tipo of ["cavalo", "caminhao"] as const) {
-      for (const sigla of ["PÁT", "VAz", "ETv"] as const) {
+      for (const sigla of ["PÁT", "ETv"] as const) {
         expect(
           esquemaDisponibilizacaoDe({ tipo, sigla }).safeParse(entrada).success,
           `${tipo} ${sigla}`,
@@ -561,7 +560,7 @@ describe("esquemaDisponibilizacaoDe: o tipo e a situação da placa decidem", ()
       );
     }
   });
-  it("apoio e equipamento também; cavalo fora de PÁT, VAz e ETv recebe a mensagem da situação", () => {
+  it("apoio e equipamento também; cavalo fora de PÁT e ETv recebe a mensagem da situação", () => {
     for (const tipo of ["apoio", "equipamento"] as const) {
       expect(
         esquemaDisponibilizacaoDe({ tipo, sigla: "PÁT" }).safeParse(entrada).success,
@@ -570,8 +569,7 @@ describe("esquemaDisponibilizacaoDe: o tipo e a situação da placa decidem", ()
     }
     const r = esquemaDisponibilizacaoDe({ tipo: "cavalo", sigla: "MAN" }).safeParse(entrada);
     expect(r.success).toBe(false);
-    if (!r.success)
-      expect(r.error.issues.map((i) => i.message).join(" ")).toMatch(/PÁT, VAz ou ETv/);
+    if (!r.success) expect(r.error.issues.map((i) => i.message).join(" ")).toMatch(/PÁT ou ETv/);
   });
   it("o esquema base continua conferindo placa, filial e versão", () => {
     expect(esquemaDisponibilizacao.safeParse({ ...entrada, filialId: "" }).success).toBe(false);

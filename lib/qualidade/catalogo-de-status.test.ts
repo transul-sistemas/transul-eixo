@@ -21,13 +21,13 @@ const glossario = readFileSync("docs/glossario.md", "utf-8");
 const bloco = (tabela: string) => blocoDoSeed(seed, tabela);
 const siglasDoSeed = () => lerSiglasDoSeed(seed);
 
-describe("seed.sql: a régua de 26 siglas", () => {
+describe("seed.sql: a régua de 25 siglas", () => {
   const linhas = siglasDoSeed();
   const porSigla = new Map(linhas.map((l) => [l.sigla, l]));
 
-  it("traz exatamente as 26 siglas do CLAUDE.md, cada uma uma vez", () => {
+  it("traz exatamente as 25 siglas do CLAUDE.md, cada uma uma vez", () => {
     expect(linhas.map((l) => l.sigla).sort()).toEqual([...SIGLAS].sort());
-    expect(new Set(linhas.map((l) => l.sigla)).size).toBe(26);
+    expect(new Set(linhas.map((l) => l.sigla)).size).toBe(25);
   });
 
   it("nome e chip de cada sigla batem com o docs/glossario.md", () => {

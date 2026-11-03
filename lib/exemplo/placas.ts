@@ -1,7 +1,7 @@
 import { carroceriaDoModelo } from "@/lib/dominio/conjunto";
-import { SIGLAS } from "@/lib/dominio/status";
 import { CASOS_FEIOS } from "./casos-feios";
 import { somarDias } from "./datas";
+import { SIGLAS_DO_EXEMPLO } from "./siglas";
 import type { PlacaDeExemplo, TipoDeAtivo } from "./tipos";
 
 export type { PlacaDeExemplo, TipoDeAtivo } from "./tipos";
@@ -82,7 +82,7 @@ function base(i: number, hoje: string): PlacaDeExemplo {
     tipo,
     modelo: modelos[i % modelos.length] as string,
     ano: i % 53 === 0 ? null : 2012 + ((i * 5) % 14),
-    sigla: SIGLAS[(i * 7 + 3) % SIGLAS.length] as PlacaDeExemplo["sigla"],
+    sigla: SIGLAS_DO_EXEMPLO[(i * 7 + 3) % SIGLAS_DO_EXEMPLO.length] as PlacaDeExemplo["sigla"],
     desde: `${somarDias(hoje, -((i * 3) % 25))}T${dois(6 + (i % 12))}:${dois((i * 7) % 60)}`,
     filial: `Filial Exemplo ${"ABCD"[i % 4]}`,
     operacao,

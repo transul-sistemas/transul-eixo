@@ -21,13 +21,13 @@ const pedido = (parcial: Partial<PedidoDeTransferencia> = {}): PedidoDeTransfere
   ...parcial,
 });
 
-describe("podeDisponibilizar: PÁT, VAz e ETv levam ao Operacional (DOp), e só cavalo ou caminhão", () => {
-  it("para cavalo e para caminhão, só essas três situações", () => {
+describe("podeDisponibilizar: PÁT e ETv levam ao Operacional (DOp), e só cavalo ou caminhão", () => {
+  it("para cavalo e para caminhão, só essas duas situações", () => {
     for (const tipo of ["cavalo", "caminhao"] as const) {
       const sim = SIGLAS.filter((s) => podeDisponibilizar(s, tipo));
-      expect([...sim].sort(), tipo).toEqual(["ETv", "PÁT", "VAz"].sort());
+      expect([...sim].sort(), tipo).toEqual(["ETv", "PÁT"].sort());
     }
-    expect([...SIGLAS_QUE_PODEM_DISPONIBILIZAR].sort()).toEqual(["ETv", "PÁT", "VAz"].sort());
+    expect([...SIGLAS_QUE_PODEM_DISPONIBILIZAR].sort()).toEqual(["ETv", "PÁT"].sort());
   });
   it("carreta (implemento), apoio e equipamento nunca, em nenhuma situação", () => {
     for (const tipo of ["implemento", "apoio", "equipamento"] as const) {
@@ -53,17 +53,18 @@ describe("motivoDeNaoDisponibilizar: diz por que a placa não vai ao Operacional
   });
   it("apoio e equipamento também recebem a mensagem do tipo", () => {
     for (const tipo of ["apoio", "equipamento"] as const) {
-      expect(motivoDeNaoDisponibilizar({ sigla: "VAz", tipo }), tipo).toBe(
+      expect(motivoDeNaoDisponibilizar({ sigla: "ETv", tipo }), tipo).toBe(
         MENSAGEM_DE_TIPO_QUE_NAO_DISPONIBILIZA,
       );
     }
   });
-  it("cavalo ou caminhão fora de PÁT, VAz e ETv: a mensagem da situação", () => {
+  it("cavalo ou caminhão fora de PÁT e ETv: a mensagem da situação", () => {
     const motivo = motivoDeNaoDisponibilizar({ sigla: "MAN", tipo: "cavalo" });
-    expect(motivo).toMatch(/PÁT, VAz ou ETv/);
+    expect(motivo).toMatch(/PÁT ou ETv/);
+    expect(motivo).not.toMatch(/VAz/);
     expect(motivo).not.toBe(MENSAGEM_DE_TIPO_QUE_NAO_DISPONIBILIZA);
   });
-  it("cavalo ou caminhão em PÁT, VAz ou ETv: sem motivo (pode)", () => {
+  it("cavalo ou caminhão em PÁT ou ETv: sem motivo (pode)", () => {
     expect(motivoDeNaoDisponibilizar({ sigla: "PÁT", tipo: "cavalo" })).toBeNull();
     expect(motivoDeNaoDisponibilizar({ sigla: "ETv", tipo: "caminhao" })).toBeNull();
   });

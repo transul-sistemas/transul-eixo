@@ -42,7 +42,6 @@ A régua única de situação da placa. A sigla é exata e aparece na linha e no
 | SMo | Sem motorista | Atenção |
 | FOg | Folga | Atenção |
 | FEr | Férias | Atenção |
-| VAz | Vazio | Atenção |
 | PÁT | Pátio | Pátio |
 | ALU | Alugado a terceiro | Fora |
 | EMP | Emprestado | Fora |

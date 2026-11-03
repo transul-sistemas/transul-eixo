@@ -16,7 +16,7 @@ import { errosDoResolvedor } from "./erros-do-resolvedor";
 import { ACAO_DO_MAIS, renderizarMini } from "./mini-cadastro-de-catalogo";
 
 // Disponibilizar ao Operacional: a placa do gestor de frota vai ao Operacional da filial escolhida
-// (de PÁT, VAz ou ETv para DOp). Dois passos: a filial e a conferência.
+// (de PÁT ou ETv para DOp). Dois passos: a filial e a conferência.
 
 interface Valores {
   filialId: string;

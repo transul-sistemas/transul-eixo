@@ -67,7 +67,7 @@ describe("dadosDosAssistentes: o que a tela entrega ao assistente", () => {
     expect(d.candidatosDoConjunto.length).toBeGreaterThan(0);
   });
 
-  it("para disponibilizar sem placa, lista as placas em PÁT, VAz ou ETv, em ordem", async () => {
+  it("para disponibilizar sem placa, lista as placas em PÁT ou ETv, em ordem", async () => {
     const d = await dadosDosAssistentes(fonte(), {
       hoje: HOJE,
       assistente: "disponibilizar",
@@ -92,7 +92,7 @@ describe("dadosDosAssistentes: o que a tela entrega ao assistente", () => {
     }
   });
 
-  it("para disponibilizar sem placa, todo cavalo e caminhão em PÁT, VAz ou ETv aparece", async () => {
+  it("para disponibilizar sem placa, todo cavalo e caminhão em PÁT ou ETv aparece", async () => {
     const d = await dadosDosAssistentes(fonte(), {
       hoje: HOJE,
       assistente: "disponibilizar",

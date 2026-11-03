@@ -86,7 +86,7 @@ test.describe("disponibilizar ao Operacional", () => {
   test("placa que não pode ser disponibilizada diz por quê", async ({ page }) => {
     await abrirHidratada(page, `${LISTA}?assistente=disponibilizar&placa=AAA0A04`);
     const aviso = page.getByRole("dialog", { name: "Disponibilizar ao Operacional" });
-    await expect(aviso).toContainText("Só placas em PÁT, VAz ou ETv");
+    await expect(aviso).toContainText("Só placas em PÁT ou ETv");
     await aviso.getByRole("button", { name: "Fechar" }).click();
     await expect(aviso).toBeHidden();
   });
@@ -196,7 +196,7 @@ test.describe("receber placa", () => {
 });
 
 // Só cavalo ou caminhão vão ao Operacional: carreta (implemento), apoio e equipamento nunca, mesmo
-// em PÁT, VAz ou ETv (o catálogo da régua diz em `tipos_validos` de DOp).
+// em PÁT ou ETv (o catálogo da régua diz em `tipos_validos` de DOp).
 const MENSAGEM_DO_TIPO = "Só cavalo ou caminhão podem ser disponibilizados ao Operacional";
 
 async function primeiraPlacaDe(page: import("@playwright/test").Page, consulta: string) {

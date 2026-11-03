@@ -1,5 +1,6 @@
 import type { EventoDeStatus } from "@/lib/dominio/linha-do-tempo";
-import { SIGLAS, SIGLAS_DE_BAIXA } from "@/lib/dominio/status";
+import { SIGLAS_DE_BAIXA } from "@/lib/dominio/status";
+import { SIGLAS_DO_EXEMPLO } from "./siglas";
 import type { PlacaDeExemplo } from "./tipos";
 
 // A história de situações de cada placa de exemplo: o último evento é sempre a situação atual (a
@@ -8,7 +9,7 @@ import type { PlacaDeExemplo } from "./tipos";
 // dia) e outros de semanas. A baixa (VND e SUC) só aparece no fim. Nunca é importada fora de
 // desenvolvimento e testes (ver lib/qualidade/barramento-do-exemplo.ts).
 
-const ATIVAS = SIGLAS.filter((sigla) => !SIGLAS_DE_BAIXA.includes(sigla));
+const ATIVAS = SIGLAS_DO_EXEMPLO.filter((sigla) => !SIGLAS_DE_BAIXA.includes(sigla));
 
 /** Intervalos entre eventos, em minutos: de uma hora e meia a quase duas semanas. */
 const INTERVALOS = [180, 1560, 420, 2900, 90, 5400, 360, 12000];

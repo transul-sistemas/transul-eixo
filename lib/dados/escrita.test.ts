@@ -172,7 +172,7 @@ describe("executarDisponibilizar", () => {
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.erro.codigo).toBe("conflito");
   });
-  it("carreta em PÁT, VAz ou ETv é recusada no servidor, com a mensagem do tipo no campo da placa, e nada muda", async () => {
+  it("carreta em PÁT ou ETv é recusada no servidor, com a mensagem do tipo no campo da placa, e nada muda", async () => {
     const ctx = contexto();
     const r = await executarDisponibilizar(CHAVE_A, entrada({ placa: carretaNoPatio.placa }), ctx);
     expect(r.ok).toBe(false);

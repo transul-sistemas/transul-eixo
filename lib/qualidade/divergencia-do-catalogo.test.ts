@@ -22,7 +22,7 @@ function trocando(sigla: string, mudanca: (l: LinhaDoCatalogo) => void): LinhaDo
 
 describe("o espelho da régua (lib/dominio/status.ts) contra o seed.sql", () => {
   it("o seed de hoje não diverge do espelho em nada", () => {
-    expect(lerSiglasDoSeed(seed)).toHaveLength(26);
+    expect(lerSiglasDoSeed(seed)).toHaveLength(25);
     expect(divergenciasDoCatalogo(copia())).toEqual([]);
   });
 

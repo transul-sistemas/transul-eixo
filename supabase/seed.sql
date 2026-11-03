@@ -16,8 +16,8 @@ insert into config.camada_de_status (codigo, nome, prioridade) values
   ('sem-motorista', 'Sem motorista', 4),
   ('atividade', 'Atividade', 5);
 
--- As 26 siglas, na ordem da régua do CLAUDE.md. Camada, aplica_a e tipos válidos: Apêndice A do
--- plano da Fase 3 (aprovado em 31/10/2026). VAz é rascunho até a equipe confirmar (só cavalo e caminhão).
+-- As 25 siglas, na ordem da régua do CLAUDE.md. Camada, aplica_a e tipos válidos: Apêndice A do
+-- plano da Fase 3 (aprovado em 31/10/2026). O VAz saiu da régua em 05/11/2026 (o PÁT cobre o ativo parado).
 insert into config.status (sigla, nome, chip, camada, baixada, aplica_a, tipos_validos, ordem) values
   ('ETc', 'Em trânsito carregado', 'em-atividade', 'atividade', false, 'conjunto', array['cavalo', 'caminhao']::nucleo.tipo_de_ativo[], 1),
   ('ETv', 'Em trânsito vazio', 'em-atividade', 'atividade', false, 'ambos', array['cavalo', 'caminhao']::nucleo.tipo_de_ativo[], 2),
@@ -33,18 +33,17 @@ insert into config.status (sigla, nome, chip, camada, baixada, aplica_a, tipos_v
   ('MAN', 'Em manutenção', 'impedida', 'impedida', false, 'solo', array['cavalo', 'implemento', 'equipamento', 'caminhao', 'apoio']::nucleo.tipo_de_ativo[], 12),
   ('REF', 'Em reforma', 'impedida', 'impedida', false, 'solo', array['cavalo', 'implemento', 'equipamento', 'caminhao', 'apoio']::nucleo.tipo_de_ativo[], 13),
   ('SIN', 'Sinistro', 'impedida', 'impedida', false, 'solo', array['cavalo', 'implemento', 'equipamento', 'caminhao', 'apoio']::nucleo.tipo_de_ativo[], 14),
-  ('VAz', 'Vazio', 'atencao', 'atividade', false, 'ambos', array['cavalo', 'caminhao']::nucleo.tipo_de_ativo[], 15),
-  ('FOg', 'Folga', 'atencao', 'sem-motorista', false, 'ambos', array['cavalo', 'caminhao']::nucleo.tipo_de_ativo[], 16),
-  ('FEr', 'Férias', 'atencao', 'sem-motorista', false, 'ambos', array['cavalo', 'caminhao']::nucleo.tipo_de_ativo[], 17),
-  ('SMo', 'Sem motorista', 'atencao', 'sem-motorista', false, 'ambos', array['cavalo', 'caminhao']::nucleo.tipo_de_ativo[], 18),
-  ('SDo', 'Sem documento', 'impedida', 'impedida', false, 'ambos', array['cavalo', 'implemento', 'equipamento', 'caminhao', 'apoio']::nucleo.tipo_de_ativo[], 19),
-  ('PÁT', 'Pátio', 'patio', 'atividade', false, 'ambos', array['cavalo', 'implemento', 'equipamento', 'caminhao', 'apoio']::nucleo.tipo_de_ativo[], 20),
-  ('DOC', 'Problema documental', 'impedida', 'impedida', false, 'ambos', array['cavalo', 'implemento', 'equipamento', 'caminhao', 'apoio']::nucleo.tipo_de_ativo[], 21),
-  ('ALU', 'Alugado a terceiro', 'fora', 'fora-da-frota', false, 'solo', array['cavalo', 'implemento', 'equipamento', 'caminhao', 'apoio']::nucleo.tipo_de_ativo[], 22),
-  ('EMP', 'Emprestado', 'fora', 'fora-da-frota', false, 'solo', array['cavalo', 'implemento', 'equipamento', 'caminhao', 'apoio']::nucleo.tipo_de_ativo[], 23),
-  ('VEN', 'Disponível para venda', 'fora', 'fora-da-frota', false, 'solo', array['cavalo', 'implemento', 'equipamento', 'caminhao', 'apoio']::nucleo.tipo_de_ativo[], 24),
-  ('SUC', 'Sucata', 'fora', 'baixada', true, 'solo', array['cavalo', 'implemento', 'equipamento', 'caminhao', 'apoio']::nucleo.tipo_de_ativo[], 25),
-  ('VND', 'Vendido', 'fora', 'baixada', true, 'solo', array['cavalo', 'implemento', 'equipamento', 'caminhao', 'apoio']::nucleo.tipo_de_ativo[], 26);
+  ('FOg', 'Folga', 'atencao', 'sem-motorista', false, 'ambos', array['cavalo', 'caminhao']::nucleo.tipo_de_ativo[], 15),
+  ('FEr', 'Férias', 'atencao', 'sem-motorista', false, 'ambos', array['cavalo', 'caminhao']::nucleo.tipo_de_ativo[], 16),
+  ('SMo', 'Sem motorista', 'atencao', 'sem-motorista', false, 'ambos', array['cavalo', 'caminhao']::nucleo.tipo_de_ativo[], 17),
+  ('SDo', 'Sem documento', 'impedida', 'impedida', false, 'ambos', array['cavalo', 'implemento', 'equipamento', 'caminhao', 'apoio']::nucleo.tipo_de_ativo[], 18),
+  ('PÁT', 'Pátio', 'patio', 'atividade', false, 'ambos', array['cavalo', 'implemento', 'equipamento', 'caminhao', 'apoio']::nucleo.tipo_de_ativo[], 19),
+  ('DOC', 'Problema documental', 'impedida', 'impedida', false, 'ambos', array['cavalo', 'implemento', 'equipamento', 'caminhao', 'apoio']::nucleo.tipo_de_ativo[], 20),
+  ('ALU', 'Alugado a terceiro', 'fora', 'fora-da-frota', false, 'solo', array['cavalo', 'implemento', 'equipamento', 'caminhao', 'apoio']::nucleo.tipo_de_ativo[], 21),
+  ('EMP', 'Emprestado', 'fora', 'fora-da-frota', false, 'solo', array['cavalo', 'implemento', 'equipamento', 'caminhao', 'apoio']::nucleo.tipo_de_ativo[], 22),
+  ('VEN', 'Disponível para venda', 'fora', 'fora-da-frota', false, 'solo', array['cavalo', 'implemento', 'equipamento', 'caminhao', 'apoio']::nucleo.tipo_de_ativo[], 23),
+  ('SUC', 'Sucata', 'fora', 'baixada', true, 'solo', array['cavalo', 'implemento', 'equipamento', 'caminhao', 'apoio']::nucleo.tipo_de_ativo[], 24),
+  ('VND', 'Vendido', 'fora', 'baixada', true, 'solo', array['cavalo', 'implemento', 'equipamento', 'caminhao', 'apoio']::nucleo.tipo_de_ativo[], 25);
 
 -- As seis carrocerias de partida. O catálogo é do Eixo e cresce com a confirmação da equipe.
 insert into config.carroceria (nome) values
@@ -214,4 +213,5 @@ insert into config.papel (codigo, nome) values
 -- pelos dias do segundo parâmetro.
 insert into config.parametro (chave, valor, descricao) values
   ('prazo_de_correcao_de_status_dias', '7', 'Dias depois do fato a partir dos quais a correção de um evento de status gera alerta.'),
-  ('dias_do_alerta_de_correcao', '30', 'Por quantos dias o alerta de correção tardia fica visível.');
+  ('dias_do_alerta_de_correcao', '30', 'Por quantos dias o alerta de correção tardia fica visível.'),
+  ('dias_parado_em_patio', '15', 'Dias em PÁT a partir dos quais o ativo gera o alerta parado_em_patio (padrão provisório).');

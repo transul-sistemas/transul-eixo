@@ -473,8 +473,9 @@ select is(
   'trocar o CR do ativo troca a operação (vale o CR vigente, não o antigo)'
 );
 select ok(
-  not exists (select 1 from nucleo.alerta_de_vinculo where ativo_id = (select id from ids where nome = 'cav40')),
-  'ativo com CR e operação não tem alerta'
+  not exists (select 1 from nucleo.alerta_de_vinculo where ativo_id = (select id from ids where nome = 'cav40')
+               and alerta in ('sem_cr', 'cr_sem_operacao', 'buraco_em_cr')),
+  'ativo com CR e operação não tem alerta de CR (o alerta de pátio é outro assunto)'
 );
 select ok(
   exists (select 1 from nucleo.alerta_de_vinculo where ativo_id = (select id from ids where nome = 'cav41') and alerta = 'sem_cr'),

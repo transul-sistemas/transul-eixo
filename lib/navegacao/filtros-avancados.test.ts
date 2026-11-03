@@ -8,7 +8,7 @@ import {
   rotuloDaSigla,
 } from "./filtros-avancados";
 
-describe("gruposDeSiglas: as 26 siglas agrupadas pelo chip de origem", () => {
+describe("gruposDeSiglas: as 25 siglas agrupadas pelo chip de origem", () => {
   const grupos = gruposDeSiglas();
 
   it("os cinco chips, na ordem em que aparecem na barra", () => {
@@ -27,18 +27,18 @@ describe("gruposDeSiglas: as 26 siglas agrupadas pelo chip de origem", () => {
       "fora",
     ]);
   });
-  it("cobrem exatamente as 26 siglas, cada uma uma vez", () => {
+  it("cobrem exatamente as 25 siglas, cada uma uma vez", () => {
     const todas = grupos.flatMap((g) => g.siglas.map((s) => s.sigla));
     expect([...todas].sort()).toEqual([...SIGLAS].sort());
-    expect(new Set(todas).size).toBe(26);
+    expect(new Set(todas).size).toBe(25);
   });
   it("cada sigla traz o nome por extenso do glossário", () => {
     for (const grupo of grupos) {
       for (const item of grupo.siglas) expect(item.nome).toBe(NOMES_DAS_SIGLAS[item.sigla]);
     }
   });
-  it("as quantidades por grupo são 8, 4, 8, 1 e 5", () => {
-    expect(grupos.map((g) => g.siglas.length)).toEqual([8, 4, 8, 1, 5]);
+  it("as quantidades por grupo são 8, 3, 8, 1 e 5 (Atenção: SMo, FOg e FEr)", () => {
+    expect(grupos.map((g) => g.siglas.length)).toEqual([8, 3, 8, 1, 5]);
   });
   it("marca VND e SUC como baixadas, e só elas", () => {
     const baixadas = grupos

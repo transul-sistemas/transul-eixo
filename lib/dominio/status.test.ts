@@ -29,7 +29,6 @@ const REGUA_DO_CLAUDE = [
   "MAN",
   "REF",
   "SIN",
-  "VAz",
   "FOg",
   "FEr",
   "SMo",
@@ -47,7 +46,7 @@ const REGUA_DO_CLAUDE = [
 const TABELA = {
   "em-atividade": ["DOp", "ACe", "CAr", "CAn", "ETc", "ADe", "DEs", "ETv"],
   impedida: ["MAc", "MAt", "MAv", "MAN", "REF", "SIN", "SDo", "DOC"],
-  atencao: ["SMo", "FOg", "FEr", "VAz"],
+  atencao: ["SMo", "FOg", "FEr"],
   patio: ["PÁT"],
   fora: ["ALU", "EMP", "VEN", "SUC", "VND"],
 } as const;
@@ -67,7 +66,6 @@ const NOMES = {
   MAN: "Em manutenção",
   REF: "Em reforma",
   SIN: "Sinistro",
-  VAz: "Vazio",
   FOg: "Folga",
   FEr: "Férias",
   SMo: "Sem motorista",
@@ -82,17 +80,18 @@ const NOMES = {
 } as const;
 
 describe("siglas e chips", () => {
-  it("as 26 siglas são exatamente as da régua do CLAUDE.md", () => {
+  it("as 25 siglas são exatamente as da régua do CLAUDE.md (VAz saiu em 05/11/2026)", () => {
     expect([...SIGLAS].sort()).toEqual([...REGUA_DO_CLAUDE].sort());
-    expect(SIGLAS).toHaveLength(26);
+    expect(SIGLAS).toHaveLength(25);
+    expect(SIGLAS).not.toContain("VAz");
   });
   it("cada sigla cai em exatamente um chip, o aprovado", () => {
     for (const [grupo, siglas] of Object.entries(TABELA)) {
       for (const sigla of siglas) expect(grupoDaSigla(sigla), sigla).toBe(grupo);
     }
-    expect(Object.values(TABELA).flat()).toHaveLength(26);
+    expect(Object.values(TABELA).flat()).toHaveLength(25);
   });
-  it("Em atividade tem 8, Impedida 8, Atenção 4, Pátio 1 e Fora 5", () => {
+  it("Em atividade tem 8, Impedida 8, Atenção 3 (SMo, FOg e FEr), Pátio 1 e Fora 5", () => {
     const quantas = (g: string) => SIGLAS.filter((s) => grupoDaSigla(s) === g).length;
     expect([
       quantas("em-atividade"),
@@ -100,7 +99,7 @@ describe("siglas e chips", () => {
       quantas("atencao"),
       quantas("patio"),
       quantas("fora"),
-    ]).toEqual([8, 8, 4, 1, 5]);
+    ]).toEqual([8, 8, 3, 1, 5]);
   });
   it("PÁT mantém o acento", () => {
     expect(SIGLAS).toContain("PÁT");
@@ -157,7 +156,7 @@ describe("a régua em camadas (Apêndice A, aprovado em 31/10/2026)", () => {
     );
     expect(por("sem-motorista")).toEqual(["FEr", "FOg", "SMo"].sort());
     expect(por("atividade")).toEqual(
-      ["ACe", "ADe", "CAn", "CAr", "DEs", "DOp", "ETc", "ETv", "PÁT", "VAz"].sort(),
+      ["ACe", "ADe", "CAn", "CAr", "DEs", "DOp", "ETc", "ETv", "PÁT"].sort(),
     );
   });
 
@@ -192,10 +191,9 @@ describe("a régua em camadas (Apêndice A, aprovado em 31/10/2026)", () => {
     }
   });
 
-  it("SDo e DOC valem para ambos; VAz (rascunho: só cavalo e caminhão) e PÁT valem para ambos", () => {
+  it("SDo e DOC valem para ambos; PÁT vale para ambos e cobre qualquer ativo parado (o VAz saiu)", () => {
     for (const sigla of ["SDo", "DOC"] as const) expect(regra(sigla).aplicaA, sigla).toBe("ambos");
-    expect(regra("VAz").aplicaA).toBe("ambos");
-    expect(ordenados(regra("VAz").tiposValidos)).toEqual(comTipos("cavalo", "caminhao"));
+    expect(Object.keys(REGRAS_DAS_SIGLAS)).not.toContain("VAz");
     expect(regra("PÁT").aplicaA).toBe("ambos");
     expect(ordenados(regra("PÁT").tiposValidos)).toEqual(comTipos(...todos));
   });

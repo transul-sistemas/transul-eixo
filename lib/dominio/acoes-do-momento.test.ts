@@ -7,8 +7,8 @@ const DISPONIBILIZAR = "frota.disponibilizar-ao-operacional";
 const RECEBER = "frota.receber-placa";
 
 describe("idsDasAcoesDoMomento: quais ações de ACOES combinam com a placa (regra provisória)", () => {
-  it("carreta (implemento) em PÁT, VAz ou ETv não tem o botão Disponibilizar ao Operacional", () => {
-    for (const sigla of ["PÁT", "VAz", "ETv"] as const) {
+  it("carreta (implemento) em PÁT ou ETv não tem o botão Disponibilizar ao Operacional", () => {
+    for (const sigla of ["PÁT", "ETv"] as const) {
       expect(idsDasAcoesDoMomento({ sigla, tipo: "implemento" }), sigla).not.toContain(
         DISPONIBILIZAR,
       );
@@ -30,11 +30,11 @@ describe("idsDasAcoesDoMomento: quais ações de ACOES combinam com a placa (reg
     ).toEqual([RECEBER]);
   });
 
-  it("Disponibilizar ao Operacional só em PÁT, VAz e ETv", () => {
+  it("Disponibilizar ao Operacional só em PÁT e ETv", () => {
     const comDisponibilizar = SIGLAS.filter((sigla) =>
       idsDasAcoesDoMomento({ sigla, tipo: "cavalo" }).includes(DISPONIBILIZAR),
     );
-    expect([...comDisponibilizar].sort()).toEqual(["ETv", "PÁT", "VAz"].sort());
+    expect([...comDisponibilizar].sort()).toEqual(["ETv", "PÁT"].sort());
   });
 
   it("DOp (já disponível no Operacional) não tem ação: DOp para ACe é do módulo Operacional", () => {

@@ -230,7 +230,7 @@ describe("disponibilizar ao Operacional", () => {
     expect((r.erro.atual as { filial: string }).filial).toBe("Filial Exemplo B");
   });
 
-  it("só de PÁT, VAz ou ETv: outra situação é recusada com o motivo no campo", () => {
+  it("só de PÁT ou ETv: outra situação é recusada com o motivo no campo", () => {
     const a = novo();
     const r = a.disponibilizar(
       entradaDeDisponibilizar({ placa: foraDoPatio.placa }),
@@ -244,7 +244,7 @@ describe("disponibilizar ao Operacional", () => {
     }
   });
 
-  it("carreta em PÁT, VAz ou ETv é recusada com a mensagem do tipo no campo da placa, sem gravar", () => {
+  it("carreta em PÁT ou ETv é recusada com a mensagem do tipo no campo da placa, sem gravar", () => {
     const a = novo();
     const r = a.disponibilizar(
       entradaDeDisponibilizar({ placa: carretaNoPatio.placa }),

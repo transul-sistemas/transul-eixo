@@ -119,6 +119,6 @@ export interface DadosDosAssistentes {
   candidatosDoConjunto: CandidatoDoConjunto[];
   /** Receber placa aberto sem placa escolhida: as placas que têm pedido pendente. */
   placasComPedido: { placa: string; nome: string }[];
-  /** Disponibilizar aberto sem placa escolhida: as placas em PÁT, VAz ou ETv. */
+  /** Disponibilizar aberto sem placa escolhida: as placas em PÁT ou ETv. */
   placasParaDisponibilizar: { placa: string; nome: string }[];
 }

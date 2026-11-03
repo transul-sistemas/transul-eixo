@@ -17,7 +17,6 @@ export const SIGLAS = [
   "MAN",
   "REF",
   "SIN",
-  "VAz",
   "FOg",
   "FEr",
   "SMo",
@@ -54,7 +53,6 @@ const GRUPOS: Record<Sigla, Status> = {
   SMo: "atencao",
   FOg: "atencao",
   FEr: "atencao",
-  VAz: "atencao",
   PÁT: "patio",
   ALU: "fora",
   EMP: "fora",
@@ -78,7 +76,6 @@ export const NOMES_DAS_SIGLAS: Record<Sigla, string> = {
   MAN: "Em manutenção",
   REF: "Em reforma",
   SIN: "Sinistro",
-  VAz: "Vazio",
   FOg: "Folga",
   FEr: "Férias",
   SMo: "Sem motorista",
@@ -151,7 +148,7 @@ const CAVALO_E_IMPLEMENTO: readonly TipoDeAtivo[] = ["cavalo", "implemento"];
 
 /**
  * O Apêndice A do plano da Fase 3, aprovado por Alexandre em 31/10/2026: camada, `aplica_a` e tipos
- * válidos de cada uma das 26 siglas. VAz é rascunho até a equipe confirmar (só cavalo e caminhão).
+ * válidos de cada uma das 25 siglas. O VAz saiu da régua em 05/11/2026 (o PÁT cobre o ativo parado).
  * É o espelho do `supabase/seed.sql`: `lib/qualidade/catalogo-de-status.test.ts` confere os dois.
  */
 export const REGRAS_DAS_SIGLAS: Record<Sigla, RegraDaSigla> = {
@@ -173,7 +170,6 @@ export const REGRAS_DAS_SIGLAS: Record<Sigla, RegraDaSigla> = {
   FEr: { camada: "sem-motorista", aplicaA: "ambos", tiposValidos: CAVALO_E_CAMINHAO },
   DOp: { camada: "atividade", aplicaA: "ambos", tiposValidos: CAVALO_E_CAMINHAO },
   ETv: { camada: "atividade", aplicaA: "ambos", tiposValidos: CAVALO_E_CAMINHAO },
-  VAz: { camada: "atividade", aplicaA: "ambos", tiposValidos: CAVALO_E_CAMINHAO },
   ACe: { camada: "atividade", aplicaA: "conjunto", tiposValidos: CAVALO_E_CAMINHAO },
   CAr: { camada: "atividade", aplicaA: "conjunto", tiposValidos: CAVALO_E_CAMINHAO },
   CAn: { camada: "atividade", aplicaA: "conjunto", tiposValidos: CAVALO_E_CAMINHAO },

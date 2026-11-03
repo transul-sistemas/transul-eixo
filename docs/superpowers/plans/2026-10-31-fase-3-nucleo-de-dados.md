@@ -152,7 +152,7 @@ Todas em `nucleo`, todas com a `EXCLUDE` da convenção 2, origem da data e excl
 2. **Fora da frota:** ALU, EMP, VEN.
 3. **Impedida:** SIN, MAt, MAc, MAv, MAN, REF, SDo, DOC.
 4. **Sem motorista:** SMo, FOg, FEr.
-5. **Atividade:** DOp, ACe, CAr, CAn, ETc, ADe, DEs, ETv, VAz e PÁT.
+5. **Atividade:** DOp, ACe, CAr, CAn, ETc, ADe, DEs, ETv e PÁT. (O VAz saiu em 05/11/2026: o PÁT cobre qualquer ativo parado.)
 
 **Como ler `aplica_a` e `tipos_validos` (decisão 14):**
 - `aplica_a` descreve a placa mestre em relação ao implemento: **`conjunto`** = cavalo com pelo menos um implemento engatado (ou o próprio implemento engatado); **`solo`** = placa sem composição (cavalo sem implemento, implemento solto, caminhão, apoio, equipamento); **`ambos`** = com ou sem.
@@ -508,7 +508,7 @@ O texto completo está em `docs/decisoes.md` (entradas de 05/11/2026).
 
 | # | Pendência | Quem resolve | O que trava |
 | --- | --- | --- | --- |
-| 19 | **VAz:** vale só para cavalo e caminhão (rascunho do Apêndice A) ou também para implemento? Até a decisão, vale o rascunho | Alexandre | Decisão final na fatia 3.1 (o catálogo é configurável) |
+| 19 | ~~VAz~~ **Resolvida em 05/11/2026: o VAz saiu da régua** (o PÁT cobre qualquer ativo parado; alerta `parado_em_patio`) | Alexandre | Resolvida (ajuste 3.6b) |
 | 3.1 | Decisões A a F **aprovadas em 01/11** (ver "Fatia 3.1 em detalhes"). Sobra só o VAz, que é pendência dele com a equipe | Alexandre | Nada trava a 3.1 |
 | 16 | ~~Regra que reconhece bitrem, bitrezão e rodotrem~~ **Respondida pela equipe em 03/11/2026** (ver "Fatia 3.4 em detalhes") | Equipe, por Alexandre | Resolvida |
 | 20 | ~~Dolly no banco~~ **Opção A escolhida por Alexandre em 03/11/2026** (função do implemento) | Alexandre | Resolvida |
@@ -516,7 +516,9 @@ O texto completo está em `docs/decisoes.md` (entradas de 05/11/2026).
 | 22 | **Consultas 2 e 3 do Sankhya** (modelo × eixos × carroceria, e os vazios) **com filtro de ativo** e, se existir, `AD_ORIGEM` (frota ou terceiros) | Equipe do Sankhya, por Alexandre | Saneamento e 3.7 |
 | 23 | **Responsável e frequência de revisão** do relatório de divergências Sankhya × Eixo | Equipe, por Alexandre | 3.7 e saneamento |
 
-## Apêndice A: as 26 siglas, para Alexandre conferir
+## Apêndice A: as 25 siglas (eram 26), para Alexandre conferir
+
+**Ajuste de 05/11/2026 (decisão de Alexandre):** o **VAz (Vazio) foi removido** da régua, que passou de 26 para 25 siglas. O **PÁT** cobre qualquer ativo parado (cavalo, caminhão, implemento, equipamento e apoio); o **ETv** continua. O sinal de "atenção" que o VAz dava passou a ser o alerta **`parado_em_patio`** (em PÁT há mais dias que o parâmetro `dias_parado_em_patio`, 15 por enquanto). A linha do VAz saiu da tabela abaixo.
 
 **De onde vem cada coluna.** O `CLAUDE.md` e o `docs/glossario.md` trazem as 26 siglas, os nomes e os chips (e o `CLAUDE.md` diz que a régua marca cada sigla como válida para conjunto, solo ou ambos), mas **nenhum dos dois traz a marca de cada sigla**. Por isso nenhuma linha de "aplica a" vem do `CLAUDE.md`: ou é regra que Alexandre fixou em 31/10, ou é rascunho meu. A coluna "diverge de" compara a **camada** (decisão 7) com o **chip** do glossário e aponta o que muda em relação ao que já está no código. As 26 siglas do `CLAUDE.md` estão todas aqui, sem sobra nem falta.
 
@@ -548,7 +550,6 @@ O texto completo está em `docs/decisoes.md` (entradas de 05/11/2026).
 | ADe | Aguardando descarga | 5 Atividade | conjunto | cavalo, caminhão | Alexandre 31/10 | — |
 | DEs | Descarregando | 5 Atividade | conjunto | cavalo, caminhão | Alexandre 31/10 | — |
 | ETv | Em trânsito vazio | 5 Atividade | ambos | cavalo, caminhão | Alexandre 31/10 | A 2D deixa Disponibilizar partir de ETv para qualquer tipo |
-| VAz | Vazio | 5 Atividade | ambos | cavalo, caminhão | Alexandre 31/10 (camada e aplica a); **tipos: rascunho meu, pendência de Alexandre** | chip "Atenção"; a 2D deixa Disponibilizar partir de VAz para qualquer tipo |
 | PÁT | Pátio | 5 Atividade | ambos | todos | Alexandre 31/10 (camada e aplica a); rascunho meu (tipos) | chip "Pátio"; a 2D deixa Disponibilizar partir de PÁT para qualquer tipo |
 
 **Aprovado por Alexandre em 31/10**, com estas respostas: SDo e DOC passam de "solo" para "ambos" (o documento vencido de um implemento engatado deixa o conjunto impedido, como a manutenção); o ajuste herdado da 2D e a perda do SMo pelo apoio estão aceitos; o VAz fica como pendência dele (a linha da tabela é o rascunho).

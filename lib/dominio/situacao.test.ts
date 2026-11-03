@@ -13,7 +13,7 @@ describe("validade da sigla no contexto (espelho de nucleo.sigla_valida)", () =>
   it("o tipo tem de estar nos tipos válidos", () => {
     expect(siglaValidaNoContexto("SMo", "implemento", false)).toBe(false);
     expect(siglaValidaNoContexto("SMo", "apoio", false)).toBe(false);
-    expect(siglaValidaNoContexto("VAz", "implemento", false)).toBe(false);
+    expect(siglaValidaNoContexto("ETv", "implemento", false)).toBe(false);
     expect(siglaValidaNoContexto("PÁT", "implemento", false)).toBe(true);
   });
 
@@ -34,9 +34,9 @@ describe("validade da sigla no contexto (espelho de nucleo.sigla_valida)", () =>
   it("a assinatura da validade é a mesma do banco (o pgTAP 40 confere a mesma constante)", () => {
     const md5 = createHash("md5").update(assinaturaDaValidade(), "utf8").digest("hex");
     expect(md5).toBe(ASSINATURA_DA_VALIDADE);
-    expect(ASSINATURA_DA_VALIDADE).toBe("6f838f3c16c75615ab050c9493d0efc9");
+    expect(ASSINATURA_DA_VALIDADE).toBe("13630926e1d4e60aa695ae90d0e64db2");
     const combinacoes = assinaturaDaValidade().split(",");
-    expect(combinacoes).toHaveLength(126);
+    expect(combinacoes).toHaveLength(122);
     expect(SIGLAS.length * TIPOS_DE_ATIVO.length * 2).toBeGreaterThan(combinacoes.length);
   });
 });

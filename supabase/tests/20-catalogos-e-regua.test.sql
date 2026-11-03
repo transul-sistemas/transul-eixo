@@ -1,4 +1,4 @@
--- Fatia 3.1: os catálogos (carroceria, marca, modelo, filial, garagem), a régua de 26 siglas em
+-- Fatia 3.1: os catálogos (carroceria, marca, modelo, filial, garagem), a régua de 25 siglas em
 -- camadas (Apêndice A, aprovado em 31/10/2026) e os nomes de conjunto, com a regra de reconhecimento
 -- ainda vazia (ela é da equipe). Usuário comum ou dono do banco; nunca a chave mestra.
 begin;
@@ -48,9 +48,9 @@ select ok(
 select set_eq(
   $$select sigla from config.status$$,
   $$values ('ETc'), ('ETv'), ('CAr'), ('DEs'), ('DOp'), ('ACe'), ('ADe'), ('CAn'), ('MAc'), ('MAt'),
-           ('MAv'), ('MAN'), ('REF'), ('SIN'), ('VAz'), ('FOg'), ('FEr'), ('SMo'), ('SDo'), ('PÁT'),
+           ('MAv'), ('MAN'), ('REF'), ('SIN'), ('FOg'), ('FEr'), ('SMo'), ('SDo'), ('PÁT'),
            ('DOC'), ('ALU'), ('EMP'), ('VEN'), ('SUC'), ('VND')$$,
-  'existem exatamente as 26 siglas do CLAUDE.md'
+  'existem exatamente as 25 siglas do CLAUDE.md (o VAz saiu em 05/11/2026)'
 );
 select is(
   (select array_agg(codigo order by prioridade) from config.camada_de_status),
@@ -109,7 +109,6 @@ select bag_eq(
     ('MAN', 'impedida', 'impedida', 'solo', 'apoio,caminhao,cavalo,equipamento,implemento'),
     ('REF', 'impedida', 'impedida', 'solo', 'apoio,caminhao,cavalo,equipamento,implemento'),
     ('SIN', 'impedida', 'impedida', 'solo', 'apoio,caminhao,cavalo,equipamento,implemento'),
-    ('VAz', 'atencao', 'atividade', 'ambos', 'caminhao,cavalo'),
     ('FOg', 'atencao', 'sem-motorista', 'ambos', 'caminhao,cavalo'),
     ('FEr', 'atencao', 'sem-motorista', 'ambos', 'caminhao,cavalo'),
     ('SMo', 'atencao', 'sem-motorista', 'ambos', 'caminhao,cavalo'),
@@ -121,7 +120,7 @@ select bag_eq(
     ('VEN', 'fora', 'fora-da-frota', 'solo', 'apoio,caminhao,cavalo,equipamento,implemento'),
     ('SUC', 'fora', 'baixada', 'solo', 'apoio,caminhao,cavalo,equipamento,implemento'),
     ('VND', 'fora', 'baixada', 'solo', 'apoio,caminhao,cavalo,equipamento,implemento')$$,
-  'as 26 regras do Apêndice A, sigla por sigla (chip, camada, aplica_a e tipos válidos)'
+  'as 25 regras do Apêndice A, sigla por sigla (chip, camada, aplica_a e tipos válidos)'
 );
 select is(
   (

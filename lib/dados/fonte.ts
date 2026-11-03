@@ -79,7 +79,7 @@ export interface FonteDeEscrita {
   pedidoPendenteDa(placa: string): Promise<PedidoDeTransferencia | null>;
   pedidosPendentes(): Promise<PedidoDeTransferencia[]>;
   candidatosDoConjunto(placa: string): Promise<CandidatoDoConjunto[]>;
-  /** As placas em PÁT, VAz ou ETv (o assistente aberto sem placa escolhida oferece estas). */
+  /** As placas em PÁT ou ETv (o assistente aberto sem placa escolhida oferece estas). */
   placasQuePodemSerDisponibilizadas(): Promise<{ placa: string; nome: string }[]>;
 }
 

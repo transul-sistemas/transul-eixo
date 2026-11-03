@@ -214,7 +214,7 @@ export type EntradaDisponibilizacao = z.infer<typeof esquemaDisponibilizacao>;
 
 /**
  * O mesmo esquema, mais a regra do tipo (e, se vier a sigla, da situação de origem): só cavalo ou
- * caminhão vão ao Operacional, vindos de PÁT, VAz ou ETv. O servidor passa só o tipo (a situação, que
+ * caminhão vão ao Operacional, vindos de PÁT ou ETv. O servidor passa só o tipo (a situação, que
  * muda, é conferida pelo armazém depois da versão, para o conflito vir primeiro); a tela passa os dois.
  */
 export function esquemaDisponibilizacaoDe({ tipo, sigla }: { tipo: TipoDeAtivo; sigla?: Sigla }) {

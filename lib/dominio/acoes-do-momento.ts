@@ -6,7 +6,7 @@ import { SIGLAS_DE_BAIXA, type Sigla } from "./status";
 // até os assistentes (2D) e o banco existirem. Devolve só ids; quem mostra cruza com `ACOES` e com o
 // perfil.
 //
-// - "Disponibilizar ao Operacional" (módulo Frota): leva a placa de PÁT, VAz ou ETv para DOp, com a
+// - "Disponibilizar ao Operacional" (módulo Frota): leva a placa de PÁT ou ETv para DOp, com a
 //   filial escolhida. DOp para ACe (alocar a um lote) é do módulo Operacional e não entra aqui.
 // - "Receber placa" (módulo Frota): é a transferência entre gestores de frota; não depende da
 //   situação, e sim de haver um pedido de transferência pendente para a placa.

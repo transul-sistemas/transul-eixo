@@ -8,6 +8,18 @@ Modelo de entrada:
 
 ---
 
+## 05/11/2026 — Ajuste 3.6b: o VAz sai da régua (25 siglas) e nasce o alerta de tempo parado
+
+- **Decisão (Alexandre, 05/11/2026):** a sigla **VAz (Vazio) foi removida** da régua, que passa de **26 para 25** siglas. O **PÁT** (pátio) cobre **qualquer ativo parado** (cavalo, caminhão, implemento, equipamento e apoio). O **ETv** (em trânsito vazio) continua.
+- **O chip "Atenção"** fica com **SMo, FOg e FEr**. A entrega ao Operacional (hoje "Disponibilizar ao Operacional") parte só de **PÁT ou ETv**; o tipo continua só cavalo e caminhão.
+- **Alerta `parado_em_patio`:** ativo com o estado de atividade **PÁT vigente há mais de N dias**, com N no parâmetro `dias_parado_em_patio` (**15 por enquanto**, a definir por Alexandre). **Substitui o sinal de "atenção" que o VAz dava.** **Lista fechada dos nomes de alerta, atualizada:** `sem_cr`, `cr_sem_operacao`, `buraco_em_cr`, `buraco_em_custodia`, `implemento_sem_eixos`, `conjunto_sem_nome`, `correcao_tardia_de_status`, `parado_em_patio`.
+- **O que mudou:** migration nova `remove_vaz_e_alerta_de_patio` (confere que nenhum evento ou estado usa o VAz, remove a sigla, deixa a ordem da régua contínua de 1 a 25 e recria a visão de alertas); o seed sem o VAz e com o parâmetro; o espelho `lib/dominio/status.ts` e a assinatura da validade (`lib/dominio/situacao.ts`, de 126 para **122** combinações, a mesma no Vitest e no pgTAP); `lib/dominio/custodia.ts` (origem só PÁT e ETv, mensagem "Só dá para disponibilizar placa em PÁT ou ETv."); a mensagem do assistente; `CLAUDE.md`, `docs/glossario.md` e o Apêndice A.
+- **Dados de exemplo:** a distribuição das situações usa a lista própria `lib/exemplo/siglas.ts` (a ordem antiga, com o VAz trocado por PÁT), para que **só** as placas que estavam em VAz mudem (para PÁT) e as demais mantenham a situação e a história.
+- **Decisões minhas a confirmar:** (1) o alerta vale para o estado **PÁT próprio** do ativo (o implemento engatado não tem atividade própria, então não alerta); (2) "há mais de N dias" conta do **início** do PÁT vigente; (3) sem o parâmetro, não há alerta (nada presumido).
+- **Quem decidiu:** Alexandre (05/11/2026).
+
+---
+
 ## 05/11/2026 — Fatia 3.6 (permissões e RLS)
 
 - **Já decidido por Alexandre (05/11/2026):** usuário é Pessoa com login, criado no Studio e ligado por `vincular_usuario`; a sessão real fica para a 3.8 e, na 3.6, a identidade vem das claims do JWT, provada no pgTAP com a chave de cada usuário (nunca a `service_role`); permissão = módulo × ação × escopo (tudo, minha_carteira, operacao, filial), com perfis, permissões e escopos em catálogo; RLS em todas as tabelas, nenhum grant automático, `UPDATE` de `nucleo.ativo` sem a coluna `tipo`; documento completo só com `pessoas.ver_documento`; gestor exige o papel de gestor de frota; correção tardia de evento gera alerta; lista de exceções das funções.

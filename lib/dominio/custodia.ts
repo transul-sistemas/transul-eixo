@@ -3,26 +3,22 @@ import { type Sigla, siglaAceitaOTipo } from "./status";
 
 // Custódia da placa entre gestores de frota e a passagem ao Operacional (regras puras).
 //
-// - Disponibilizar ao Operacional (módulo Frota): a placa de PÁT, VAz ou ETv vai para DOp, com a
+// - Disponibilizar ao Operacional (módulo Frota): a placa de PÁT ou ETv vai para DOp, com a
 //   filial escolhida. DOp para ACe (alocar a um lote) é do módulo Operacional e fica fora daqui.
 // - Receber placa (módulo Frota): transferência entre gestores de frota. Quem envia deixa o motivo
 //   e as pendências conhecidas (um pedido); quem recebe confere, define o que muda e conclui.
 
-export const SIGLAS_QUE_PODEM_DISPONIBILIZAR = [
-  "PÁT",
-  "VAz",
-  "ETv",
-] as const satisfies readonly Sigla[];
+export const SIGLAS_QUE_PODEM_DISPONIBILIZAR = ["PÁT", "ETv"] as const satisfies readonly Sigla[];
 
 export const MENSAGEM_DE_TIPO_QUE_NAO_DISPONIBILIZA =
   "Só cavalo ou caminhão podem ser disponibilizados ao Operacional.";
 export const MENSAGEM_DE_SIGLA_QUE_NAO_DISPONIBILIZA =
-  "Só dá para disponibilizar placa em PÁT, VAz ou ETv.";
+  "Só dá para disponibilizar placa em PÁT ou ETv.";
 
 /**
  * Por que a placa não pode ir ao Operacional, ou `null` se pode. Duas condições: o tipo tem de aceitar
  * DOp (o catálogo da régua: hoje, cavalo e caminhão; carreta, apoio e equipamento nunca) e a
- * situação de origem tem de ser PÁT, VAz ou ETv. O tipo vem primeiro: não adianta mudar de situação.
+ * situação de origem tem de ser PÁT ou ETv. O tipo vem primeiro: não adianta mudar de situação.
  */
 export function motivoDeNaoDisponibilizar({
   sigla,

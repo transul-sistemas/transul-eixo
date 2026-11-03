@@ -5,7 +5,7 @@
 -- `set constraints all immediate`, que confere tudo o que está pendente.
 begin;
 
-select plan(64);
+select plan(67);
 
 create temp table ids (nome text primary key, id uuid not null);
 
@@ -143,7 +143,7 @@ select throws_ok(
 select lives_ok($$select pg_temp.ev('k1', 'ACe', '2026-02-05 00:00-03')$$, 'caminhão vale só pelos tipos (nunca tem composição)');
 select throws_ok(
   $$select pg_temp.ev('i6', 'VAz', '2026-02-05 00:00-03')$$,
-  '23514', 'A situação VAz não vale para implemento.', 'VAz fica no rascunho: só cavalo e caminhão'
+  '23514', 'A situação VAz não existe na régua.', 'o VAz saiu da régua (05/11/2026): o PÁT cobre o ativo parado'
 );
 select throws_ok(
   $$select pg_temp.ev('a1', 'SMo', '2026-02-05 00:00-03')$$,
@@ -346,6 +346,21 @@ select lives_ok(
   'com só PÁT vigente (vale para todos), o tipo muda'
 );
 
+-- ---- alerta de tempo parado no pátio (substitui o sinal de atenção que o VAz dava) ----
+select pg_temp.ev('k1', 'PÁT', now() - interval '2 days');
+select ok(
+  exists (select 1 from nucleo.alerta_de_vinculo where ativo_id = pg_temp.id('c9') and alerta = 'parado_em_patio'),
+  'ativo em PÁT há mais dias que o parâmetro (15) gera o alerta parado_em_patio'
+);
+select ok(
+  not exists (select 1 from nucleo.alerta_de_vinculo where ativo_id = pg_temp.id('k1') and alerta = 'parado_em_patio'),
+  'em PÁT há poucos dias, sem alerta'
+);
+select ok(
+  not exists (select 1 from nucleo.alerta_de_vinculo where ativo_id = pg_temp.id('c6') and alerta = 'parado_em_patio'),
+  'fora do PÁT (ETv), sem alerta'
+);
+
 -- ---- situação atual e o espelho ----
 select is(nucleo.situacao_atual(pg_temp.id('c1')), 'VEN', 'situacao_atual é a situação de agora');
 select is(
@@ -354,7 +369,7 @@ select is(
      cross join unnest(enum_range(null::nucleo.tipo_de_ativo)) as t (tipo)
      cross join (values ('solo'), ('conjunto')) as c (ctx)
     where nucleo.sigla_valida(s.sigla, t.tipo, c.ctx = 'conjunto')),
-  '6f838f3c16c75615ab050c9493d0efc9',
+  '13630926e1d4e60aa695ae90d0e64db2',
   'a validade (sigla × tipo × contexto) do banco é a mesma do espelho em TypeScript (mesma assinatura)'
 );
 

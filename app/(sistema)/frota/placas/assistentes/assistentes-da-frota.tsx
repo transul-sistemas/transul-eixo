@@ -180,7 +180,7 @@ export function AssistentesDaFrota({
                         tipo: dados.placaAlvo.tipo,
                       }) === MENSAGEM_DE_TIPO_QUE_NAO_DISPONIBILIZA
                     ? `A placa ${nomeDaPlaca} é ${NOMES_DOS_TIPOS[dados.placaAlvo.tipo].toLowerCase()}. ${MENSAGEM_DE_TIPO_QUE_NAO_DISPONIBILIZA}`
-                    : `A placa ${nomeDaPlaca} está em ${dados.placaAlvo.sigla}. Só placas em PÁT, VAz ou ETv podem ser disponibilizadas ao Operacional.`
+                    : `A placa ${nomeDaPlaca} está em ${dados.placaAlvo.sigla}. Só placas em PÁT ou ETv podem ser disponibilizadas ao Operacional.`
             }
             aoEscolher={escolherPlaca}
             aoFechar={disponibilizar.fechar}
