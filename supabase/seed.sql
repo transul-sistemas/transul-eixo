@@ -57,9 +57,9 @@ insert into config.carroceria (nome) values
 
 -- As quatro configurações de conjunto, reconhecidas pela estrutura (regra da equipe, 03/11/2026):
 -- unidades engatadas (o dolly conta), presença de dolly, eixos aceitos nos semirreboques (todos iguais
--- entre si) e eixos do dolly.
+-- entre si) e eixos do dolly. O simples aceita de 1 a 6 eixos (ajuste de 04/11/2026).
 insert into config.configuracao_de_conjunto (codigo, nome, unidades, com_dolly, eixos_dos_semirreboques, eixos_do_dolly) values
-  ('simples', 'Simples', 1, false, '{2,3}', null),
+  ('simples', 'Simples', 1, false, '{1,2,3,4,5,6}', null),
   ('bi', 'Bi', 2, false, '{2}', null),
   ('bitrezao', 'Bitrezão', 2, false, '{3}', null),
   ('rodo', 'Rodo', 3, true, '{2}', 2);
