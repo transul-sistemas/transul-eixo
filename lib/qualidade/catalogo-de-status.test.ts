@@ -111,8 +111,8 @@ describe("seed.sql: as camadas e os nomes de conjunto", () => {
     ]);
   });
 
-  it("não semeia marca, modelo, filial nem garagem (entram pelo + e, depois, pela ponte)", () => {
-    for (const tabela of ["marca", "modelo", "filial", "garagem"]) {
+  it("não semeia marca, modelo nem filial (entram pelo + e, depois, pela ponte)", () => {
+    for (const tabela of ["marca", "modelo", "filial"]) {
       expect(seed, tabela).not.toMatch(new RegExp(`insert\\s+into\\s+config\\.${tabela}\\b`, "i"));
     }
   });

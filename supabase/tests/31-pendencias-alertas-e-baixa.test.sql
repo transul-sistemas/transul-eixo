@@ -270,12 +270,12 @@ select throws_ok(
 -- ---- nomes de alerta: lista fechada ----
 select set_eq(
   $$select distinct (regexp_matches(pg_get_viewdef('nucleo.alerta_de_vinculo'::regclass) || pg_get_viewdef('nucleo.alerta_de_cr'::regclass), ',\s+''(\w+)''::text', 'g'))[1]$$,
-  array['sem_cr', 'cr_sem_operacao', 'buraco_em_cr', 'buraco_em_custodia', 'implemento_sem_eixos', 'conjunto_sem_nome', 'correcao_tardia_de_status', 'parado_em_patio'],
+  array['sem_cr', 'cr_sem_operacao', 'buraco_em_cr', 'buraco_em_custodia', 'implemento_sem_eixos', 'conjunto_sem_nome', 'correcao_tardia_de_status', 'parado_em_patio', 'ativo_sem_operacao'],
   'as visões de alertas (vínculo e CR) só produzem os nomes registrados em docs/decisoes.md'
 );
 select is(
   (select count(*) from nucleo.alerta_de_vinculo
-    where alerta not in ('sem_cr', 'cr_sem_operacao', 'buraco_em_cr', 'buraco_em_custodia', 'implemento_sem_eixos', 'conjunto_sem_nome', 'correcao_tardia_de_status', 'parado_em_patio')),
+    where alerta not in ('sem_cr', 'cr_sem_operacao', 'buraco_em_cr', 'buraco_em_custodia', 'implemento_sem_eixos', 'conjunto_sem_nome', 'correcao_tardia_de_status', 'parado_em_patio', 'ativo_sem_operacao')),
   0::bigint,
   'nenhuma linha de alerta tem nome fora da lista'
 );

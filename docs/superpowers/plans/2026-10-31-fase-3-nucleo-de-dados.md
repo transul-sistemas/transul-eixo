@@ -486,7 +486,9 @@ O texto completo está em `docs/decisoes.md` (entradas de 04/11/2026). Aqui fica
 O texto completo está em `docs/decisoes.md` (entrada de 05/11/2026). **Substitui** a regra da 3.3 de que a operação da placa é a do CR vigente.
 
 - **3.6c (banco):** `codcencus` obrigatório e único; tipo do CR (serviço, frota de placa, frota sem placa) derivado de `AD_FROTA` e `VEICULO`, com origem; CR pai, ativo, bloqueado e analítico com origem; **o CR de frota de placa pertence a um único ativo, para sempre (regra do banco, com teste de mutação)**; o vínculo **placa-operação** com vigência (uma operação por vez por placa, quem montou, vigência aberta até alguém alterar); o vínculo **CR de serviço-operação** com vigência; `operacao_do_ativo` lê o vínculo (engatado e solto como estão); o custo de cada data vem do CR que a placa tinha naquela data; o alerta `cr_sem_operacao` só para CR de serviço; o escopo "operacao" lê o vínculo.
-- **Importação:** o relatório de divergência do Sankhya lista os CRs usados por mais de um veículo; o segundo vínculo vai para a fila de exceções, sem enfraquecer a regra.
+- **Importação:** o relatório de divergência do Sankhya lista os CRs usados por mais de um veículo; o segundo vínculo vai para a fila de exceções, sem enfraquecer a regra. A montagem da placa é sugerida pela garagem do CR vigente ("a confirmar"); Parceiros, ADM, Vendidos e Sem Operação só sugerem, nunca decidem.
+- **Ajustes do checkpoint (05/11/2026):** garagem como atributo do CR (catálogo de 13 valores do Sankhya; a da placa é a do CR vigente, calculada), substituindo a garagem filha de filial; um CR de serviço em uma operação por vez; CR bloqueado ou inativo sem vínculo novo (o da placa vendida); operação "sem operação" como operação parada e o alerta `ativo_sem_operacao`.
+- **3.7 e 3.9:** o passo "Local" do "Cadastrar placa" e o "+" de garagem deixam de pedir a filial da garagem (a lista do que muda está em `docs/decisoes.md`).
 - **Hipóteses (aditivas, fáceis de mudar):** vários CRs de serviço por operação; quem monta a operação usa as permissões do módulo Operações (sem perfil novo até Alexandre decidir).
 
 **Pendências para o Sankhya (só agregados, sem placas):**
@@ -531,7 +533,7 @@ O texto completo está em `docs/decisoes.md` (entradas de 05/11/2026).
 | 22 | **Consultas 2 e 3 do Sankhya** (modelo × eixos × carroceria, e os vazios) **com filtro de ativo** e, se existir, `AD_ORIGEM` (frota ou terceiros) | Equipe do Sankhya, por Alexandre | Saneamento e 3.7 |
 | 23 | **Responsável e frequência de revisão** do relatório de divergências Sankhya × Eixo | Equipe, por Alexandre | 3.7 e saneamento |
 | 24 | **Consultas de CR no Sankhya** (1: distribuição de `AD_FROTA`, `VEICULO`, `ATIVO`, `AD_BLOQUEADO`, `ANALITICO`; 2: veículos ativos por tipo de CR; 3: CRs com mais de um veículo ativo; 4: operação e garagem nos CRs de frota ativos), só agregadas | Equipe do Sankhya, por Alexandre | Confirmar o tipo do CR e levantar as divergências antes da importação |
-| 25 | **Operação:** um ou vários CRs de serviço por operação (hipótese: vários)? Qual perfil monta a operação (talvez "Gestor de operação")? | Alexandre | 3.6c fica com a hipótese e sem perfil novo |
+| 25 | **Operação:** um ou vários CRs de serviço por operação (hipótese: vários)? Qual perfil monta a operação (talvez "Gestor de operação")? Remover `cr.operacao_id` na 3.7 (o `AD_OPERACAO` está vazio em todos os CRs de frota)? | Alexandre | 3.6c fica com a hipótese e sem perfil novo |
 
 ## Apêndice A: as 25 siglas (eram 26), para Alexandre conferir
 

@@ -7,7 +7,7 @@
 begin;
 \ir apoio/como_usuario.psql
 
-select plan(49);
+select plan(61);
 
 create function pg_temp.id(p_nome text) returns uuid language sql as $$
   select nullif(current_setting('t.' || p_nome, true), '')::uuid
@@ -193,6 +193,20 @@ select ok(
 );
 select is((select degrau from nucleo.operacao_do_ativo where ativo_id = pg_temp.id('c1')), 'elenco', 'o degrau da placa montada é "elenco"');
 select is((select cr_id from nucleo.operacao_do_ativo where ativo_id = pg_temp.id('c1')), pg_temp.id('A2'), 'a visão mostra o CR vigente da própria placa');
+
+-- ---- a garagem é do CR; a da placa é a do CR vigente (calculada, nunca gravada) ----
+update nucleo.cr set garagem = 'C' where id = pg_temp.id('A1');
+update nucleo.cr set garagem = 'M' where id = pg_temp.id('A2');
+select ok(
+  (select count(*) from config.garagem) = 13
+  and (select rotulo from config.garagem where codigo = 'C') = 'Operação Sudeste',
+  'o catálogo das 13 garagens do Sankhya está semeado (código e rótulo)'
+);
+select ok(
+  nucleo.garagem_em(pg_temp.id('c1'), '2026-02-15 00:00-03') = 'C'
+  and nucleo.garagem_em(pg_temp.id('c1'), '2026-04-01 00:00-03') = 'M',
+  'a garagem da placa muda ao trocar o CR, e o histórico acompanha a vigência'
+);
 select lives_ok(
   $q$do $b$ begin
       update nucleo.placa_na_operacao set fim = '2026-05-01 00:00-03', fim_origem = 'informada'
@@ -255,7 +269,66 @@ select throws_ok(
   '23P01', null, 'um CR de serviço em uma operação por vez'
 );
 
+-- ---- CR bloqueado ou inativo não aceita vínculo novo; o que já existe fica ----
+select pg_temp.cr('B1', 4011200, true, true);
+update nucleo.cr set bloqueado = true where id = pg_temp.id('B1');
+select throws_ok(
+  $$insert into nucleo.cr_do_ativo (ativo_id, cr_id, inicio, inicio_origem)
+    values (pg_temp.id('c2'), pg_temp.id('B1'), '2026-10-01 00:00-03', 'informada')$$,
+  '23514', 'Este CR está bloqueado ou inativo: não aceita vínculo novo (os vínculos antigos continuam).',
+  'CR bloqueado (por exemplo, o de uma placa vendida) não aceita vigência nova'
+);
+select lives_ok(
+  $$insert into nucleo.cr_do_ativo (ativo_id, cr_id, inicio, fim, inicio_origem, fim_origem)
+    values (pg_temp.id('c2'), pg_temp.id('B1'), '2025-12-01 00:00-03', '2026-01-10 00:00-03', 'derivada', 'derivada')$$,
+  'a importação do histórico (origem derivada) ainda grava a vigência antiga do CR bloqueado'
+);
+select pg_temp.cr('I1', 4011201, true, true);
+update nucleo.cr set ativo = false where id = pg_temp.id('I1');
+select throws_ok(
+  $$insert into nucleo.cr_do_ativo (ativo_id, cr_id, inicio, inicio_origem)
+    values (pg_temp.id('pb'), pg_temp.id('I1'), '2026-01-10 00:00-03', 'informada')$$,
+  '23514', 'Este CR está bloqueado ou inativo: não aceita vínculo novo (os vínculos antigos continuam).',
+  'CR inativo também não aceita vigência nova'
+);
+update nucleo.cr set bloqueado = true where id = pg_temp.id('A2');
+select ok(
+  exists (select 1 from nucleo.cr_do_ativo where ativo_id = pg_temp.id('c1') and cr_id = pg_temp.id('A2') and excluido_em is null),
+  'bloquear o CR não mexe na vigência que ele já tem'
+);
+select lives_ok(
+  $$update nucleo.cr_do_ativo set fim = '2026-10-01 00:00-03', fim_origem = 'informada'
+     where ativo_id = pg_temp.id('c1') and cr_id = pg_temp.id('A2') and fim is null$$,
+  'e a vigência antiga ainda pode ser fechada'
+);
+select pg_temp.cr('S4', 5001004, false, false);
+update nucleo.cr set bloqueado = true where id = pg_temp.id('S4');
+select throws_ok(
+  $$insert into nucleo.cr_de_servico_na_operacao (cr_id, operacao_id, inicio, inicio_origem)
+    values (pg_temp.id('S4'), pg_temp.op('Grãos'), '2026-01-10 00:00-03', 'informada')$$,
+  '23514', 'Este CR está bloqueado ou inativo: não aceita vínculo novo (os vínculos antigos continuam).',
+  'CR de serviço bloqueado não entra numa operação'
+);
+
+-- ---- toda placa precisa de operação: a "sem operação" é uma operação parada ----
+insert into nucleo.operacao (nome, parada) values ('SEM OPERAÇÃO Matriz', true);
+select ok(
+  (select parada from nucleo.operacao where nome = 'SEM OPERAÇÃO Matriz')
+  and not (select parada from nucleo.operacao where nome = 'Grãos'),
+  'a operação "sem operação" é uma operação como as outras, marcada como parada'
+);
+select pg_temp.placa_na_operacao('c2', 'SEM OPERAÇÃO Matriz', '2026-01-10 00:00-03');
+select is(nucleo.operacao_em(pg_temp.id('c2'), '2026-02-01 00:00-03'), pg_temp.op('SEM OPERAÇÃO Matriz'), 'a placa parada tem operação (a parada)');
+
 -- ---- alertas ----
+select ok(
+  exists (select 1 from nucleo.alerta_de_vinculo where ativo_id = pg_temp.id('pa') and alerta = 'ativo_sem_operacao'),
+  'placa sem montagem vigente gera o alerta ativo_sem_operacao (é erro, não estado normal)'
+);
+select ok(
+  not exists (select 1 from nucleo.alerta_de_vinculo where ativo_id in (pg_temp.id('c1'), pg_temp.id('c2')) and alerta = 'ativo_sem_operacao'),
+  'placa montada (inclusive na operação parada) não gera ativo_sem_operacao'
+);
 select ok(
   exists (select 1 from nucleo.alerta_de_cr where cr_id = pg_temp.id('S3') and alerta = 'cr_sem_operacao'),
   'CR de serviço sem operação gera o alerta cr_sem_operacao'

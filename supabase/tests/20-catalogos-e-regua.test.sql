@@ -213,7 +213,6 @@ insert into ids select 'volvo', id from config.marca where nome = 'Volvo';
 insert into ids select 'scania', id from config.marca where nome = 'Scania';
 insert into config.modelo (marca_id, nome) select id, 'FH 540' from ids where nome = 'volvo';
 insert into config.filial (nome) values ('Filial T1'), ('Filial T2');
-insert into config.garagem (filial_id, nome) select id, 'Garagem 1' from config.filial where nome = 'Filial T1';
 
 select throws_ok(
   $$insert into config.marca (nome) values ('Volvo')$$,
@@ -244,14 +243,15 @@ select throws_ok(
   'filial repetida é recusada'
 );
 select throws_ok(
-  $$insert into config.garagem (filial_id, nome) select id, 'Garagem 1' from config.filial where nome = 'Filial T1'$$,
+  $$insert into config.garagem (codigo, rotulo, ordem) values ('C', 'Outra garagem', 1)$$,
   '23505',
   null,
-  'garagem repetida na mesma filial é recusada'
+  'garagem repetida (o mesmo código do Sankhya) é recusada'
 );
-select lives_ok(
-  $$insert into config.garagem (filial_id, nome) select id, 'Garagem 1' from config.filial where nome = 'Filial T2'$$,
-  'o mesmo nome de garagem em outra filial passa (a garagem é única por filial)'
+select is(
+  (select count(*) from config.garagem where origem = 'sankhya' and conferencia = 'a_conferir'),
+  13::bigint,
+  'as 13 garagens do Sankhya estão semeadas, com origem Sankhya e "a conferir" (a garagem não é mais filha de filial)'
 );
 select throws_ok(
   $$insert into config.modelo (marca_id, nome, eixos) select id, 'R 450', 0 from ids where nome = 'scania'$$,
@@ -338,7 +338,7 @@ select throws_ok(
 
 -- ---- índices das chaves estrangeiras ----
 select has_index('config', 'modelo', 'modelo_marca_id_idx', 'marca_id', 'a marca do modelo tem índice');
-select has_index('config', 'garagem', 'garagem_filial_id_idx', 'filial_id', 'a filial da garagem tem índice');
+select has_index('nucleo', 'cr', 'cr_garagem_idx', 'garagem', 'a garagem do CR tem índice');
 select has_index('config', 'status', 'status_camada_idx', 'camada', 'a camada da sigla tem índice');
 select has_index(
   'config', 'nomenclatura_de_conjunto', 'nomenclatura_de_conjunto_configuracao_idx', 'configuracao',

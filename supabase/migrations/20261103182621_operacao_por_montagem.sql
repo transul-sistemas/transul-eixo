@@ -11,8 +11,13 @@
 --  * A operação de um ativo num instante: engatado, a do cavalo; senão, a montagem mais recente entre
 --    o vínculo da placa e a operação gravada na saída do conjunto. O custo de cada data vai para o CR
 --    que a placa tinha naquela data (nucleo.cr_em).
---  * Alertas: cr_sem_operacao só para CR de serviço (visão nova alerta_de_cr); o escopo "operação" da
---    RLS passa a ler a montagem (pela visão operacao_do_ativo).
+--  * Alertas: cr_sem_operacao só para CR de serviço (visão nova alerta_de_cr); ativo_sem_operacao (toda
+--    placa precisa de operação, mesmo parada); o escopo "operação" da RLS lê a montagem.
+--  * Garagem (hipótese a confirmar): atributo do CR, do catálogo de 13 valores do Sankhya; a garagem da
+--    placa é a do CR vigente (calculada, nunca gravada). Substitui a garagem filha de filial da 3.1. Nada
+--    se deriva dela sem confirmação: os rótulos são só sugestão para a importação.
+--  * CR bloqueado ou inativo (por exemplo, o da placa vendida) não aceita vínculo novo; os antigos ficam.
+--  * A operação "sem operação" é uma operação como as outras, marcada como parada (hipótese).
 
 create type nucleo.tipo_de_cr as enum ('servico', 'frota_de_placa', 'frota_sem_placa');
 comment on type nucleo.tipo_de_cr is
@@ -41,6 +46,38 @@ $$;
 revoke all on function nucleo.tipo_do_cr(boolean, boolean) from public;
 
 -- ---------------------------------------------------------------------------------------------
+-- Garagem: o catálogo do Sankhya (AD_GARAGEM), no lugar da garagem filha de filial da 3.1
+-- ---------------------------------------------------------------------------------------------
+drop table config.garagem;
+
+create table config.garagem (
+  codigo text primary key check (codigo ~ '^[A-Z]$'),
+  rotulo text not null check (length(btrim(rotulo)) > 0),
+  ordem smallint not null,
+  origem config.origem_do_campo not null default 'sankhya',
+  conferencia text not null default 'a_conferir' check (conferencia in ('a_conferir', 'conferida')),
+  sugestao_na_importacao text check (sugestao_na_importacao in ('operacao', 'sem_operacao', 'apoio', 'veiculo_de_parceiro', 'baixa')),
+  versao integer not null default 1,
+  criado_em timestamptz not null default now()
+);
+comment on table config.garagem is
+  'As garagens do Sankhya (AD_GARAGEM do CR), com o código de uma letra. A garagem da placa é a do CR vigente. A sugestão para a importação é só sugestão, a conferir: nada se deriva dela sem confirmação.';
+comment on column config.garagem.sugestao_na_importacao is
+  'O que a garagem sugere na importação (a confirmar): operação, sem operação (operação parada), apoio (veículo administrativo), veículo de parceiro (o papel vem do cadastro de parceiros) ou baixa (a baixa real é o evento VND).';
+alter table config.garagem enable row level security;
+create trigger t30_versao before update on config.garagem
+  for each row execute function nucleo.incrementar_versao();
+create trigger t40_sem_exclusao_fisica before delete on config.garagem
+  for each row execute function nucleo.bloquear_exclusao_fisica();
+create trigger t90_auditoria after insert or update or delete on config.garagem
+  for each row execute function auditoria.registrar_mudanca('codigo');
+
+-- Toda placa precisa de operação, mesmo parada: a "sem operação" é uma operação como as outras.
+alter table nucleo.operacao add column parada boolean not null default false;
+comment on column nucleo.operacao.parada is
+  'Operação de placa parada (as "SEM OPERAÇÃO" de Matriz, Cordeirópolis e Parauapebas). Hipótese a confirmar.';
+
+-- ---------------------------------------------------------------------------------------------
 -- CR: o código do Sankhya obrigatório e os campos com origem
 -- ---------------------------------------------------------------------------------------------
 alter table nucleo.cr alter column codcencus set not null;
@@ -58,14 +95,19 @@ alter table nucleo.cr
   add column ativo_origem config.origem_do_campo not null default 'informada',
   add column bloqueado_origem config.origem_do_campo not null default 'informada',
   add column conferencia text not null default 'a_conferir',
+  add column garagem text references config.garagem (codigo),
+  add column garagem_origem config.origem_do_campo,
   add constraint cr_conferencia_valida check (conferencia in ('a_conferir', 'conferida')),
   add constraint cr_participa_da_frota_com_origem check ((participa_da_frota is null) = (participa_da_frota_origem is null)),
   add constraint cr_veiculo_obrigatorio_com_origem check ((veiculo_obrigatorio is null) = (veiculo_obrigatorio_origem is null)),
   add constraint cr_tipo_com_origem check ((tipo is null) = (tipo_origem is null)),
   add constraint cr_pai_com_origem check ((cr_pai_id is null) = (cr_pai_origem is null)),
   add constraint cr_analitico_com_origem check ((analitico is null) = (analitico_origem is null)),
+  add constraint cr_garagem_com_origem check ((garagem is null) = (garagem_origem is null)),
   add constraint cr_pai_nao_e_ele_mesmo check (cr_pai_id is distinct from id);
 create index cr_cr_pai_id_idx on nucleo.cr (cr_pai_id);
+create index cr_garagem_idx on nucleo.cr (garagem);
+comment on column nucleo.cr.garagem is 'AD_GARAGEM do Sankhya (pode faltar). A garagem da placa é a do CR vigente (nucleo.garagem_em).';
 comment on column nucleo.cr.codcencus is 'CODCENCUS do Sankhya (o inteiro, sem a máscara): obrigatório e único. O CR sempre vem do Sankhya.';
 comment on column nucleo.cr.codigo is 'O código com a máscara hierárquica (ex.: 04.011.142), só para exibição.';
 comment on column nucleo.cr.operacao_id is
@@ -85,6 +127,7 @@ begin
   new.veiculo_obrigatorio_origem := case when new.veiculo_obrigatorio is null then null else coalesce(new.veiculo_obrigatorio_origem, 'informada') end;
   new.cr_pai_origem := case when new.cr_pai_id is null then null else coalesce(new.cr_pai_origem, 'informada') end;
   new.analitico_origem := case when new.analitico is null then null else coalesce(new.analitico_origem, 'informada') end;
+  new.garagem_origem := case when new.garagem is null then null else coalesce(new.garagem_origem, 'informada') end;
   if new.tipo_origem is distinct from 'informada' then
     new.tipo := nucleo.tipo_do_cr(new.participa_da_frota, new.veiculo_obrigatorio);
     new.tipo_origem := case when new.tipo is null then null else 'derivada' end;
@@ -96,6 +139,30 @@ revoke all on function nucleo.normalizar_cr() from public;
 
 create trigger t05_normalizar before insert or update on nucleo.cr
   for each row execute function nucleo.normalizar_cr();
+
+-- ---------------------------------------------------------------------------------------------
+-- CR bloqueado ou inativo não aceita vínculo novo (o da placa vendida fica bloqueado e nunca se
+-- apaga). A importação do histórico (origem derivada ou observada) ainda grava as vigências antigas.
+-- ---------------------------------------------------------------------------------------------
+create function nucleo.exigir_cr_liberado()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  if (tg_op = 'INSERT' or new.cr_id is distinct from old.cr_id)
+     and new.inicio_origem = 'informada'
+     and exists (select 1 from nucleo.cr where id = new.cr_id and (bloqueado or not ativo)) then
+    raise exception 'Este CR está bloqueado ou inativo: não aceita vínculo novo (os vínculos antigos continuam).'
+      using errcode = '23514';
+  end if;
+  return new;
+end;
+$$;
+revoke all on function nucleo.exigir_cr_liberado() from public;
+
+create trigger t13_cr_liberado before insert or update on nucleo.cr_do_ativo
+  for each row execute function nucleo.exigir_cr_liberado();
 
 -- ---------------------------------------------------------------------------------------------
 -- O CR de frota de placa pertence a uma única placa, para sempre
@@ -258,6 +325,8 @@ create trigger t10_intervalo before insert or update on nucleo.cr_de_servico_na_
   for each row execute function nucleo.conferir_intervalo_da_vigencia();
 create trigger t12_so_servico before insert or update on nucleo.cr_de_servico_na_operacao
   for each row execute function nucleo.exigir_cr_de_servico();
+create trigger t13_cr_liberado before insert or update on nucleo.cr_de_servico_na_operacao
+  for each row execute function nucleo.exigir_cr_liberado();
 create trigger t20_motivo_da_correcao before update on nucleo.cr_de_servico_na_operacao
   for each row execute function nucleo.exigir_motivo_da_correcao();
 create trigger t30_versao before update on nucleo.cr_de_servico_na_operacao
@@ -282,6 +351,17 @@ as $$
    where ativo_id = p_ativo_id and excluido_em is null and periodo @> p_em
 $$;
 revoke all on function nucleo.cr_em(uuid, timestamptz) from public;
+
+-- A garagem da placa naquele instante: a do CR vigente (calculada, nunca gravada na placa).
+create function nucleo.garagem_em(p_ativo_id uuid, p_em timestamptz)
+returns text
+language sql
+stable
+set search_path = ''
+as $$
+  select c.garagem from nucleo.cr c where c.id = nucleo.cr_em(p_ativo_id, p_em)
+$$;
+revoke all on function nucleo.garagem_em(uuid, timestamptz) from public;
 
 -- A operação e o degrau: engatado (a do cavalo, pela montagem dele); senão, a mais recente entre a
 -- montagem da própria placa (elenco) e a gravada na saída do conjunto (solto); sem nada, nula.
@@ -442,9 +522,13 @@ create or replace view nucleo.alerta_de_vinculo with (security_invoker = true) a
     join nucleo.estado_de_status e
       on e.ativo_id = f.id and e.camada = 'atividade' and e.sigla = 'PÁT'
      and e.fim is null and e.excluido_em is null
-   where e.inicio < now() - make_interval(days => p.parado);
+   where e.inicio < now() - make_interval(days => p.parado)
+  union all
+  select f.id, 'ativo_sem_operacao'
+    from na_frota f
+   where nucleo.operacao_em(f.id, now()) is null;
 comment on view nucleo.alerta_de_vinculo is
-  'Pendências das placas: sem_cr, buraco_em_cr, buraco_em_custodia, implemento_sem_eixos, conjunto_sem_nome (no cavalo), correcao_tardia_de_status e parado_em_patio. Ativo baixado não entra. Os alertas de CR ficam em alerta_de_cr.';
+  'Pendências das placas: sem_cr, buraco_em_cr, buraco_em_custodia, implemento_sem_eixos, conjunto_sem_nome (no cavalo), correcao_tardia_de_status, parado_em_patio e ativo_sem_operacao (toda placa precisa de operação, mesmo parada). Ativo baixado não entra. Os alertas de CR ficam em alerta_de_cr.';
 
 create view nucleo.alerta_de_cr with (security_invoker = true) as
   select c.id as cr_id, 'cr_sem_operacao'::text as alerta
@@ -483,7 +567,13 @@ as $$
 $$;
 revoke all on function config.pode_na_operacao(uuid, text) from public;
 
-grant select, insert, update on nucleo.placa_na_operacao, nucleo.cr_de_servico_na_operacao to authenticated;
+grant select, insert, update on nucleo.placa_na_operacao, nucleo.cr_de_servico_na_operacao, config.garagem to authenticated;
+
+-- A garagem nova (as políticas da antiga saíram com a tabela): todo usuário vinculado lê; Cadastros grava.
+create policy garagem_ler on config.garagem for select to authenticated using (config.usuario_atual() is not null);
+create policy garagem_criar on config.garagem for insert to authenticated with check (config.pode('cadastros', 'criar'));
+create policy garagem_alterar on config.garagem for update to authenticated
+  using (config.pode('cadastros', 'editar')) with check (config.pode('cadastros', 'editar'));
 grant select on nucleo.alerta_de_cr to authenticated;
 
 create policy placa_na_operacao_ler on nucleo.placa_na_operacao for select to authenticated
@@ -508,7 +598,8 @@ insert into config.funcao_executavel (assinatura, justificativa) values
   ('nucleo.tipo_do_cr(boolean,boolean)', 'Pura e imutável: o tipo do CR pelos sinais do Sankhya (gatilho do CR).'),
   ('nucleo.cr_em(uuid,timestamp with time zone)', 'Leitura do CR da placa num instante, com a RLS de quem consulta.'),
   ('nucleo.operacao_e_degrau_em(uuid,timestamp with time zone)', 'Leitura da operação da placa num instante, com a RLS de quem consulta.'),
-  ('nucleo.operacao_em(uuid,timestamp with time zone)', 'Leitura da operação da placa num instante (e a gravada na saída do conjunto).');
+  ('nucleo.operacao_em(uuid,timestamp with time zone)', 'Leitura da operação da placa num instante (e a gravada na saída do conjunto).'),
+  ('nucleo.garagem_em(uuid,timestamp with time zone)', 'Leitura da garagem da placa num instante (a do CR vigente), com a RLS de quem consulta.');
 
 do $$
 declare
@@ -519,7 +610,7 @@ begin
      where assinatura in (
        'config.pode_na_operacao(uuid,text)', 'nucleo.tipo_do_cr(boolean,boolean)',
        'nucleo.cr_em(uuid,timestamp with time zone)', 'nucleo.operacao_e_degrau_em(uuid,timestamp with time zone)',
-       'nucleo.operacao_em(uuid,timestamp with time zone)')
+       'nucleo.operacao_em(uuid,timestamp with time zone)', 'nucleo.garagem_em(uuid,timestamp with time zone)')
   loop
     execute format('grant execute on function %s to authenticated', v_assinatura);
   end loop;

@@ -215,3 +215,20 @@ insert into config.parametro (chave, valor, descricao) values
   ('prazo_de_correcao_de_status_dias', '7', 'Dias depois do fato a partir dos quais a correção de um evento de status gera alerta.'),
   ('dias_do_alerta_de_correcao', '30', 'Por quantos dias o alerta de correção tardia fica visível.'),
   ('dias_parado_em_patio', '15', 'Dias em PÁT a partir dos quais o ativo gera o alerta parado_em_patio (padrão provisório).');
+
+-- As 13 garagens do Sankhya (AD_GARAGEM do CR), com o rótulo e a ordem de lá. A sugestão para a
+-- importação é só sugestão, a conferir: nada se deriva da garagem sem confirmação (3.6c, 05/11/2026).
+insert into config.garagem (codigo, rotulo, ordem, sugestao_na_importacao) values
+  ('C', 'Operação Sudeste', 1, 'operacao'),
+  ('M', 'Operação Matriz', 2, 'operacao'),
+  ('P', 'Parauapebas - OZ Minerais', 3, 'operacao'),
+  ('R', 'Parauapebas Sem Operação', 4, 'sem_operacao'),
+  ('Q', 'Parauapebas - Rollom', 4, 'operacao'),
+  ('S', 'Veículo ADM Matriz', 5, 'apoio'),
+  ('X', 'Veículos ADM Parauapebas', 6, 'apoio'),
+  ('Z', 'Parceiros', 6, 'veiculo_de_parceiro'),
+  ('U', 'Veículos Vendidos', 6, 'baixa'),
+  ('V', 'Veículos ADM Cordeiro', 6, 'apoio'),
+  ('T', 'Operação Porto', 7, 'operacao'),
+  ('A', 'Operação Matriz Sem Operação', 8, 'sem_operacao'),
+  ('O', 'Cordeirópolis Sem Operação', 9, 'sem_operacao');
