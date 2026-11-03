@@ -8,6 +8,59 @@ Modelo de entrada:
 
 ---
 
+## 04/11/2026 — Placa e conjunto: duas classificações
+
+- **A placa (solo)** guarda os **eixos** (1 a 6) e, no implemento, a **carroceria** (Sider, Graneleira, Basculante...). "Aí morre para a placa": nada de conjunto é dado da placa.
+- **O conjunto** tem o nome dado **ao engatar** (Bitrem, Bitrezão, Rodotrem, Rodocaçamba...), **calculado pela estrutura e nunca gravado**. A palavra de conjunto **nunca** entra na placa nem no nome do modelo, e os prefixos de fabricante (BT, BZ, RD) **não valem como fonte**.
+- **Quem decidiu:** Alexandre (04/11/2026).
+
+## 04/11/2026 — Sankhya: o nome do modelo do implemento descreve só os eixos
+
+- **"Carreta 3 eixos" descreve os eixos, não a carroceria:** uma carreta de 3 eixos pode ser graneleira, sider ou baú.
+- **Campos separados em `TGFVEI`:** `NUMEIXOS` (eixos), `TIPOCAR` e `CODTIPCAR` (carroceria), `TIPVEI` e `CODTIPVEI` (tipo do veículo). O modelo vem de `TMSMODELOVEI` e a marca de `TMSMARCAVEI`.
+- **Quem decidiu:** Alexandre (04/11/2026), a partir do catálogo recebido.
+
+## 04/11/2026 — Catálogo de marca e modelo recebido do Sankhya (só agregados)
+
+Fonte: `docs/sankhya/mapa.md` e a planilha de apoio, **só agregados, sem placas**. Contagem **sem filtro de ativo** (inclui inativos e terceiros).
+
+- **82 modelos e 4.455 veículos.** Cerca de **33 modelos de implemento (2.325 veículos)**, **2 modelos DOLLY (250)**, cerca de **42 de cavalo e caminhão (1.763)**, **1 empilhadeira (106)**, além de motos e vans.
+- **A marca "SR"** (sigla de semirreboque) aparece em **546 veículos**, com o fabricante real no nome do modelo. O **dolly** aparece sob as marcas **Guerra** e **Librelato**.
+- **Modelos duplicados por grafia:** `RANSONSP` x `RANDONSP`, espaço em `SR/ LIBRELATO`.
+- **Eixos no nome do modelo:** presentes em cerca de **1.339** dos 2.325 implementos e ausentes em cerca de **986**; ao menos **81 veículos com 4 eixos** no nome; textos ambíguos (`3E1ED`, `4ED`, `G4E140`, `1E 2E`).
+- **Pendentes:** as consultas 2 e 3 (modelo × eixos × carroceria, e os vazios), já **com filtro de ativo** (ver a pendência no plano).
+
+## 04/11/2026 — Propósito do Eixo: melhorar as leituras do Sankhya
+
+- **Motivo:** muitos cadastros originais do Sankhya foram digitados errado.
+- **Nenhum campo do Sankhya é confiado cegamente** (nem `NUMEIXOS`). Cada campo de cadastro guarda **o valor do Sankhya, a correção local (quem, quando e por quê) e o valor efetivo**.
+- **A sincronização atualiza o valor do Sankhya sem apagar a correção.** Divergência entre os dois vira **relatório**; o que não se deduz vai para a **fila de exceções**, nunca presumido.
+- **Chaves não aceitam correção local:** placa, RENAVAM, CPF e CNPJ.
+- **A combinar com a equipe:** um responsável e uma frequência de revisão do relatório de divergências (pedido no plano da 3.7 e do saneamento).
+- **Quem decidiu:** Alexandre (04/11/2026).
+
+## 04/11/2026 — Correção de eixos e carroceria é por placa, não por modelo
+
+- **Decisão:** um de-para **por modelo não serve**: eixos e carroceria são da placa e variam dentro do mesmo modelo. A correção é **por placa, dentro do Eixo**, com o Sankhya como **sugestão** (`NUMEIXOS`, `TIPOCAR` e `CODTIPCAR`; o nome do modelo só confere). O que o Sankhya traz coerente passa direto; o duvidoso vai para a fila de exceções.
+- **Marca e nome do modelo** são normalizados pelas regras da importação (grafias duplicadas, espaços, a marca "SR").
+- **Backlog (depois da Fase 3):** tela de **conferência rápida por gestor**, em tabela, com o valor do Sankhya ao lado e dois campos (eixos e carroceria) para confirmar ou corrigir em lote.
+- **Alternativa descartada:** de-para por modelo.
+- **Quem decidiu:** Alexandre (04/11/2026).
+
+## 04/11/2026 — Consulta de placa no "Cadastrar placa": descartada por ora
+
+- **Decisão:** a sugestão de marca, modelo e ano por consulta de placa está **descartada por ora**. Só faria sentido com **API paga ou canal oficial**, que depende de **autorização da diretoria**. **Não usar** consultas não oficiais (SINESP raspado) nem bases que estimam dados.
+- **Se voltar:** é mais uma fonte de **sugestão**, com origem e data por campo, **nunca valor confirmado**; **eixos e carroceria não vêm dela**; só campos técnicos do veículo (dado de proprietário é descartado, LGPD); a chave do serviço fica **só no servidor**; uma **função única, trocável de fornecedor**; a falha **nunca bloqueia** o cadastro manual.
+- **Quem decidiu:** Alexandre (04/11/2026).
+
+## 04/11/2026 — Tela "Receber placa" ajustada à opção B só na 3.9
+
+- **Situação:** a tela do assistente "Receber placa" (2D) ainda faz tudo numa etapa e troca o gestor ao concluir. A opção B (receber registra a chegada; concluir troca o gestor depois de toda pendência respondida) já está no banco desde a 3.3.
+- **Decisão:** o ajuste da tela fica para a **3.9**, junto da fonte do banco. As telas e os testes afetados estão listados no plano (seção "Sankhya, classificações e saneamento").
+- **Quem decidiu:** Alexandre (04/11/2026).
+
+---
+
 ## 01/11/2026 — Conformidade da composição (backlog), princípios e a correção sobre o Sankhya
 
 Registro de direção, só em texto: nenhum código nem migration. Não muda a fatia 3.1 em andamento.
