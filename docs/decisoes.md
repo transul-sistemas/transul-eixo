@@ -781,3 +781,14 @@ Registro de direção, só em texto: nenhum código nem migration. Não muda a f
 - **Verificação (Docker local):** o pgTAP 30 foi rodado **antes** das migrations e falhou por falta de objetos (as 11 primeiras asserções e o abortamento no primeiro `insert`); depois, `db reset` duas vezes sem erro, `supabase test db` com 226 testes passando, `db lint` sem alertas, `pnpm db:tipos` em LF, Vitest (1757), ESLint, `tsc` e Prettier limpos. Sem tela: nenhum e2e novo.
 - **Fica para a 3.4:** composição, `operacao_na_saida_id`, os degraus 1 e 2 de `operacao_do_ativo`, meta e `nome_do_conjunto` (depende da regra da equipe), e a trava do `tipo` do ativo com vínculo vigente.
 - **Quem decidiu:** Alexandre (o plano); os itens acima aguardam a confirmação do checkpoint.
+
+## 03/11/2026 — Checkpoint 3.3 aprovado com ajustes
+
+- **`plan(86)` é contagem, não teste pulado.** Por seção: estrutura 11, CR 4, cadastro 4, buraco 6, baixa 4, origem 4, regime 1, correção 5, transferência 12, operação e alertas 10, versão e auditoria 5, limites e posse e custódia 20 (4 × 4 em laço mais 4) = **86**; nenhum `skip` nem `todo`; o pgTAP também executou 86. Não há histórico do arquivo de antes do WIP, então não dá para dizer de onde vieram os 2 a mais; os candidatos são os dois testes de operação com composição listados no plano (engatado mostra a do cavalo; solto mantém a última), que são da 3.4.
+- **Pendências do pedido:** `nucleo.transferencia_pendencia (transferencia_id, texto, resolvida_por, resolvida_em, nota)`, com RLS, sem grant, índice nas chaves estrangeiras, versão, auditoria e exclusão lógica; resolver exige quem **e** quando. Receber o pedido **não** confere as pendências (não há regra para isso; perguntar antes de travar).
+- **CODCENCUS:** `unique` simples, que no Postgres já é "único quando existe" (vários nulos convivem); provado por teste.
+- **Nomes de alerta (lista fechada):** `sem_cr`, `cr_sem_operacao`, `buraco_em_cr`, `buraco_em_custodia`. O teste lê a definição da visão `nucleo.alerta_de_vinculo` e falha se surgir um nome fora dessa lista; quem acrescentar um alerta atualiza esta lista e o teste juntos.
+- **Siglas de baixa:** teste que falha se as siglas com `baixada = true` em `config.status` deixarem de ser exatamente `{VND, SUC}` (as mesmas do `CHECK` de `baixa_do_ativo`).
+- **Pendência da 3.6:** `gestor_da_carteira.gestor_id` (e `transferencia.de_gestor_id` e `para_gestor_id`) passa a exigir o papel de gestor de frota quando o papel existir.
+- **Provas:** os testes novos (`31-pendencias-alertas-e-baixa.test.sql`, 17) falharam antes da tabela existir; os guardas de alerta e de baixa foram provados por mutação dentro de uma transação desfeita (nome inventado na visão; VEN marcada como baixada): os dois falharam apontando o registro a mais.
+- **Quem decidiu:** Alexandre.

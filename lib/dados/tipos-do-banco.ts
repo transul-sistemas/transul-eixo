@@ -506,6 +506,32 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"transferencia_pendencia": {
+                  Row: {
+                    "criado_em": string,"excluido_em": string | null,"excluido_por": string | null,"id": string,"motivo_da_exclusao": string | null,"nota": string | null,"resolvida_em": string | null,"resolvida_por": string | null,"texto": string,"transferencia_id": string,"versao": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "criado_em"?: string,"excluido_em"?: string | null,"excluido_por"?: string | null,"id"?: string,"motivo_da_exclusao"?: string | null,"nota"?: string | null,"resolvida_em"?: string | null,"resolvida_por"?: string | null,"texto": string,"transferencia_id": string,"versao"?: number
+                  }
+                  Update: {
+                    "criado_em"?: string,"excluido_em"?: string | null,"excluido_por"?: string | null,"id"?: string,"motivo_da_exclusao"?: string | null,"nota"?: string | null,"resolvida_em"?: string | null,"resolvida_por"?: string | null,"texto"?: string,"transferencia_id"?: string,"versao"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "transferencia_pendencia_resolvida_por_fkey"
+      columns: ["resolvida_por"]
+isOneToOne: false
+      referencedRelation: "pessoa"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "transferencia_pendencia_transferencia_id_fkey"
+      columns: ["transferencia_id"]
+isOneToOne: false
+      referencedRelation: "transferencia"
+      referencedColumns: ["id"]
+    }
+                  ]
                 }
           }
           Views: {

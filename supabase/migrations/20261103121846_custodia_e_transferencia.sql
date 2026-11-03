@@ -92,6 +92,39 @@ create trigger t40_sem_exclusao_fisica before delete on nucleo.transferencia
 create trigger t90_auditoria after insert or update or delete on nucleo.transferencia
   for each row execute function auditoria.registrar_mudanca('id');
 
+-- Pendências conhecidas do pedido (documento vencido, multa, avaria…), cada uma resolvida por alguém.
+create table nucleo.transferencia_pendencia (
+  id uuid primary key default gen_random_uuid(),
+  transferencia_id uuid not null references nucleo.transferencia (id),
+  texto text not null check (length(btrim(texto)) > 0),
+  resolvida_por uuid references nucleo.pessoa (id),
+  resolvida_em timestamptz,
+  nota text,
+  versao integer not null default 1,
+  criado_em timestamptz not null default now(),
+  excluido_em timestamptz,
+  excluido_por uuid,
+  motivo_da_exclusao text,
+  constraint transferencia_pendencia_resolvida_completa check ((resolvida_por is null) = (resolvida_em is null))
+);
+comment on table nucleo.transferencia_pendencia is
+  'Pendências conhecidas de um pedido de transferência. Resolver é dizer quem e quando, com nota opcional.';
+
+create index transferencia_pendencia_transferencia_id_idx on nucleo.transferencia_pendencia (transferencia_id);
+create index transferencia_pendencia_resolvida_por_idx on nucleo.transferencia_pendencia (resolvida_por);
+create index transferencia_pendencia_nao_excluida_idx on nucleo.transferencia_pendencia (transferencia_id)
+  where excluido_em is null;
+alter table nucleo.transferencia_pendencia enable row level security;
+
+create trigger t20_chave_imutavel before update on nucleo.transferencia_pendencia
+  for each row execute function nucleo.proibir_mudanca_de_chave('transferencia_id');
+create trigger t30_versao before update on nucleo.transferencia_pendencia
+  for each row execute function nucleo.incrementar_versao();
+create trigger t40_sem_exclusao_fisica before delete on nucleo.transferencia_pendencia
+  for each row execute function nucleo.bloquear_exclusao_fisica();
+create trigger t90_auditoria after insert or update or delete on nucleo.transferencia_pendencia
+  for each row execute function auditoria.registrar_mudanca('id');
+
 -- Receber a placa: fecha o gestor antigo e abre o novo, no mesmo instante, e marca o pedido como
 -- recebido. Roda com o usuário (a RLS vale). Devolve o id da vigência nova do gestor.
 create function nucleo.receber_transferencia(p_transferencia_id uuid, p_em timestamptz)
