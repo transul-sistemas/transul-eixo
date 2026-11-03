@@ -8,7 +8,7 @@ Modelo de entrada:
 
 ---
 
-## 05/11/2026 — Fatia 3.7 (dados do ativo com origem e gravações atômicas)
+## 03/11/2026 — Fatia 3.7 (dados do ativo com origem e gravações atômicas)
 
 - **O que entrou (duas migrations novas: `origem_correcao_local`, só o valor novo do enum, e `dados_do_ativo`):**
   - **O valor mora no ativo, com a origem de cada campo.** Modelo, carroceria, eixos, tara, PBT, CMT, ano de fabricação, ano do modelo, valor FIPE e valor manual, cada um com `<campo>_origem` (`sankhya`, `derivada`, `informada`, `correcao_local`). O nome do conjunto, os alertas e as telas continuam lendo só `nucleo.ativo` (nada mudou neles). Massas em kg, inteiras e positivas; tara menor que o PBT; CMT só em cavalo e caminhão; ano do modelo igual ao de fabricação ou o seguinte; valor FIPE (com mês de referência) só em cavalo e caminhão; valor manual (com fonte e data) só nos demais. Dinheiro em `numeric(15,2)`.
@@ -19,24 +19,33 @@ Modelo de entrada:
   - **Funções atômicas, com chave de envio e versão:** `nucleo.cadastrar_ativo` (ativo, placa, posse, gestor, evento inicial, CR e operação numa transação; **CR e operação obrigatórios**; o gestor só na própria carteira, salvo escopo "tudo"), `nucleo.criar_cr` (o "+" de CR: CODCENCUS obrigatório e único, nasce "a conferir"), `nucleo.entregar_ao_operacional` (versão conferida; só cavalo ou caminhão, pelo catálogo do DOp; só de PÁT ou ETv; fecha a custódia aberta, abre a do Operacional da filial e grava o DOp com a mesma hora) e `corrigir_campo`. A chave de envio agora guarda o resultado (`auditoria.envio.resultado`): a mesma chave devolve o mesmo id (`auditoria.reservar_envio` e `auditoria.concluir_envio`).
   - **Acesso:** cinco políticas novas com nome; sete funções novas na lista de exceções, cada uma justificada; o UPDATE do ativo ganhou as colunas novas de valor, **nunca as de origem**.
   - **Espelho em TypeScript:** `lib/dominio/campos-do-ativo.ts` (campos corrigíveis, chaves, pendência por tipo, FIPE ou manual, anos), conferido contra a migration no Vitest.
-- **Testes vistos falhando antes:** pgTAP 70 (71 de 71 falhando: nada existia) e o Vitest do espelho (módulo inexistente). **Mutações (todas pegas):** correção apagável por gravação direta; correção sem motivo; operação opcional no cadastro; sinal que sobrescreve a correção; chave corrigível; cadastro sem idempotência.
+- **Testes vistos falhando antes:** pgTAP 70 (todas as asserções falhando: nada existia; 74 asserções no checkpoint, 82 com os ajustes) e o Vitest do espelho (módulo inexistente). **Mutações (todas pegas):** correção apagável por gravação direta; correção sem motivo; operação opcional no cadastro; sinal que sobrescreve a correção; chave corrigível; cadastro sem idempotência.
 - **Decisões minhas a confirmar:**
   1. **O valor efetivo fica no ativo** (o sinal do Sankhya fica à parte), em vez de uma visão "efetiva" sobre o valor do Sankhya: assim o nome do conjunto e todo o resto já leem o valor corrigido.
-  2. **Onde o vazio fica pendente:** modelo e anos em todos os tipos; eixos, tara e PBT em cavalo, implemento e caminhão; CMT e valor FIPE em cavalo e caminhão; valor manual em implemento, equipamento e apoio; carroceria nunca (já é obrigatória no semirreboque; opcional no caminhão).
+  2. **Onde o vazio fica pendente:** modelo e anos em todos os tipos; eixos, tara e PBT em cavalo, implemento e caminhão; CMT e valor FIPE em cavalo e caminhão; valor manual em implemento, equipamento e apoio; carroceria no caminhão (ajuste do checkpoint; no semirreboque já é obrigatória); código FIPE quando há valor FIPE.
   3. **Valor informado no Eixo vence o sinal do Sankhya** (fica `mantido` e aparece na divergência), igual à correção local.
   4. **Correção sem alçada de aprovação:** motivo, quem e quando bastam para os dados do ativo (a alçada da regra 3 fica para os fatos financeiros).
   5. **No cadastro, o gestor escolhe a operação sem precisar do módulo Operações** (a operação é obrigatória no cadastro; a montagem posterior segue com Operações).
   6. **Erros:** conflito de versão `40001` ("Este registro mudou desde que você o abriu…"); chave de envio usada noutra gravação `23505`; falta de permissão `42501`.
-  7. **Anos plausíveis de 1950 a 2100** no banco (o assistente hoje pede um "ano" só, de 1980 ao ano seguinte). **O código FIPE** que o assistente pede não tem coluna ainda.
+  7. **Anos plausíveis de 1950 a 2100** no banco (o assistente hoje pede um "ano" só, de 1980 ao ano seguinte). O código FIPE ganhou coluna no ajuste do checkpoint.
   8. **Revogar não tem chave de envio** (revogar duas vezes dá "já foi revogada").
 - **Gravações que ainda não têm chave de envio:** `registrar_evento`, `engatar`, `desatrelar`, `registrar_baixa`, `receber_transferencia` e `concluir_transferencia` já são atômicas, mas sem `p_chave` (mudar a assinatura é migration nova; proponho fazer junto da troca de fonte, na 3.9).
 - **Só listado, nenhuma tela alterada (entra com a troca de fonte, 3.9):** os campos Função, Carroceria e Eixos do implemento e o passo de Operação obrigatório no assistente "Cadastrar placa" afetam `app/(sistema)/frota/placas/assistentes/cadastrar-placa.tsx` (passos "Veículo", "Valor" e "Posse"; hoje `operacaoId` e `crId` são opcionais e há um "ano" só), `assistentes-da-frota.tsx`, `app/(sistema)/frota/placas/acoes.ts`, `lib/dominio/esquemas/placa.ts` (`esquemaCadastrarPlaca`) e o teste dele, `lib/dados/entradas-dos-assistentes.ts`, `escrita.ts`, `fonte.ts`, `fonte-de-exemplo.ts` (e testes), o armazém de exemplo (`lib/exemplo/armazem.ts` e teste) e os e2e `e2e/apoio-assistentes-frota.ts`, `assistentes-frota.spec.ts`, `assistentes-frota.casca.spec.ts`, `assistentes-frota.visual(.casca).spec.ts`, `assistentes-frota.resultado(.casca).spec.ts` e `assistentes-frota-custodia.spec.ts` (Entregar ao Operacional).
 - **Fica para a 3.8:** o login e `exigirPermissao()` lendo `config.pode` com a sessão real (as funções de gravação já conferem a permissão por dentro).
-- **Quem decidiu:** Alexandre (o escopo da 3.7, 05/11/2026); os itens numerados aguardam o checkpoint.
+- **Quem decidiu:** Alexandre (o escopo da 3.7, 03/11/2026); os itens numerados aguardam o checkpoint.
+- **Checkpoint aprovado com ajustes (Alexandre, 03/11/2026):**
+  - **Caminhão sem carroceria fica pendente** (o semirreboque já a exige).
+  - **Código FIPE:** coluna `codigo_fipe` (texto, formato 000000-0) no ativo, só em cavalo e caminhão, com origem e corrigível; fica pendente quando o valor FIPE existe e o código não (`config.campo_corrigivel.pendente_com`).
+  - **O gestor escolhe uma operação existente no cadastro** (arquivada é recusada); **criar operação nova é do módulo Operações**. Hoje a política `operacao_criar` ainda pede `cadastros.criar` (os perfis atuais dão o mesmo resultado); a troca para `operacoes.criar` fica para quando a tela de Operações existir.
+  - **CR pela lista real do Sankhya (migration nova `cr_do_sankhya`, com `create or replace`):** `ad_frota` e `ad_bloqueado` guardados como vieram (S, N ou vazio), com origem, e deles derivam `participa_da_frota` e `bloqueado`; tipo: AD_FROTA S e VEICULO S = frota de placa; AD_FROTA S e VEICULO diferente de S = frota sem placa; AD_FROTA N ou vazio = serviço (o vazio deixa de ser pendente); `ATIVO` guardado, mas fora da decisão (sai da recusa de vínculo e do alerta `cr_sem_operacao`); **CR agrupador (ANALITICO N) não aceita vínculo** (`cr_do_ativo` e `cr_de_servico_na_operacao`, de qualquer origem; toda tabela nova de vínculo com CR ganha o mesmo gatilho). Espelho `lib/dominio/cr.ts` e assinatura nova (`cc0ddd63a7f39933c402d3bbfcc6baa2`). Teste novo `65-cr-do-sankhya` (26 asserções). **Decisão minha a confirmar:** o agrupador também saiu do alerta `cr_sem_operacao` (ele nunca entra numa operação).
+  - **Testes antigos ajustados (a regra mudou de propósito):** 60 (assinatura nova; CR sem AD_FROTA é serviço; CR com ATIVO N aceita vínculo; mensagem do bloqueio sem "inativo").
+  - **Mutações (todas pegas):** agrupador aceito; vazio pendente de novo; ATIVO decidindo; AD_BLOQUEADO ignorado; operação arquivada aceita; código FIPE sem pendência.
+  - **Os agregados da lista de CRs, as perguntas para a equipe e as regras de saneamento** estão em `docs/sankhya/mapa.md` (nada de saneamento virou código agora).
+  - **Datas:** os registros escritos como 04/11/2026 e 05/11/2026 passaram a 03/11/2026 (a data real, conferida pelo git log) aqui, no plano, no mapa do Sankhya e no CLAUDE.md. Comentários de código e migrations já enviadas ficaram como estavam.
 
 ---
 
-## 05/11/2026 — Fatia 3.6c (operação por montagem)
+## 03/11/2026 — Fatia 3.6c (operação por montagem)
 
 - **O que entrou (migration nova `operacao_por_montagem`):**
   - **CR:** `codcencus` obrigatório e único; tipo (`servico`, `frota_de_placa`, `frota_sem_placa`) derivado de `participa_da_frota` (AD_FROTA) e `veiculo_obrigatorio` (VEICULO) por `nucleo.tipo_do_cr`, com origem; CR pai, analítico, ativo e bloqueado com origem (`config.origem_do_campo`: sankhya, derivada, informada); `conferencia` nasce "a conferir". O CR não se apaga de verdade (o gasto histórico aponta para ele).
@@ -57,7 +66,7 @@ Modelo de entrada:
 - **Perguntas pendentes (Alexandre):** um ou vários CRs de serviço por operação (hipótese aplicada: vários)? Qual perfil monta a operação (talvez "Gestor de operação"; hoje, quem tem o módulo Operações)?
 - **Testes antigos ajustados (a regra mudou de propósito):** 30 (CR com `codcencus`; operação pela montagem; `cr_sem_operacao` na visão de CR), 31 (CR sem `codcencus` recusado; a lista fechada lê as duas visões), 35 e 40 (cavalo e placas montados), 50 (placas montadas, escopo pela montagem, políticas novas na lista).
 - **Fica para a 3.7:** os assistentes e as funções atômicas de cadastro; o "+" de CR pedindo o código do Sankhya (a conferir); a montagem da operação na tela (com o módulo Operações).
-- **Checkpoint aprovado com ajustes (Alexandre, 05/11/2026):**
+- **Checkpoint aprovado com ajustes (Alexandre, 03/11/2026):**
   - **Garagem como atributo do CR (hipótese a confirmar):** catálogo `config.garagem` com os 13 valores do Sankhya (código de uma letra, rótulo, ordem, origem Sankhya, "a conferir"): C Operação Sudeste; M Operação Matriz; P Parauapebas - OZ Minerais; R Parauapebas Sem Operação; Q Parauapebas - Rollom; S Veículo ADM Matriz; X Veículos ADM Parauapebas; Z Parceiros; U Veículos Vendidos; V Veículos ADM Cordeiro; T Operação Porto; A Operação Matriz Sem Operação; O Cordeirópolis Sem Operação. O CR guarda a garagem (pode faltar: 4 CRs no Sankhya não têm), com origem. **A garagem da placa é a do CR vigente, calculada (`nucleo.garagem_em`), nunca gravada.** A filial continua separada (custódia e escopo). **Nada se deriva da garagem sem confirmação:** a coluna `sugestao_na_importacao` é só sugestão, "a conferir". O catálogo antigo `config.garagem` (filho de filial, da 3.1) foi **substituído**.
   - **Um CR de serviço pertence a uma operação por vez (hipótese):** o banco recusa o mesmo CR de serviço em duas operações ao mesmo tempo (a exclusão é por CR, não pelo par).
   - **Veículos Vendidos (U):** a placa vendida **continua com o seu CR**, que fica **bloqueado** e nunca se apaga; a garagem só sugere a baixa na importação (a baixa real é o evento VND). **CR bloqueado ou inativo não aceita vínculo novo** (`cr_do_ativo` e `cr_de_servico_na_operacao`); as vigências antigas ficam intactas e podem ser fechadas. **Decisão minha a confirmar:** a recusa vale para o vínculo informado por alguém; a importação do histórico (origem derivada ou observada) ainda grava as vigências antigas do CR bloqueado.
@@ -66,11 +75,11 @@ Modelo de entrada:
   - **Lista fechada dos nomes de alerta, atualizada:** `sem_cr`, `buraco_em_cr`, `buraco_em_custodia`, `implemento_sem_eixos`, `conjunto_sem_nome`, `correcao_tardia_de_status`, `parado_em_patio`, `ativo_sem_operacao` (placas) e `cr_sem_operacao` (CR).
   - **Impacto da garagem nova nas telas (nada alterado agora; entra na 3.7 e na 3.9):** o passo "Local" do assistente "Cadastrar placa" (`cadastrar-placa.tsx`, filial e garagem filha da filial); o "+" de garagem (`mini-cadastro-de-catalogo.tsx`, que pede a filial); a criação de item de catálogo (`app/(sistema)/frota/placas/acoes.ts`); `lib/dados/catalogos-locais.ts`, `escrita-tipos.ts` e `entradas-dos-assistentes.ts`; o esquema `lib/dominio/esquemas/placa.ts`; o armazém e os catálogos de exemplo (`lib/exemplo/armazem.ts`, `catalogos.ts`, com garagens por filial); os testes deles e os e2e `e2e/apoio-assistentes-frota.ts` (passo Local, "Garagem A1") e `e2e/assistentes-frota.spec.ts`. O resumo da placa não mostra a garagem hoje.
   - **Perguntas pendentes (Alexandre):** um ou vários CRs de serviço por operação (hipótese: vários)? Qual perfil monta a operação (talvez "Gestor de operação")? Remover `cr.operacao_id` na 3.7 (o `AD_OPERACAO` está vazio em todos os CRs de frota)?
-- **Quem decidiu:** Alexandre (a regra do CR e da operação, 05/11/2026); os itens numerados aguardam o checkpoint.
+- **Quem decidiu:** Alexandre (a regra do CR e da operação, 03/11/2026); os itens numerados aguardam o checkpoint.
 
 ---
 
-## 05/11/2026 — O CR vem do Sankhya e a operação é montada por um usuário (substitui a regra da 3.3)
+## 03/11/2026 — O CR vem do Sankhya e a operação é montada por um usuário (substitui a regra da 3.3)
 
 - **O CR sempre vem do Sankhya.** O `codcencus` passa a ser **obrigatório e único** (migration nova, na **3.6c**; hoje é opcional só por causa dos testes). Antes da ponte, o "+" de CR no assistente pede o código do Sankhya e marca o CR "a conferir"; depois da ponte, o CR é escolhido entre os sincronizados.
 - **Estrutura do CR no Sankhya (`TSICUS`, vista em tela):** `CODCENCUS` é inteiro, com máscara hierárquica (por exemplo, 04.000.000 Frota COR/SP > 04.011.000 Frota implemento COR > 04.011.142, o CR da placa); `DESCRCENCUS` é a placa, nos CRs de frota; "analítico" e "veículo obrigatório" ficam ligados nesses; há `AD_BLOQUEADO`, `AD_GARAGEM`, `AD_OPERACAO` e `AD_FROTA` ("Participa da Frota?"). O vínculo placa-CR é `TGFVEI.CODCENCUS`; a descrição serve só para conferir (fica velha na conversão Mercosul).
@@ -86,30 +95,30 @@ Modelo de entrada:
   - **Tipo do CR no Eixo, derivado de campos do Sankhya, com origem:** serviço (`AD_FROTA` desligado); frota de placa (`AD_FROTA` e `VEICULO` ligados); frota sem placa (`AD_FROTA` ligado e `VEICULO` desligado). Confirmar com a consulta 1 do Sankhya.
   - **Importação:** entram **todos** os CRs, inclusive bloqueados e inativos (as despesas históricas apontam para eles).
   - **Alertas:** placa sem CR; **dois CRs ao mesmo tempo na mesma placa** (sobreposição, não a troca de garagem); buraco entre CRs; **CR de serviço sem operação**. **Não existe** alerta de "CR de frota sem placa".
-  - **Um CR de frota de placa pertence a uma única placa, para sempre** (atualização de Alexandre, 05/11/2026). A placa pode ter vários CRs ao longo do tempo (a troca de garagem cria CR novo; o antigo nunca se exclui), mas **o CR não se reaproveita em outra placa**. É **regra do banco** (3.6c): o banco recusa ligar o mesmo CR de frota de placa a dois ativos, com mensagem clara. A referência é o **ativo**, não o texto da placa, então a conversão Mercosul não quebra. A regra **não** vale para CR de frota sem placa nem para CR de serviço. **Confirmado por Alexandre (05/11/2026):** o CR de frota de placa **nunca** é reaproveitado em outra placa ("para sempre", não "uma por vez").
+  - **Um CR de frota de placa pertence a uma única placa, para sempre** (atualização de Alexandre, 03/11/2026). A placa pode ter vários CRs ao longo do tempo (a troca de garagem cria CR novo; o antigo nunca se exclui), mas **o CR não se reaproveita em outra placa**. É **regra do banco** (3.6c): o banco recusa ligar o mesmo CR de frota de placa a dois ativos, com mensagem clara. A referência é o **ativo**, não o texto da placa, então a conversão Mercosul não quebra. A regra **não** vale para CR de frota sem placa nem para CR de serviço. **Confirmado por Alexandre (03/11/2026):** o CR de frota de placa **nunca** é reaproveitado em outra placa ("para sempre", não "uma por vez").
   - **Do lado do Sankhya, relatório de divergência:** CRs usados por mais de um veículo, antes da importação. Na importação, o segundo vínculo vai para a **fila de exceções**; a regra **não se enfraquece** para a importação passar.
   - **Backlog (ideia):** alerta de "troca de gestor ou garagem sem troca de CR".
   - O implemento engatado continua herdando a operação do cavalo (calculada); o solto mantém a `operacao_na_saida`; o custo continua no CR da própria placa.
   - **Perguntas pendentes:** um ou vários CRs de serviço por operação (hipótese: vários)? Qual perfil monta a operação (talvez um perfil novo, "Gestor de operação")?
-- **Quem decidiu:** Alexandre (05/11/2026).
+- **Quem decidiu:** Alexandre (03/11/2026).
 
 ---
 
-## 05/11/2026 — Ajuste 3.6b: o VAz sai da régua (25 siglas) e nasce o alerta de tempo parado
+## 03/11/2026 — Ajuste 3.6b: o VAz sai da régua (25 siglas) e nasce o alerta de tempo parado
 
-- **Decisão (Alexandre, 05/11/2026):** a sigla **VAz (Vazio) foi removida** da régua, que passa de **26 para 25** siglas. O **PÁT** (pátio) cobre **qualquer ativo parado** (cavalo, caminhão, implemento, equipamento e apoio). O **ETv** (em trânsito vazio) continua.
+- **Decisão (Alexandre, 03/11/2026):** a sigla **VAz (Vazio) foi removida** da régua, que passa de **26 para 25** siglas. O **PÁT** (pátio) cobre **qualquer ativo parado** (cavalo, caminhão, implemento, equipamento e apoio). O **ETv** (em trânsito vazio) continua.
 - **O chip "Atenção"** fica com **SMo, FOg e FEr**. A entrega ao Operacional (hoje "Disponibilizar ao Operacional") parte só de **PÁT ou ETv**; o tipo continua só cavalo e caminhão.
 - **Alerta `parado_em_patio`:** ativo com o estado de atividade **PÁT vigente há mais de N dias**, com N no parâmetro `dias_parado_em_patio` (**15 por enquanto**, a definir por Alexandre). **Substitui o sinal de "atenção" que o VAz dava.** **Lista fechada dos nomes de alerta, atualizada:** `sem_cr`, `cr_sem_operacao`, `buraco_em_cr`, `buraco_em_custodia`, `implemento_sem_eixos`, `conjunto_sem_nome`, `correcao_tardia_de_status`, `parado_em_patio`.
 - **O que mudou:** migration nova `remove_vaz_e_alerta_de_patio` (confere que nenhum evento ou estado usa o VAz, remove a sigla, deixa a ordem da régua contínua de 1 a 25 e recria a visão de alertas); o seed sem o VAz e com o parâmetro; o espelho `lib/dominio/status.ts` e a assinatura da validade (`lib/dominio/situacao.ts`, de 126 para **122** combinações, a mesma no Vitest e no pgTAP); `lib/dominio/custodia.ts` (origem só PÁT e ETv, mensagem "Só dá para disponibilizar placa em PÁT ou ETv."); a mensagem do assistente; `CLAUDE.md`, `docs/glossario.md` e o Apêndice A.
 - **Dados de exemplo:** a distribuição das situações usa a lista própria `lib/exemplo/siglas.ts` (a ordem antiga, com o VAz trocado por PÁT), para que **só** as placas que estavam em VAz mudem (para PÁT) e as demais mantenham a situação e a história.
 - **Decisões minhas a confirmar:** (1) o alerta vale para o estado **PÁT próprio** do ativo (o implemento engatado não tem atividade própria, então não alerta); (2) "há mais de N dias" conta do **início** do PÁT vigente; (3) sem o parâmetro, não há alerta (nada presumido).
-- **Quem decidiu:** Alexandre (05/11/2026).
+- **Quem decidiu:** Alexandre (03/11/2026).
 
 ---
 
-## 05/11/2026 — Fatia 3.6 (permissões e RLS)
+## 03/11/2026 — Fatia 3.6 (permissões e RLS)
 
-- **Já decidido por Alexandre (05/11/2026):** usuário é Pessoa com login, criado no Studio e ligado por `vincular_usuario`; a sessão real fica para a 3.8 e, na 3.6, a identidade vem das claims do JWT, provada no pgTAP com a chave de cada usuário (nunca a `service_role`); permissão = módulo × ação × escopo (tudo, minha_carteira, operacao, filial), com perfis, permissões e escopos em catálogo; RLS em todas as tabelas, nenhum grant automático, `UPDATE` de `nucleo.ativo` sem a coluna `tipo`; documento completo só com `pessoas.ver_documento`; gestor exige o papel de gestor de frota; correção tardia de evento gera alerta; lista de exceções das funções.
+- **Já decidido por Alexandre (03/11/2026):** usuário é Pessoa com login, criado no Studio e ligado por `vincular_usuario`; a sessão real fica para a 3.8 e, na 3.6, a identidade vem das claims do JWT, provada no pgTAP com a chave de cada usuário (nunca a `service_role`); permissão = módulo × ação × escopo (tudo, minha_carteira, operacao, filial), com perfis, permissões e escopos em catálogo; RLS em todas as tabelas, nenhum grant automático, `UPDATE` de `nucleo.ativo` sem a coluna `tipo`; documento completo só com `pessoas.ver_documento`; gestor exige o papel de gestor de frota; correção tardia de evento gera alerta; lista de exceções das funções.
 - **O que entrou (três migrations novas):**
   - `acesso_catalogo_e_usuario`: `config.modulo`, `acao`, `escopo`, `perfil`, `permissao_do_perfil`, `papel`, `parametro`, `funcao_executavel`; `nucleo.usuario`, `usuario_operacao`, `usuario_filial`, `papel_da_pessoa`; o gatilho do papel de gestor (gestor da carteira, origem e destino da transferência); a visão `nucleo.pessoa_para_leitura` (máscara); `nucleo.vincular_usuario` (só no Studio).
   - `acesso_funcoes`: `config.usuario_atual`, `perfil_atual`, `pode`, `pode_algum`, `ve_ativo` e `ativo_sem_gestor`; a exclusão lógica exige a ação `excluir`; o evento em placa fora do alcance é negado como falta de acesso; `mudar_tipo_do_ativo`, `receber_transferencia` e `concluir_transferencia` conferem a permissão por dentro; o alerta `correcao_tardia_de_status`.
@@ -130,7 +139,7 @@ Modelo de entrada:
   12. **Testes antigos ajustados (regra mudou de propósito):** o alicerce (00) e os de chaves (10), régua (20) e pendências (31) passaram de "authenticated sem acesso" para "anon sem acesso; usuário sem vínculo lê zero linhas; authenticated só a lista de exceções"; os gestores dos testes ganharam o papel; a lista fechada de alertas ganhou `correcao_tardia_de_status`; o teste de qualidade da fundação passou a permitir o grant a `authenticated` só na migration de políticas e grants.
 - **Testes vistos falhando antes:** o novo `50-permissoes-e-rls` (62) e os antigos (sem `usage` nos schemas, sem as tabelas); o Vitest do espelho sem o módulo. **Mutações** (cada uma acusada e restaurada com `db reset`): `ativo_ler` aberta (falham 6), documento aberto (3), `UPDATE` do tipo liberado (2), escopo de filial desligado (3), uma função a mais executável (1).
 - **Fica para a 3.7:** correção de campo com origem, a função atômica de cadastro (ativo, posse, gestor e evento inicial numa transação, com o gestor enxergando a placa nova), as demais funções atômicas (Entregar ao Operacional, receber), idempotência e versão nas gravações, e os campos Função, Carroceria e Eixos do implemento no "Cadastrar placa".
-- **Checkpoint aprovado com ajustes (Alexandre, 05/11/2026):**
+- **Checkpoint aprovado com ajustes (Alexandre, 03/11/2026):**
   - **Perder o papel tira o acesso na hora:** o escopo "minha carteira" passa a exigir também o papel de gestor de frota; sem o papel, o gestor lê zero, não altera e não registra evento, sem depender de sessão nova. O vínculo inativado tem o mesmo efeito.
   - **O token não concede nada sozinho:** JWT válido sem vínculo lê zero e não cria; token sem a claim `sub` lê zero e não cria; perfil, escopo ou papel forjados no `user_metadata` (ou no `app_metadata`) são ignorados, porque o acesso sai do vínculo e da tabela de permissões.
   - **Registrado para a 3.9:** nenhuma tela de cadastro grava direto sem a função atômica da 3.7; a mensagem para quem não tem vínculo; a dúvida se a Diretoria vê o documento completo (hoje só o mascarado).
@@ -138,9 +147,9 @@ Modelo de entrada:
 
 ---
 
-## 05/11/2026 — "Disponibilizar" é para um gestor; a entrega ao Operacional ganha outro verbo
+## 03/11/2026 — "Disponibilizar" é para um gestor; a entrega ao Operacional ganha outro verbo
 
-- **Decisão (Alexandre, 05/11/2026), opção 1:** **"Disponibilizar"** passa a ser o passo de **quem envia a placa a outro gestor de frota** (o assistente antes chamado "Transferir placa"); o gestor que recebe preenche o que já está pronto (assistente "Receber placa"). A **entrega à custódia do Operacional** passa a ter **outro verbo**: proposta **"Entregar ao Operacional"**. A ação e o assistente têm o **mesmo nome do começo ao fim** ("Disponibilizar placa" → "Placa disponibilizada"; "Entregar ao Operacional" → "Placa entregue ao Operacional").
+- **Decisão (Alexandre, 03/11/2026), opção 1:** **"Disponibilizar"** passa a ser o passo de **quem envia a placa a outro gestor de frota** (o assistente antes chamado "Transferir placa"); o gestor que recebe preenche o que já está pronto (assistente "Receber placa"). A **entrega à custódia do Operacional** passa a ter **outro verbo**: proposta **"Entregar ao Operacional"**. A ação e o assistente têm o **mesmo nome do começo ao fim** ("Disponibilizar placa" → "Placa disponibilizada"; "Entregar ao Operacional" → "Placa entregue ao Operacional").
 - **Motivo:** disponibilizar se faz a uma pessoa que vai assumir a placa, não a uma filial.
 - **Alternativa descartada (opção 2):** manter "Disponibilizar ao Operacional" pedindo um gestor em vez de uma filial; mexeria no modelo (custódia por filial, escopo do Operacional por filial) sem ganho.
 - **O modelo do banco não muda:** `nucleo.transferencia` (com `transferencia_pendencia`) é o "Disponibilizar"; `nucleo.custodia` com `com_quem = 'operacional'` e a filial é o "Entregar ao Operacional". A sigla **DOp ("Disponível no Operacional")** descreve o estado da placa, não a ação, e fica como está (a confirmar).
@@ -150,11 +159,11 @@ Modelo de entrada:
   - **Servidor, dados e domínio:** `disponibilizarPlacaAcao` (`app/(sistema)/frota/placas/acoes.ts`); `disponibilizarPlaca` em `lib/dados/fonte.ts`, `fonte-de-exemplo.ts`, `escrita.ts`, `escrita-tipos.ts` e `assistentes.ts`; o armazém de exemplo (`lib/exemplo/armazem.ts`); `lib/dominio/custodia.ts` (`podeDisponibilizar` e as mensagens "Só cavalo ou caminhão podem ser disponibilizados ao Operacional." e "Só dá para disponibilizar placa em PÁT, VAz ou ETv."); `lib/dominio/acoes-do-momento.ts`; `esquemaDisponibilizacao` e `esquemaDisponibilizacaoDe` (`lib/dominio/esquemas/placa.ts`).
   - **Testes (Vitest):** `app/(sistema)/frota/placas/acoes.test.ts`, `components/ficha/acoes-da-ficha.test.tsx`, `lib/dados/assistentes.test.ts`, `lib/dados/escrita.test.ts`, `lib/dominio/acoes-do-momento.test.ts`, `lib/dominio/custodia.test.ts`, `lib/dominio/esquemas/placa.test.ts`, `lib/exemplo/armazem.test.ts`, `lib/navegacao/acoes.test.ts`, `lib/navegacao/busca-rapida.test.ts`, `lib/seguranca/exigir-permissao.test.ts`.
   - **e2e:** `e2e/assistentes-frota-custodia.spec.ts`, `e2e/busca-rapida.spec.ts`, `e2e/ficha.spec.ts` e os apoios `e2e/apoio-assistentes-frota.ts` e `e2e/apoio-resultado-dos-assistentes.ts`.
-- **Quem decidiu:** Alexandre (05/11/2026).
+- **Quem decidiu:** Alexandre (03/11/2026).
 
-## 05/11/2026 — Receber placa tem de ser bem aparente para o novo gestor
+## 03/11/2026 — Receber placa tem de ser bem aparente para o novo gestor
 
-- **Requisito (Alexandre, 05/11/2026):** a placa disponibilizada a um gestor precisa ser **bem aparente**, fácil de perceber e de aceitar, **nunca escondida**.
+- **Requisito (Alexandre, 03/11/2026):** a placa disponibilizada a um gestor precisa ser **bem aparente**, fácil de perceber e de aceitar, **nunca escondida**.
 - **Desenho:**
   - **Selo com o número** no item Frota do menu; item **"Para receber"** no topo do grupo.
   - **Faixa no topo da lista de placas:** "Você tem N placas para receber", com o botão **"Ver e receber"**.
@@ -165,13 +174,13 @@ Modelo de entrada:
 - **Fonte dos dados:** o aviso em tempo real fica na **Central de Tarefas**; o selo, a faixa e o filtro saem **direto da lista de pedidos pendentes** (`nucleo.transferencia` em aberto para o gestor).
 - **Quando:** entra junto do assistente de enviar ("Disponibilizar placa") e do "Receber placa" em duas etapas, **depois da 3.9**.
 - **Critérios de aceite (e2e):** a pessoa certa vê a faixa em **até um clique**; a pessoa errada **não vê**; navegação por **teclado** e **leitor de tela**.
-- **Quem decidiu:** Alexandre (05/11/2026).
+- **Quem decidiu:** Alexandre (03/11/2026).
 
 ---
 
-## 04/11/2026 — Fatia 3.5 (status): eventos, estado por camada e situação calculada
+## 03/11/2026 — Fatia 3.5 (status): eventos, estado por camada e situação calculada
 
-- **Já decidido por Alexandre (04/11/2026):** cinco camadas (baixada, fora da frota, impedida, sem motorista, atividade), um estado por camada; evento com sigla e hora (com origem da data), imutável; evento sem sigla encerra a camada; vigência `[início, fim)` por (ativo, camada) com exclusão; a situação é a sigla da camada de maior prioridade; o cadastro cria o evento inicial (padrão PÁT); validade pela marca `tipos_validos` e `aplica_a` (o caminhão só pelos tipos; o apoio perde o SMo; VAz no rascunho); herança calculada e nunca gravada (o implemento engatado herda só a atividade; qualquer membro impedido deixa o conjunto impedido; o banco nunca desengata sozinho); desatrelar e engatar atômicos; a baixa gera o evento da camada baixada; a trava do tipo pela situação; "pendente" quando não se calcula.
+- **Já decidido por Alexandre (03/11/2026):** cinco camadas (baixada, fora da frota, impedida, sem motorista, atividade), um estado por camada; evento com sigla e hora (com origem da data), imutável; evento sem sigla encerra a camada; vigência `[início, fim)` por (ativo, camada) com exclusão; a situação é a sigla da camada de maior prioridade; o cadastro cria o evento inicial (padrão PÁT); validade pela marca `tipos_validos` e `aplica_a` (o caminhão só pelos tipos; o apoio perde o SMo; VAz no rascunho); herança calculada e nunca gravada (o implemento engatado herda só a atividade; qualquer membro impedido deixa o conjunto impedido; o banco nunca desengata sozinho); desatrelar e engatar atômicos; a baixa gera o evento da camada baixada; a trava do tipo pela situação; "pendente" quando não se calcula.
 - **O que entrou (três migrations novas):**
   - `eventos_e_estado_de_status`: `nucleo.evento_de_status` (imutável, só se marca a exclusão lógica do último evento da camada, com motivo, que desfaz o efeito) e `nucleo.estado_de_status` (gravado só pelo evento, `EXCLUDE` por ativo e camada); `nucleo.sigla_valida`, `nucleo.em_conjunto`, `nucleo.registrar_evento`; o ativo exige o evento inicial no fim da transação, e a baixa exige o evento da camada baixada no mesmo instante (e o evento da baixada exige a baixa).
   - `situacao_calculada`: `nucleo.situacao_em(ativo, instante)`, `nucleo.situacao_atual(ativo)`, `nucleo.situacao_do_conjunto(cavalo, instante)` (com a causa) e `nucleo.estado_em`.
@@ -188,7 +197,7 @@ Modelo de entrada:
   8. **Nos testes antigos** (30, 31, 35 e 36), os ativos de apoio passaram a nascer com o evento inicial PÁT e as baixas diretas com o evento da camada baixada; nenhuma expectativa mudou.
 - **Testes vistos falhando antes:** o novo `40-eventos-e-situacao` (62) falhou sem as tabelas e as funções; os arquivos 30, 31, 35 e 36 falharam sem `nucleo.evento_de_status`; o Vitest de `situacao` falhou sem o módulo. **Mutação:** validade sem conjunto/solo (falham 5, incluindo a assinatura), ativo sem evento inicial (falha o cadastro), conjunto sem herança do impedimento (falham 6), e no TypeScript o caminhão sem a exceção (falham 2).
 - **Fica para a 3.6:** acesso no banco (usuário, perfil, permissão, escopos `tudo`, `minha_carteira`, `operacao` e `filial`), RLS com políticas em todas as tabelas (inclusive as da 3.5), grants explícitos (o `UPDATE` de `nucleo.ativo` sem a coluna `tipo`), a lista de exceções das funções de validação e o pgTAP da matriz por perfil.
-- **Checkpoint aprovado com ajustes (Alexandre, 04/11/2026):**
+- **Checkpoint aprovado com ajustes (Alexandre, 03/11/2026):**
   - **Engatar recusa implemento fora da frota ou baixado:** com estado vigente na camada fora da frota (ALU, EMP, VEN), a mensagem é "O implemento está em VEN (fora da frota): ele não entra em conjunto."; baixado, "Ativo baixado não entra em conjunto.".
   - **A recusa do desatrelar diz o que fazer:** "A situação ETc do cavalo exige conjunto: mude a situação do cavalo antes de desatrelar o último implemento." (teste da mensagem exata).
   - **Correção de evento feita muito depois do fato gera alerta:** a política (prazo e quem vê) é da **3.6**.
@@ -198,9 +207,9 @@ Modelo de entrada:
 
 ---
 
-## 04/11/2026 — Push direto na main, sem pull request (regra de trabalho)
+## 03/11/2026 — Push direto na main, sem pull request (regra de trabalho)
 
-- **Decisão (Alexandre, 04/11/2026):** a partir do merge do PR `ci/direto` (o último por pull request), o trabalho entra **direto na `main`**, sem pull request, para ganhar velocidade. A barreira passa a ser a **verificação completa local** e o **checkpoint**.
+- **Decisão (Alexandre, 03/11/2026):** a partir do merge do PR `ci/direto` (o último por pull request), o trabalho entra **direto na `main`**, sem pull request, para ganhar velocidade. A barreira passa a ser a **verificação completa local** e o **checkpoint**.
 - **A regra:**
   1. Desenvolver em **branch local**, com **teste antes**, vendo falhar.
   2. **Verificação completa local antes de qualquer push:** Vitest, `tsc`, ESLint, Stylelint e Prettier; banco com `db reset` duas vezes, `supabase test db`, `supabase db lint --fail-on warning` e `pnpm db:tipos` em LF; **e2e só das telas alteradas** (o completo fica para o CI); fatia só de banco não roda e2e. **Nunca** push com teste vermelho local.
@@ -218,9 +227,9 @@ Modelo de entrada:
   - **Pular o e2e por `supabase/**` vale só até a 3.8** e deve ser **revisto antes da 3.9** (modo banco, quando migration passa a mudar tela).
   - **Lembrete (Vercel):** antes de criar o projeto da Vercel, **produção publicada só de etiqueta ou de uma branch `release`**, nunca de toda a `main`.
 - **Etiquetas das fatias já concluídas:** `fase-3-0` (merge do #23), `fase-3-1` (`c0abd09`, #25), `fase-3-3` (`2b0a6c5`, #26), `fase-3-4` (`0db4256`, #27), `fase-3-4b` (`72fed11`, #29). A 3.2 foi absorvida pela 3.0, sem etiqueta. Enviadas depois do merge do PR `ci/direto`.
-- **Quem decidiu:** Alexandre (04/11/2026).
+- **Quem decidiu:** Alexandre (03/11/2026).
 
-## 04/11/2026 — Assistentes da Frota que faltam (em ordem)
+## 03/11/2026 — Assistentes da Frota que faltam (em ordem)
 
 1. **Transferir placa (enviar):** o gestor que entrega cria o pedido: a placa (ou várias, em lote), o gestor de destino, o motivo e as pendências conhecidas. A tabela `nucleo.transferencia` (com `transferencia_pendencia`) da 3.3 já guarda isso.
 2. **Receber placa em duas etapas:** receber registra a chegada; concluir responde as pendências e troca o gestor (opção B). Ajuste da tela na 3.9.
@@ -230,23 +239,23 @@ Modelo de entrada:
 
 - **Sem o assistente de enviar, ninguém abre pedido real:** ele é **obrigatório antes do uso real**. O aviso em tempo real para quem recebe fica na **Central de Tarefas**.
 - **VAz:** a regra (rascunho: só cavalo e caminhão) segue **pendente de decisão de Alexandre**.
-- **Quem decidiu:** Alexandre (04/11/2026).
+- **Quem decidiu:** Alexandre (03/11/2026).
 
 ---
 
-## 04/11/2026 — Placa e conjunto: duas classificações
+## 03/11/2026 — Placa e conjunto: duas classificações
 
 - **A placa (solo)** guarda os **eixos** (1 a 6) e, no implemento, a **carroceria** (Sider, Graneleira, Basculante...). "Aí morre para a placa": nada de conjunto é dado da placa.
 - **O conjunto** tem o nome dado **ao engatar** (Bitrem, Bitrezão, Rodotrem, Rodocaçamba...), **calculado pela estrutura e nunca gravado**. A palavra de conjunto **nunca** entra na placa nem no nome do modelo, e os prefixos de fabricante (BT, BZ, RD) **não valem como fonte**.
-- **Quem decidiu:** Alexandre (04/11/2026).
+- **Quem decidiu:** Alexandre (03/11/2026).
 
-## 04/11/2026 — Sankhya: o nome do modelo do implemento descreve só os eixos
+## 03/11/2026 — Sankhya: o nome do modelo do implemento descreve só os eixos
 
 - **"Carreta 3 eixos" descreve os eixos, não a carroceria:** uma carreta de 3 eixos pode ser graneleira, sider ou baú.
 - **Campos separados em `TGFVEI`:** `NUMEIXOS` (eixos), `TIPOCAR` e `CODTIPCAR` (carroceria), `TIPVEI` e `CODTIPVEI` (tipo do veículo). O modelo vem de `TMSMODELOVEI` e a marca de `TMSMARCAVEI`.
-- **Quem decidiu:** Alexandre (04/11/2026), a partir do catálogo recebido.
+- **Quem decidiu:** Alexandre (03/11/2026), a partir do catálogo recebido.
 
-## 04/11/2026 — Catálogo de marca e modelo recebido do Sankhya (só agregados)
+## 03/11/2026 — Catálogo de marca e modelo recebido do Sankhya (só agregados)
 
 Fonte: `docs/sankhya/mapa.md` e a planilha de apoio, **só agregados, sem placas**. Contagem **sem filtro de ativo** (inclui inativos e terceiros).
 
@@ -256,34 +265,34 @@ Fonte: `docs/sankhya/mapa.md` e a planilha de apoio, **só agregados, sem placas
 - **Eixos no nome do modelo:** presentes em cerca de **1.339** dos 2.325 implementos e ausentes em cerca de **986**; ao menos **81 veículos com 4 eixos** no nome; textos ambíguos (`3E1ED`, `4ED`, `G4E140`, `1E 2E`).
 - **Pendentes:** as consultas 2 e 3 (modelo × eixos × carroceria, e os vazios), já **com filtro de ativo** (ver a pendência no plano).
 
-## 04/11/2026 — Propósito do Eixo: melhorar as leituras do Sankhya
+## 03/11/2026 — Propósito do Eixo: melhorar as leituras do Sankhya
 
 - **Motivo:** muitos cadastros originais do Sankhya foram digitados errado.
 - **Nenhum campo do Sankhya é confiado cegamente** (nem `NUMEIXOS`). Cada campo de cadastro guarda **o valor do Sankhya, a correção local (quem, quando e por quê) e o valor efetivo**.
 - **A sincronização atualiza o valor do Sankhya sem apagar a correção.** Divergência entre os dois vira **relatório**; o que não se deduz vai para a **fila de exceções**, nunca presumido.
 - **Chaves não aceitam correção local:** placa, RENAVAM, CPF e CNPJ.
 - **A combinar com a equipe:** um responsável e uma frequência de revisão do relatório de divergências (pedido no plano da 3.7 e do saneamento).
-- **Quem decidiu:** Alexandre (04/11/2026).
+- **Quem decidiu:** Alexandre (03/11/2026).
 
-## 04/11/2026 — Correção de eixos e carroceria é por placa, não por modelo
+## 03/11/2026 — Correção de eixos e carroceria é por placa, não por modelo
 
 - **Decisão:** um de-para **por modelo não serve**: eixos e carroceria são da placa e variam dentro do mesmo modelo. A correção é **por placa, dentro do Eixo**, com o Sankhya como **sugestão** (`NUMEIXOS`, `TIPOCAR` e `CODTIPCAR`; o nome do modelo só confere). O que o Sankhya traz coerente passa direto; o duvidoso vai para a fila de exceções.
 - **Marca e nome do modelo** são normalizados pelas regras da importação (grafias duplicadas, espaços, a marca "SR").
 - **Backlog (depois da Fase 3):** tela de **conferência rápida por gestor**, em tabela, com o valor do Sankhya ao lado e dois campos (eixos e carroceria) para confirmar ou corrigir em lote.
 - **Alternativa descartada:** de-para por modelo.
-- **Quem decidiu:** Alexandre (04/11/2026).
+- **Quem decidiu:** Alexandre (03/11/2026).
 
-## 04/11/2026 — Consulta de placa no "Cadastrar placa": descartada por ora
+## 03/11/2026 — Consulta de placa no "Cadastrar placa": descartada por ora
 
 - **Decisão:** a sugestão de marca, modelo e ano por consulta de placa está **descartada por ora**. Só faria sentido com **API paga ou canal oficial**, que depende de **autorização da diretoria**. **Não usar** consultas não oficiais (SINESP raspado) nem bases que estimam dados.
 - **Se voltar:** é mais uma fonte de **sugestão**, com origem e data por campo, **nunca valor confirmado**; **eixos e carroceria não vêm dela**; só campos técnicos do veículo (dado de proprietário é descartado, LGPD); a chave do serviço fica **só no servidor**; uma **função única, trocável de fornecedor**; a falha **nunca bloqueia** o cadastro manual.
-- **Quem decidiu:** Alexandre (04/11/2026).
+- **Quem decidiu:** Alexandre (03/11/2026).
 
-## 04/11/2026 — Tela "Receber placa" ajustada à opção B só na 3.9
+## 03/11/2026 — Tela "Receber placa" ajustada à opção B só na 3.9
 
 - **Situação:** a tela do assistente "Receber placa" (2D) ainda faz tudo numa etapa e troca o gestor ao concluir. A opção B (receber registra a chegada; concluir troca o gestor depois de toda pendência respondida) já está no banco desde a 3.3.
 - **Decisão:** o ajuste da tela fica para a **3.9**, junto da fonte do banco. As telas e os testes afetados estão listados no plano (seção "Sankhya, classificações e saneamento").
-- **Quem decidiu:** Alexandre (04/11/2026).
+- **Quem decidiu:** Alexandre (03/11/2026).
 
 ---
 
@@ -1122,9 +1131,9 @@ Registro de direção, só em texto: nenhum código nem migration. Não muda a f
 - **Registrado no plano:** o "Cadastrar placa" precisa dos campos Função, Carroceria e Eixos do implemento antes da 3.9 (entram na 3.7); a posição é ordem, não contígua.
 - **Quem decidiu:** Alexandre.
 
-## 04/11/2026 — Ajuste 3.4b: eixos do implemento de 1 a 6 e conjunto "sem nome definido"
+## 03/11/2026 — Ajuste 3.4b: eixos do implemento de 1 a 6 e conjunto "sem nome definido"
 
-- **Informação de Alexandre (04/11/2026):** o implemento pode ter de 1 a 6 eixos por placa, classificado por carroceria; no Sankhya aparecem modelos de 4 eixos (por exemplo, "SR/LIBRELATO SRCA 4E").
+- **Informação de Alexandre (03/11/2026):** o implemento pode ter de 1 a 6 eixos por placa, classificado por carroceria; no Sankhya aparecem modelos de 4 eixos (por exemplo, "SR/LIBRELATO SRCA 4E").
 - **O que mudou (migration nova `eixos_e_conjunto_sem_nome`; as anteriores não foram editadas):**
   - `nucleo.ativo.eixos` do implemento aceita **1 a 6**, o dolly incluído. A exigência de dolly com 2 eixos saiu do cadastro do ativo e vale só dentro do rodo, como parte da configuração `rodo`.
   - **Estrutura que não bate com nenhuma configuração conhecida deixa de ser recusada:** o conjunto fica com o nome **"sem nome definido"** e gera o alerta **`conjunto_sem_nome`** (no cavalo).
@@ -1138,9 +1147,9 @@ Registro de direção, só em texto: nenhum código nem migration. Não muda a f
 - **Testes vistos falhando antes:** o novo `36-eixos-e-conjunto-sem-nome` (14) falhou nos CHECKs antigos de eixos; o `35` (74) falhou no dolly de 3 eixos e no rodo de 3 eixos recusado; o `31` falhou sem o nome `conjunto_sem_nome`; o Vitest de `composicao` falhou sem a migration nova e com a recusa antiga.
 - **Quem decidiu:** Alexandre (a faixa de eixos e o "sem nome definido"); os itens numerados aguardam o checkpoint.
 
-## 04/11/2026 — Checkpoint 3.4b aprovado com ajustes: simples de 1 a 6 eixos
+## 03/11/2026 — Checkpoint 3.4b aprovado com ajustes: simples de 1 a 6 eixos
 
-- **Decisão (Alexandre, 04/11/2026):** a configuração `simples` (um único semirreboque, sem dolly) aceita **de 1 a 6 eixos**, não só 2 ou 3. **Bi** continua só com semirreboques de 2 eixos, **bitrezão** só com 3, **rodo** só com semirreboques de 2 e dolly de 2; fora disso, "sem nome definido" com o alerta `conjunto_sem_nome`.
+- **Decisão (Alexandre, 03/11/2026):** a configuração `simples` (um único semirreboque, sem dolly) aceita **de 1 a 6 eixos**, não só 2 ou 3. **Bi** continua só com semirreboques de 2 eixos, **bitrezão** só com 3, **rodo** só com semirreboques de 2 e dolly de 2; fora disso, "sem nome definido" com o alerta `conjunto_sem_nome`.
 - **Onde mudou:** migration nova `simples_de_1_a_6_eixos` (as anteriores não foram editadas), o seed de `config.configuracao_de_conjunto`, o espelho `CONFIGURACOES_DE_CONJUNTO` (`lib/dominio/composicao.ts`, conferido contra o seed por teste), o `CLAUDE.md` e a tabela do plano.
 - **Testes vistos falhando antes:** simples de 1, 4, 5 e 6 eixos com o nome da carroceria e sem alerta (pgTAP `36`); o seed esperado em `35`; o Vitest de `configuracaoDoConjunto`. O bi de 4 eixos cada continua "sem nome definido" com alerta.
 - **`plan` do arquivo 36:** escrito com `plan(15)`, corrigido para `plan(14)` antes da primeira execução (eram 14 asserções, incluindo o implemento de 7 eixos recusado); agora `plan(20)`, igual às executadas, sem `skip` nem `todo`.

@@ -152,7 +152,7 @@ Todas em `nucleo`, todas com a `EXCLUDE` da convenção 2, origem da data e excl
 2. **Fora da frota:** ALU, EMP, VEN.
 3. **Impedida:** SIN, MAt, MAc, MAv, MAN, REF, SDo, DOC.
 4. **Sem motorista:** SMo, FOg, FEr.
-5. **Atividade:** DOp, ACe, CAr, CAn, ETc, ADe, DEs, ETv e PÁT. (O VAz saiu em 05/11/2026: o PÁT cobre qualquer ativo parado.)
+5. **Atividade:** DOp, ACe, CAr, CAn, ETc, ADe, DEs, ETv e PÁT. (O VAz saiu em 03/11/2026: o PÁT cobre qualquer ativo parado.)
 
 **Como ler `aplica_a` e `tipos_validos` (decisão 14):**
 - `aplica_a` descreve a placa mestre em relação ao implemento: **`conjunto`** = cavalo com pelo menos um implemento engatado (ou o próprio implemento engatado); **`solo`** = placa sem composição (cavalo sem implemento, implemento solto, caminhão, apoio, equipamento); **`ambos`** = com ou sem.
@@ -405,7 +405,7 @@ O nome do conjunto olha quatro coisas, nunca o total de eixos: **unidades engata
 
 | Configuração | Unidades | Semirreboques | Dolly | Eixos de cada semirreboque | Eixos do dolly |
 | --- | --- | --- | --- | --- | --- |
-| `simples` | 1 | 1 | não | 1 a 6 (ajuste de 04/11/2026; era 2 ou 3) | - |
+| `simples` | 1 | 1 | não | 1 a 6 (ajuste de 03/11/2026; era 2 ou 3) | - |
 | `bi` | 2 | 2 | não | 2 | - |
 | `bitrezao` | 2 | 2 | não | 3 | - |
 | `rodo` | 3 | 2 | sim, entre os dois | 2 | 2 |
@@ -471,9 +471,9 @@ Hoje o banco exige carroceria em todo implemento (`ativo_carroceria_obrigatoria_
 5. **Operação gravada na saída do conjunto:** é o único dado derivado que vira fato; o trigger que o torna imutável precisa de teste de borda (desengatar e reengatar no mesmo instante).
 6. **Sem login até a 3.8:** o app só pode ser exercitado contra o banco depois dela; até lá o banco é provado só por pgTAP.
 
-## Sankhya, classificações e saneamento (04/11/2026)
+## Sankhya, classificações e saneamento (03/11/2026)
 
-O texto completo está em `docs/decisoes.md` (entradas de 04/11/2026). Aqui ficam os acréscimos às fatias.
+O texto completo está em `docs/decisoes.md` (entradas de 03/11/2026). Aqui ficam os acréscimos às fatias.
 
 - **Duas classificações:** a placa guarda eixos (1 a 6) e, no implemento, a carroceria; o conjunto tem o nome calculado ao engatar, nunca gravado. Palavra de conjunto e prefixos de fabricante (BT, BZ, RD) nunca valem como fonte.
 - **Acréscimo à 3.7 (cadastro com origem por campo) e ao saneamento:** cada campo de cadastro guarda o valor do Sankhya, a correção local (quem, quando e por quê) e o efetivo; a sincronização atualiza o do Sankhya sem apagar a correção; a divergência vira relatório e o que não se deduz vai para a fila de exceções. A correção de eixos e carroceria é **por placa**, com `NUMEIXOS`, `TIPOCAR` e `CODTIPCAR` como sugestão (o nome do modelo só confere), nunca por de-para de modelo. **Combinar com a equipe um responsável e uma frequência de revisão do relatório de divergências** (pendência 23).
@@ -481,21 +481,22 @@ O texto completo está em `docs/decisoes.md` (entradas de 04/11/2026). Aqui fica
 - **Consulta de placa no "Cadastrar placa":** descartada por ora (depende de API paga ou canal oficial autorizado pela diretoria).
 - **"Receber placa" na opção B (ajuste da tela na 3.9):** a tela ainda faz tudo numa etapa e troca o gestor ao concluir. Mudam: `app/(sistema)/frota/placas/assistentes/receber-placa.tsx` (duas etapas e três respostas por pendência, com nota); `esquemaRecebimento` em `lib/dominio/esquemas/placa.ts` (pendências com `resolvida: boolean`); `lib/dominio/custodia.ts` (`SituacaoDoPedido` e `podeReceberPedido`); o `receber` do armazém de exemplo (`lib/exemplo/armazem.ts`, que troca o gestor no recebimento); `receberPlacaAcao` (`app/(sistema)/frota/placas/acoes.ts`) e `lib/dados/entradas-dos-assistentes.ts`; as ações da ficha (`lib/dominio/acoes-do-momento.ts` e `components/ficha/acoes-da-ficha.tsx`, que não têm "concluir" para pedido em conferência); e os e2e de custódia (`e2e/assistentes-frota-custodia.spec.ts`, além de `assistentes-frota.casca.spec.ts`, `assistentes-frota.visual.spec.ts` e `ficha.spec.ts`).
 
-## Dados do ativo (05/11/2026): fatia 3.7
+## Dados do ativo (03/11/2026): fatia 3.7
 
 O texto completo está em `docs/decisoes.md` (entrada "Fatia 3.7").
 
 - **3.7 (banco e domínio, sem e2e):** origem por campo no ativo (modelo, carroceria, eixos, tara, PBT, CMT, anos, valor FIPE e valor manual); sinal do Sankhya à parte (aplicado só onde ninguém corrigiu); correção local com motivo que a sincronização não apaga; chaves sem correção; pendência por tipo; relatório de divergência; fila de exceções; funções atômicas `cadastrar_ativo` (CR e operação obrigatórios), `criar_cr` (CODCENCUS obrigatório, "a conferir"), `entregar_ao_operacional` e `corrigir_campo`, com chave de envio (que agora devolve o resultado) e versão.
 - **3.9:** o assistente "Cadastrar placa" ganha Função, Carroceria e Eixos do implemento e o passo de Operação obrigatório, e grava pela `cadastrar_ativo` (a lista dos arquivos e e2e afetados está na decisão); as gravações antigas (`registrar_evento`, `engatar`, `desatrelar`, `registrar_baixa`, receber e concluir a transferência) ganham a chave de envio.
+- **Ajustes do checkpoint (03/11/2026):** caminhão sem carroceria pendente; `codigo_fipe` com origem (pendente com valor FIPE e sem código); operação existente no cadastro (criar é do módulo Operações); o CR pela lista real do Sankhya (migration `cr_do_sankhya`: AD_FROTA e AD_BLOQUEADO brutos, o vazio é serviço, ATIVO não decide, agrupador sem vínculo). Os agregados e as perguntas estão em `docs/sankhya/mapa.md`.
 - **Pendente:** configuração de tração (4x2, 6x2, 6x4, 8x2, 8x4) como catálogo próprio, proposta da seção "Conformidade da composição", não entrou na 3.7 (a confirmar com Alexandre).
 
-## CR e operação (05/11/2026): fatia 3.6c
+## CR e operação (03/11/2026): fatia 3.6c
 
-O texto completo está em `docs/decisoes.md` (entrada de 05/11/2026). **Substitui** a regra da 3.3 de que a operação da placa é a do CR vigente.
+O texto completo está em `docs/decisoes.md` (entrada de 03/11/2026). **Substitui** a regra da 3.3 de que a operação da placa é a do CR vigente.
 
 - **3.6c (banco):** `codcencus` obrigatório e único; tipo do CR (serviço, frota de placa, frota sem placa) derivado de `AD_FROTA` e `VEICULO`, com origem; CR pai, ativo, bloqueado e analítico com origem; **o CR de frota de placa pertence a um único ativo, para sempre (regra do banco, com teste de mutação)**; o vínculo **placa-operação** com vigência (uma operação por vez por placa, quem montou, vigência aberta até alguém alterar); o vínculo **CR de serviço-operação** com vigência; `operacao_do_ativo` lê o vínculo (engatado e solto como estão); o custo de cada data vem do CR que a placa tinha naquela data; o alerta `cr_sem_operacao` só para CR de serviço; o escopo "operacao" lê o vínculo.
 - **Importação:** o relatório de divergência do Sankhya lista os CRs usados por mais de um veículo; o segundo vínculo vai para a fila de exceções, sem enfraquecer a regra. A montagem da placa é sugerida pela garagem do CR vigente ("a confirmar"); Parceiros, ADM, Vendidos e Sem Operação só sugerem, nunca decidem.
-- **Ajustes do checkpoint (05/11/2026):** garagem como atributo do CR (catálogo de 13 valores do Sankhya; a da placa é a do CR vigente, calculada), substituindo a garagem filha de filial; um CR de serviço em uma operação por vez; CR bloqueado ou inativo sem vínculo novo (o da placa vendida); operação "sem operação" como operação parada e o alerta `ativo_sem_operacao`.
+- **Ajustes do checkpoint (03/11/2026):** garagem como atributo do CR (catálogo de 13 valores do Sankhya; a da placa é a do CR vigente, calculada), substituindo a garagem filha de filial; um CR de serviço em uma operação por vez; CR bloqueado ou inativo sem vínculo novo (o da placa vendida); operação "sem operação" como operação parada e o alerta `ativo_sem_operacao`.
 - **3.7 e 3.9:** o passo "Local" do "Cadastrar placa" e o "+" de garagem deixam de pedir a filial da garagem (a lista do que muda está em `docs/decisoes.md`).
 - **Hipóteses (aditivas, fáceis de mudar):** vários CRs de serviço por operação; quem monta a operação usa as permissões do módulo Operações (sem perfil novo até Alexandre decidir).
 
@@ -506,7 +507,7 @@ O texto completo está em `docs/decisoes.md` (entrada de 05/11/2026). **Substitu
 - **CR, consulta 4:** operação e garagem nos CRs de frota ativos.
 - **Veículos:** modelo × eixos × carroceria, e os vazios (as consultas 2 e 3 da pendência 22).
 
-## Acréscimos da 3.6 (05/11/2026)
+## Acréscimos da 3.6 (03/11/2026)
 
 - **3.7:** a função atômica de cadastro (ativo, posse, gestor e evento inicial numa transação), para o gestor enxergar a placa nova logo depois de criá-la (sob RLS, a placa sem gestor vigente não aparece para ele).
 - **3.8:** `exigirPermissao()` passa a ler `config.pode` com a sessão real; o teste que compara a navegação com o seed já existe no espelho (`lib/seguranca/permissoes.test.ts`).
@@ -515,15 +516,15 @@ O texto completo está em `docs/decisoes.md` (entrada de 05/11/2026). **Substitu
 - **3.9, sem vínculo:** quando o usuário entra sem vínculo no Eixo, a tela diz "Seu acesso ainda não foi liberado. Fale com o administrador." (hoje ele só veria listas vazias).
 - **3.9, a decidir:** a Diretoria vê o documento completo? Hoje só o Administrador tem `pessoas.ver_documento`; a Diretoria vê o mascarado. Se mudar, é uma linha no seed (e no espelho).
 
-## Disponibilizar e receber (05/11/2026)
+## Disponibilizar e receber (03/11/2026)
 
-O texto completo está em `docs/decisoes.md` (entradas de 05/11/2026).
+O texto completo está em `docs/decisoes.md` (entradas de 03/11/2026).
 
 - **Terminologia (opção 1):** "Disponibilizar placa" é o envio da placa a outro gestor de frota (antes "Transferir placa"); a entrega à custódia do Operacional passa a ser "Entregar ao Operacional". Mesmo nome do começo ao fim. O banco não muda (`transferencia` e `custodia`); a lista do que muda de nome (ações, telas, testes e e2e) está na decisão, e a troca entra com os assistentes, depois da 3.9.
 - **Receber bem aparente:** selo no menu, item "Para receber", faixa na lista, chip "Para receber (N)" primeiro, linha destacada com "Aguardando você", faixa grande na ficha com "Receber placa" e o assistente já preenchido; só quem recebe vê; nunca só pela cor; tom muda depois de alguns dias. Selo, faixa e filtro saem da lista de pedidos pendentes; o aviso em tempo real é da Central de Tarefas.
 - **Ordem, depois da 3.9:** o assistente "Disponibilizar placa" (envio, em lote), o "Receber placa" em duas etapas e este desenho, com e2e de aceite (a pessoa certa vê em até um clique; a errada não vê; teclado e leitor de tela).
 
-## Acréscimos da 3.5 (04/11/2026)
+## Acréscimos da 3.5 (03/11/2026)
 
 - **3.6:** a correção de evento de status feita muito depois do fato gera **alerta**; a política (prazo, quem vê) nasce com as permissões.
 - **3.9:** medir `nucleo.situacao_atual` com **cerca de 5.000 ativos** antes de decidir entre a função por linha (hoje) e a tabela mantida por gatilho (para a lista filtrar e somar no banco).
@@ -533,7 +534,7 @@ O texto completo está em `docs/decisoes.md` (entradas de 05/11/2026).
 
 | # | Pendência | Quem resolve | O que trava |
 | --- | --- | --- | --- |
-| 19 | ~~VAz~~ **Resolvida em 05/11/2026: o VAz saiu da régua** (o PÁT cobre qualquer ativo parado; alerta `parado_em_patio`) | Alexandre | Resolvida (ajuste 3.6b) |
+| 19 | ~~VAz~~ **Resolvida em 03/11/2026: o VAz saiu da régua** (o PÁT cobre qualquer ativo parado; alerta `parado_em_patio`) | Alexandre | Resolvida (ajuste 3.6b) |
 | 3.1 | Decisões A a F **aprovadas em 01/11** (ver "Fatia 3.1 em detalhes"). Sobra só o VAz, que é pendência dele com a equipe | Alexandre | Nada trava a 3.1 |
 | 16 | ~~Regra que reconhece bitrem, bitrezão e rodotrem~~ **Respondida pela equipe em 03/11/2026** (ver "Fatia 3.4 em detalhes") | Equipe, por Alexandre | Resolvida |
 | 20 | ~~Dolly no banco~~ **Opção A escolhida por Alexandre em 03/11/2026** (função do implemento) | Alexandre | Resolvida |
@@ -545,7 +546,7 @@ O texto completo está em `docs/decisoes.md` (entradas de 05/11/2026).
 
 ## Apêndice A: as 25 siglas (eram 26), para Alexandre conferir
 
-**Ajuste de 05/11/2026 (decisão de Alexandre):** o **VAz (Vazio) foi removido** da régua, que passou de 26 para 25 siglas. O **PÁT** cobre qualquer ativo parado (cavalo, caminhão, implemento, equipamento e apoio); o **ETv** continua. O sinal de "atenção" que o VAz dava passou a ser o alerta **`parado_em_patio`** (em PÁT há mais dias que o parâmetro `dias_parado_em_patio`, 15 por enquanto). A linha do VAz saiu da tabela abaixo.
+**Ajuste de 03/11/2026 (decisão de Alexandre):** o **VAz (Vazio) foi removido** da régua, que passou de 26 para 25 siglas. O **PÁT** cobre qualquer ativo parado (cavalo, caminhão, implemento, equipamento e apoio); o **ETv** continua. O sinal de "atenção" que o VAz dava passou a ser o alerta **`parado_em_patio`** (em PÁT há mais dias que o parâmetro `dias_parado_em_patio`, 15 por enquanto). A linha do VAz saiu da tabela abaixo.
 
 **De onde vem cada coluna.** O `CLAUDE.md` e o `docs/glossario.md` trazem as 26 siglas, os nomes e os chips (e o `CLAUDE.md` diz que a régua marca cada sigla como válida para conjunto, solo ou ambos), mas **nenhum dos dois traz a marca de cada sigla**. Por isso nenhuma linha de "aplica a" vem do `CLAUDE.md`: ou é regra que Alexandre fixou em 31/10, ou é rascunho meu. A coluna "diverge de" compara a **camada** (decisão 7) com o **chip** do glossário e aponta o que muda em relação ao que já está no código. As 26 siglas do `CLAUDE.md` estão todas aqui, sem sobra nem falta.
 

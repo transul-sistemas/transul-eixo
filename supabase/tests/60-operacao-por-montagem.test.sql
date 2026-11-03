@@ -111,7 +111,7 @@ select is(
           order by coalesce(f::text, 'nulo') || '|' || coalesce(v::text, 'nulo') || '|' || coalesce(nucleo.tipo_do_cr(f, v)::text, 'pendente') collate "C"))
      from (values (null::boolean), (false), (true)) as a (f)
      cross join (values (null::boolean), (false), (true)) as b (v)),
-  'ddb7e0d7b60a5dc8e514fe0deab03297',
+  'cc0ddd63a7f39933c402d3bbfcc6baa2',
   'o tipo do CR pelos dois sinais do Sankhya é o mesmo do espelho em TypeScript (mesma assinatura)'
 );
 
@@ -143,7 +143,7 @@ select is((select tipo::text from nucleo.cr where id = pg_temp.id('S1')), 'servi
 insert into nucleo.cr (codcencus, codigo) values (9999001, 'Sem sinais');
 select is(
   (select tipo::text from nucleo.cr where codcencus = 9999001),
-  null, 'sem os sinais do Sankhya, o tipo fica pendente (nulo), nunca presumido'
+  'servico', 'sem AD_FROTA, o CR é serviço (o vazio é serviço, regra de 03/11/2026)'
 );
 select is((select conferencia from nucleo.cr where id = pg_temp.id('A1')), 'a_conferir', 'o CR cadastrado antes da ponte nasce "a conferir"');
 
@@ -269,13 +269,13 @@ select throws_ok(
   '23P01', null, 'um CR de serviço em uma operação por vez'
 );
 
--- ---- CR bloqueado ou inativo não aceita vínculo novo; o que já existe fica ----
+-- ---- CR bloqueado não aceita vínculo novo (o ATIVO do Sankhya não decide); o que já existe fica ----
 select pg_temp.cr('B1', 4011200, true, true);
 update nucleo.cr set bloqueado = true where id = pg_temp.id('B1');
 select throws_ok(
   $$insert into nucleo.cr_do_ativo (ativo_id, cr_id, inicio, inicio_origem)
     values (pg_temp.id('c2'), pg_temp.id('B1'), '2026-10-01 00:00-03', 'informada')$$,
-  '23514', 'Este CR está bloqueado ou inativo: não aceita vínculo novo (os vínculos antigos continuam).',
+  '23514', 'Este CR está bloqueado: não aceita vínculo novo (os vínculos antigos continuam).',
   'CR bloqueado (por exemplo, o de uma placa vendida) não aceita vigência nova'
 );
 select lives_ok(
@@ -285,11 +285,10 @@ select lives_ok(
 );
 select pg_temp.cr('I1', 4011201, true, true);
 update nucleo.cr set ativo = false where id = pg_temp.id('I1');
-select throws_ok(
+select lives_ok(
   $$insert into nucleo.cr_do_ativo (ativo_id, cr_id, inicio, inicio_origem)
     values (pg_temp.id('pb'), pg_temp.id('I1'), '2026-01-10 00:00-03', 'informada')$$,
-  '23514', 'Este CR está bloqueado ou inativo: não aceita vínculo novo (os vínculos antigos continuam).',
-  'CR inativo também não aceita vigência nova'
+  'CR com ATIVO N aceita vigência nova: o ATIVO do Sankhya é guardado, mas não decide (regra de 03/11/2026)'
 );
 update nucleo.cr set bloqueado = true where id = pg_temp.id('A2');
 select ok(
@@ -306,7 +305,7 @@ update nucleo.cr set bloqueado = true where id = pg_temp.id('S4');
 select throws_ok(
   $$insert into nucleo.cr_de_servico_na_operacao (cr_id, operacao_id, inicio, inicio_origem)
     values (pg_temp.id('S4'), pg_temp.op('Grãos'), '2026-01-10 00:00-03', 'informada')$$,
-  '23514', 'Este CR está bloqueado ou inativo: não aceita vínculo novo (os vínculos antigos continuam).',
+  '23514', 'Este CR está bloqueado: não aceita vínculo novo (os vínculos antigos continuam).',
   'CR de serviço bloqueado não entra numa operação'
 );
 

@@ -9,7 +9,7 @@
 begin;
 \ir apoio/como_usuario.psql
 
-select plan(74);
+select plan(82);
 
 create function pg_temp.id(p_nome text) returns uuid language sql as $$
   select nullif(current_setting('t.' || p_nome, true), '')::uuid
@@ -92,7 +92,7 @@ select has_function('nucleo', 'cadastrar_ativo', 'existe a função atômica de 
 select enum_has_labels('config', 'origem_do_campo', array['sankhya', 'derivada', 'informada', 'correcao_local'], 'a origem do campo ganha a correção local');
 select set_eq(
   $$select campo from config.campo_corrigivel$$,
-  array['modelo_id', 'carroceria_id', 'eixos', 'tara_kg', 'pbt_kg', 'cmt_kg', 'ano_fabricacao', 'ano_modelo', 'valor_fipe', 'valor_manual'],
+  array['modelo_id', 'carroceria_id', 'eixos', 'tara_kg', 'pbt_kg', 'cmt_kg', 'ano_fabricacao', 'ano_modelo', 'valor_fipe', 'codigo_fipe', 'valor_manual'],
   'os campos corrigíveis são os do espelho em TypeScript (nenhuma chave)'
 );
 
@@ -107,7 +107,9 @@ insert into nucleo.usuario_filial (usuario_id, filial_id) values (pg_temp.id('op
 insert into nucleo.cr (codcencus, codigo, participa_da_frota, veiculo_obrigatorio) values
   (7101, 'X1', true, true), (7102, 'X2', true, true), (7103, 'X3', true, true);
 select pg_temp.ativo(n, t::nucleo.tipo_de_ativo, k) from (values
-  ('k1', 'cavalo', 71), ('k2', 'cavalo', 72), ('i1', 'implemento', 73), ('a1', 'apoio', 74)) as v (n, t, k);
+  ('k1', 'cavalo', 71), ('k2', 'cavalo', 72), ('i1', 'implemento', 73), ('a1', 'apoio', 74), ('cm1', 'caminhao', 75)) as v (n, t, k);
+insert into nucleo.operacao (nome) values ('Arquivada');
+update nucleo.operacao set excluido_em = now(), motivo_da_exclusao = 'Encerrada' where nome = 'Arquivada';
 set constraints all immediate;
 set constraints all deferred;
 
@@ -142,6 +144,27 @@ select ok(
 select ok(
   not exists (select 1 from nucleo.campo_pendente where ativo_id = pg_temp.id('k1') and campo in ('tara_kg', 'pbt_kg', 'cmt_kg')),
   'informado, deixa de ser pendente'
+);
+select ok(
+  exists (select 1 from nucleo.campo_pendente where ativo_id = pg_temp.id('cm1') and campo = 'carroceria_id'),
+  'caminhão sem carroceria fica pendente'
+);
+select throws_ok($$update nucleo.ativo set codigo_fipe = '004278-1' where id = pg_temp.id('i1')$$, '23514', null, 'código FIPE só para cavalo e caminhão');
+select throws_ok($$update nucleo.ativo set codigo_fipe = '4278' where id = pg_temp.id('k1')$$, '23514', null, 'código FIPE no formato 000000-0');
+select lives_ok(
+  $$update nucleo.ativo set valor_fipe = 450000.00, valor_fipe_referencia = '2026-10-01' where id = pg_temp.id('k1')$$,
+  'o valor FIPE do cavalo, com o mês de referência'
+);
+select ok(
+  exists (select 1 from nucleo.campo_pendente where ativo_id = pg_temp.id('k1') and campo = 'codigo_fipe')
+  and not exists (select 1 from nucleo.campo_pendente where ativo_id = pg_temp.id('k2') and campo = 'codigo_fipe'),
+  'com valor FIPE e sem o código, o código FIPE fica pendente (sem valor, não)'
+);
+select lives_ok($$update nucleo.ativo set codigo_fipe = '004278-1' where id = pg_temp.id('k1')$$, 'o código FIPE do cavalo');
+select ok(
+  (select codigo_fipe_origem = 'informada' from nucleo.ativo where id = pg_temp.id('k1'))
+  and not exists (select 1 from nucleo.campo_pendente where ativo_id = pg_temp.id('k1') and campo = 'codigo_fipe'),
+  'o código FIPE tem origem e deixa de ser pendente'
 );
 
 -- ---- o sinal do Sankhya e a correção local ----
@@ -251,6 +274,13 @@ select throws_ok(
       p_cr_id => null, p_operacao_id => (select id from nucleo.operacao where nome = 'Grãos'))$$,
   '23514', 'O CR é obrigatório no cadastro (toda placa tem o seu CR).',
   'o CR é obrigatório'
+);
+select throws_ok(
+  $$select nucleo.cadastrar_ativo(
+      p_tipo => 'cavalo', p_renavam => pg_temp.renavam(81), p_placa => 'ABC1D24', p_gestor_id => pg_temp.id('ga'),
+      p_cr_id => (select id from nucleo.cr where codigo = 'X2'), p_operacao_id => (select id from nucleo.operacao where nome = 'Arquivada'))$$,
+  '23514', 'Escolha uma operação existente (a operação nova se cria no módulo Operações).',
+  'o gestor escolhe uma operação existente, não arquivada'
 );
 select throws_ok(
   $$select nucleo.cadastrar_ativo(
@@ -381,7 +411,7 @@ select lives_ok(
   $$update nucleo.fila_de_excecoes set resolvida_em = now(), resolucao = 'Conferido na placa: 3 eixos'$$,
   'e resolve, com a resolução escrita'
 );
-select is((select count(*) from config.campo_corrigivel), 10::bigint, 'campo_corrigivel: todo usuário vinculado lê a lista');
+select is((select count(*) from config.campo_corrigivel), 11::bigint, 'campo_corrigivel: todo usuário vinculado lê a lista');
 reset role;
 select is((select count(*) from nucleo.fila_de_excecoes where resolvida_em is not null), 1::bigint, 'a exceção ficou resolvida');
 

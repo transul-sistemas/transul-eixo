@@ -10,7 +10,12 @@ import {
 } from "@/lib/dominio/campos-do-ativo";
 
 // O catálogo `config.campo_corrigivel` nasce na migração da 3.7; o espelho tem de bater com ele.
-function catalogoDaMigracao(): { campo: string; origem: string; pendenteEm: string[] }[] {
+function catalogoDaMigracao(): {
+  campo: string;
+  origem: string;
+  pendenteEm: string[];
+  pendenteCom: string | null;
+}[] {
   const pasta = "supabase/migrations";
   const arquivo = readdirSync(pasta).find((n) =>
     readFileSync(`${pasta}/${n}`, "utf-8").includes("insert into config.campo_corrigivel"),
@@ -18,22 +23,28 @@ function catalogoDaMigracao(): { campo: string; origem: string; pendenteEm: stri
   expect(arquivo).toBeTruthy();
   const texto = readFileSync(`${pasta}/${arquivo}`, "utf-8");
   const bloco = /insert into config\.campo_corrigivel[^;]*;/.exec(texto)?.[0] ?? "";
-  return [...bloco.matchAll(/\('(\w+)', '(\w+)', '[^']*', array\[([^\]]*)\]/g)].map((m) => ({
+  return [
+    ...bloco.matchAll(
+      /\('(\w+)', '(\w+)', '[^']*', array\[([^\]]*)\]::nucleo\.tipo_de_ativo\[\], (?:null|'(\w+)')/g,
+    ),
+  ].map((m) => ({
     campo: m[1] as string,
     origem: m[2] as string,
     pendenteEm: [...(m[3] as string).matchAll(/'(\w+)'/g)].map((t) => t[1] as string),
+    pendenteCom: m[4] ?? null,
   }));
 }
 
 describe("campos do ativo com origem (espelho de config.campo_corrigivel)", () => {
   it("os campos corrigíveis, a coluna de origem e onde ficam pendentes batem com a migração", () => {
     const banco = catalogoDaMigracao();
-    expect(banco).toHaveLength(10);
+    expect(banco).toHaveLength(11);
     expect(
       CAMPOS_CORRIGIVEIS.map((c) => ({
         campo: c.campo,
         origem: c.colunaDaOrigem,
         pendenteEm: [...c.pendenteEm],
+        pendenteCom: c.pendenteCom,
       })),
     ).toEqual(banco);
   });
@@ -57,6 +68,17 @@ describe("campos do ativo com origem (espelho de config.campo_corrigivel)", () =
     expect(camposPendentes("cavalo", {})).toContain("valor_fipe");
     expect(camposPendentes("cavalo", {})).not.toContain("valor_manual");
     expect(camposPendentes("apoio", {})).toContain("valor_manual");
+    expect(camposPendentes("caminhao", {})).toContain("carroceria_id");
+    expect(camposPendentes("implemento", {})).not.toContain("carroceria_id");
+  });
+
+  it("o código FIPE fica pendente quando há valor FIPE sem código", () => {
+    expect(camposPendentes("cavalo", { valor_fipe: 450000 })).toContain("codigo_fipe");
+    expect(camposPendentes("cavalo", {})).not.toContain("codigo_fipe");
+    expect(
+      camposPendentes("cavalo", { valor_fipe: 450000, codigo_fipe: "004278-1" }),
+    ).not.toContain("codigo_fipe");
+    expect(aceitaCorrecaoLocal("codigo_fipe")).toBe(true);
   });
 
   it("cavalo e caminhão usam o valor FIPE; os demais, o valor manual com fonte e data", () => {

@@ -12,6 +12,8 @@ export type CampoCorrigivel = {
   rotulo: string;
   /** Os tipos em que o campo vazio fica pendente (nunca presumido). */
   pendenteEm: readonly TipoDeAtivo[];
+  /** O campo que, preenchido, torna este pendente quando vazio (o código FIPE com valor FIPE). */
+  pendenteCom: string | null;
 };
 
 const TODOS: readonly TipoDeAtivo[] = ["cavalo", "implemento", "equipamento", "caminhao", "apoio"];
@@ -19,60 +21,82 @@ const COM_TRACAO_E_IMPLEMENTO: readonly TipoDeAtivo[] = ["cavalo", "implemento",
 
 /** Na mesma ordem da migração. Massas em kg, inteiras. */
 export const CAMPOS_CORRIGIVEIS: readonly CampoCorrigivel[] = [
-  { campo: "modelo_id", colunaDaOrigem: "modelo_origem", rotulo: "Modelo", pendenteEm: TODOS },
+  {
+    campo: "modelo_id",
+    colunaDaOrigem: "modelo_origem",
+    rotulo: "Modelo",
+    pendenteEm: TODOS,
+    pendenteCom: null,
+  },
   {
     campo: "carroceria_id",
     colunaDaOrigem: "carroceria_origem",
     rotulo: "Carroceria",
-    pendenteEm: [],
+    pendenteEm: ["caminhao"],
+    pendenteCom: null,
   },
   {
     campo: "eixos",
     colunaDaOrigem: "eixos_origem",
     rotulo: "Eixos",
     pendenteEm: COM_TRACAO_E_IMPLEMENTO,
+    pendenteCom: null,
   },
   {
     campo: "tara_kg",
     colunaDaOrigem: "tara_kg_origem",
     rotulo: "Tara",
     pendenteEm: COM_TRACAO_E_IMPLEMENTO,
+    pendenteCom: null,
   },
   {
     campo: "pbt_kg",
     colunaDaOrigem: "pbt_kg_origem",
     rotulo: "PBT",
     pendenteEm: COM_TRACAO_E_IMPLEMENTO,
+    pendenteCom: null,
   },
   {
     campo: "cmt_kg",
     colunaDaOrigem: "cmt_kg_origem",
     rotulo: "CMT",
     pendenteEm: ["cavalo", "caminhao"],
+    pendenteCom: null,
   },
   {
     campo: "ano_fabricacao",
     colunaDaOrigem: "ano_fabricacao_origem",
     rotulo: "Ano de fabricação",
     pendenteEm: TODOS,
+    pendenteCom: null,
   },
   {
     campo: "ano_modelo",
     colunaDaOrigem: "ano_modelo_origem",
     rotulo: "Ano do modelo",
     pendenteEm: TODOS,
+    pendenteCom: null,
   },
   {
     campo: "valor_fipe",
     colunaDaOrigem: "valor_fipe_origem",
     rotulo: "Valor FIPE",
     pendenteEm: ["cavalo", "caminhao"],
+    pendenteCom: null,
+  },
+  {
+    campo: "codigo_fipe",
+    colunaDaOrigem: "codigo_fipe_origem",
+    rotulo: "Código FIPE",
+    pendenteEm: [],
+    pendenteCom: "valor_fipe",
   },
   {
     campo: "valor_manual",
     colunaDaOrigem: "valor_manual_origem",
     rotulo: "Valor do ativo",
     pendenteEm: ["implemento", "equipamento", "apoio"],
+    pendenteCom: null,
   },
 ];
 
@@ -90,13 +114,16 @@ export function aceitaCorrecaoLocal(campo: string): boolean {
   return CAMPOS_CORRIGIVEIS.some((c) => c.campo === campo);
 }
 
-/** Os campos vazios que o tipo exige, na ordem do catálogo. */
+/** Os campos vazios que o tipo (ou outro campo preenchido) exige, na ordem do catálogo. */
 export function camposPendentes(
   tipo: TipoDeAtivo,
   valores: Partial<Record<string, unknown>>,
 ): string[] {
   return CAMPOS_CORRIGIVEIS.filter(
-    (c) => c.pendenteEm.includes(tipo) && (valores[c.campo] ?? null) === null,
+    (c) =>
+      (c.pendenteEm.includes(tipo) ||
+        (c.pendenteCom !== null && (valores[c.pendenteCom] ?? null) !== null)) &&
+      (valores[c.campo] ?? null) === null,
   ).map((c) => c.campo);
 }
 

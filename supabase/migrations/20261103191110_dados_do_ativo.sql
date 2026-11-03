@@ -21,23 +21,26 @@ create table config.campo_corrigivel (
   coluna_da_origem text not null unique,
   rotulo text not null check (length(btrim(rotulo)) > 0),
   pendente_em nucleo.tipo_de_ativo[] not null default '{}',
+  pendente_com text references config.campo_corrigivel (campo),
   ordem smallint not null unique
 );
 comment on table config.campo_corrigivel is
-  'Os campos do ativo que o Eixo possui, com a coluna da origem de cada um e os tipos em que o campo vazio fica pendente. Chave (placa, RENAVAM, CPF, CNPJ, série, chassi) nunca entra aqui.';
+  'Os campos do ativo que o Eixo possui, com a coluna da origem de cada um, os tipos em que o campo vazio fica pendente e o campo que, preenchido, o torna pendente (o código FIPE quando há valor FIPE). Chave (placa, RENAVAM, CPF, CNPJ, série, chassi) nunca entra aqui.';
+create index campo_corrigivel_pendente_com_idx on config.campo_corrigivel (pendente_com);
 alter table config.campo_corrigivel enable row level security;
 
-insert into config.campo_corrigivel (campo, coluna_da_origem, rotulo, pendente_em, ordem) values
-  ('modelo_id', 'modelo_origem', 'Modelo', array['cavalo', 'implemento', 'equipamento', 'caminhao', 'apoio']::nucleo.tipo_de_ativo[], 1),
-  ('carroceria_id', 'carroceria_origem', 'Carroceria', array[]::nucleo.tipo_de_ativo[], 2),
-  ('eixos', 'eixos_origem', 'Eixos', array['cavalo', 'implemento', 'caminhao']::nucleo.tipo_de_ativo[], 3),
-  ('tara_kg', 'tara_kg_origem', 'Tara', array['cavalo', 'implemento', 'caminhao']::nucleo.tipo_de_ativo[], 4),
-  ('pbt_kg', 'pbt_kg_origem', 'PBT', array['cavalo', 'implemento', 'caminhao']::nucleo.tipo_de_ativo[], 5),
-  ('cmt_kg', 'cmt_kg_origem', 'CMT', array['cavalo', 'caminhao']::nucleo.tipo_de_ativo[], 6),
-  ('ano_fabricacao', 'ano_fabricacao_origem', 'Ano de fabricação', array['cavalo', 'implemento', 'equipamento', 'caminhao', 'apoio']::nucleo.tipo_de_ativo[], 7),
-  ('ano_modelo', 'ano_modelo_origem', 'Ano do modelo', array['cavalo', 'implemento', 'equipamento', 'caminhao', 'apoio']::nucleo.tipo_de_ativo[], 8),
-  ('valor_fipe', 'valor_fipe_origem', 'Valor FIPE', array['cavalo', 'caminhao']::nucleo.tipo_de_ativo[], 9),
-  ('valor_manual', 'valor_manual_origem', 'Valor do ativo', array['implemento', 'equipamento', 'apoio']::nucleo.tipo_de_ativo[], 10);
+insert into config.campo_corrigivel (campo, coluna_da_origem, rotulo, pendente_em, pendente_com, ordem) values
+  ('modelo_id', 'modelo_origem', 'Modelo', array['cavalo', 'implemento', 'equipamento', 'caminhao', 'apoio']::nucleo.tipo_de_ativo[], null, 1),
+  ('carroceria_id', 'carroceria_origem', 'Carroceria', array['caminhao']::nucleo.tipo_de_ativo[], null, 2),
+  ('eixos', 'eixos_origem', 'Eixos', array['cavalo', 'implemento', 'caminhao']::nucleo.tipo_de_ativo[], null, 3),
+  ('tara_kg', 'tara_kg_origem', 'Tara', array['cavalo', 'implemento', 'caminhao']::nucleo.tipo_de_ativo[], null, 4),
+  ('pbt_kg', 'pbt_kg_origem', 'PBT', array['cavalo', 'implemento', 'caminhao']::nucleo.tipo_de_ativo[], null, 5),
+  ('cmt_kg', 'cmt_kg_origem', 'CMT', array['cavalo', 'caminhao']::nucleo.tipo_de_ativo[], null, 6),
+  ('ano_fabricacao', 'ano_fabricacao_origem', 'Ano de fabricação', array['cavalo', 'implemento', 'equipamento', 'caminhao', 'apoio']::nucleo.tipo_de_ativo[], null, 7),
+  ('ano_modelo', 'ano_modelo_origem', 'Ano do modelo', array['cavalo', 'implemento', 'equipamento', 'caminhao', 'apoio']::nucleo.tipo_de_ativo[], null, 8),
+  ('valor_fipe', 'valor_fipe_origem', 'Valor FIPE', array['cavalo', 'caminhao']::nucleo.tipo_de_ativo[], null, 9),
+  ('codigo_fipe', 'codigo_fipe_origem', 'Código FIPE', array[]::nucleo.tipo_de_ativo[], 'valor_fipe', 10),
+  ('valor_manual', 'valor_manual_origem', 'Valor do ativo', array['implemento', 'equipamento', 'apoio']::nucleo.tipo_de_ativo[], null, 11);
 
 -- ---------------------------------------------------------------------------------------------
 -- As colunas novas do ativo, cada campo com a sua origem
@@ -59,6 +62,8 @@ alter table nucleo.ativo
   add column valor_fipe numeric(15, 2),
   add column valor_fipe_origem config.origem_do_campo,
   add column valor_fipe_referencia date,
+  add column codigo_fipe text,
+  add column codigo_fipe_origem config.origem_do_campo,
   add column valor_manual numeric(15, 2),
   add column valor_manual_origem config.origem_do_campo,
   add column valor_manual_fonte text,
@@ -68,6 +73,7 @@ comment on column nucleo.ativo.tara_kg is 'Tara em kg, inteira.';
 comment on column nucleo.ativo.pbt_kg is 'Peso bruto total em kg, inteiro.';
 comment on column nucleo.ativo.cmt_kg is 'Capacidade máxima de tração em kg, inteira. Só cavalo e caminhão.';
 comment on column nucleo.ativo.valor_fipe is 'Valor FIPE (cavalo e caminhão), com o mês de referência.';
+comment on column nucleo.ativo.codigo_fipe is 'Código FIPE (cavalo e caminhão), no formato 000000-0. Com valor FIPE e sem código, fica pendente.';
 comment on column nucleo.ativo.valor_manual is 'Valor do ativo que não tem FIPE (implemento, equipamento, apoio), com a fonte e a data.';
 comment on column nucleo.ativo.eixos is
   'Eixos da peça. No implemento (dolly incluído), de 1 a 6. Nulo é pendente e deixa o nome do conjunto pendente; a origem fica em eixos_origem.';
@@ -89,6 +95,9 @@ alter table nucleo.ativo
   add constraint ativo_ano_fabricacao_com_origem check ((ano_fabricacao is null) = (ano_fabricacao_origem is null)),
   add constraint ativo_ano_modelo_com_origem check ((ano_modelo is null) = (ano_modelo_origem is null)),
   add constraint ativo_valor_fipe_com_origem check ((valor_fipe is null) = (valor_fipe_origem is null)),
+  add constraint ativo_codigo_fipe_com_origem check ((codigo_fipe is null) = (codigo_fipe_origem is null)),
+  add constraint ativo_codigo_fipe_formato check (codigo_fipe is null or codigo_fipe ~ '^[0-9]{6}-[0-9]$'),
+  add constraint ativo_codigo_fipe_so_com_tracao check (codigo_fipe is null or tipo in ('cavalo', 'caminhao')),
   add constraint ativo_valor_manual_com_origem check ((valor_manual is null) = (valor_manual_origem is null)),
   add constraint ativo_massas_positivas check (
     (tara_kg is null or tara_kg > 0) and (pbt_kg is null or pbt_kg > 0) and (cmt_kg is null or cmt_kg > 0)),
@@ -245,12 +254,14 @@ create trigger t90_auditoria after insert or update or delete on nucleo.fila_de_
 create view nucleo.campo_pendente with (security_invoker = true) as
   select a.id as ativo_id, c.campo, c.rotulo
     from nucleo.ativo a
-    join config.campo_corrigivel c on a.tipo = any (c.pendente_em)
+    join config.campo_corrigivel c
+      on a.tipo = any (c.pendente_em)
+      or (c.pendente_com is not null and jsonb_typeof(to_jsonb(a) -> c.pendente_com) <> 'null')
    where a.excluido_em is null
      and jsonb_typeof(to_jsonb(a) -> c.campo) = 'null'
      and not exists (select 1 from nucleo.baixa_do_ativo b where b.ativo_id = a.id and b.excluido_em is null);
 comment on view nucleo.campo_pendente is
-  'Os campos vazios que o tipo do ativo exige (fora os baixados): pendentes, nunca presumidos.';
+  'Os campos vazios que o tipo do ativo exige, ou que outro campo preenchido exige (o código FIPE quando há valor FIPE), fora os baixados: pendentes, nunca presumidos.';
 
 create view nucleo.divergencia_de_campo with (security_invoker = true) as
   select s.ativo_id, s.campo, c.rotulo,
@@ -548,6 +559,10 @@ begin
   if p_cr_id is null then
     raise exception 'O CR é obrigatório no cadastro (toda placa tem o seu CR).' using errcode = '23514';
   end if;
+  -- O gestor escolhe uma operação que já existe; criar operação é do módulo Operações.
+  if not exists (select 1 from nucleo.operacao where id = p_operacao_id and excluido_em is null) then
+    raise exception 'Escolha uma operação existente (a operação nova se cria no módulo Operações).' using errcode = '23514';
+  end if;
   if not v_escopo_tudo and p_gestor_id is distinct from config.usuario_atual() then
     raise exception 'Você só cadastra placa na sua própria carteira.' using errcode = '42501';
   end if;
@@ -668,7 +683,7 @@ revoke all on function nucleo.entregar_ao_operacional(uuid, uuid, timestamptz, i
 -- Grants e políticas (no mesmo arquivo)
 -- ---------------------------------------------------------------------------------------------
 grant update (tara_kg, pbt_kg, cmt_kg, ano_fabricacao, ano_modelo, valor_fipe, valor_fipe_referencia,
-              valor_manual, valor_manual_fonte, valor_manual_em)
+              codigo_fipe, valor_manual, valor_manual_fonte, valor_manual_em)
   on nucleo.ativo to authenticated;
 grant select on config.campo_corrigivel, nucleo.sinal_do_sankhya, nucleo.correcao_de_campo, nucleo.fila_de_excecoes to authenticated;
 grant update (resolvida_em, resolvida_por, resolucao, versao) on nucleo.fila_de_excecoes to authenticated;

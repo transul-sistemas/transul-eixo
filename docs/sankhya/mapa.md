@@ -35,7 +35,7 @@ O usuário da API é somente leitura **por enquanto**. A garantia do Eixo é a t
 
 - **Chave permanente do ativo:** `RENAVAM`. A `PLACA` muda (Mercosul) e o Sankhya **não guarda a placa antiga**; o histórico de placas é do Eixo.
 - **Identidade e cadastro:** `CODVEICULO`, `PLACA`, `RENAVAM`, `CHASSIS`, `NUMMOTOR`, `ANOFABRIC`, `ANOMOD`, `CODMARCAVEI`/`CODMODELOVEI` (e as tabelas de marca e modelo, com médias de consumo sugeridas), `TIPVEI` e `CODTIPVEI` (tipo, em `TMSTVC`), `NUMEIXOS` (eixos), `TIPOCAR` e `CODTIPCAR` (carroceria), `TIPOROD` e `CODTIPRD` (rodado), `CAVALO`, `ATIVO`, `BLOQUEADO`, `MOTIVOBLOQ`.
-- **O nome do modelo do implemento descreve só os eixos** ("Carreta 3 eixos"), não a carroceria. Eixos e carroceria são da placa: o Sankhya (`NUMEIXOS`, `TIPOCAR`, `CODTIPCAR`) é **sugestão**, corrigida por placa no Eixo (decisões de 04/11/2026). Catálogo de marca e modelo: 82 modelos e 4.455 veículos, sem filtro de ativo (agregados em `docs/decisoes.md`).
+- **O nome do modelo do implemento descreve só os eixos** ("Carreta 3 eixos"), não a carroceria. Eixos e carroceria são da placa: o Sankhya (`NUMEIXOS`, `TIPOCAR`, `CODTIPCAR`) é **sugestão**, corrigida por placa no Eixo (decisões de 03/11/2026). Catálogo de marca e modelo: 82 modelos e 4.455 veículos, sem filtro de ativo (agregados em `docs/decisoes.md`).
 - **Composição:** `CODVEI1`, `CODVEI2` e `CODVEI3` (carretas 1 a 3). São mantidos no dia a dia; a composição atual pode vir do Sankhya.
 - **Gestor:** `CODPARCGESTOR` existe, mas **não é mantido**: o gestor da carteira é do Eixo.
 - **Centro de resultado:** `CODCENCUS` (um por veículo no Sankhya; o histórico de vigência é do Eixo).
@@ -50,9 +50,41 @@ O usuário da API é somente leitura **por enquanto**. A garantia do Eixo é a t
 
 ## Centros de resultado, naturezas e TOPs (`TSICUS`, `TGFNAT`, `TGFTOP`)
 
-- **CR (`TSICUS`), vista em tela em 05/11/2026:** `CODCENCUS` é inteiro com máscara hierárquica (04.000.000 Frota COR/SP > 04.011.000 Frota implemento COR > 04.011.142, o CR da placa); `DESCRCENCUS` é a placa nos CRs de frota (só confere: fica velha na conversão Mercosul); "analítico" e "veículo obrigatório" ligados nos CRs de placa; `AD_BLOQUEADO`, `AD_GARAGEM`, `AD_OPERACAO` (vazio no CR de frota) e `AD_FROTA` ("Participa da Frota?"). O vínculo placa-CR é `TGFVEI.CODCENCUS`.
+- **CR (`TSICUS`), vista em tela em 03/11/2026:** `CODCENCUS` é inteiro com máscara hierárquica (04.000.000 Frota COR/SP > 04.011.000 Frota implemento COR > 04.011.142, o CR da placa); `DESCRCENCUS` é a placa nos CRs de frota (só confere: fica velha na conversão Mercosul); "analítico" e "veículo obrigatório" ligados nos CRs de placa; `AD_BLOQUEADO`, `AD_GARAGEM`, `AD_OPERACAO` (vazio no CR de frota) e `AD_FROTA` ("Participa da Frota?"). O vínculo placa-CR é `TGFVEI.CODCENCUS`.
 - **Campos permitidos (CR):** `CODCENCUS`, `DESCRCENCUS`, `ATIVO`, `ANALITICO`, `VEICULO`, `CODCENCUSPAI`, `AD_FROTA`, `AD_BLOQUEADO`, `AD_OPERACAO`, `AD_GARAGEM`, `DTINCLUSAO`. **Não ler** `CODUSURESP` nem `CODPARCRESP` (dado de pessoa).
-- **Tipo do CR no Eixo (derivado, com origem):** serviço (`AD_FROTA` desligado); frota de placa (`AD_FROTA` e `VEICULO` ligados); frota sem placa (`AD_FROTA` ligado e `VEICULO` desligado). A operação **não** vem do CR de frota: é montada no Eixo (decisão de 05/11/2026). Todos os CRs entram na importação, inclusive bloqueados e inativos.
+- **Tipo do CR no Eixo (derivado, com origem; regra de 03/11/2026 pela lista real):** frota de placa (`AD_FROTA` = S e `VEICULO` = S); frota sem placa (`AD_FROTA` = S e `VEICULO` diferente de S); serviço (`AD_FROTA` = N **ou vazio**: o vazio é serviço, nunca pendente). Bloqueado: `AD_BLOQUEADO` = S; N ou vazio = não bloqueado. `AD_FROTA` e `AD_BLOQUEADO` são guardados como vieram (S, N ou vazio), com origem. `ATIVO` é guardado, mas não decide nada. O CR agrupador (`ANALITICO` = N) não aceita vínculo. A operação **não** vem do CR de frota: é montada no Eixo (decisão de 03/11/2026). Todos os CRs entram na importação, inclusive bloqueados.
+
+### A lista real dos CRs (03/11/2026, só agregados)
+
+| Campo | Distribuição |
+| --- | --- |
+| Total | 1.714 CRs |
+| `ATIVO` | Sim em todos (não distingue nada) |
+| `AD_OPERACAO` | vazio em todos |
+| `AD_FROTA` (Participa da Frota) | Sim 1.140 (todos com código de 7 dígitos), Não 28, vazio 546; serviço = Não + vazio = 574 |
+| `VEICULO` (veículo obrigatório) | Sim 1.145, Não 569 |
+| `ANALITICO` | Sim 1.623, Não 91 (agrupadores, ex.: FRETES e os acionistas pai) |
+| `GRAU` 1 / 2 / 3 | 27 / 259 / 1.428 |
+| `AD_BLOQUEADO` | Sim 291, Não 253, vazio 1.170 |
+| `AD_GARAGEM` | preenchida em 1.225, vazia em 489 |
+
+- **Frota (AD_FROTA = Sim):** 1.093 analíticos com veículo obrigatório (CR de placa) e 47 sem (estoque, oficina, pneu, posto, manutenção).
+- **CRs de placa:** 1.005 com descrição de placa, 963 placas distintas; 41 placas com 2 ou mais CRs (83 CRs, 40 bloqueados); só 5 placas com 2 ou mais CRs abertos; em 39 das 41 as garagens dos CRs repetidos são iguais (só 2 mudaram de garagem).
+- **49 CRs "CAIXA..."** de frota com veículo obrigatório e sem placa.
+- **22 placas** só aparecem em CRs fora da frota.
+- **Fora da frota:** 272 CRs com descrição de placa (82 com garagem "Parceiros"), sob agrupadores com nome de pessoa.
+- **46 CRs** com descrição de placa e veículo obrigatório que não participam da frota: candidatos a erro de cadastro.
+
+**Perguntas para a equipe (por Alexandre):**
+1. Por que uma placa tem 2 ou mais CRs (41 placas), se em 39 delas a garagem não mudou?
+2. Os 49 CRs "CAIXA..." de frota com veículo obrigatório e sem placa são equipamentos (com a série como chave)?
+3. Os 272 CRs com descrição de placa fora da frota, sob agrupadores com nome de pessoa, são a estrutura por acionista?
+
+**Regras de saneamento da importação (a registrar; nada disso é código ainda):**
+- Entram **todos** os CRs, inclusive os bloqueados.
+- A descrição do CR (`DESCRCENCUS`) **só confere**, nunca decide.
+- CR suspeito (os 46 acima, o segundo CR aberto de uma placa, os "CAIXA..." até a resposta) vai para a **fila de exceções** da importação.
+- **Mapa de garagem para filial: pendente.** A frota tem 3 garagens; Alexandre vai informar a qual filial pertence cada um dos 13 valores.
 
 - **Centro de resultado (`TSICUS`):** `CODCENCUS`, `DESCRCENCUS`, `ATIVO`, `ANALITICO`, `VEICULO` (veículo obrigatório), `CODCENCUSPAI`, `GRAU`, responsáveis.
 - **Campos `AD_` do centro:** `AD_BLOQUEADO` (bloquear a utilização), `AD_FROTA`, `AD_OPERACAO`, `AD_GARAGEM`, `AD_IDEXTERNO`.
