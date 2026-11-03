@@ -27,7 +27,13 @@ Modelo de entrada:
   8. **Nos testes antigos** (30, 31, 35 e 36), os ativos de apoio passaram a nascer com o evento inicial PÁT e as baixas diretas com o evento da camada baixada; nenhuma expectativa mudou.
 - **Testes vistos falhando antes:** o novo `40-eventos-e-situacao` (62) falhou sem as tabelas e as funções; os arquivos 30, 31, 35 e 36 falharam sem `nucleo.evento_de_status`; o Vitest de `situacao` falhou sem o módulo. **Mutação:** validade sem conjunto/solo (falham 5, incluindo a assinatura), ativo sem evento inicial (falha o cadastro), conjunto sem herança do impedimento (falham 6), e no TypeScript o caminhão sem a exceção (falham 2).
 - **Fica para a 3.6:** acesso no banco (usuário, perfil, permissão, escopos `tudo`, `minha_carteira`, `operacao` e `filial`), RLS com políticas em todas as tabelas (inclusive as da 3.5), grants explícitos (o `UPDATE` de `nucleo.ativo` sem a coluna `tipo`), a lista de exceções das funções de validação e o pgTAP da matriz por perfil.
-- **Quem decidiu:** Alexandre (as regras da 3.5); os itens numerados aguardam o checkpoint.
+- **Checkpoint aprovado com ajustes (Alexandre, 04/11/2026):**
+  - **Engatar recusa implemento fora da frota ou baixado:** com estado vigente na camada fora da frota (ALU, EMP, VEN), a mensagem é "O implemento está em VEN (fora da frota): ele não entra em conjunto."; baixado, "Ativo baixado não entra em conjunto.".
+  - **A recusa do desatrelar diz o que fazer:** "A situação ETc do cavalo exige conjunto: mude a situação do cavalo antes de desatrelar o último implemento." (teste da mensagem exata).
+  - **Correção de evento feita muito depois do fato gera alerta:** a política (prazo e quem vê) é da **3.6**.
+  - **Na 3.9, medir `situacao_atual` com cerca de 5.000 ativos** antes de decidir entre a função por linha e a tabela mantida por gatilho.
+  - **VAz segue no rascunho** (só cavalo e caminhão) até Alexandre decidir.
+- **Quem decidiu:** Alexandre (as regras da 3.5 e os ajustes do checkpoint).
 
 ---
 

@@ -1,7 +1,8 @@
 -- Fase 3, fatia 3.5 (3 de 3): engatar, desatrelar e registrar a baixa como funções atômicas, e a
 -- trava do tipo pela situação vigente.
 --
---  * Engatar: confere que nenhum dos dois está baixado, encerra a atividade própria do implemento (ele
+--  * Engatar: confere que nenhum dos dois está baixado e que o implemento não está fora da frota
+--    (ALU, EMP, VEN), encerra a atividade própria do implemento (ele
 --    passa a herdar a do cavalo) e grava a composição; a estrutura é conferida no fim da transação.
 --  * Desatrelar: fecha a composição (a operação na saída é gravada pelo banco), e o implemento solto
 --    volta ao pátio (PÁT). Desatrelar o último implemento com o cavalo numa situação que exige
@@ -19,12 +20,27 @@ set search_path = ''
 as $$
 declare
   v_id uuid;
+  v_sigla text;
+  v_camada text;
 begin
   if exists (
     select 1 from nucleo.baixa_do_ativo
      where ativo_id in (p_cavalo_id, p_implemento_id) and excluido_em is null and em <= p_em
   ) then
     raise exception 'Ativo baixado não entra em conjunto.' using errcode = '23514';
+  end if;
+
+  -- Implemento baixado ou fora da frota (ALU, EMP, VEN) não entra em conjunto.
+  select e.sigla, e.camada into v_sigla, v_camada
+    from nucleo.estado_de_status e
+   where e.ativo_id = p_implemento_id and e.camada in ('baixada', 'fora-da-frota')
+     and e.excluido_em is null and e.periodo @> p_em
+   order by e.camada
+   limit 1;
+  if v_camada = 'baixada' then
+    raise exception 'Ativo baixado não entra em conjunto.' using errcode = '23514';
+  elsif v_camada = 'fora-da-frota' then
+    raise exception 'O implemento está em % (fora da frota): ele não entra em conjunto.', v_sigla using errcode = '23514';
   end if;
 
   if exists (
@@ -70,7 +86,7 @@ begin
   if v_restantes = 0 then
     v_sigla := nucleo.estado_em(p_cavalo_id, 'atividade', p_em);
     if v_sigla is not null and exists (select 1 from config.status where sigla = v_sigla and aplica_a = 'conjunto') then
-      raise exception 'A situação % do cavalo exige conjunto: mude a situação antes de desatrelar o último implemento.', v_sigla
+      raise exception 'A situação % do cavalo exige conjunto: mude a situação do cavalo antes de desatrelar o último implemento.', v_sigla
         using errcode = '23514';
     end if;
   end if;

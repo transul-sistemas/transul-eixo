@@ -481,6 +481,12 @@ O texto completo está em `docs/decisoes.md` (entradas de 04/11/2026). Aqui fica
 - **Consulta de placa no "Cadastrar placa":** descartada por ora (depende de API paga ou canal oficial autorizado pela diretoria).
 - **"Receber placa" na opção B (ajuste da tela na 3.9):** a tela ainda faz tudo numa etapa e troca o gestor ao concluir. Mudam: `app/(sistema)/frota/placas/assistentes/receber-placa.tsx` (duas etapas e três respostas por pendência, com nota); `esquemaRecebimento` em `lib/dominio/esquemas/placa.ts` (pendências com `resolvida: boolean`); `lib/dominio/custodia.ts` (`SituacaoDoPedido` e `podeReceberPedido`); o `receber` do armazém de exemplo (`lib/exemplo/armazem.ts`, que troca o gestor no recebimento); `receberPlacaAcao` (`app/(sistema)/frota/placas/acoes.ts`) e `lib/dados/entradas-dos-assistentes.ts`; as ações da ficha (`lib/dominio/acoes-do-momento.ts` e `components/ficha/acoes-da-ficha.tsx`, que não têm "concluir" para pedido em conferência); e os e2e de custódia (`e2e/assistentes-frota-custodia.spec.ts`, além de `assistentes-frota.casca.spec.ts`, `assistentes-frota.visual.spec.ts` e `ficha.spec.ts`).
 
+## Acréscimos da 3.5 (04/11/2026)
+
+- **3.6:** a correção de evento de status feita muito depois do fato gera **alerta**; a política (prazo, quem vê) nasce com as permissões.
+- **3.9:** medir `nucleo.situacao_atual` com **cerca de 5.000 ativos** antes de decidir entre a função por linha (hoje) e a tabela mantida por gatilho (para a lista filtrar e somar no banco).
+- **VAz:** segue no rascunho (só cavalo e caminhão) até a decisão de Alexandre (pendência 19).
+
 ## Pendências em aberto
 
 | # | Pendência | Quem resolve | O que trava |

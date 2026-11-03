@@ -5,7 +5,7 @@
 -- `set constraints all immediate`, que confere tudo o que está pendente.
 begin;
 
-select plan(62);
+select plan(64);
 
 create temp table ids (nome text primary key, id uuid not null);
 
@@ -117,6 +117,7 @@ select lives_ok(
         ('c6', 'cavalo', 6), ('c7', 'cavalo', 7), ('c8', 'cavalo', 8), ('c9', 'cavalo', 9),
         ('i2', 'implemento', 12), ('i4', 'implemento', 14), ('i5', 'implemento', 15), ('i6', 'implemento', 16),
         ('i7', 'implemento', 17), ('i8', 'implemento', 18), ('i9', 'implemento', 19), ('i10', 'implemento', 20),
+        ('i11', 'implemento', 21), ('i12', 'implemento', 22),
         ('k1', 'caminhao', 31), ('a1', 'apoio', 41)) as v (n, t, k);
       set constraints all immediate; set constraints all deferred;
     end $b$$q$,
@@ -269,7 +270,7 @@ select is(
 select pg_temp.ev('c6', 'ETc', '2026-05-02 00:00-03');
 select throws_ok(
   $$select nucleo.desatrelar(pg_temp.id('c6'), '2026-05-03 00:00-03')$$,
-  '23514', 'A situação ETc do cavalo exige conjunto: mude a situação antes de desatrelar o último implemento.',
+  '23514', 'A situação ETc do cavalo exige conjunto: mude a situação do cavalo antes de desatrelar o último implemento.',
   'desatrelar o último implemento com o cavalo em situação de conjunto é recusado'
 );
 select pg_temp.ev('c6', 'ETv', '2026-05-04 00:00-03');
@@ -305,6 +306,18 @@ select ok(
 select throws_ok(
   $$select nucleo.engatar(pg_temp.id('c9'), pg_temp.id('i10'), 1::smallint, '2026-05-12 00:00-03')$$,
   '23514', 'Ativo baixado não entra em conjunto.', 'engatar implemento baixado é recusado'
+);
+select pg_temp.ev('i11', 'VEN', '2026-05-11 00:00-03');
+select throws_ok(
+  $$select nucleo.engatar(pg_temp.id('c9'), pg_temp.id('i11'), 1::smallint, '2026-05-12 00:00-03')$$,
+  '23514', 'O implemento está em VEN (fora da frota): ele não entra em conjunto.',
+  'engatar implemento fora da frota (VEN) é recusado'
+);
+select pg_temp.ev('i12', 'ALU', '2026-05-11 00:00-03');
+select throws_ok(
+  $$select nucleo.engatar(pg_temp.id('c9'), pg_temp.id('i12'), 1::smallint, '2026-05-12 00:00-03')$$,
+  '23514', 'O implemento está em ALU (fora da frota): ele não entra em conjunto.',
+  'engatar implemento alugado a terceiro (ALU) é recusado'
 );
 select throws_ok(
   $$select pg_temp.ev('c7', 'SUC', '2026-05-10 00:00-03')$$,
