@@ -76,6 +76,7 @@ $$;
 insert into nucleo.pessoa (nome) values ('Ana');
 insert into ids select 'ana', id from nucleo.pessoa where nome = 'Ana';
 insert into nucleo.pessoa_documento (pessoa_id, documento) values (pg_temp.id('ana'), '529.982.247-25');
+insert into nucleo.papel_da_pessoa (pessoa_id, papel) values (pg_temp.id('ana'), 'gestor_de_frota');
 
 -- ---- eixos do implemento: de 1 a 6 ----
 select lives_ok($$select pg_temp.semi('e1', 801, 1::smallint)$$, 'implemento de 1 eixo passa');

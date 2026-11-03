@@ -83,3 +83,135 @@ select c.id, n.configuracao, n.nome
     ('Basculante', 'rodo', 'Rodocaçamba')
   ) as n (carroceria, configuracao, nome)
   join config.carroceria c on c.nome = n.carroceria;
+
+-- ---------------------------------------------------------------------------------------------
+-- Acesso (fatia 3.6): módulos, ações, escopos, perfis provisórios e as permissões de cada perfil.
+-- Permissão = módulo × ação × escopo. O espelho é lib/seguranca/permissoes.ts (o teste confere os
+-- dois e a assinatura no banco). O catálogo é ampliável.
+-- ---------------------------------------------------------------------------------------------
+insert into config.modulo (codigo, nome) values
+  ('inicio', 'Início'),
+  ('frota', 'Frota'),
+  ('operacional', 'Operacional'),
+  ('operacoes', 'Operações'),
+  ('pessoas', 'Pessoas'),
+  ('parceiros', 'Parceiros'),
+  ('resultados', 'Resultados'),
+  ('cadastros', 'Cadastros'),
+  ('admin', 'Administração');
+
+insert into config.acao (codigo, nome) values
+  ('ver', 'Ver'),
+  ('criar', 'Criar'),
+  ('editar', 'Editar'),
+  ('excluir', 'Excluir'),
+  ('ver_documento', 'Ver o documento completo');
+
+insert into config.escopo (codigo, nome) values
+  ('tudo', 'Tudo'),
+  ('minha_carteira', 'Minha carteira'),
+  ('operacao', 'Operação'),
+  ('filial', 'Filial');
+
+insert into config.perfil (codigo, nome) values
+  ('administrador', 'Administrador'),
+  ('diretoria', 'Diretoria'),
+  ('gestor_de_frota', 'Gestor de frota'),
+  ('operacional', 'Operacional');
+
+insert into config.permissao_do_perfil (perfil, modulo, acao, escopo) values
+  ('administrador', 'inicio', 'ver', 'tudo'),
+  ('administrador', 'inicio', 'criar', 'tudo'),
+  ('administrador', 'inicio', 'editar', 'tudo'),
+  ('administrador', 'inicio', 'excluir', 'tudo'),
+  ('administrador', 'frota', 'ver', 'tudo'),
+  ('administrador', 'frota', 'criar', 'tudo'),
+  ('administrador', 'frota', 'editar', 'tudo'),
+  ('administrador', 'frota', 'excluir', 'tudo'),
+  ('administrador', 'operacional', 'ver', 'tudo'),
+  ('administrador', 'operacional', 'criar', 'tudo'),
+  ('administrador', 'operacional', 'editar', 'tudo'),
+  ('administrador', 'operacional', 'excluir', 'tudo'),
+  ('administrador', 'operacoes', 'ver', 'tudo'),
+  ('administrador', 'operacoes', 'criar', 'tudo'),
+  ('administrador', 'operacoes', 'editar', 'tudo'),
+  ('administrador', 'operacoes', 'excluir', 'tudo'),
+  ('administrador', 'pessoas', 'ver', 'tudo'),
+  ('administrador', 'pessoas', 'criar', 'tudo'),
+  ('administrador', 'pessoas', 'editar', 'tudo'),
+  ('administrador', 'pessoas', 'excluir', 'tudo'),
+  ('administrador', 'parceiros', 'ver', 'tudo'),
+  ('administrador', 'parceiros', 'criar', 'tudo'),
+  ('administrador', 'parceiros', 'editar', 'tudo'),
+  ('administrador', 'parceiros', 'excluir', 'tudo'),
+  ('administrador', 'resultados', 'ver', 'tudo'),
+  ('administrador', 'resultados', 'criar', 'tudo'),
+  ('administrador', 'resultados', 'editar', 'tudo'),
+  ('administrador', 'resultados', 'excluir', 'tudo'),
+  ('administrador', 'cadastros', 'ver', 'tudo'),
+  ('administrador', 'cadastros', 'criar', 'tudo'),
+  ('administrador', 'cadastros', 'editar', 'tudo'),
+  ('administrador', 'cadastros', 'excluir', 'tudo'),
+  ('administrador', 'admin', 'ver', 'tudo'),
+  ('administrador', 'admin', 'criar', 'tudo'),
+  ('administrador', 'admin', 'editar', 'tudo'),
+  ('administrador', 'admin', 'excluir', 'tudo'),
+  ('diretoria', 'inicio', 'ver', 'tudo'),
+  ('diretoria', 'inicio', 'criar', 'tudo'),
+  ('diretoria', 'inicio', 'editar', 'tudo'),
+  ('diretoria', 'inicio', 'excluir', 'tudo'),
+  ('diretoria', 'frota', 'ver', 'tudo'),
+  ('diretoria', 'frota', 'criar', 'tudo'),
+  ('diretoria', 'frota', 'editar', 'tudo'),
+  ('diretoria', 'frota', 'excluir', 'tudo'),
+  ('diretoria', 'operacional', 'ver', 'tudo'),
+  ('diretoria', 'operacional', 'criar', 'tudo'),
+  ('diretoria', 'operacional', 'editar', 'tudo'),
+  ('diretoria', 'operacional', 'excluir', 'tudo'),
+  ('diretoria', 'operacoes', 'ver', 'tudo'),
+  ('diretoria', 'operacoes', 'criar', 'tudo'),
+  ('diretoria', 'operacoes', 'editar', 'tudo'),
+  ('diretoria', 'operacoes', 'excluir', 'tudo'),
+  ('diretoria', 'pessoas', 'ver', 'tudo'),
+  ('diretoria', 'pessoas', 'criar', 'tudo'),
+  ('diretoria', 'pessoas', 'editar', 'tudo'),
+  ('diretoria', 'pessoas', 'excluir', 'tudo'),
+  ('diretoria', 'parceiros', 'ver', 'tudo'),
+  ('diretoria', 'parceiros', 'criar', 'tudo'),
+  ('diretoria', 'parceiros', 'editar', 'tudo'),
+  ('diretoria', 'parceiros', 'excluir', 'tudo'),
+  ('diretoria', 'resultados', 'ver', 'tudo'),
+  ('diretoria', 'resultados', 'criar', 'tudo'),
+  ('diretoria', 'resultados', 'editar', 'tudo'),
+  ('diretoria', 'resultados', 'excluir', 'tudo'),
+  ('diretoria', 'cadastros', 'ver', 'tudo'),
+  ('diretoria', 'cadastros', 'criar', 'tudo'),
+  ('diretoria', 'cadastros', 'editar', 'tudo'),
+  ('diretoria', 'cadastros', 'excluir', 'tudo'),
+  ('diretoria', 'admin', 'ver', 'tudo'),
+  ('diretoria', 'admin', 'criar', 'tudo'),
+  ('diretoria', 'admin', 'editar', 'tudo'),
+  ('diretoria', 'admin', 'excluir', 'tudo'),
+  ('administrador', 'pessoas', 'ver_documento', 'tudo'),
+  ('gestor_de_frota', 'inicio', 'ver', 'tudo'),
+  ('gestor_de_frota', 'frota', 'ver', 'minha_carteira'),
+  ('gestor_de_frota', 'frota', 'criar', 'minha_carteira'),
+  ('gestor_de_frota', 'frota', 'editar', 'minha_carteira'),
+  ('gestor_de_frota', 'frota', 'excluir', 'minha_carteira'),
+  ('operacional', 'inicio', 'ver', 'tudo'),
+  ('operacional', 'operacional', 'ver', 'filial'),
+  ('operacional', 'operacional', 'criar', 'filial'),
+  ('operacional', 'operacional', 'editar', 'filial');
+
+-- Papéis da pessoa (o gestor da carteira exige o de gestor de frota).
+insert into config.papel (codigo, nome) values
+  ('gestor_de_frota', 'Gestor de frota'),
+  ('motorista', 'Motorista'),
+  ('acionista', 'Acionista'),
+  ('agregado', 'Agregado');
+
+-- Parâmetros: a correção de evento de status feita depois deste prazo gera alerta, que fica visível
+-- pelos dias do segundo parâmetro.
+insert into config.parametro (chave, valor, descricao) values
+  ('prazo_de_correcao_de_status_dias', '7', 'Dias depois do fato a partir dos quais a correção de um evento de status gera alerta.'),
+  ('dias_do_alerta_de_correcao', '30', 'Por quantos dias o alerta de correção tardia fica visível.');

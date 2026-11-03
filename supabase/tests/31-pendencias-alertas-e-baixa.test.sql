@@ -25,6 +25,7 @@ declare v_id uuid;
 begin
   insert into nucleo.pessoa (nome) values (p_nome) returning id into v_id;
   insert into nucleo.pessoa_documento (pessoa_id, documento) values (v_id, p_documento);
+  insert into nucleo.papel_da_pessoa (pessoa_id, papel) values (v_id, 'gestor_de_frota');
   return v_id;
 end;
 $$;
@@ -38,9 +39,9 @@ select ok(
 select is(
   (select count(*) from information_schema.role_table_grants
     where table_schema = 'nucleo' and table_name = 'transferencia_pendencia'
-      and grantee in ('anon', 'authenticated', 'PUBLIC')),
+      and grantee in ('anon', 'PUBLIC')),
   0::bigint,
-  'transferencia_pendencia não dá acesso a anon, authenticated nem PUBLIC'
+  'transferencia_pendencia não dá acesso a anon nem PUBLIC (authenticated recebe grant explícito na 3.6)'
 );
 select ok(
   exists (
@@ -268,13 +269,13 @@ select throws_ok(
 
 -- ---- nomes de alerta: lista fechada ----
 select set_eq(
-  $$select distinct (regexp_matches(pg_get_viewdef('nucleo.alerta_de_vinculo'::regclass), '''(\w+)''::text', 'g'))[1]$$,
-  array['sem_cr', 'cr_sem_operacao', 'buraco_em_cr', 'buraco_em_custodia', 'implemento_sem_eixos', 'conjunto_sem_nome'],
+  $$select distinct (regexp_matches(pg_get_viewdef('nucleo.alerta_de_vinculo'::regclass), ',\s+''(\w+)''::text', 'g'))[1]$$,
+  array['sem_cr', 'cr_sem_operacao', 'buraco_em_cr', 'buraco_em_custodia', 'implemento_sem_eixos', 'conjunto_sem_nome', 'correcao_tardia_de_status'],
   'a visão de alertas só produz os nomes registrados em docs/decisoes.md'
 );
 select is(
   (select count(*) from nucleo.alerta_de_vinculo
-    where alerta not in ('sem_cr', 'cr_sem_operacao', 'buraco_em_cr', 'buraco_em_custodia', 'implemento_sem_eixos', 'conjunto_sem_nome')),
+    where alerta not in ('sem_cr', 'cr_sem_operacao', 'buraco_em_cr', 'buraco_em_custodia', 'implemento_sem_eixos', 'conjunto_sem_nome', 'correcao_tardia_de_status')),
   0::bigint,
   'nenhuma linha de alerta tem nome fora da lista'
 );

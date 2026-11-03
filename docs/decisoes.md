@@ -8,6 +8,33 @@ Modelo de entrada:
 
 ---
 
+## 05/11/2026 — Fatia 3.6 (permissões e RLS)
+
+- **Já decidido por Alexandre (05/11/2026):** usuário é Pessoa com login, criado no Studio e ligado por `vincular_usuario`; a sessão real fica para a 3.8 e, na 3.6, a identidade vem das claims do JWT, provada no pgTAP com a chave de cada usuário (nunca a `service_role`); permissão = módulo × ação × escopo (tudo, minha_carteira, operacao, filial), com perfis, permissões e escopos em catálogo; RLS em todas as tabelas, nenhum grant automático, `UPDATE` de `nucleo.ativo` sem a coluna `tipo`; documento completo só com `pessoas.ver_documento`; gestor exige o papel de gestor de frota; correção tardia de evento gera alerta; lista de exceções das funções.
+- **O que entrou (três migrations novas):**
+  - `acesso_catalogo_e_usuario`: `config.modulo`, `acao`, `escopo`, `perfil`, `permissao_do_perfil`, `papel`, `parametro`, `funcao_executavel`; `nucleo.usuario`, `usuario_operacao`, `usuario_filial`, `papel_da_pessoa`; o gatilho do papel de gestor (gestor da carteira, origem e destino da transferência); a visão `nucleo.pessoa_para_leitura` (máscara); `nucleo.vincular_usuario` (só no Studio).
+  - `acesso_funcoes`: `config.usuario_atual`, `perfil_atual`, `pode`, `pode_algum`, `ve_ativo` e `ativo_sem_gestor`; a exclusão lógica exige a ação `excluir`; o evento em placa fora do alcance é negado como falta de acesso; `mudar_tipo_do_ativo`, `receber_transferencia` e `concluir_transferencia` conferem a permissão por dentro; o alerta `correcao_tardia_de_status`.
+  - `politicas_e_grants`: grants explícitos (nunca `DELETE`, nada para `anon`), 112 políticas com nome (ler, criar, alterar) e o `EXECUTE` só das 33 funções de `config.funcao_executavel`, cada uma com a justificativa.
+  - Seed: módulos, ações, escopos, os quatro perfis, 82 permissões, papéis e os parâmetros do alerta. Espelho em TypeScript: `lib/seguranca/permissoes.ts` (assinatura md5 conferida no Vitest e no pgTAP; módulos de cada perfil iguais aos da navegação).
+- **Decisões minhas a confirmar:**
+  1. **Permissões provisórias:** Administrador e Diretoria com ver, criar, editar e excluir em todos os módulos (escopo tudo), como a navegação de hoje; **só o Administrador** com `pessoas.ver_documento`. Gestor de frota: `inicio.ver` e Frota (ver, criar, editar, excluir) na **sua carteira**. Operacional: `inicio.ver` e Operacional (ver, criar, editar) na **sua filial**, sem excluir.
+  2. **Quem alcança a placa:** ler vale para a Frota e o Operacional (cada um no seu escopo); o cadastro da placa e os vínculos dela (placa, CR, posse, gestor, baixa, composição, meta, transferência) são só da Frota; custódia e eventos de status, da Frota e do Operacional. O escopo "operação" usa a operação do ativo da 3.4 (engatado: a do cavalo).
+  3. **Sem vínculo, nada:** usuário do Auth sem vínculo no Eixo, ou com o vínculo inativo, lê zero linhas em tudo, inclusive nos catálogos (não é erro; é vazio).
+  4. **Pessoas:** todo usuário vinculado lê a pessoa (nome e documento mascarado), porque as telas da Frota mostram o gestor; o documento completo só com `pessoas.ver_documento`.
+  5. **Cadastro de placa pelo gestor:** o gestor só se põe na carteira de placa **ainda sem gestor** (não toma a placa de outra carteira). Enquanto a placa nova não tem gestor vigente, ele não a enxerga (sem `RETURNING`); a função atômica de cadastro da **3.7** resolve isso.
+  6. **Excluir:** a exclusão lógica exige a ação `excluir` no módulo da tabela; a **correção de evento** (excluir o último da camada) segue a política de alterar do evento, sem exigir `excluir`.
+  7. **Transferência sob RLS:** abrir o pedido exige criar na placa (só quem a tem na carteira); a origem e o destino leem o pedido; o destino altera, recebe e conclui (as funções rodam como dono e conferem a permissão). Na 3.3, sem RLS, "qualquer um abria".
+  8. **Funções que rodam como dono (SECURITY DEFINER), cada uma com a justificativa no código:** as de acesso (`usuario_atual`, `perfil_atual`, `pode`, `pode_algum`, `ve_ativo`, `ativo_sem_gestor`), a gravação do estado da camada (aplicar e desfazer o evento), a máscara e a conferência do documento, `mudar_tipo_do_ativo`, `receber_transferencia` e `concluir_transferencia`, além das duas da 3.0.
+  9. **Alerta de correção tardia:** prazo de **7 dias** depois do fato, visível por **30 dias** (os dois em `config.parametro`, editáveis pela Administração).
+  10. **Catálogos:** Cadastros grava carroceria, marca, modelo, filial, garagem, nomes e configurações de conjunto, operação e CR; a régua e o acesso (camadas, siglas, módulos, ações, escopos, perfis, permissões, papéis, parâmetros, funções liberadas) só a Administração.
+  11. **`vincular_usuario`** reativa o vínculo se a pessoa já tinha um, e não é executável pelo app.
+  12. **Testes antigos ajustados (regra mudou de propósito):** o alicerce (00) e os de chaves (10), régua (20) e pendências (31) passaram de "authenticated sem acesso" para "anon sem acesso; usuário sem vínculo lê zero linhas; authenticated só a lista de exceções"; os gestores dos testes ganharam o papel; a lista fechada de alertas ganhou `correcao_tardia_de_status`; o teste de qualidade da fundação passou a permitir o grant a `authenticated` só na migration de políticas e grants.
+- **Testes vistos falhando antes:** o novo `50-permissoes-e-rls` (62) e os antigos (sem `usage` nos schemas, sem as tabelas); o Vitest do espelho sem o módulo. **Mutações** (cada uma acusada e restaurada com `db reset`): `ativo_ler` aberta (falham 6), documento aberto (3), `UPDATE` do tipo liberado (2), escopo de filial desligado (3), uma função a mais executável (1).
+- **Fica para a 3.7:** correção de campo com origem, a função atômica de cadastro (ativo, posse, gestor e evento inicial numa transação, com o gestor enxergando a placa nova), as demais funções atômicas (Entregar ao Operacional, receber), idempotência e versão nas gravações, e os campos Função, Carroceria e Eixos do implemento no "Cadastrar placa".
+- **Quem decidiu:** Alexandre (as regras da 3.6); os itens numerados aguardam o checkpoint.
+
+---
+
 ## 05/11/2026 — "Disponibilizar" é para um gestor; a entrega ao Operacional ganha outro verbo
 
 - **Decisão (Alexandre, 05/11/2026), opção 1:** **"Disponibilizar"** passa a ser o passo de **quem envia a placa a outro gestor de frota** (o assistente antes chamado "Transferir placa"); o gestor que recebe preenche o que já está pronto (assistente "Receber placa"). A **entrega à custódia do Operacional** passa a ter **outro verbo**: proposta **"Entregar ao Operacional"**. A ação e o assistente têm o **mesmo nome do começo ao fim** ("Disponibilizar placa" → "Placa disponibilizada"; "Entregar ao Operacional" → "Placa entregue ao Operacional").

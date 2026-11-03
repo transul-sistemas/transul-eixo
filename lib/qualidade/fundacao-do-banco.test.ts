@@ -121,9 +121,18 @@ describe("migrations da fundação", () => {
     expect(semRls).toEqual([]);
   });
 
-  it("nenhuma tabela é aberta a anon nem a authenticated na fundação", () => {
+  it("nenhuma tabela é aberta a anon, em nenhuma migration", () => {
     expect(texto).not.toMatch(
-      /grant\s+[^;]*\bon\s+(?:table\s+)?(?:nucleo|config|auditoria)\.[^;]*\bto\s+[^;]*\b(?:anon|authenticated)\b/i,
+      /grant\s+[^;]*\bon\s+(?:table\s+)?(?:nucleo|config|auditoria)\.[^;]*\bto\s+[^;]*\banon\b/i,
     );
+  });
+
+  it("o grant a authenticated só existe na migration de políticas e grants (3.6)", () => {
+    const comGrant = arquivos.filter((n) =>
+      /grant\s+[^;]*\bon\s+(?:table\s+|schema\s+)?(?:nucleo|config|auditoria)\b[^;]*\bto\s+authenticated\b/i.test(
+        lerArquivo(`supabase/migrations/${n}`),
+      ),
+    );
+    expect(comGrant).toEqual(["20261103170725_politicas_e_grants.sql"]);
   });
 });

@@ -30,6 +30,7 @@ declare v_id uuid;
 begin
   insert into nucleo.pessoa (nome) values (p_nome) returning id into v_id;
   insert into nucleo.pessoa_documento (pessoa_id, documento) values (v_id, p_documento);
+  insert into nucleo.papel_da_pessoa (pessoa_id, papel) values (v_id, 'gestor_de_frota');
   return v_id;
 end;
 $$;

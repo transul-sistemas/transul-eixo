@@ -349,7 +349,7 @@ select has_index(
 -- ---- ninguém acessa por padrão ----
 select set_config('tests.u1', tests.criar_usuario('tres@exemplo.local')::text, true);
 select tests.como(current_setting('tests.u1')::uuid);
-select throws_ok('select 1 from config.status', '42501', null, 'authenticated não lê a régua sem permissão explícita');
+select is((select count(*) from config.status), 0::bigint, 'usuário sem vínculo no Eixo não lê a régua (0 linhas)');
 reset role;
 select tests.como_anonimo();
 select throws_ok('select config.nome_do_conjunto(null, 1, false, 2, null)', '42501', null, 'anon não executa config.nome_do_conjunto');

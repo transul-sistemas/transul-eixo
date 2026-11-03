@@ -122,6 +122,7 @@ select ok(
 insert into nucleo.pessoa (nome) values ('Ana');
 insert into ids select 'ana', id from nucleo.pessoa where nome = 'Ana';
 insert into nucleo.pessoa_documento (pessoa_id, documento) values (pg_temp.id('ana'), '529.982.247-25');
+insert into nucleo.papel_da_pessoa (pessoa_id, papel) values (pg_temp.id('ana'), 'gestor_de_frota');
 insert into nucleo.operacao (nome) values ('Grãos'), ('Cimento');
 insert into nucleo.cr (codcencus, codigo, operacao_id) values
   (2001, 'CR-G', (select id from nucleo.operacao where nome = 'Grãos')),

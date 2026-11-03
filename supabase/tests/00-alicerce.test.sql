@@ -105,13 +105,11 @@ select is(
 select tests.como(current_setting('tests.u1')::uuid);
 select is(auth.uid(), current_setting('tests.u1')::uuid, 'como_usuario: auth.uid() devolve o usuário de teste');
 select is(current_user::text, 'authenticated', 'como_usuario: age como authenticated');
-select throws_ok('select count(*) from auditoria.evento', '42501', null, 'authenticated não lê a auditoria');
+select is((select count(*) from auditoria.evento), 0::bigint, 'usuário sem vínculo no Eixo não lê a auditoria (0 linhas)');
 select throws_ok('select count(*) from auditoria.envio', '42501', null, 'authenticated não lê as chaves de envio');
-select throws_ok(
+select lives_ok(
   $$select auditoria.consumir_envio('33333333-3333-3333-3333-333333333333', 'x')$$,
-  '42501',
-  null,
-  'authenticated não executa consumir_envio'
+  'authenticated executa consumir_envio (idempotência das gravações, liberada na 3.6)'
 );
 reset role;
 select tests.como_anonimo();
@@ -142,10 +140,10 @@ select is(
         'nucleo', 'operacional', 'pessoas', 'rh_clinico', 'parceiros',
         'financeiro', 'sync', 'config', 'auditoria'
       ])
-      and grantee in ('anon', 'authenticated', 'PUBLIC')
+      and grantee in ('anon', 'PUBLIC')
   ),
   0::bigint,
-  'nenhuma tabela dos nove schemas dá acesso a anon, authenticated ou PUBLIC'
+  'nenhuma tabela dos nove schemas dá acesso a anon ou PUBLIC (authenticated recebe grants explícitos na 3.6)'
 );
 select is(
   (
@@ -158,11 +156,10 @@ select is(
       ])
       and (
         has_function_privilege('anon', p.oid, 'execute')
-        or has_function_privilege('authenticated', p.oid, 'execute')
       )
   ),
   0::bigint,
-  'nenhuma função dos nove schemas é executável por anon ou authenticated'
+  'nenhuma função dos nove schemas é executável por anon (authenticated: só a lista de exceções, no 50)'
 );
 
 select * from finish();

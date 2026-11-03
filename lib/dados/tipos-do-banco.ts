@@ -8,7 +8,21 @@ export type Database = {
   
   "config": {
           Tables: {
-            "camada_de_status": {
+            "acao": {
+                  Row: {
+                    "codigo": string,"nome": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "codigo": string,"nome": string
+                  }
+                  Update: {
+                    "codigo"?: string,"nome"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"camada_de_status": {
                   Row: {
                     "codigo": string,"nome": string,"prioridade": number
                   }
@@ -50,6 +64,20 @@ export type Database = {
                   Relationships: [
                     
                   ]
+                },"escopo": {
+                  Row: {
+                    "codigo": string,"nome": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "codigo": string,"nome": string
+                  }
+                  Update: {
+                    "codigo"?: string,"nome"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
                 },"filial": {
                   Row: {
                     "criado_em": string,"excluido_em": string | null,"excluido_por": string | null,"id": string,"motivo_da_exclusao": string | null,"nome": string,"versao": number
@@ -60,6 +88,20 @@ export type Database = {
                   }
                   Update: {
                     "criado_em"?: string,"excluido_em"?: string | null,"excluido_por"?: string | null,"id"?: string,"motivo_da_exclusao"?: string | null,"nome"?: string,"versao"?: number
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"funcao_executavel": {
+                  Row: {
+                    "assinatura": string,"justificativa": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "assinatura": string,"justificativa": string
+                  }
+                  Update: {
+                    "assinatura"?: string,"justificativa"?: string
                   }
                   Relationships: [
                     
@@ -124,6 +166,20 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"modulo": {
+                  Row: {
+                    "codigo": string,"nome": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "codigo": string,"nome": string
+                  }
+                  Update: {
+                    "codigo"?: string,"nome"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
                 },"nomenclatura_de_conjunto": {
                   Row: {
                     "carroceria_id": string,"configuracao": string,"nome": string,"versao": number
@@ -147,6 +203,86 @@ isOneToOne: false
       columns: ["configuracao"]
 isOneToOne: false
       referencedRelation: "configuracao_de_conjunto"
+      referencedColumns: ["codigo"]
+    }
+                  ]
+                },"papel": {
+                  Row: {
+                    "codigo": string,"nome": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "codigo": string,"nome": string
+                  }
+                  Update: {
+                    "codigo"?: string,"nome"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"parametro": {
+                  Row: {
+                    "chave": string,"descricao": string,"valor": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "chave": string,"descricao": string,"valor": string
+                  }
+                  Update: {
+                    "chave"?: string,"descricao"?: string,"valor"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"perfil": {
+                  Row: {
+                    "codigo": string,"nome": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "codigo": string,"nome": string
+                  }
+                  Update: {
+                    "codigo"?: string,"nome"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"permissao_do_perfil": {
+                  Row: {
+                    "acao": string,"escopo": string,"modulo": string,"perfil": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "acao": string,"escopo": string,"modulo": string,"perfil": string
+                  }
+                  Update: {
+                    "acao"?: string,"escopo"?: string,"modulo"?: string,"perfil"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "permissao_do_perfil_acao_fkey"
+      columns: ["acao"]
+isOneToOne: false
+      referencedRelation: "acao"
+      referencedColumns: ["codigo"]
+    },{
+      foreignKeyName: "permissao_do_perfil_escopo_fkey"
+      columns: ["escopo"]
+isOneToOne: false
+      referencedRelation: "escopo"
+      referencedColumns: ["codigo"]
+    },{
+      foreignKeyName: "permissao_do_perfil_modulo_fkey"
+      columns: ["modulo"]
+isOneToOne: false
+      referencedRelation: "modulo"
+      referencedColumns: ["codigo"]
+    },{
+      foreignKeyName: "permissao_do_perfil_perfil_fkey"
+      columns: ["perfil"]
+isOneToOne: false
+      referencedRelation: "perfil"
       referencedColumns: ["codigo"]
     }
                   ]
@@ -176,8 +312,26 @@ isOneToOne: false
             [_ in never]: never
           }
           Functions: {
-            "nome_do_conjunto":
+            "ativo_sem_gestor":
+{ Args: { "p_ativo_id": string }; Returns: boolean
+                           },
+"nome_do_conjunto":
 { Args: { "p_carroceria_id": string,"p_com_dolly": boolean,"p_eixos_do_dolly": number,"p_eixos_dos_semirreboques": number,"p_unidades": number }; Returns: string
+                           },
+"perfil_atual":
+{ Args: Record<PropertyKey, never>; Returns: string
+                           },
+"pode":
+{ Args: { "p_acao": string,"p_modulo": string }; Returns: boolean
+                           },
+"pode_algum":
+{ Args: { "p_acao": string,"p_modulos": (string)[] }; Returns: boolean
+                           },
+"usuario_atual":
+{ Args: Record<PropertyKey, never>; Returns: string
+                           },
+"ve_ativo":
+{ Args: { "p_acao": string,"p_ativo_id": string,"p_modulos": (string)[] }; Returns: boolean
                            }
           }
           Enums: {
@@ -450,6 +604,12 @@ isOneToOne: false
 isOneToOne: false
       referencedRelation: "pessoa"
       referencedColumns: ["id"]
+    },{
+      foreignKeyName: "gestor_da_carteira_gestor_id_fkey"
+      columns: ["gestor_id"]
+isOneToOne: false
+      referencedRelation: "pessoa_para_leitura"
+      referencedColumns: ["id"]
     }
                   ]
                 },"meta_do_conjunto": {
@@ -486,6 +646,32 @@ isOneToOne: false
                   Relationships: [
                     
                   ]
+                },"papel_da_pessoa": {
+                  Row: {
+                    "papel": string,"pessoa_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "papel": string,"pessoa_id": string
+                  }
+                  Update: {
+                    "papel"?: string,"pessoa_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "papel_da_pessoa_pessoa_id_fkey"
+      columns: ["pessoa_id"]
+isOneToOne: false
+      referencedRelation: "pessoa"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "papel_da_pessoa_pessoa_id_fkey"
+      columns: ["pessoa_id"]
+isOneToOne: false
+      referencedRelation: "pessoa_para_leitura"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"pessoa": {
                   Row: {
                     "codparc": number | null,"criado_em": string,"documento_mascarado": string | null,"email": string | null,"excluido_em": string | null,"excluido_por": string | null,"id": string,"motivo_da_exclusao": string | null,"nome": string,"versao": number
@@ -517,6 +703,12 @@ isOneToOne: false
       columns: ["pessoa_id"]
 isOneToOne: true
       referencedRelation: "pessoa"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "pessoa_documento_pessoa_id_fkey"
+      columns: ["pessoa_id"]
+isOneToOne: true
+      referencedRelation: "pessoa_para_leitura"
       referencedColumns: ["id"]
     }
                   ]
@@ -576,6 +768,12 @@ isOneToOne: false
 isOneToOne: false
       referencedRelation: "pessoa"
       referencedColumns: ["id"]
+    },{
+      foreignKeyName: "posse_do_ativo_pessoa_dona_id_fkey"
+      columns: ["pessoa_dona_id"]
+isOneToOne: false
+      referencedRelation: "pessoa_para_leitura"
+      referencedColumns: ["id"]
     }
                   ]
                 },"transferencia": {
@@ -609,10 +807,22 @@ isOneToOne: false
       referencedRelation: "pessoa"
       referencedColumns: ["id"]
     },{
+      foreignKeyName: "transferencia_de_gestor_id_fkey"
+      columns: ["de_gestor_id"]
+isOneToOne: false
+      referencedRelation: "pessoa_para_leitura"
+      referencedColumns: ["id"]
+    },{
       foreignKeyName: "transferencia_para_gestor_id_fkey"
       columns: ["para_gestor_id"]
 isOneToOne: false
       referencedRelation: "pessoa"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "transferencia_para_gestor_id_fkey"
+      columns: ["para_gestor_id"]
+isOneToOne: false
+      referencedRelation: "pessoa_para_leitura"
       referencedColumns: ["id"]
     }
                   ]
@@ -635,11 +845,89 @@ isOneToOne: false
       referencedRelation: "pessoa"
       referencedColumns: ["id"]
     },{
+      foreignKeyName: "transferencia_pendencia_respondida_por_fkey"
+      columns: ["respondida_por"]
+isOneToOne: false
+      referencedRelation: "pessoa_para_leitura"
+      referencedColumns: ["id"]
+    },{
       foreignKeyName: "transferencia_pendencia_transferencia_id_fkey"
       columns: ["transferencia_id"]
 isOneToOne: false
       referencedRelation: "transferencia"
       referencedColumns: ["id"]
+    }
+                  ]
+                },"usuario": {
+                  Row: {
+                    "ativo": boolean,"auth_user_id": string,"criado_em": string,"perfil": string,"pessoa_id": string,"versao": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "ativo"?: boolean,"auth_user_id": string,"criado_em"?: string,"perfil": string,"pessoa_id": string,"versao"?: number
+                  }
+                  Update: {
+                    "ativo"?: boolean,"auth_user_id"?: string,"criado_em"?: string,"perfil"?: string,"pessoa_id"?: string,"versao"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "usuario_pessoa_id_fkey"
+      columns: ["pessoa_id"]
+isOneToOne: true
+      referencedRelation: "pessoa"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "usuario_pessoa_id_fkey"
+      columns: ["pessoa_id"]
+isOneToOne: true
+      referencedRelation: "pessoa_para_leitura"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"usuario_filial": {
+                  Row: {
+                    "filial_id": string,"usuario_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "filial_id": string,"usuario_id": string
+                  }
+                  Update: {
+                    "filial_id"?: string,"usuario_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "usuario_filial_usuario_id_fkey"
+      columns: ["usuario_id"]
+isOneToOne: false
+      referencedRelation: "usuario"
+      referencedColumns: ["pessoa_id"]
+    }
+                  ]
+                },"usuario_operacao": {
+                  Row: {
+                    "operacao_id": string,"usuario_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "operacao_id": string,"usuario_id": string
+                  }
+                  Update: {
+                    "operacao_id"?: string,"usuario_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "usuario_operacao_operacao_id_fkey"
+      columns: ["operacao_id"]
+isOneToOne: false
+      referencedRelation: "operacao"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "usuario_operacao_usuario_id_fkey"
+      columns: ["usuario_id"]
+isOneToOne: false
+      referencedRelation: "usuario"
+      referencedColumns: ["pessoa_id"]
     }
                   ]
                 }
@@ -666,6 +954,20 @@ isOneToOne: false
       referencedRelation: "cr"
       referencedColumns: ["id"]
     }
+                  ]
+                },"pessoa_para_leitura": {
+                  Row: {
+                    "codparc": number | null,"criado_em": string,"documento_mascarado": string | null,"email": string | null,"excluido_em": string | null,"id": string,"nome": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                           "codparc"?: number | null,"criado_em"?: string | null,"documento_mascarado"?: string | null,"email"?: string | null,"excluido_em"?: string | null,"id"?: string | null,"nome"?: string | null
+                         }
+                        Update: {
+                           "codparc"?: number | null,"criado_em"?: string | null,"documento_mascarado"?: string | null,"email"?: string | null,"excluido_em"?: string | null,"id"?: string | null,"nome"?: string | null
+                         }
+                        Relationships: [
+                    
                   ]
                 },"placa_atual": {
                   Row: {
@@ -774,6 +1076,9 @@ isOneToOne: false
                            },
 "situacao_em":
 { Args: { "p_ativo_id": string,"p_em": string }; Returns: string
+                           },
+"vincular_usuario":
+{ Args: { "p_email": string,"p_perfil": string,"p_pessoa_id": string }; Returns: undefined
                            }
           }
           Enums: {

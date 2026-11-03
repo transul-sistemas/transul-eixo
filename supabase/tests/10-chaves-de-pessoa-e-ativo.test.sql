@@ -362,7 +362,7 @@ select is(
 -- ---- ninguém acessa por padrão ----
 select set_config('tests.u1', tests.criar_usuario('dois@exemplo.local')::text, true);
 select tests.como(current_setting('tests.u1')::uuid);
-select throws_ok('select 1 from nucleo.ativo', '42501', null, 'authenticated não lê ativos sem uma permissão explícita');
+select is((select count(*) from nucleo.ativo), 0::bigint, 'usuário sem vínculo no Eixo não lê ativos (0 linhas)');
 reset role;
 select tests.como_anonimo();
 select throws_ok('select 1 from nucleo.pessoa', '42501', null, 'anon não lê pessoas');
