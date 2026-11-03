@@ -356,6 +356,70 @@ isOneToOne: false
       referencedColumns: ["ativo_id"]
     }
                   ]
+                },"estado_de_status": {
+                  Row: {
+                    "ativo_id": string,"camada": string,"criado_em": string,"evento_fim_id": string | null,"evento_inicio_id": string,"excluido_em": string | null,"excluido_por": string | null,"fim": string | null,"fim_origem": Database["config"]['Enums']["origem_da_data"] | null,"id": string,"inicio": string,"inicio_origem": Database["config"]['Enums']["origem_da_data"],"motivo_da_exclusao": string | null,"periodo": unknown,"sigla": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "ativo_id": string,"camada": string,"criado_em"?: string,"evento_fim_id"?: string | null,"evento_inicio_id": string,"excluido_em"?: string | null,"excluido_por"?: string | null,"fim"?: string | null,"fim_origem"?: Database["config"]['Enums']["origem_da_data"] | null,"id"?: string,"inicio": string,"inicio_origem": Database["config"]['Enums']["origem_da_data"],"motivo_da_exclusao"?: string | null,"periodo"?: never,"sigla": string
+                  }
+                  Update: {
+                    "ativo_id"?: string,"camada"?: string,"criado_em"?: string,"evento_fim_id"?: string | null,"evento_inicio_id"?: string,"excluido_em"?: string | null,"excluido_por"?: string | null,"fim"?: string | null,"fim_origem"?: Database["config"]['Enums']["origem_da_data"] | null,"id"?: string,"inicio"?: string,"inicio_origem"?: Database["config"]['Enums']["origem_da_data"],"motivo_da_exclusao"?: string | null,"periodo"?: never,"sigla"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "estado_de_status_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: false
+      referencedRelation: "ativo"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "estado_de_status_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: false
+      referencedRelation: "operacao_do_ativo"
+      referencedColumns: ["ativo_id"]
+    },{
+      foreignKeyName: "estado_de_status_evento_fim_id_fkey"
+      columns: ["evento_fim_id"]
+isOneToOne: false
+      referencedRelation: "evento_de_status"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "estado_de_status_evento_inicio_id_fkey"
+      columns: ["evento_inicio_id"]
+isOneToOne: false
+      referencedRelation: "evento_de_status"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"evento_de_status": {
+                  Row: {
+                    "ativo_id": string,"camada": string,"em": string,"em_origem": Database["config"]['Enums']["origem_da_data"],"excluido_em": string | null,"excluido_por": string | null,"id": string,"justificativa": string | null,"motivo_da_exclusao": string | null,"origem": string,"registrado_em": string,"registrado_por": string | null,"sigla": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "ativo_id": string,"camada": string,"em": string,"em_origem": Database["config"]['Enums']["origem_da_data"],"excluido_em"?: string | null,"excluido_por"?: string | null,"id"?: string,"justificativa"?: string | null,"motivo_da_exclusao"?: string | null,"origem": string,"registrado_em"?: string,"registrado_por"?: string | null,"sigla"?: string | null
+                  }
+                  Update: {
+                    "ativo_id"?: string,"camada"?: string,"em"?: string,"em_origem"?: Database["config"]['Enums']["origem_da_data"],"excluido_em"?: string | null,"excluido_por"?: string | null,"id"?: string,"justificativa"?: string | null,"motivo_da_exclusao"?: string | null,"origem"?: string,"registrado_em"?: string,"registrado_por"?: string | null,"sigla"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "evento_de_status_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: false
+      referencedRelation: "ativo"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "evento_de_status_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: false
+      referencedRelation: "operacao_do_ativo"
+      referencedColumns: ["ativo_id"]
+    }
+                  ]
                 },"gestor_da_carteira": {
                   Row: {
                     "ativo_id": string,"criado_em": string,"excluido_em": string | null,"excluido_por": string | null,"fim": string | null,"fim_origem": Database["config"]['Enums']["origem_da_data"] | null,"gestor_id": string,"id": string,"inicio": string,"inicio_origem": Database["config"]['Enums']["origem_da_data"],"motivo_da_exclusao": string | null,"periodo": unknown,"versao": number
@@ -638,8 +702,20 @@ isOneToOne: false
 "conferir_conjunto":
 { Args: { "p_cavalo_id": string }; Returns: undefined
                            },
+"desatrelar":
+{ Args: { "p_cavalo_id": string,"p_em": string,"p_implementos"?: (string)[] }; Returns: number
+                           },
 "documento_valido":
 { Args: { "p_texto": string }; Returns: boolean
+                           },
+"em_conjunto":
+{ Args: { "p_ativo_id": string,"p_em": string }; Returns: boolean
+                           },
+"engatar":
+{ Args: { "p_cavalo_id": string,"p_em": string,"p_implemento_id": string,"p_posicao": number }; Returns: string
+                           },
+"estado_em":
+{ Args: { "p_ativo_id": string,"p_camada": string,"p_em": string }; Returns: string
                            },
 "mascarar_documento":
 { Args: { "p_texto": string }; Returns: string
@@ -652,6 +728,9 @@ isOneToOne: false
                            },
 "nome_do_conjunto":
 { Args: { "p_cavalo_id": string,"p_em"?: string }; Returns: string
+                           },
+"nome_do_tipo":
+{ Args: { "p_tipo": Database["nucleo"]['Enums']["tipo_de_ativo"] }; Returns: string
                            },
 "normalizar_documento":
 { Args: { "p_texto": string }; Returns: string
@@ -668,8 +747,33 @@ isOneToOne: false
 "receber_transferencia":
 { Args: { "p_em": string,"p_transferencia_id": string }; Returns: undefined
                            },
+"registrar_baixa":
+{ Args: { "p_ativo_id": string,"p_em": string,"p_motivo": string,"p_sigla": string }; Returns: undefined
+                           },
+"registrar_evento":
+{ Args: { "p_ativo_id": string,"p_camada"?: string,"p_em": string,"p_em_origem"?: Database["config"]['Enums']["origem_da_data"],"p_justificativa"?: string,"p_origem"?: string,"p_sigla": string }; Returns: string
+                           },
 "renavam_valido":
 { Args: { "p_texto": string }; Returns: boolean
+                           },
+"sigla_valida":
+{ Args: { "p_em_conjunto": boolean,"p_sigla": string,"p_tipo": Database["nucleo"]['Enums']["tipo_de_ativo"] }; Returns: boolean
+                           },
+"situacao_atual":
+{ Args: { "p_ativo_id": string }; Returns: string
+                           },
+"situacao_com_causa":
+{ Args: { "p_ativo_id": string,"p_em": string }; Returns: {
+              "causa_id": string,"sigla": string
+            }[]
+                           },
+"situacao_do_conjunto":
+{ Args: { "p_cavalo_id": string,"p_em": string }; Returns: {
+              "causa_id": string,"sigla": string
+            }[]
+                           },
+"situacao_em":
+{ Args: { "p_ativo_id": string,"p_em": string }; Returns: string
                            }
           }
           Enums: {

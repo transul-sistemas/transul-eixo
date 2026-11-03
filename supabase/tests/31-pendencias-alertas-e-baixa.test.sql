@@ -66,6 +66,8 @@ begin
     values (v_id, 'propria', '2026-01-10 00:00-03', 'informada');
   insert into nucleo.gestor_da_carteira (ativo_id, gestor_id, inicio, inicio_origem)
     values (v_id, (select id from ids where nome = 'ana'), '2026-01-10 00:00-03', 'informada');
+  insert into nucleo.evento_de_status (ativo_id, sigla, em, em_origem, origem)
+    values (v_id, 'PÁT', '2026-01-10 00:00-03', 'informada', 'manual');
   return v_id;
 end;
 $$;
@@ -78,6 +80,7 @@ set constraints all deferred;
 select throws_ok(
   $q$do $b$ begin
       insert into nucleo.baixa_do_ativo (ativo_id, sigla, em) values ((select id from ids where nome = 'b1'), 'VND', '2026-03-10 00:00-03');
+      insert into nucleo.evento_de_status (ativo_id, sigla, em, em_origem, origem) values ((select id from ids where nome = 'b1'), 'VND', '2026-03-10 00:00-03', 'informada', 'manual');
       set constraints all immediate;
     end $b$$q$,
   '23514', null, 'baixa com posse e gestor ainda em aberto é recusada'
@@ -87,6 +90,7 @@ select throws_ok(
       update nucleo.posse_do_ativo set fim = '2026-03-10 00:00-03', fim_origem = 'informada'
        where ativo_id = (select id from ids where nome = 'b2');
       insert into nucleo.baixa_do_ativo (ativo_id, sigla, em) values ((select id from ids where nome = 'b2'), 'SUC', '2026-03-10 00:00-03');
+      insert into nucleo.evento_de_status (ativo_id, sigla, em, em_origem, origem) values ((select id from ids where nome = 'b2'), 'SUC', '2026-03-10 00:00-03', 'informada', 'manual');
       set constraints all immediate;
     end $b$$q$,
   '23514', null, 'baixa com a posse fechada e o gestor ainda em aberto é recusada'
@@ -98,6 +102,7 @@ select lives_ok(
       update nucleo.gestor_da_carteira set fim = '2026-03-10 00:00-03', fim_origem = 'informada'
        where ativo_id = (select id from ids where nome = 'b3');
       insert into nucleo.baixa_do_ativo (ativo_id, sigla, em) values ((select id from ids where nome = 'b3'), 'SUC', '2026-03-10 00:00-03');
+      insert into nucleo.evento_de_status (ativo_id, sigla, em, em_origem, origem) values ((select id from ids where nome = 'b3'), 'SUC', '2026-03-10 00:00-03', 'informada', 'manual');
       set constraints all immediate;
       set constraints all deferred;
     end $b$$q$,

@@ -32,6 +32,8 @@ begin
     values (p_ativo, 'propria', '2026-01-10 00:00-03', 'informada');
   insert into nucleo.gestor_da_carteira (ativo_id, gestor_id, inicio, inicio_origem)
     values (p_ativo, pg_temp.id('ana'), '2026-01-10 00:00-03', 'informada');
+  insert into nucleo.evento_de_status (ativo_id, sigla, em, em_origem, origem)
+    values (p_ativo, 'PÁT', '2026-01-10 00:00-03', 'informada', 'manual');
   return p_ativo;
 end;
 $$;

@@ -8,6 +8,29 @@ Modelo de entrada:
 
 ---
 
+## 04/11/2026 — Fatia 3.5 (status): eventos, estado por camada e situação calculada
+
+- **Já decidido por Alexandre (04/11/2026):** cinco camadas (baixada, fora da frota, impedida, sem motorista, atividade), um estado por camada; evento com sigla e hora (com origem da data), imutável; evento sem sigla encerra a camada; vigência `[início, fim)` por (ativo, camada) com exclusão; a situação é a sigla da camada de maior prioridade; o cadastro cria o evento inicial (padrão PÁT); validade pela marca `tipos_validos` e `aplica_a` (o caminhão só pelos tipos; o apoio perde o SMo; VAz no rascunho); herança calculada e nunca gravada (o implemento engatado herda só a atividade; qualquer membro impedido deixa o conjunto impedido; o banco nunca desengata sozinho); desatrelar e engatar atômicos; a baixa gera o evento da camada baixada; a trava do tipo pela situação; "pendente" quando não se calcula.
+- **O que entrou (três migrations novas):**
+  - `eventos_e_estado_de_status`: `nucleo.evento_de_status` (imutável, só se marca a exclusão lógica do último evento da camada, com motivo, que desfaz o efeito) e `nucleo.estado_de_status` (gravado só pelo evento, `EXCLUDE` por ativo e camada); `nucleo.sigla_valida`, `nucleo.em_conjunto`, `nucleo.registrar_evento`; o ativo exige o evento inicial no fim da transação, e a baixa exige o evento da camada baixada no mesmo instante (e o evento da baixada exige a baixa).
+  - `situacao_calculada`: `nucleo.situacao_em(ativo, instante)`, `nucleo.situacao_atual(ativo)`, `nucleo.situacao_do_conjunto(cavalo, instante)` (com a causa) e `nucleo.estado_em`.
+  - `engatar_desatrelar_e_baixa`: `nucleo.engatar`, `nucleo.desatrelar`, `nucleo.registrar_baixa` e a trava do tipo acrescida.
+  - Espelho em TypeScript: `lib/dominio/situacao.ts` (`siglaValidaNoContexto`, `situacaoDoAtivo`, a assinatura da validade); a mesma constante md5 da matriz sigla × tipo × contexto é conferida no Vitest e no pgTAP.
+- **Decisões minhas a confirmar:**
+  1. **Correção de evento:** só o **último** evento de cada camada pode ser excluído (com motivo), e a exclusão desfaz o efeito dele (o estado que abriu sai; o que fechou reabre). Evento mais antigo se corrige excluindo os posteriores, em ordem. Evento com hora anterior ao último da camada é recusado ("fora de ordem").
+  2. **A validade (`aplica_a`) é conferida no registro do evento**, não depois: engatar ou desatrelar não reavaliam as siglas já vigentes. Por isso um implemento que estava em MAN (solo) e foi engatado deixa o conjunto impedido, como pedido.
+  3. **Engatar encerra a atividade própria do implemento** (evento derivado, sem sigla), porque engatado ele herda a do cavalo; **desatrelar dá PÁT** ao implemento solto que ficou sem atividade (evento derivado).
+  4. **Desatrelar o último implemento** com o cavalo numa sigla de conjunto (ACe, CAr, CAn, ETc, ADe, DEs) é **recusado**: o banco não muda a situação do cavalo sozinho; o gestor muda a situação antes.
+  5. **Conjunto impedido:** o impedimento próprio vale antes do herdado; entre os membros, o do cavalo vem antes, depois os implementos pela posição. `situacao_do_conjunto` devolve a causa (o ativo que deixou o conjunto impedido).
+  6. **A baixa e o evento andam juntos nos dois sentidos** (a baixa exige o evento e o evento da camada baixada exige a baixa); a baixa não se encerra por evento e o evento dela não se exclui por aqui; baixa de ativo engatado é recusada (desatrele antes).
+  7. **`situacao_atual` é função, não tabela:** a tabela mantida por gatilho (para a lista filtrar e somar no banco) fica para a fatia que liga a lista ao banco (3.9).
+  8. **Nos testes antigos** (30, 31, 35 e 36), os ativos de apoio passaram a nascer com o evento inicial PÁT e as baixas diretas com o evento da camada baixada; nenhuma expectativa mudou.
+- **Testes vistos falhando antes:** o novo `40-eventos-e-situacao` (62) falhou sem as tabelas e as funções; os arquivos 30, 31, 35 e 36 falharam sem `nucleo.evento_de_status`; o Vitest de `situacao` falhou sem o módulo. **Mutação:** validade sem conjunto/solo (falham 5, incluindo a assinatura), ativo sem evento inicial (falha o cadastro), conjunto sem herança do impedimento (falham 6), e no TypeScript o caminhão sem a exceção (falham 2).
+- **Fica para a 3.6:** acesso no banco (usuário, perfil, permissão, escopos `tudo`, `minha_carteira`, `operacao` e `filial`), RLS com políticas em todas as tabelas (inclusive as da 3.5), grants explícitos (o `UPDATE` de `nucleo.ativo` sem a coluna `tipo`), a lista de exceções das funções de validação e o pgTAP da matriz por perfil.
+- **Quem decidiu:** Alexandre (as regras da 3.5); os itens numerados aguardam o checkpoint.
+
+---
+
 ## 04/11/2026 — Push direto na main, sem pull request (regra de trabalho)
 
 - **Decisão (Alexandre, 04/11/2026):** a partir do merge do PR `ci/direto` (o último por pull request), o trabalho entra **direto na `main`**, sem pull request, para ganhar velocidade. A barreira passa a ser a **verificação completa local** e o **checkpoint**.
