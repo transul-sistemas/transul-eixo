@@ -2,7 +2,7 @@
 -- existe, a lista fechada dos nomes de alerta e as siglas de baixa do catálogo.
 begin;
 
-select plan(17);
+select plan(20);
 
 create temp table ids (nome text primary key, id uuid not null);
 
@@ -53,9 +53,58 @@ select ok(
   'a chave estrangeira transferencia_id tem índice'
 );
 
--- ---- pendências do pedido ----
 insert into ids select 'ana', pg_temp.nova_pessoa('Ana', '529.982.247-25');
 insert into ids select 'bia', pg_temp.nova_pessoa('Bia', '11144477735');
+
+-- ---- baixa: posse e gestor têm de terminar no instante dela ----
+-- (antes de qualquer ativo sem posse: `set constraints all immediate` confere todos os pendentes)
+create function pg_temp.ativo_completo(p_n bigint) returns uuid language plpgsql as $$
+declare v_id uuid;
+begin
+  insert into nucleo.ativo (tipo, renavam) values ('cavalo', pg_temp.renavam(p_n)) returning id into v_id;
+  insert into nucleo.posse_do_ativo (ativo_id, regime, inicio, inicio_origem)
+    values (v_id, 'propria', '2026-01-10 00:00-03', 'informada');
+  insert into nucleo.gestor_da_carteira (ativo_id, gestor_id, inicio, inicio_origem)
+    values (v_id, (select id from ids where nome = 'ana'), '2026-01-10 00:00-03', 'informada');
+  return v_id;
+end;
+$$;
+insert into ids select 'b1', pg_temp.ativo_completo(601);
+insert into ids select 'b2', pg_temp.ativo_completo(602);
+insert into ids select 'b3', pg_temp.ativo_completo(603);
+set constraints all immediate;
+set constraints all deferred;
+
+select throws_ok(
+  $q$do $b$ begin
+      insert into nucleo.baixa_do_ativo (ativo_id, sigla, em) values ((select id from ids where nome = 'b1'), 'VND', '2026-03-10 00:00-03');
+      set constraints all immediate;
+    end $b$$q$,
+  '23514', null, 'baixa com posse e gestor ainda em aberto é recusada'
+);
+select throws_ok(
+  $q$do $b$ begin
+      update nucleo.posse_do_ativo set fim = '2026-03-10 00:00-03', fim_origem = 'informada'
+       where ativo_id = (select id from ids where nome = 'b2');
+      insert into nucleo.baixa_do_ativo (ativo_id, sigla, em) values ((select id from ids where nome = 'b2'), 'SUC', '2026-03-10 00:00-03');
+      set constraints all immediate;
+    end $b$$q$,
+  '23514', null, 'baixa com a posse fechada e o gestor ainda em aberto é recusada'
+);
+select lives_ok(
+  $q$do $b$ begin
+      update nucleo.posse_do_ativo set fim = '2026-03-10 00:00-03', fim_origem = 'informada'
+       where ativo_id = (select id from ids where nome = 'b3');
+      update nucleo.gestor_da_carteira set fim = '2026-03-10 00:00-03', fim_origem = 'informada'
+       where ativo_id = (select id from ids where nome = 'b3');
+      insert into nucleo.baixa_do_ativo (ativo_id, sigla, em) values ((select id from ids where nome = 'b3'), 'SUC', '2026-03-10 00:00-03');
+      set constraints all immediate;
+      set constraints all deferred;
+    end $b$$q$,
+  'baixa com posse e gestor terminando exatamente no instante dela passa'
+);
+
+-- ---- pendências do pedido ----
 with a as (
   insert into nucleo.ativo (tipo, renavam) values ('cavalo', pg_temp.renavam(500)) returning id
 )
