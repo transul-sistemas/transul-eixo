@@ -8,6 +8,31 @@ Modelo de entrada:
 
 ---
 
+## 05/11/2026 — O CR vem do Sankhya e a operação é montada por um usuário (substitui a regra da 3.3)
+
+- **O CR sempre vem do Sankhya.** O `codcencus` passa a ser **obrigatório e único** (migration nova, na **3.6c**; hoje é opcional só por causa dos testes). Antes da ponte, o "+" de CR no assistente pede o código do Sankhya e marca o CR "a conferir"; depois da ponte, o CR é escolhido entre os sincronizados.
+- **Estrutura do CR no Sankhya (`TSICUS`, vista em tela):** `CODCENCUS` é inteiro, com máscara hierárquica (por exemplo, 04.000.000 Frota COR/SP > 04.011.000 Frota implemento COR > 04.011.142, o CR da placa); `DESCRCENCUS` é a placa, nos CRs de frota; "analítico" e "veículo obrigatório" ficam ligados nesses; há `AD_BLOQUEADO`, `AD_GARAGEM`, `AD_OPERACAO` e `AD_FROTA` ("Participa da Frota?"). O vínculo placa-CR é `TGFVEI.CODCENCUS`; a descrição serve só para conferir (fica velha na conversão Mercosul).
+- **O que o Eixo guarda do CR:** o inteiro como chave; o código com máscara como código de exibição (texto livre); o CR pai (`CODCENCUSPAI`); ativo, bloqueado e analítico, **cada um com origem**. Tipo de ativo e filial **não** são derivados da hierarquia sem confirmação (só sugestão).
+- **Leitura do Sankhya por lista de campos permitidos (CR):** `CODCENCUS`, `DESCRCENCUS`, `ATIVO`, `ANALITICO`, `VEICULO`, `CODCENCUSPAI`, `AD_FROTA`, `AD_BLOQUEADO`, `AD_OPERACAO`, `AD_GARAGEM`, `DTINCLUSAO`. **Não ler** `CODUSURESP` nem `CODPARCRESP` (dado de pessoa).
+- **A regra da operação e do CR (substitui "a operação da placa é a do CR vigente", da 3.3):**
+  - Todo CR vem do Sankhya e é o **vínculo da despesa**; cada CR é único; **toda placa e todo serviço têm o seu CR**.
+  - **Uma placa pode ter vários CRs ao longo do tempo:** ao mudar de garagem (responsabilidade), cria-se um CR novo para a nova posição, e o CR antigo **nunca é excluído** (é o gasto histórico).
+  - Existe **CR de frota sem placa** (despesa de frota que não é de uma placa).
+  - A **operação é montada por um usuário** e tem **dois lados**: **frota** (as placas da operação, cada uma com o seu CR) e **serviço** (os CRs de serviço da operação). **A operação é a soma dos dois.**
+  - **O CR de frota não diz a operação** (no Sankhya, o campo Operação do CR de frota fica vazio).
+  - A montagem vale **por data** e, sem alteração, **se mantém** (vigência aberta, sem fim, até alguém alterar).
+  - **Tipo do CR no Eixo, derivado de campos do Sankhya, com origem:** serviço (`AD_FROTA` desligado); frota de placa (`AD_FROTA` e `VEICULO` ligados); frota sem placa (`AD_FROTA` ligado e `VEICULO` desligado). Confirmar com a consulta 1 do Sankhya.
+  - **Importação:** entram **todos** os CRs, inclusive bloqueados e inativos (as despesas históricas apontam para eles).
+  - **Alertas:** placa sem CR; **dois CRs ao mesmo tempo na mesma placa** (sobreposição, não a troca de garagem); buraco entre CRs; **CR de serviço sem operação**. **Não existe** alerta de "CR de frota sem placa".
+  - **Um CR de frota de placa pertence a uma única placa, para sempre** (atualização de Alexandre, 05/11/2026). A placa pode ter vários CRs ao longo do tempo (a troca de garagem cria CR novo; o antigo nunca se exclui), mas **o CR não se reaproveita em outra placa**. É **regra do banco** (3.6c): o banco recusa ligar o mesmo CR de frota de placa a dois ativos, com mensagem clara. A referência é o **ativo**, não o texto da placa, então a conversão Mercosul não quebra. A regra **não** vale para CR de frota sem placa nem para CR de serviço. **Confirmado por Alexandre (05/11/2026):** o CR de frota de placa **nunca** é reaproveitado em outra placa ("para sempre", não "uma por vez").
+  - **Do lado do Sankhya, relatório de divergência:** CRs usados por mais de um veículo, antes da importação. Na importação, o segundo vínculo vai para a **fila de exceções**; a regra **não se enfraquece** para a importação passar.
+  - **Backlog (ideia):** alerta de "troca de gestor ou garagem sem troca de CR".
+  - O implemento engatado continua herdando a operação do cavalo (calculada); o solto mantém a `operacao_na_saida`; o custo continua no CR da própria placa.
+  - **Perguntas pendentes:** um ou vários CRs de serviço por operação (hipótese: vários)? Qual perfil monta a operação (talvez um perfil novo, "Gestor de operação")?
+- **Quem decidiu:** Alexandre (05/11/2026).
+
+---
+
 ## 05/11/2026 — Ajuste 3.6b: o VAz sai da régua (25 siglas) e nasce o alerta de tempo parado
 
 - **Decisão (Alexandre, 05/11/2026):** a sigla **VAz (Vazio) foi removida** da régua, que passa de **26 para 25** siglas. O **PÁT** (pátio) cobre **qualquer ativo parado** (cavalo, caminhão, implemento, equipamento e apoio). O **ETv** (em trânsito vazio) continua.

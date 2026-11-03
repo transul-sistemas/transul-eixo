@@ -50,6 +50,10 @@ O usuário da API é somente leitura **por enquanto**. A garantia do Eixo é a t
 
 ## Centros de resultado, naturezas e TOPs (`TSICUS`, `TGFNAT`, `TGFTOP`)
 
+- **CR (`TSICUS`), vista em tela em 05/11/2026:** `CODCENCUS` é inteiro com máscara hierárquica (04.000.000 Frota COR/SP > 04.011.000 Frota implemento COR > 04.011.142, o CR da placa); `DESCRCENCUS` é a placa nos CRs de frota (só confere: fica velha na conversão Mercosul); "analítico" e "veículo obrigatório" ligados nos CRs de placa; `AD_BLOQUEADO`, `AD_GARAGEM`, `AD_OPERACAO` (vazio no CR de frota) e `AD_FROTA` ("Participa da Frota?"). O vínculo placa-CR é `TGFVEI.CODCENCUS`.
+- **Campos permitidos (CR):** `CODCENCUS`, `DESCRCENCUS`, `ATIVO`, `ANALITICO`, `VEICULO`, `CODCENCUSPAI`, `AD_FROTA`, `AD_BLOQUEADO`, `AD_OPERACAO`, `AD_GARAGEM`, `DTINCLUSAO`. **Não ler** `CODUSURESP` nem `CODPARCRESP` (dado de pessoa).
+- **Tipo do CR no Eixo (derivado, com origem):** serviço (`AD_FROTA` desligado); frota de placa (`AD_FROTA` e `VEICULO` ligados); frota sem placa (`AD_FROTA` ligado e `VEICULO` desligado). A operação **não** vem do CR de frota: é montada no Eixo (decisão de 05/11/2026). Todos os CRs entram na importação, inclusive bloqueados e inativos.
+
 - **Centro de resultado (`TSICUS`):** `CODCENCUS`, `DESCRCENCUS`, `ATIVO`, `ANALITICO`, `VEICULO` (veículo obrigatório), `CODCENCUSPAI`, `GRAU`, responsáveis.
 - **Campos `AD_` do centro:** `AD_BLOQUEADO` (bloquear a utilização), `AD_FROTA`, `AD_OPERACAO`, `AD_GARAGEM`, `AD_IDEXTERNO`.
 - **Regra do vigente:** ao mudar de centro, o antigo é bloqueado; o vigente é o não bloqueado; **mais de um não bloqueado vira alerta**. O bloqueio **não guarda data**. As datas de início e fim do centro na vigência vêm da origem **derivada** (primeiro e último lançamento do veículo naquele centro, no financeiro), **observada** (quando a sincronização viu a mudança de bloqueio) ou **informada** (assistente de transferência), e a origem é registrada junto da data.

@@ -481,6 +481,21 @@ O texto completo está em `docs/decisoes.md` (entradas de 04/11/2026). Aqui fica
 - **Consulta de placa no "Cadastrar placa":** descartada por ora (depende de API paga ou canal oficial autorizado pela diretoria).
 - **"Receber placa" na opção B (ajuste da tela na 3.9):** a tela ainda faz tudo numa etapa e troca o gestor ao concluir. Mudam: `app/(sistema)/frota/placas/assistentes/receber-placa.tsx` (duas etapas e três respostas por pendência, com nota); `esquemaRecebimento` em `lib/dominio/esquemas/placa.ts` (pendências com `resolvida: boolean`); `lib/dominio/custodia.ts` (`SituacaoDoPedido` e `podeReceberPedido`); o `receber` do armazém de exemplo (`lib/exemplo/armazem.ts`, que troca o gestor no recebimento); `receberPlacaAcao` (`app/(sistema)/frota/placas/acoes.ts`) e `lib/dados/entradas-dos-assistentes.ts`; as ações da ficha (`lib/dominio/acoes-do-momento.ts` e `components/ficha/acoes-da-ficha.tsx`, que não têm "concluir" para pedido em conferência); e os e2e de custódia (`e2e/assistentes-frota-custodia.spec.ts`, além de `assistentes-frota.casca.spec.ts`, `assistentes-frota.visual.spec.ts` e `ficha.spec.ts`).
 
+## CR e operação (05/11/2026): fatia 3.6c
+
+O texto completo está em `docs/decisoes.md` (entrada de 05/11/2026). **Substitui** a regra da 3.3 de que a operação da placa é a do CR vigente.
+
+- **3.6c (banco):** `codcencus` obrigatório e único; tipo do CR (serviço, frota de placa, frota sem placa) derivado de `AD_FROTA` e `VEICULO`, com origem; CR pai, ativo, bloqueado e analítico com origem; **o CR de frota de placa pertence a um único ativo, para sempre (regra do banco, com teste de mutação)**; o vínculo **placa-operação** com vigência (uma operação por vez por placa, quem montou, vigência aberta até alguém alterar); o vínculo **CR de serviço-operação** com vigência; `operacao_do_ativo` lê o vínculo (engatado e solto como estão); o custo de cada data vem do CR que a placa tinha naquela data; o alerta `cr_sem_operacao` só para CR de serviço; o escopo "operacao" lê o vínculo.
+- **Importação:** o relatório de divergência do Sankhya lista os CRs usados por mais de um veículo; o segundo vínculo vai para a fila de exceções, sem enfraquecer a regra.
+- **Hipóteses (aditivas, fáceis de mudar):** vários CRs de serviço por operação; quem monta a operação usa as permissões do módulo Operações (sem perfil novo até Alexandre decidir).
+
+**Pendências para o Sankhya (só agregados, sem placas):**
+- **CR, consulta 1:** distribuição de `AD_FROTA`, `VEICULO`, `ATIVO`, `AD_BLOQUEADO` e `ANALITICO`.
+- **CR, consulta 2:** veículos ativos por tipo de CR.
+- **CR, consulta 3:** CRs com mais de um veículo (o relatório de divergência antes da importação).
+- **CR, consulta 4:** operação e garagem nos CRs de frota ativos.
+- **Veículos:** modelo × eixos × carroceria, e os vazios (as consultas 2 e 3 da pendência 22).
+
 ## Acréscimos da 3.6 (05/11/2026)
 
 - **3.7:** a função atômica de cadastro (ativo, posse, gestor e evento inicial numa transação), para o gestor enxergar a placa nova logo depois de criá-la (sob RLS, a placa sem gestor vigente não aparece para ele).
@@ -515,6 +530,8 @@ O texto completo está em `docs/decisoes.md` (entradas de 05/11/2026).
 | 21 | **Prefixos dos nomes de fabricante** no Sankhya (BT, BZ, RD, SR, CA...): o que significam. Não valem como fonte de conjunto | Equipe, por Alexandre | Normalização da importação |
 | 22 | **Consultas 2 e 3 do Sankhya** (modelo × eixos × carroceria, e os vazios) **com filtro de ativo** e, se existir, `AD_ORIGEM` (frota ou terceiros) | Equipe do Sankhya, por Alexandre | Saneamento e 3.7 |
 | 23 | **Responsável e frequência de revisão** do relatório de divergências Sankhya × Eixo | Equipe, por Alexandre | 3.7 e saneamento |
+| 24 | **Consultas de CR no Sankhya** (1: distribuição de `AD_FROTA`, `VEICULO`, `ATIVO`, `AD_BLOQUEADO`, `ANALITICO`; 2: veículos ativos por tipo de CR; 3: CRs com mais de um veículo ativo; 4: operação e garagem nos CRs de frota ativos), só agregadas | Equipe do Sankhya, por Alexandre | Confirmar o tipo do CR e levantar as divergências antes da importação |
+| 25 | **Operação:** um ou vários CRs de serviço por operação (hipótese: vários)? Qual perfil monta a operação (talvez "Gestor de operação")? | Alexandre | 3.6c fica com a hipótese e sem perfil novo |
 
 ## Apêndice A: as 25 siglas (eram 26), para Alexandre conferir
 
