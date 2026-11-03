@@ -34,7 +34,8 @@ O usuário da API é somente leitura **por enquanto**. A garantia do Eixo é a t
 ## Veículos (`TGFVEI`, `TMSMARCAVEI`, `TMSMODELOVEI`, `TMSTVC`)
 
 - **Chave permanente do ativo:** `RENAVAM`. A `PLACA` muda (Mercosul) e o Sankhya **não guarda a placa antiga**; o histórico de placas é do Eixo.
-- **Identidade e cadastro:** `CODVEICULO`, `PLACA`, `RENAVAM`, `CHASSIS`, `NUMMOTOR`, `ANOFABRIC`, `ANOMOD`, `CODMARCAVEI`/`CODMODELOVEI` (e as tabelas de marca e modelo, com médias de consumo sugeridas), `CODTIPVEI` (tipo, em `TMSTVC`), `TIPOCAR` e `CODTIPCAR` (carroceria), `TIPOROD` e `CODTIPRD` (rodado), `CAVALO`, `ATIVO`, `BLOQUEADO`, `MOTIVOBLOQ`.
+- **Identidade e cadastro:** `CODVEICULO`, `PLACA`, `RENAVAM`, `CHASSIS`, `NUMMOTOR`, `ANOFABRIC`, `ANOMOD`, `CODMARCAVEI`/`CODMODELOVEI` (e as tabelas de marca e modelo, com médias de consumo sugeridas), `TIPVEI` e `CODTIPVEI` (tipo, em `TMSTVC`), `NUMEIXOS` (eixos), `TIPOCAR` e `CODTIPCAR` (carroceria), `TIPOROD` e `CODTIPRD` (rodado), `CAVALO`, `ATIVO`, `BLOQUEADO`, `MOTIVOBLOQ`.
+- **O nome do modelo do implemento descreve só os eixos** ("Carreta 3 eixos"), não a carroceria. Eixos e carroceria são da placa: o Sankhya (`NUMEIXOS`, `TIPOCAR`, `CODTIPCAR`) é **sugestão**, corrigida por placa no Eixo (decisões de 04/11/2026). Catálogo de marca e modelo: 82 modelos e 4.455 veículos, sem filtro de ativo (agregados em `docs/decisoes.md`).
 - **Composição:** `CODVEI1`, `CODVEI2` e `CODVEI3` (carretas 1 a 3). São mantidos no dia a dia; a composição atual pode vir do Sankhya.
 - **Gestor:** `CODPARCGESTOR` existe, mas **não é mantido**: o gestor da carteira é do Eixo.
 - **Centro de resultado:** `CODCENCUS` (um por veículo no Sankhya; o histórico de vigência é do Eixo).

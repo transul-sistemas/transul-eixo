@@ -471,6 +471,16 @@ Hoje o banco exige carroceria em todo implemento (`ativo_carroceria_obrigatoria_
 5. **Operação gravada na saída do conjunto:** é o único dado derivado que vira fato; o trigger que o torna imutável precisa de teste de borda (desengatar e reengatar no mesmo instante).
 6. **Sem login até a 3.8:** o app só pode ser exercitado contra o banco depois dela; até lá o banco é provado só por pgTAP.
 
+## Sankhya, classificações e saneamento (04/11/2026)
+
+O texto completo está em `docs/decisoes.md` (entradas de 04/11/2026). Aqui ficam os acréscimos às fatias.
+
+- **Duas classificações:** a placa guarda eixos (1 a 6) e, no implemento, a carroceria; o conjunto tem o nome calculado ao engatar, nunca gravado. Palavra de conjunto e prefixos de fabricante (BT, BZ, RD) nunca valem como fonte.
+- **Acréscimo à 3.7 (cadastro com origem por campo) e ao saneamento:** cada campo de cadastro guarda o valor do Sankhya, a correção local (quem, quando e por quê) e o efetivo; a sincronização atualiza o do Sankhya sem apagar a correção; a divergência vira relatório e o que não se deduz vai para a fila de exceções. A correção de eixos e carroceria é **por placa**, com `NUMEIXOS`, `TIPOCAR` e `CODTIPCAR` como sugestão (o nome do modelo só confere), nunca por de-para de modelo. **Combinar com a equipe um responsável e uma frequência de revisão do relatório de divergências** (pendência 23).
+- **Backlog (depois da Fase 3):** conferência rápida por gestor, em tabela, com o valor do Sankhya ao lado e dois campos (eixos e carroceria) para confirmar ou corrigir em lote.
+- **Consulta de placa no "Cadastrar placa":** descartada por ora (depende de API paga ou canal oficial autorizado pela diretoria).
+- **"Receber placa" na opção B (ajuste da tela na 3.9):** a tela ainda faz tudo numa etapa e troca o gestor ao concluir. Mudam: `app/(sistema)/frota/placas/assistentes/receber-placa.tsx` (duas etapas e três respostas por pendência, com nota); `esquemaRecebimento` em `lib/dominio/esquemas/placa.ts` (pendências com `resolvida: boolean`); `lib/dominio/custodia.ts` (`SituacaoDoPedido` e `podeReceberPedido`); o `receber` do armazém de exemplo (`lib/exemplo/armazem.ts`, que troca o gestor no recebimento); `receberPlacaAcao` (`app/(sistema)/frota/placas/acoes.ts`) e `lib/dados/entradas-dos-assistentes.ts`; as ações da ficha (`lib/dominio/acoes-do-momento.ts` e `components/ficha/acoes-da-ficha.tsx`, que não têm "concluir" para pedido em conferência); e os e2e de custódia (`e2e/assistentes-frota-custodia.spec.ts`, além de `assistentes-frota.casca.spec.ts`, `assistentes-frota.visual.spec.ts` e `ficha.spec.ts`).
+
 ## Pendências em aberto
 
 | # | Pendência | Quem resolve | O que trava |
@@ -479,6 +489,9 @@ Hoje o banco exige carroceria em todo implemento (`ativo_carroceria_obrigatoria_
 | 3.1 | Decisões A a F **aprovadas em 01/11** (ver "Fatia 3.1 em detalhes"). Sobra só o VAz, que é pendência dele com a equipe | Alexandre | Nada trava a 3.1 |
 | 16 | ~~Regra que reconhece bitrem, bitrezão e rodotrem~~ **Respondida pela equipe em 03/11/2026** (ver "Fatia 3.4 em detalhes") | Equipe, por Alexandre | Resolvida |
 | 20 | ~~Dolly no banco~~ **Opção A escolhida por Alexandre em 03/11/2026** (função do implemento) | Alexandre | Resolvida |
+| 21 | **Prefixos dos nomes de fabricante** no Sankhya (BT, BZ, RD, SR, CA...): o que significam. Não valem como fonte de conjunto | Equipe, por Alexandre | Normalização da importação |
+| 22 | **Consultas 2 e 3 do Sankhya** (modelo × eixos × carroceria, e os vazios) **com filtro de ativo** e, se existir, `AD_ORIGEM` (frota ou terceiros) | Equipe do Sankhya, por Alexandre | Saneamento e 3.7 |
+| 23 | **Responsável e frequência de revisão** do relatório de divergências Sankhya × Eixo | Equipe, por Alexandre | 3.7 e saneamento |
 
 ## Apêndice A: as 26 siglas, para Alexandre conferir
 
