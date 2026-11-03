@@ -481,6 +481,14 @@ O texto completo está em `docs/decisoes.md` (entradas de 04/11/2026). Aqui fica
 - **Consulta de placa no "Cadastrar placa":** descartada por ora (depende de API paga ou canal oficial autorizado pela diretoria).
 - **"Receber placa" na opção B (ajuste da tela na 3.9):** a tela ainda faz tudo numa etapa e troca o gestor ao concluir. Mudam: `app/(sistema)/frota/placas/assistentes/receber-placa.tsx` (duas etapas e três respostas por pendência, com nota); `esquemaRecebimento` em `lib/dominio/esquemas/placa.ts` (pendências com `resolvida: boolean`); `lib/dominio/custodia.ts` (`SituacaoDoPedido` e `podeReceberPedido`); o `receber` do armazém de exemplo (`lib/exemplo/armazem.ts`, que troca o gestor no recebimento); `receberPlacaAcao` (`app/(sistema)/frota/placas/acoes.ts`) e `lib/dados/entradas-dos-assistentes.ts`; as ações da ficha (`lib/dominio/acoes-do-momento.ts` e `components/ficha/acoes-da-ficha.tsx`, que não têm "concluir" para pedido em conferência); e os e2e de custódia (`e2e/assistentes-frota-custodia.spec.ts`, além de `assistentes-frota.casca.spec.ts`, `assistentes-frota.visual.spec.ts` e `ficha.spec.ts`).
 
+## Disponibilizar e receber (05/11/2026)
+
+O texto completo está em `docs/decisoes.md` (entradas de 05/11/2026).
+
+- **Terminologia (opção 1):** "Disponibilizar placa" é o envio da placa a outro gestor de frota (antes "Transferir placa"); a entrega à custódia do Operacional passa a ser "Entregar ao Operacional". Mesmo nome do começo ao fim. O banco não muda (`transferencia` e `custodia`); a lista do que muda de nome (ações, telas, testes e e2e) está na decisão, e a troca entra com os assistentes, depois da 3.9.
+- **Receber bem aparente:** selo no menu, item "Para receber", faixa na lista, chip "Para receber (N)" primeiro, linha destacada com "Aguardando você", faixa grande na ficha com "Receber placa" e o assistente já preenchido; só quem recebe vê; nunca só pela cor; tom muda depois de alguns dias. Selo, faixa e filtro saem da lista de pedidos pendentes; o aviso em tempo real é da Central de Tarefas.
+- **Ordem, depois da 3.9:** o assistente "Disponibilizar placa" (envio, em lote), o "Receber placa" em duas etapas e este desenho, com e2e de aceite (a pessoa certa vê em até um clique; a errada não vê; teclado e leitor de tela).
+
 ## Acréscimos da 3.5 (04/11/2026)
 
 - **3.6:** a correção de evento de status feita muito depois do fato gera **alerta**; a política (prazo, quem vê) nasce com as permissões.

@@ -8,6 +8,37 @@ Modelo de entrada:
 
 ---
 
+## 05/11/2026 — "Disponibilizar" é para um gestor; a entrega ao Operacional ganha outro verbo
+
+- **Decisão (Alexandre, 05/11/2026), opção 1:** **"Disponibilizar"** passa a ser o passo de **quem envia a placa a outro gestor de frota** (o assistente antes chamado "Transferir placa"); o gestor que recebe preenche o que já está pronto (assistente "Receber placa"). A **entrega à custódia do Operacional** passa a ter **outro verbo**: proposta **"Entregar ao Operacional"**. A ação e o assistente têm o **mesmo nome do começo ao fim** ("Disponibilizar placa" → "Placa disponibilizada"; "Entregar ao Operacional" → "Placa entregue ao Operacional").
+- **Motivo:** disponibilizar se faz a uma pessoa que vai assumir a placa, não a uma filial.
+- **Alternativa descartada (opção 2):** manter "Disponibilizar ao Operacional" pedindo um gestor em vez de uma filial; mexeria no modelo (custódia por filial, escopo do Operacional por filial) sem ganho.
+- **O modelo do banco não muda:** `nucleo.transferencia` (com `transferencia_pendencia`) é o "Disponibilizar"; `nucleo.custodia` com `com_quem = 'operacional'` e a filial é o "Entregar ao Operacional". A sigla **DOp ("Disponível no Operacional")** descreve o estado da placa, não a ação, e fica como está (a confirmar).
+- **O que muda de nome (nada alterado agora; a troca entra com o assistente de enviar e o Receber em duas etapas, depois da 3.9):**
+  - **Ações (`lib/navegacao/acoes.ts`, `ACOES`):** `frota.disponibilizar-ao-operacional` ("Disponibilizar ao Operacional", rota `?assistente=disponibilizar`) vira **"Entregar ao Operacional"**; nasce a ação **"Disponibilizar placa"** (o envio a outro gestor); `frota.receber-placa` fica, com a descrição ajustada ("Recebe a placa disponibilizada por outro gestor...").
+  - **Telas e assistentes:** `app/(sistema)/frota/placas/assistentes/disponibilizar-ao-operacional.tsx` (nome do arquivo, título, botões e mensagens), `assistentes-da-frota.tsx` (inclui o texto vazio "Quando um gestor transferir uma placa..."), `escolher-a-placa.tsx`; `lib/navegacao/catalogo.ts` (a descrição "disponibiliza placas ao Operacional").
+  - **Servidor, dados e domínio:** `disponibilizarPlacaAcao` (`app/(sistema)/frota/placas/acoes.ts`); `disponibilizarPlaca` em `lib/dados/fonte.ts`, `fonte-de-exemplo.ts`, `escrita.ts`, `escrita-tipos.ts` e `assistentes.ts`; o armazém de exemplo (`lib/exemplo/armazem.ts`); `lib/dominio/custodia.ts` (`podeDisponibilizar` e as mensagens "Só cavalo ou caminhão podem ser disponibilizados ao Operacional." e "Só dá para disponibilizar placa em PÁT, VAz ou ETv."); `lib/dominio/acoes-do-momento.ts`; `esquemaDisponibilizacao` e `esquemaDisponibilizacaoDe` (`lib/dominio/esquemas/placa.ts`).
+  - **Testes (Vitest):** `app/(sistema)/frota/placas/acoes.test.ts`, `components/ficha/acoes-da-ficha.test.tsx`, `lib/dados/assistentes.test.ts`, `lib/dados/escrita.test.ts`, `lib/dominio/acoes-do-momento.test.ts`, `lib/dominio/custodia.test.ts`, `lib/dominio/esquemas/placa.test.ts`, `lib/exemplo/armazem.test.ts`, `lib/navegacao/acoes.test.ts`, `lib/navegacao/busca-rapida.test.ts`, `lib/seguranca/exigir-permissao.test.ts`.
+  - **e2e:** `e2e/assistentes-frota-custodia.spec.ts`, `e2e/busca-rapida.spec.ts`, `e2e/ficha.spec.ts` e os apoios `e2e/apoio-assistentes-frota.ts` e `e2e/apoio-resultado-dos-assistentes.ts`.
+- **Quem decidiu:** Alexandre (05/11/2026).
+
+## 05/11/2026 — Receber placa tem de ser bem aparente para o novo gestor
+
+- **Requisito (Alexandre, 05/11/2026):** a placa disponibilizada a um gestor precisa ser **bem aparente**, fácil de perceber e de aceitar, **nunca escondida**.
+- **Desenho:**
+  - **Selo com o número** no item Frota do menu; item **"Para receber"** no topo do grupo.
+  - **Faixa no topo da lista de placas:** "Você tem N placas para receber", com o botão **"Ver e receber"**.
+  - **Primeiro chip de filtro "Para receber (N)"**, em destaque.
+  - **Linha da placa destacada** com o selo **"Aguardando você"**, quem enviou e há quantos dias.
+  - **Na ficha, faixa grande** ("[gestor] enviou esta placa", o motivo e N pendências) com o botão principal **"Receber placa"**; **um clique** abre o assistente já preenchido com o que o remetente informou.
+  - **Só quem recebe vê.** **Nunca só pela cor:** texto, selo e ícone. A faixa **muda de tom** depois de alguns dias sem resposta.
+- **Fonte dos dados:** o aviso em tempo real fica na **Central de Tarefas**; o selo, a faixa e o filtro saem **direto da lista de pedidos pendentes** (`nucleo.transferencia` em aberto para o gestor).
+- **Quando:** entra junto do assistente de enviar ("Disponibilizar placa") e do "Receber placa" em duas etapas, **depois da 3.9**.
+- **Critérios de aceite (e2e):** a pessoa certa vê a faixa em **até um clique**; a pessoa errada **não vê**; navegação por **teclado** e **leitor de tela**.
+- **Quem decidiu:** Alexandre (05/11/2026).
+
+---
+
 ## 04/11/2026 — Fatia 3.5 (status): eventos, estado por camada e situação calculada
 
 - **Já decidido por Alexandre (04/11/2026):** cinco camadas (baixada, fora da frota, impedida, sem motorista, atividade), um estado por camada; evento com sigla e hora (com origem da data), imutável; evento sem sigla encerra a camada; vigência `[início, fim)` por (ativo, camada) com exclusão; a situação é a sigla da camada de maior prioridade; o cadastro cria o evento inicial (padrão PÁT); validade pela marca `tipos_validos` e `aplica_a` (o caminhão só pelos tipos; o apoio perde o SMo; VAz no rascunho); herança calculada e nunca gravada (o implemento engatado herda só a atividade; qualquer membro impedido deixa o conjunto impedido; o banco nunca desengata sozinho); desatrelar e engatar atômicos; a baixa gera o evento da camada baixada; a trava do tipo pela situação; "pendente" quando não se calcula.
