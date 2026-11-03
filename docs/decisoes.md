@@ -762,3 +762,22 @@ Registro de direção, só em texto: nenhum código nem migration. Não muda a f
   7. **e2e:** os testes que escolhiam "a primeira placa de `?chip=patio`" passam a escolher `?chip=patio&chip=cavalo` (a primeira podia ser uma carreta, que agora não oferece o botão).
 - **Verificação (Docker local):** `db reset` repetido sem erro, `supabase test db` com 136 testes (21 + 58 + 47 + 10), `db lint --fail-on warning` sem alertas, tipos regenerados em LF.
 - **Quem decidiu:** Alexandre aprovou as decisões A a F; os itens acima aguardam a confirmação do checkpoint.
+
+## 03/11/2026 — Fase 3, fatia 3.3 (vigências, CR e operação)
+
+- **O que entrou (banco, três migrations):** (1) `nucleo.operacao`, `nucleo.cr` (com `codcencus` e `codigo` livre) e `nucleo.cr_do_ativo`; (2) `nucleo.posse_do_ativo`, `nucleo.gestor_da_carteira` e `nucleo.baixa_do_ativo`, com a regra do buraco; (3) `nucleo.custodia`, `nucleo.transferencia`, `nucleo.receber_transferencia` e as visões `nucleo.operacao_do_ativo` e `nucleo.alerta_de_vinculo`. Tudo com RLS ligado e **sem grant**; nenhuma função nova é `SECURITY DEFINER`.
+- **O que entrou (código):** `lib/dominio/vigencia.ts` (`sobrepoe`, `consecutivas`, `vigenteEm`, `buracosEntre`, `semBuraco`, limites `[)`) e o fim do `CR-0000` no esquema do CR.
+- **Regra comum às quatro vigências:** `EXCLUDE` por `ativo_id` em `[início, fim)` só para linha não excluída; fim depois do início (`23514`); fim com origem; origem da data `derivada`, `observada` ou `informada`. **Corrigir** o início, ou um fim já registrado, exige o motivo (`eixo.motivo`), que a auditoria guarda; fechar uma vigência em aberto não é correção.
+- **Buraco:** proibido em posse e gestor (gatilho de restrição adiado, conferido no fim da transação, também no cadastro do ativo); permitido em CR e custódia, onde vira alerta (`buraco_em_cr`, `buraco_em_custodia`). Posse e gestor só terminam sem sucessora junto da baixa (VND ou SUC), no **mesmo instante** da baixa.
+- **Decisões minhas a confirmar:**
+  1. **Baixa fecha tudo:** com baixa registrada, posse e gestor **têm** de terminar exatamente em `em`; vigência ainda em aberto depois da baixa é recusada. O plano só dizia "fecha junto da baixa"; o teste não cobre o caso contrário.
+  2. **`operacao_do_ativo` na 3.3 só tem o degrau 3** (a operação do CR vigente). Engatado (a do cavalo) e solto (a última) dependem da composição e entram na 3.4, redefinindo a visão.
+  3. **Alerta de vínculo:** `sem_cr`, `cr_sem_operacao`, `buraco_em_cr` e `buraco_em_custodia`, só para ativo sem baixa. `buraco_em_cr` é o intervalo **entre** duas vigências; "sem CR agora" é `sem_cr`. O nome do alerta é texto, não enum, para a 3.4 e a 3.5 acrescentarem sem migration de tipo.
+  4. **`transferencia`:** situações `pendente`, `recebida` e `cancelada` (texto com `CHECK`); `de` e `para` e o ativo não mudam depois de criados. O plano cita "pendências" do pedido; **não inventei coluna**, fica para o assistente (3.7). Receber grava a origem `informada` nas duas datas.
+  5. **`gestor_id` aponta para `nucleo.pessoa`**, sem checar o papel de gestor de frota: o papel nasce com o usuário e o perfil (3.6). A pessoa dona da posse é opcional em todos os regimes, e proibida só na posse própria.
+  6. **`nucleo.cr.nome` pode faltar**, como o `codcencus`, até a ponte; `codigo` é obrigatório e único, inclusive de linha excluída. `nucleo.operacao` só tem `nome` (único): não inventei código do Sankhya.
+  7. **`baixa_do_ativo.sigla`** tem chave estrangeira para `config.status` **e** `CHECK (sigla in ('VND','SUC'))`, porque a chave estrangeira sozinha aceitaria ETc (erro `23514` pedido pelo teste). As duas siglas repetem as marcadas `baixada` no catálogo. Uma baixa por ativo (índice único parcial).
+  8. **Contagem do pgTAP:** o `plan(88)` escrito antes estava errado; contadas à mão, são 86 asserções. Corrigido para `plan(86)`.
+- **Verificação (Docker local):** o pgTAP 30 foi rodado **antes** das migrations e falhou por falta de objetos (as 11 primeiras asserções e o abortamento no primeiro `insert`); depois, `db reset` duas vezes sem erro, `supabase test db` com 226 testes passando, `db lint` sem alertas, `pnpm db:tipos` em LF, Vitest (1757), ESLint, `tsc` e Prettier limpos. Sem tela: nenhum e2e novo.
+- **Fica para a 3.4:** composição, `operacao_na_saida_id`, os degraus 1 e 2 de `operacao_do_ativo`, meta e `nome_do_conjunto` (depende da regra da equipe), e a trava do `tipo` do ativo com vínculo vigente.
+- **Quem decidiu:** Alexandre (o plano); os itens acima aguardam a confirmação do checkpoint.

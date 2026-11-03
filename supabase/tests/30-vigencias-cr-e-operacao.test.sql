@@ -7,7 +7,7 @@
 -- ativos sem posse nem gestor de propósito, vêm por último.
 begin;
 
-select plan(88);
+select plan(86);
 
 create temp table ids (nome text primary key, id uuid not null);
 
