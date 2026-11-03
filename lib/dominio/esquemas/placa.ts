@@ -342,7 +342,8 @@ export const esquemaItemDeCatalogo = z.discriminatedUnion(
       nome: z
         .string({ error: "Informe o código do CR." })
         .trim()
-        .regex(/^CR-\d{4}$/, { error: "Código inválido. Use o formato CR-0000." }),
+        .min(2, { error: "Informe o código do CR com pelo menos 2 caracteres." })
+        .max(60, { error: "Use até 60 caracteres no código do CR." }),
       paiId: id("a operação"),
     }),
     z.object({ tipo: z.literal("filial"), nome: nomeDoItem }),

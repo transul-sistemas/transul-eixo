@@ -220,6 +220,162 @@ isOneToOne: false
                   Relationships: [
                     
                   ]
+                },"baixa_do_ativo": {
+                  Row: {
+                    "ativo_id": string,"criado_em": string,"em": string,"excluido_em": string | null,"excluido_por": string | null,"id": string,"motivo_da_exclusao": string | null,"sigla": string,"versao": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "ativo_id": string,"criado_em"?: string,"em": string,"excluido_em"?: string | null,"excluido_por"?: string | null,"id"?: string,"motivo_da_exclusao"?: string | null,"sigla": string,"versao"?: number
+                  }
+                  Update: {
+                    "ativo_id"?: string,"criado_em"?: string,"em"?: string,"excluido_em"?: string | null,"excluido_por"?: string | null,"id"?: string,"motivo_da_exclusao"?: string | null,"sigla"?: string,"versao"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "baixa_do_ativo_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: false
+      referencedRelation: "ativo"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "baixa_do_ativo_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: false
+      referencedRelation: "operacao_do_ativo"
+      referencedColumns: ["ativo_id"]
+    }
+                  ]
+                },"cr": {
+                  Row: {
+                    "ativo": boolean,"bloqueado": boolean,"codcencus": number | null,"codigo": string,"criado_em": string,"excluido_em": string | null,"excluido_por": string | null,"id": string,"motivo_da_exclusao": string | null,"nome": string | null,"operacao_id": string | null,"versao": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "ativo"?: boolean,"bloqueado"?: boolean,"codcencus"?: number | null,"codigo": string,"criado_em"?: string,"excluido_em"?: string | null,"excluido_por"?: string | null,"id"?: string,"motivo_da_exclusao"?: string | null,"nome"?: string | null,"operacao_id"?: string | null,"versao"?: number
+                  }
+                  Update: {
+                    "ativo"?: boolean,"bloqueado"?: boolean,"codcencus"?: number | null,"codigo"?: string,"criado_em"?: string,"excluido_em"?: string | null,"excluido_por"?: string | null,"id"?: string,"motivo_da_exclusao"?: string | null,"nome"?: string | null,"operacao_id"?: string | null,"versao"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "cr_operacao_id_fkey"
+      columns: ["operacao_id"]
+isOneToOne: false
+      referencedRelation: "operacao"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"cr_do_ativo": {
+                  Row: {
+                    "ativo_id": string,"cr_id": string,"criado_em": string,"excluido_em": string | null,"excluido_por": string | null,"fim": string | null,"fim_origem": Database["config"]['Enums']["origem_da_data"] | null,"id": string,"inicio": string,"inicio_origem": Database["config"]['Enums']["origem_da_data"],"motivo_da_exclusao": string | null,"periodo": unknown,"versao": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "ativo_id": string,"cr_id": string,"criado_em"?: string,"excluido_em"?: string | null,"excluido_por"?: string | null,"fim"?: string | null,"fim_origem"?: Database["config"]['Enums']["origem_da_data"] | null,"id"?: string,"inicio": string,"inicio_origem": Database["config"]['Enums']["origem_da_data"],"motivo_da_exclusao"?: string | null,"periodo"?: never,"versao"?: number
+                  }
+                  Update: {
+                    "ativo_id"?: string,"cr_id"?: string,"criado_em"?: string,"excluido_em"?: string | null,"excluido_por"?: string | null,"fim"?: string | null,"fim_origem"?: Database["config"]['Enums']["origem_da_data"] | null,"id"?: string,"inicio"?: string,"inicio_origem"?: Database["config"]['Enums']["origem_da_data"],"motivo_da_exclusao"?: string | null,"periodo"?: never,"versao"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "cr_do_ativo_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: false
+      referencedRelation: "ativo"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "cr_do_ativo_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: false
+      referencedRelation: "operacao_do_ativo"
+      referencedColumns: ["ativo_id"]
+    },{
+      foreignKeyName: "cr_do_ativo_cr_id_fkey"
+      columns: ["cr_id"]
+isOneToOne: false
+      referencedRelation: "cr"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "cr_do_ativo_cr_id_fkey"
+      columns: ["cr_id"]
+isOneToOne: false
+      referencedRelation: "operacao_do_ativo"
+      referencedColumns: ["cr_id"]
+    }
+                  ]
+                },"custodia": {
+                  Row: {
+                    "ativo_id": string,"com_quem": Database["nucleo"]['Enums']["com_quem_da_custodia"],"criado_em": string,"excluido_em": string | null,"excluido_por": string | null,"filial_id": string | null,"fim": string | null,"fim_origem": Database["config"]['Enums']["origem_da_data"] | null,"id": string,"inicio": string,"inicio_origem": Database["config"]['Enums']["origem_da_data"],"motivo_da_exclusao": string | null,"periodo": unknown,"versao": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "ativo_id": string,"com_quem": Database["nucleo"]['Enums']["com_quem_da_custodia"],"criado_em"?: string,"excluido_em"?: string | null,"excluido_por"?: string | null,"filial_id"?: string | null,"fim"?: string | null,"fim_origem"?: Database["config"]['Enums']["origem_da_data"] | null,"id"?: string,"inicio": string,"inicio_origem": Database["config"]['Enums']["origem_da_data"],"motivo_da_exclusao"?: string | null,"periodo"?: never,"versao"?: number
+                  }
+                  Update: {
+                    "ativo_id"?: string,"com_quem"?: Database["nucleo"]['Enums']["com_quem_da_custodia"],"criado_em"?: string,"excluido_em"?: string | null,"excluido_por"?: string | null,"filial_id"?: string | null,"fim"?: string | null,"fim_origem"?: Database["config"]['Enums']["origem_da_data"] | null,"id"?: string,"inicio"?: string,"inicio_origem"?: Database["config"]['Enums']["origem_da_data"],"motivo_da_exclusao"?: string | null,"periodo"?: never,"versao"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "custodia_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: false
+      referencedRelation: "ativo"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "custodia_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: false
+      referencedRelation: "operacao_do_ativo"
+      referencedColumns: ["ativo_id"]
+    }
+                  ]
+                },"gestor_da_carteira": {
+                  Row: {
+                    "ativo_id": string,"criado_em": string,"excluido_em": string | null,"excluido_por": string | null,"fim": string | null,"fim_origem": Database["config"]['Enums']["origem_da_data"] | null,"gestor_id": string,"id": string,"inicio": string,"inicio_origem": Database["config"]['Enums']["origem_da_data"],"motivo_da_exclusao": string | null,"periodo": unknown,"versao": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "ativo_id": string,"criado_em"?: string,"excluido_em"?: string | null,"excluido_por"?: string | null,"fim"?: string | null,"fim_origem"?: Database["config"]['Enums']["origem_da_data"] | null,"gestor_id": string,"id"?: string,"inicio": string,"inicio_origem": Database["config"]['Enums']["origem_da_data"],"motivo_da_exclusao"?: string | null,"periodo"?: never,"versao"?: number
+                  }
+                  Update: {
+                    "ativo_id"?: string,"criado_em"?: string,"excluido_em"?: string | null,"excluido_por"?: string | null,"fim"?: string | null,"fim_origem"?: Database["config"]['Enums']["origem_da_data"] | null,"gestor_id"?: string,"id"?: string,"inicio"?: string,"inicio_origem"?: Database["config"]['Enums']["origem_da_data"],"motivo_da_exclusao"?: string | null,"periodo"?: never,"versao"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "gestor_da_carteira_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: false
+      referencedRelation: "ativo"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "gestor_da_carteira_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: false
+      referencedRelation: "operacao_do_ativo"
+      referencedColumns: ["ativo_id"]
+    },{
+      foreignKeyName: "gestor_da_carteira_gestor_id_fkey"
+      columns: ["gestor_id"]
+isOneToOne: false
+      referencedRelation: "pessoa"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"operacao": {
+                  Row: {
+                    "criado_em": string,"excluido_em": string | null,"excluido_por": string | null,"id": string,"motivo_da_exclusao": string | null,"nome": string,"versao": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "criado_em"?: string,"excluido_em"?: string | null,"excluido_por"?: string | null,"id"?: string,"motivo_da_exclusao"?: string | null,"nome": string,"versao"?: number
+                  }
+                  Update: {
+                    "criado_em"?: string,"excluido_em"?: string | null,"excluido_por"?: string | null,"id"?: string,"motivo_da_exclusao"?: string | null,"nome"?: string,"versao"?: number
+                  }
+                  Relationships: [
+                    
+                  ]
                 },"pessoa": {
                   Row: {
                     "codparc": number | null,"criado_em": string,"documento_mascarado": string | null,"email": string | null,"excluido_em": string | null,"excluido_por": string | null,"id": string,"motivo_da_exclusao": string | null,"nome": string,"versao": number
@@ -272,12 +428,136 @@ isOneToOne: true
 isOneToOne: false
       referencedRelation: "ativo"
       referencedColumns: ["id"]
+    },{
+      foreignKeyName: "placa_do_ativo_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: false
+      referencedRelation: "operacao_do_ativo"
+      referencedColumns: ["ativo_id"]
+    }
+                  ]
+                },"posse_do_ativo": {
+                  Row: {
+                    "ativo_id": string,"criado_em": string,"excluido_em": string | null,"excluido_por": string | null,"fim": string | null,"fim_origem": Database["config"]['Enums']["origem_da_data"] | null,"id": string,"inicio": string,"inicio_origem": Database["config"]['Enums']["origem_da_data"],"motivo_da_exclusao": string | null,"periodo": unknown,"pessoa_dona_id": string | null,"regime": Database["nucleo"]['Enums']["regime_de_posse"],"versao": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "ativo_id": string,"criado_em"?: string,"excluido_em"?: string | null,"excluido_por"?: string | null,"fim"?: string | null,"fim_origem"?: Database["config"]['Enums']["origem_da_data"] | null,"id"?: string,"inicio": string,"inicio_origem": Database["config"]['Enums']["origem_da_data"],"motivo_da_exclusao"?: string | null,"periodo"?: never,"pessoa_dona_id"?: string | null,"regime": Database["nucleo"]['Enums']["regime_de_posse"],"versao"?: number
+                  }
+                  Update: {
+                    "ativo_id"?: string,"criado_em"?: string,"excluido_em"?: string | null,"excluido_por"?: string | null,"fim"?: string | null,"fim_origem"?: Database["config"]['Enums']["origem_da_data"] | null,"id"?: string,"inicio"?: string,"inicio_origem"?: Database["config"]['Enums']["origem_da_data"],"motivo_da_exclusao"?: string | null,"periodo"?: never,"pessoa_dona_id"?: string | null,"regime"?: Database["nucleo"]['Enums']["regime_de_posse"],"versao"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "posse_do_ativo_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: false
+      referencedRelation: "ativo"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "posse_do_ativo_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: false
+      referencedRelation: "operacao_do_ativo"
+      referencedColumns: ["ativo_id"]
+    },{
+      foreignKeyName: "posse_do_ativo_pessoa_dona_id_fkey"
+      columns: ["pessoa_dona_id"]
+isOneToOne: false
+      referencedRelation: "pessoa"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"transferencia": {
+                  Row: {
+                    "ativo_id": string,"concluida_em": string | null,"criado_em": string,"de_gestor_id": string,"devolvida_em": string | null,"excluido_em": string | null,"excluido_por": string | null,"id": string,"motivo": string,"motivo_da_exclusao": string | null,"para_gestor_id": string,"recebida_em": string | null,"situacao": string,"versao": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "ativo_id": string,"concluida_em"?: string | null,"criado_em"?: string,"de_gestor_id": string,"devolvida_em"?: string | null,"excluido_em"?: string | null,"excluido_por"?: string | null,"id"?: string,"motivo": string,"motivo_da_exclusao"?: string | null,"para_gestor_id": string,"recebida_em"?: string | null,"situacao"?: string,"versao"?: number
+                  }
+                  Update: {
+                    "ativo_id"?: string,"concluida_em"?: string | null,"criado_em"?: string,"de_gestor_id"?: string,"devolvida_em"?: string | null,"excluido_em"?: string | null,"excluido_por"?: string | null,"id"?: string,"motivo"?: string,"motivo_da_exclusao"?: string | null,"para_gestor_id"?: string,"recebida_em"?: string | null,"situacao"?: string,"versao"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "transferencia_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: false
+      referencedRelation: "ativo"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "transferencia_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: false
+      referencedRelation: "operacao_do_ativo"
+      referencedColumns: ["ativo_id"]
+    },{
+      foreignKeyName: "transferencia_de_gestor_id_fkey"
+      columns: ["de_gestor_id"]
+isOneToOne: false
+      referencedRelation: "pessoa"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "transferencia_para_gestor_id_fkey"
+      columns: ["para_gestor_id"]
+isOneToOne: false
+      referencedRelation: "pessoa"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"transferencia_pendencia": {
+                  Row: {
+                    "criado_em": string,"excluido_em": string | null,"excluido_por": string | null,"id": string,"motivo_da_exclusao": string | null,"nota": string | null,"respondida_em": string | null,"respondida_por": string | null,"resposta": string | null,"texto": string,"transferencia_id": string,"versao": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "criado_em"?: string,"excluido_em"?: string | null,"excluido_por"?: string | null,"id"?: string,"motivo_da_exclusao"?: string | null,"nota"?: string | null,"respondida_em"?: string | null,"respondida_por"?: string | null,"resposta"?: string | null,"texto": string,"transferencia_id": string,"versao"?: number
+                  }
+                  Update: {
+                    "criado_em"?: string,"excluido_em"?: string | null,"excluido_por"?: string | null,"id"?: string,"motivo_da_exclusao"?: string | null,"nota"?: string | null,"respondida_em"?: string | null,"respondida_por"?: string | null,"resposta"?: string | null,"texto"?: string,"transferencia_id"?: string,"versao"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "transferencia_pendencia_respondida_por_fkey"
+      columns: ["respondida_por"]
+isOneToOne: false
+      referencedRelation: "pessoa"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "transferencia_pendencia_transferencia_id_fkey"
+      columns: ["transferencia_id"]
+isOneToOne: false
+      referencedRelation: "transferencia"
+      referencedColumns: ["id"]
     }
                   ]
                 }
           }
           Views: {
-            "placa_atual": {
+            "alerta_de_vinculo": {
+                  Row: {
+                    "alerta": string | null,"ativo_id": string | null
+                  }
+                  ComputedFields: never
+                  Relationships: [
+                    
+                  ]
+                },"operacao_do_ativo": {
+                  Row: {
+                    "ativo_id": string,"cr_id": string | null,"operacao_id": string | null
+                  }
+                  ComputedFields: never
+                  Relationships: [
+                    {
+      foreignKeyName: "cr_operacao_id_fkey"
+      columns: ["operacao_id"]
+isOneToOne: false
+      referencedRelation: "operacao"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"placa_atual": {
                   Row: {
                     "ativo_id": string,"inicio": string,"placa": string
                   }
@@ -295,12 +575,21 @@ isOneToOne: false
 isOneToOne: false
       referencedRelation: "ativo"
       referencedColumns: ["id"]
+    },{
+      foreignKeyName: "placa_do_ativo_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: false
+      referencedRelation: "operacao_do_ativo"
+      referencedColumns: ["ativo_id"]
     }
                   ]
                 }
           }
           Functions: {
-            "documento_valido":
+            "concluir_transferencia":
+{ Args: { "p_em": string,"p_transferencia_id": string }; Returns: string
+                           },
+"documento_valido":
 { Args: { "p_texto": string }; Returns: boolean
                            },
 "mascarar_documento":
@@ -318,12 +607,15 @@ isOneToOne: false
 "placa_valida":
 { Args: { "p_texto": string }; Returns: boolean
                            },
+"receber_transferencia":
+{ Args: { "p_em": string,"p_transferencia_id": string }; Returns: undefined
+                           },
 "renavam_valido":
 { Args: { "p_texto": string }; Returns: boolean
                            }
           }
           Enums: {
-            "tipo_de_ativo": "cavalo"|"implemento"|"equipamento"|"caminhao"|"apoio"
+            "com_quem_da_custodia": "gestor"|"operacional","regime_de_posse": "propria"|"acionista"|"agregado"|"terceiro"|"alugada","tipo_de_ativo": "cavalo"|"implemento"|"equipamento"|"caminhao"|"apoio"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -463,7 +755,7 @@ export const Constants = {
           }
         },"nucleo": {
           Enums: {
-            "tipo_de_ativo": ["cavalo", "implemento", "equipamento", "caminhao", "apoio"]
+            "com_quem_da_custodia": ["gestor", "operacional"],"regime_de_posse": ["propria", "acionista", "agregado", "terceiro", "alugada"],"tipo_de_ativo": ["cavalo", "implemento", "equipamento", "caminhao", "apoio"]
           }
         },"public": {
           Enums: {

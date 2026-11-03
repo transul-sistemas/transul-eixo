@@ -290,17 +290,17 @@ describe("executarCriarItemDeCatalogo", () => {
     if (r.ok) expect(r.linha).toMatchObject({ tipo: "marca", nome: "DAF" });
     expect((await ctx.fonte.catalogos()).marcas.some((m) => m.nome === "DAF")).toBe(true);
   });
-  it("o esquema recusa modelo sem marca e CR fora do formato", async () => {
+  it("o esquema recusa modelo sem marca e CR sem código", async () => {
     const ctx = contexto();
     const r1 = await executarCriarItemDeCatalogo(CHAVE_A, { tipo: "modelo", nome: "XF" }, ctx);
     expect(r1.ok).toBe(false);
     const r2 = await executarCriarItemDeCatalogo(
       CHAVE_B,
-      { tipo: "cr", nome: "1006", paiId: "op-1" },
+      { tipo: "cr", nome: " ", paiId: "op-1" },
       ctx,
     );
     expect(r2.ok).toBe(false);
-    if (!r2.ok) expect(r2.erro.campos?.nome?.[0]).toMatch(/CR-0000/);
+    if (!r2.ok) expect(r2.erro.campos?.nome?.[0]).toMatch(/código do CR/);
   });
   it("nome repetido é entrada_invalida no campo nome", async () => {
     const ctx = contexto();
