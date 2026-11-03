@@ -127,12 +127,16 @@ describe("migrations da fundação", () => {
     );
   });
 
-  it("o grant a authenticated só existe na migration de políticas e grants (3.6)", () => {
+  it("o grant a authenticated nasceu na 3.6 e toda migration que o dá cria as políticas no mesmo arquivo", () => {
     const comGrant = arquivos.filter((n) =>
       /grant\s+[^;]*\bon\s+(?:table\s+|schema\s+)?(?:nucleo|config|auditoria)\b[^;]*\bto\s+authenticated\b/i.test(
         lerArquivo(`supabase/migrations/${n}`),
       ),
     );
-    expect(comGrant).toEqual(["20261103170725_politicas_e_grants.sql"]);
+    expect(comGrant[0]).toBe("20261103170725_politicas_e_grants.sql");
+    const semPolitica = comGrant.filter(
+      (n) => !/create\s+policy\b/i.test(lerArquivo(`supabase/migrations/${n}`)),
+    );
+    expect(semPolitica).toEqual([]);
   });
 });

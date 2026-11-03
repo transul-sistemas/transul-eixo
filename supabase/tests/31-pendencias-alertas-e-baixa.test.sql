@@ -258,9 +258,9 @@ select lives_ok(
 );
 
 -- ---- CODCENCUS: único quando existe ----
-select lives_ok(
-  $$insert into nucleo.cr (codigo) values ('Sem chave 1'), ('Sem chave 2')$$,
-  'vários CRs sem CODCENCUS convivem (até a ponte)'
+select throws_ok(
+  $$insert into nucleo.cr (codigo) values ('Sem chave 1')$$,
+  '23502', null, 'CR sem CODCENCUS é recusado (o CR sempre vem do Sankhya, 3.6c)'
 );
 select throws_ok(
   $$insert into nucleo.cr (codcencus, codigo) values (7001, 'Com chave 1'), (7001, 'Com chave 2')$$,
@@ -269,9 +269,9 @@ select throws_ok(
 
 -- ---- nomes de alerta: lista fechada ----
 select set_eq(
-  $$select distinct (regexp_matches(pg_get_viewdef('nucleo.alerta_de_vinculo'::regclass), ',\s+''(\w+)''::text', 'g'))[1]$$,
+  $$select distinct (regexp_matches(pg_get_viewdef('nucleo.alerta_de_vinculo'::regclass) || pg_get_viewdef('nucleo.alerta_de_cr'::regclass), ',\s+''(\w+)''::text', 'g'))[1]$$,
   array['sem_cr', 'cr_sem_operacao', 'buraco_em_cr', 'buraco_em_custodia', 'implemento_sem_eixos', 'conjunto_sem_nome', 'correcao_tardia_de_status', 'parado_em_patio'],
-  'a visão de alertas só produz os nomes registrados em docs/decisoes.md'
+  'as visões de alertas (vínculo e CR) só produzem os nomes registrados em docs/decisoes.md'
 );
 select is(
   (select count(*) from nucleo.alerta_de_vinculo

@@ -128,8 +128,8 @@ select throws_ok(
   '23505', null, 'o código de exibição do CR é único'
 );
 select lives_ok(
-  $$insert into nucleo.cr (codigo) values ('formato livre 9/Z')$$,
-  'o código de exibição não tem formato imposto (fim do CR-0000), e o CODCENCUS pode faltar até a ponte'
+  $$insert into nucleo.cr (codcencus, codigo) values (1005, 'formato livre 9/Z')$$,
+  'o código de exibição não tem formato imposto (fim do CR-0000); o CODCENCUS é obrigatório desde a 3.6c'
 );
 select lives_ok(
   $$insert into nucleo.cr (codcencus, codigo, operacao_id) values (1004, 'CR-N', null)$$,
@@ -450,27 +450,32 @@ insert into nucleo.custodia (ativo_id, com_quem, inicio, fim, inicio_origem, fim
   ((select id from ids where nome = 'cav44'), 'gestor', now() - interval '60 days', now() - interval '40 days', 'informada', 'informada');
 insert into nucleo.custodia (ativo_id, com_quem, inicio, inicio_origem) values
   ((select id from ids where nome = 'cav44'), 'gestor', now() - interval '20 days', 'informada');
+-- A operação é montada (3.6c): o vínculo placa-operação, não o CR.
+insert into nucleo.placa_na_operacao (ativo_id, operacao_id, inicio, inicio_origem) values
+  ((select id from ids where nome = 'cav40'), (select id from nucleo.operacao where nome = 'Grãos'), now() - interval '60 days', 'informada'),
+  ((select id from ids where nome = 'cav43'), (select id from nucleo.operacao where nome = 'Cimento'), now() - interval '60 days', 'informada');
+update nucleo.cr set participa_da_frota = false where codigo = 'CR-S';
 select pg_temp.conferir();
 
 select is(
   (select operacao_id from nucleo.operacao_do_ativo where ativo_id = (select id from ids where nome = 'cav40')),
   (select id from nucleo.operacao where nome = 'Grãos'),
-  'a operação do ativo vem do CR vigente'
+  'a operação do ativo vem da montagem (vínculo placa-operação)'
 );
 select is(
   (select operacao_id from nucleo.operacao_do_ativo where ativo_id = (select id from ids where nome = 'cav41')),
   null::uuid,
-  'ativo sem CR vigente fica sem operação'
+  'ativo sem montagem fica sem operação'
 );
 select is(
   (select operacao_id from nucleo.operacao_do_ativo where ativo_id = (select id from ids where nome = 'cav42')),
   null::uuid,
-  'ativo cujo CR vigente não tem operação fica sem operação'
+  'o CR não diz a operação: sem montagem, sem operação'
 );
 select is(
   (select operacao_id from nucleo.operacao_do_ativo where ativo_id = (select id from ids where nome = 'cav43')),
   (select id from nucleo.operacao where nome = 'Cimento'),
-  'trocar o CR do ativo troca a operação (vale o CR vigente, não o antigo)'
+  'trocar o CR do ativo não troca a operação (ela vem da montagem)'
 );
 select ok(
   not exists (select 1 from nucleo.alerta_de_vinculo where ativo_id = (select id from ids where nome = 'cav40')
@@ -482,8 +487,8 @@ select ok(
   'ativo sem CR vigente gera o alerta sem_cr'
 );
 select ok(
-  exists (select 1 from nucleo.alerta_de_vinculo where ativo_id = (select id from ids where nome = 'cav42') and alerta = 'cr_sem_operacao'),
-  'CR vigente sem operação gera o alerta cr_sem_operacao'
+  exists (select 1 from nucleo.alerta_de_cr where cr_id = (select id from nucleo.cr where codigo = 'CR-S') and alerta = 'cr_sem_operacao'),
+  'CR de serviço sem operação gera o alerta cr_sem_operacao (na visão de alertas de CR)'
 );
 select ok(
   exists (select 1 from nucleo.alerta_de_vinculo where ativo_id = (select id from ids where nome = 'cav43') and alerta = 'buraco_em_cr')

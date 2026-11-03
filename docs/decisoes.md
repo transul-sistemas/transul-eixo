@@ -8,6 +8,31 @@ Modelo de entrada:
 
 ---
 
+## 05/11/2026 — Fatia 3.6c (operação por montagem)
+
+- **O que entrou (migration nova `operacao_por_montagem`):**
+  - **CR:** `codcencus` obrigatório e único; tipo (`servico`, `frota_de_placa`, `frota_sem_placa`) derivado de `participa_da_frota` (AD_FROTA) e `veiculo_obrigatorio` (VEICULO) por `nucleo.tipo_do_cr`, com origem; CR pai, analítico, ativo e bloqueado com origem (`config.origem_do_campo`: sankhya, derivada, informada); `conferencia` nasce "a conferir". O CR não se apaga de verdade (o gasto histórico aponta para ele).
+  - **O CR de frota de placa pertence a uma única placa, para sempre:** o gatilho recusa ligá-lo a outro ativo (com trava por CR, para duas transações não passarem juntas), e também recusa virar frota de placa um CR que já está em mais de uma placa. Não vale para CR de frota sem placa nem para CR de serviço.
+  - **Montagem:** `nucleo.placa_na_operacao` (o lado da frota) e `nucleo.cr_de_servico_na_operacao` (o lado do serviço, só CR de serviço), cada um com vigência, exclusão contra sobreposição, quem montou, versão, auditoria e exclusão lógica (exige `operacoes.excluir`).
+  - **Operação num instante:** `nucleo.operacao_em` e `nucleo.operacao_e_degrau_em`; `nucleo.cr_em` dá o CR de cada data (o custo). A visão `operacao_do_ativo` troca o degrau `proprio_cr` por `elenco`; a operação gravada na saída do conjunto passa a vir da montagem do cavalo.
+  - **Alertas:** `cr_sem_operacao` sai de `alerta_de_vinculo` e vai para a visão nova `nucleo.alerta_de_cr` (só CR de serviço). **Lista fechada dos nomes de alerta:** `sem_cr`, `buraco_em_cr`, `buraco_em_custodia`, `implemento_sem_eixos`, `conjunto_sem_nome`, `correcao_tardia_de_status`, `parado_em_patio` (placas) e `cr_sem_operacao` (CR).
+  - **Acesso:** o escopo "operação" lê a montagem (pela visão); montar usa as permissões do módulo Operações (`config.pode_na_operacao`), sem perfil novo; seis políticas novas com nome; cinco funções novas na lista de exceções, cada uma justificada.
+  - **Espelho em TypeScript:** `lib/dominio/cr.ts` (`tipoDoCr`), com a mesma assinatura md5 no Vitest e no pgTAP.
+- **Decisões minhas a confirmar:**
+  1. **Montagem mais recente vence entre o elenco e a saída do conjunto:** o implemento solto mantém a operação gravada na saída **até** alguém montá-lo de novo; se a montagem da placa começou depois da saída, vale a montagem.
+  2. **Sem montagem nem saída, o degrau é `sem_operacao`** (operação nula). Não criei o alerta `ativo_sem_operacao` (só se Alexandre pedir).
+  3. **`cr_sem_operacao` só para CR de serviço ativo e não bloqueado** (os bloqueados e inativos entram na importação por causa do histórico, mas não pedem operação).
+  4. **`nucleo.cr.operacao_id` fica como sugestão do Sankhya (AD_OPERACAO)**, sem efeito na operação (migração aditiva: a coluna não foi removida).
+  5. **A origem dos campos do CR** é `informada` quando ninguém disse outra (antes da ponte); a ponte gravará `sankhya`.
+  6. **Quem lê a montagem:** quem alcança a placa (Frota e Operacional, pelo escopo) ou tem Operações na operação; os CRs de serviço da operação, só Operações.
+  7. **O teste de qualidade da fundação** passou a exigir que toda migration com grant a `authenticated` crie as políticas no mesmo arquivo (antes, o grant só podia existir na migration da 3.6).
+- **Perguntas pendentes (Alexandre):** um ou vários CRs de serviço por operação (hipótese aplicada: vários)? Qual perfil monta a operação (talvez "Gestor de operação"; hoje, quem tem o módulo Operações)?
+- **Testes antigos ajustados (a regra mudou de propósito):** 30 (CR com `codcencus`; operação pela montagem; `cr_sem_operacao` na visão de CR), 31 (CR sem `codcencus` recusado; a lista fechada lê as duas visões), 35 e 40 (cavalo e placas montados), 50 (placas montadas, escopo pela montagem, políticas novas na lista).
+- **Fica para a 3.7:** os assistentes e as funções atômicas de cadastro; o "+" de CR pedindo o código do Sankhya (a conferir); a montagem da operação na tela (com o módulo Operações).
+- **Quem decidiu:** Alexandre (a regra do CR e da operação, 05/11/2026); os itens numerados aguardam o checkpoint.
+
+---
+
 ## 05/11/2026 — O CR vem do Sankhya e a operação é montada por um usuário (substitui a regra da 3.3)
 
 - **O CR sempre vem do Sankhya.** O `codcencus` passa a ser **obrigatório e único** (migration nova, na **3.6c**; hoje é opcional só por causa dos testes). Antes da ponte, o "+" de CR no assistente pede o código do Sankhya e marca o CR "a conferir"; depois da ponte, o CR é escolhido entre os sincronizados.

@@ -167,6 +167,8 @@ select set_eq(
     'nucleo.usuario.usuario_ler', 'nucleo.usuario.usuario_criar', 'nucleo.usuario.usuario_alterar',
     'nucleo.usuario_operacao.usuario_operacao_ler', 'nucleo.usuario_operacao.usuario_operacao_criar', 'nucleo.usuario_operacao.usuario_operacao_alterar',
     'nucleo.usuario_filial.usuario_filial_ler', 'nucleo.usuario_filial.usuario_filial_criar', 'nucleo.usuario_filial.usuario_filial_alterar',
+    'nucleo.placa_na_operacao.placa_na_operacao_ler', 'nucleo.placa_na_operacao.placa_na_operacao_criar', 'nucleo.placa_na_operacao.placa_na_operacao_alterar',
+    'nucleo.cr_de_servico_na_operacao.cr_de_servico_na_operacao_ler', 'nucleo.cr_de_servico_na_operacao.cr_de_servico_na_operacao_criar', 'nucleo.cr_de_servico_na_operacao.cr_de_servico_na_operacao_alterar',
     'config.carroceria.carroceria_ler', 'config.carroceria.carroceria_criar', 'config.carroceria.carroceria_alterar',
     'config.marca.marca_ler', 'config.marca.marca_criar', 'config.marca.marca_alterar',
     'config.modelo.modelo_ler', 'config.modelo.modelo_criar', 'config.modelo.modelo_alterar',
@@ -254,6 +256,10 @@ insert into nucleo.usuario_operacao (usuario_id, operacao_id) values
 select pg_temp.placa('pa', 501, 'ga', 'CR-G', 'Filial A');
 select pg_temp.placa('pb', 502, 'gb', 'CR-C', 'Filial B');
 select pg_temp.placa('pc', 503, 'ga', null, null);
+-- A operação é montada (3.6c): o escopo "operação" lê o vínculo placa-operação.
+insert into nucleo.placa_na_operacao (ativo_id, operacao_id, inicio, inicio_origem) values
+  (pg_temp.id('pa'), (select id from nucleo.operacao where nome = 'Grãos'), '2026-01-10 00:00-03', 'informada'),
+  (pg_temp.id('pb'), (select id from nucleo.operacao where nome = 'Cimento'), '2026-01-10 00:00-03', 'informada');
 set constraints all immediate;
 set constraints all deferred;
 
@@ -382,7 +388,7 @@ select tests.como(pg_temp.id('uop'));
 select set_eq(
   $$select id from nucleo.ativo where id in (pg_temp.id('pa'), pg_temp.id('pb'), pg_temp.id('pc'))$$,
   $$values (pg_temp.id('pa'))$$,
-  'escopo operacao: vê só as placas cujo CR vigente é da operação do usuário'
+  'escopo operacao: vê só as placas montadas na operação do usuário'
 );
 reset role;
 

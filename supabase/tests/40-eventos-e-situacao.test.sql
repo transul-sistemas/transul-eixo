@@ -255,6 +255,8 @@ select is(nucleo.situacao_em(pg_temp.id('c5'), '2026-04-02 00:00-03'), 'MAN', 'i
 -- ---- engatar e desatrelar (funções atômicas) ----
 insert into nucleo.cr_do_ativo (ativo_id, cr_id, inicio, inicio_origem)
   values (pg_temp.id('c6'), (select id from nucleo.cr where codigo = 'CR-G'), '2026-01-10 00:00-03', 'informada');
+insert into nucleo.placa_na_operacao (ativo_id, operacao_id, inicio, inicio_origem)
+  values (pg_temp.id('c6'), (select id from nucleo.operacao where nome = 'Grãos'), '2026-01-10 00:00-03', 'informada');
 select lives_ok(
   $q$do $b$ begin
       perform nucleo.engatar(pg_temp.id('c6'), pg_temp.id('i8'), 1::smallint, '2026-05-01 00:00-03');

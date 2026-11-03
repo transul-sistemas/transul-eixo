@@ -327,6 +327,10 @@ insert into nucleo.cr_do_ativo (ativo_id, cr_id, inicio, inicio_origem) values
   (pg_temp.id('c1'), (select id from nucleo.cr where codigo = 'CR-G'), '2026-01-10 00:00-03', 'informada'),
   (pg_temp.id('g2a'), (select id from nucleo.cr where codigo = 'CR-C'), '2026-01-10 00:00-03', 'informada'),
   (pg_temp.id('g3c'), (select id from nucleo.cr where codigo = 'CR-C'), '2026-01-10 00:00-03', 'informada');
+-- A operação é montada (3.6c): o cavalo c1 em Grãos e o g3c em Cimento.
+insert into nucleo.placa_na_operacao (ativo_id, operacao_id, inicio, inicio_origem) values
+  (pg_temp.id('c1'), (select id from nucleo.operacao where nome = 'Grãos'), '2026-01-10 00:00-03', 'informada'),
+  (pg_temp.id('g3c'), (select id from nucleo.operacao where nome = 'Cimento'), '2026-01-10 00:00-03', 'informada');
 
 select is(
   (select operacao_id from nucleo.operacao_do_ativo where ativo_id = pg_temp.id('g2a')),
@@ -357,10 +361,14 @@ update nucleo.cr_do_ativo set fim = '2026-07-01 00:00-03', fim_origem = 'informa
  where ativo_id = pg_temp.id('c1') and fim is null;
 insert into nucleo.cr_do_ativo (ativo_id, cr_id, inicio, inicio_origem)
   values (pg_temp.id('c1'), (select id from nucleo.cr where codigo = 'CR-C'), '2026-07-01 00:00-03', 'informada');
+update nucleo.placa_na_operacao set fim = '2026-07-01 00:00-03', fim_origem = 'informada'
+ where ativo_id = pg_temp.id('c1') and fim is null;
+insert into nucleo.placa_na_operacao (ativo_id, operacao_id, inicio, inicio_origem)
+  values (pg_temp.id('c1'), (select id from nucleo.operacao where nome = 'Cimento'), '2026-07-01 00:00-03', 'informada');
 select is(
   (select operacao_id from nucleo.operacao_do_ativo where ativo_id = pg_temp.id('g2a')),
   (select id from nucleo.operacao where nome = 'Grãos'),
-  'solto: mantém a última operação, mesmo que o cavalo mude de CR depois'
+  'solto: mantém a última operação, mesmo que o cavalo mude de CR e de operação depois'
 );
 select is((select degrau from nucleo.operacao_do_ativo where ativo_id = pg_temp.id('g2a')), 'solto', 'degrau solto');
 select throws_ok(
@@ -371,9 +379,9 @@ select throws_ok(
 select is(
   (select operacao_id from nucleo.operacao_do_ativo where ativo_id = pg_temp.id('g3c')),
   (select id from nucleo.operacao where nome = 'Cimento'),
-  'nunca engatado: a operação do próprio CR'
+  'nunca engatado: a operação montada da própria placa'
 );
-select is((select degrau from nucleo.operacao_do_ativo where ativo_id = pg_temp.id('g3c')), 'proprio_cr', 'degrau próprio CR');
+select is((select degrau from nucleo.operacao_do_ativo where ativo_id = pg_temp.id('g3c')), 'elenco', 'degrau elenco (a montagem)');
 select is(nucleo.nome_do_conjunto(pg_temp.id('c1')), null, 'depois de desengatar, o cavalo fica sem nome de conjunto');
 select lives_ok(
   $q$do $b$ begin

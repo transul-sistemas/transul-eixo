@@ -327,6 +327,9 @@ isOneToOne: false
 "pode_algum":
 { Args: { "p_acao": string,"p_modulos": (string)[] }; Returns: boolean
                            },
+"pode_na_operacao":
+{ Args: { "p_acao": string,"p_operacao_id": string }; Returns: boolean
+                           },
 "usuario_atual":
 { Args: Record<PropertyKey, never>; Returns: string
                            },
@@ -335,7 +338,7 @@ isOneToOne: false
                            }
           }
           Enums: {
-            "origem_da_data": "derivada"|"observada"|"informada"
+            "origem_da_data": "derivada"|"observada"|"informada","origem_do_campo": "sankhya"|"derivada"|"informada"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -434,18 +437,74 @@ isOneToOne: false
                   ]
                 },"cr": {
                   Row: {
-                    "ativo": boolean,"bloqueado": boolean,"codcencus": number | null,"codigo": string,"criado_em": string,"excluido_em": string | null,"excluido_por": string | null,"id": string,"motivo_da_exclusao": string | null,"nome": string | null,"operacao_id": string | null,"versao": number
+                    "analitico": boolean | null,"analitico_origem": Database["config"]['Enums']["origem_do_campo"] | null,"ativo": boolean,"ativo_origem": Database["config"]['Enums']["origem_do_campo"],"bloqueado": boolean,"bloqueado_origem": Database["config"]['Enums']["origem_do_campo"],"codcencus": number,"codigo": string,"conferencia": string,"cr_pai_id": string | null,"cr_pai_origem": Database["config"]['Enums']["origem_do_campo"] | null,"criado_em": string,"excluido_em": string | null,"excluido_por": string | null,"id": string,"motivo_da_exclusao": string | null,"nome": string | null,"operacao_id": string | null,"participa_da_frota": boolean | null,"participa_da_frota_origem": Database["config"]['Enums']["origem_do_campo"] | null,"tipo": Database["nucleo"]['Enums']["tipo_de_cr"] | null,"tipo_origem": Database["config"]['Enums']["origem_do_campo"] | null,"veiculo_obrigatorio": boolean | null,"veiculo_obrigatorio_origem": Database["config"]['Enums']["origem_do_campo"] | null,"versao": number
                   }
                   ComputedFields: never
                   Insert: {
-                    "ativo"?: boolean,"bloqueado"?: boolean,"codcencus"?: number | null,"codigo": string,"criado_em"?: string,"excluido_em"?: string | null,"excluido_por"?: string | null,"id"?: string,"motivo_da_exclusao"?: string | null,"nome"?: string | null,"operacao_id"?: string | null,"versao"?: number
+                    "analitico"?: boolean | null,"analitico_origem"?: Database["config"]['Enums']["origem_do_campo"] | null,"ativo"?: boolean,"ativo_origem"?: Database["config"]['Enums']["origem_do_campo"],"bloqueado"?: boolean,"bloqueado_origem"?: Database["config"]['Enums']["origem_do_campo"],"codcencus": number,"codigo": string,"conferencia"?: string,"cr_pai_id"?: string | null,"cr_pai_origem"?: Database["config"]['Enums']["origem_do_campo"] | null,"criado_em"?: string,"excluido_em"?: string | null,"excluido_por"?: string | null,"id"?: string,"motivo_da_exclusao"?: string | null,"nome"?: string | null,"operacao_id"?: string | null,"participa_da_frota"?: boolean | null,"participa_da_frota_origem"?: Database["config"]['Enums']["origem_do_campo"] | null,"tipo"?: Database["nucleo"]['Enums']["tipo_de_cr"] | null,"tipo_origem"?: Database["config"]['Enums']["origem_do_campo"] | null,"veiculo_obrigatorio"?: boolean | null,"veiculo_obrigatorio_origem"?: Database["config"]['Enums']["origem_do_campo"] | null,"versao"?: number
                   }
                   Update: {
-                    "ativo"?: boolean,"bloqueado"?: boolean,"codcencus"?: number | null,"codigo"?: string,"criado_em"?: string,"excluido_em"?: string | null,"excluido_por"?: string | null,"id"?: string,"motivo_da_exclusao"?: string | null,"nome"?: string | null,"operacao_id"?: string | null,"versao"?: number
+                    "analitico"?: boolean | null,"analitico_origem"?: Database["config"]['Enums']["origem_do_campo"] | null,"ativo"?: boolean,"ativo_origem"?: Database["config"]['Enums']["origem_do_campo"],"bloqueado"?: boolean,"bloqueado_origem"?: Database["config"]['Enums']["origem_do_campo"],"codcencus"?: number,"codigo"?: string,"conferencia"?: string,"cr_pai_id"?: string | null,"cr_pai_origem"?: Database["config"]['Enums']["origem_do_campo"] | null,"criado_em"?: string,"excluido_em"?: string | null,"excluido_por"?: string | null,"id"?: string,"motivo_da_exclusao"?: string | null,"nome"?: string | null,"operacao_id"?: string | null,"participa_da_frota"?: boolean | null,"participa_da_frota_origem"?: Database["config"]['Enums']["origem_do_campo"] | null,"tipo"?: Database["nucleo"]['Enums']["tipo_de_cr"] | null,"tipo_origem"?: Database["config"]['Enums']["origem_do_campo"] | null,"veiculo_obrigatorio"?: boolean | null,"veiculo_obrigatorio_origem"?: Database["config"]['Enums']["origem_do_campo"] | null,"versao"?: number
                   }
                   Relationships: [
                     {
+      foreignKeyName: "cr_cr_pai_id_fkey"
+      columns: ["cr_pai_id"]
+isOneToOne: false
+      referencedRelation: "alerta_de_cr"
+      referencedColumns: ["cr_id"]
+    },{
+      foreignKeyName: "cr_cr_pai_id_fkey"
+      columns: ["cr_pai_id"]
+isOneToOne: false
+      referencedRelation: "cr"
+      referencedColumns: ["id"]
+    },{
       foreignKeyName: "cr_operacao_id_fkey"
+      columns: ["operacao_id"]
+isOneToOne: false
+      referencedRelation: "operacao"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"cr_de_servico_na_operacao": {
+                  Row: {
+                    "cr_id": string,"criado_em": string,"excluido_em": string | null,"excluido_por": string | null,"fim": string | null,"fim_origem": Database["config"]['Enums']["origem_da_data"] | null,"id": string,"inicio": string,"inicio_origem": Database["config"]['Enums']["origem_da_data"],"montado_por": string | null,"motivo_da_exclusao": string | null,"operacao_id": string,"periodo": unknown,"versao": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "cr_id": string,"criado_em"?: string,"excluido_em"?: string | null,"excluido_por"?: string | null,"fim"?: string | null,"fim_origem"?: Database["config"]['Enums']["origem_da_data"] | null,"id"?: string,"inicio": string,"inicio_origem": Database["config"]['Enums']["origem_da_data"],"montado_por"?: string | null,"motivo_da_exclusao"?: string | null,"operacao_id": string,"periodo"?: never,"versao"?: number
+                  }
+                  Update: {
+                    "cr_id"?: string,"criado_em"?: string,"excluido_em"?: string | null,"excluido_por"?: string | null,"fim"?: string | null,"fim_origem"?: Database["config"]['Enums']["origem_da_data"] | null,"id"?: string,"inicio"?: string,"inicio_origem"?: Database["config"]['Enums']["origem_da_data"],"montado_por"?: string | null,"motivo_da_exclusao"?: string | null,"operacao_id"?: string,"periodo"?: never,"versao"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "cr_de_servico_na_operacao_cr_id_fkey"
+      columns: ["cr_id"]
+isOneToOne: false
+      referencedRelation: "alerta_de_cr"
+      referencedColumns: ["cr_id"]
+    },{
+      foreignKeyName: "cr_de_servico_na_operacao_cr_id_fkey"
+      columns: ["cr_id"]
+isOneToOne: false
+      referencedRelation: "cr"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "cr_de_servico_na_operacao_montado_por_fkey"
+      columns: ["montado_por"]
+isOneToOne: false
+      referencedRelation: "pessoa"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "cr_de_servico_na_operacao_montado_por_fkey"
+      columns: ["montado_por"]
+isOneToOne: false
+      referencedRelation: "pessoa_para_leitura"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "cr_de_servico_na_operacao_operacao_id_fkey"
       columns: ["operacao_id"]
 isOneToOne: false
       referencedRelation: "operacao"
@@ -476,6 +535,12 @@ isOneToOne: false
 isOneToOne: false
       referencedRelation: "operacao_do_ativo"
       referencedColumns: ["ativo_id"]
+    },{
+      foreignKeyName: "cr_do_ativo_cr_id_fkey"
+      columns: ["cr_id"]
+isOneToOne: false
+      referencedRelation: "alerta_de_cr"
+      referencedColumns: ["cr_id"]
     },{
       foreignKeyName: "cr_do_ativo_cr_id_fkey"
       columns: ["cr_id"]
@@ -738,6 +803,50 @@ isOneToOne: false
       referencedColumns: ["ativo_id"]
     }
                   ]
+                },"placa_na_operacao": {
+                  Row: {
+                    "ativo_id": string,"criado_em": string,"excluido_em": string | null,"excluido_por": string | null,"fim": string | null,"fim_origem": Database["config"]['Enums']["origem_da_data"] | null,"id": string,"inicio": string,"inicio_origem": Database["config"]['Enums']["origem_da_data"],"montado_por": string | null,"motivo_da_exclusao": string | null,"operacao_id": string,"periodo": unknown,"versao": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "ativo_id": string,"criado_em"?: string,"excluido_em"?: string | null,"excluido_por"?: string | null,"fim"?: string | null,"fim_origem"?: Database["config"]['Enums']["origem_da_data"] | null,"id"?: string,"inicio": string,"inicio_origem": Database["config"]['Enums']["origem_da_data"],"montado_por"?: string | null,"motivo_da_exclusao"?: string | null,"operacao_id": string,"periodo"?: never,"versao"?: number
+                  }
+                  Update: {
+                    "ativo_id"?: string,"criado_em"?: string,"excluido_em"?: string | null,"excluido_por"?: string | null,"fim"?: string | null,"fim_origem"?: Database["config"]['Enums']["origem_da_data"] | null,"id"?: string,"inicio"?: string,"inicio_origem"?: Database["config"]['Enums']["origem_da_data"],"montado_por"?: string | null,"motivo_da_exclusao"?: string | null,"operacao_id"?: string,"periodo"?: never,"versao"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "placa_na_operacao_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: false
+      referencedRelation: "ativo"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "placa_na_operacao_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: false
+      referencedRelation: "operacao_do_ativo"
+      referencedColumns: ["ativo_id"]
+    },{
+      foreignKeyName: "placa_na_operacao_montado_por_fkey"
+      columns: ["montado_por"]
+isOneToOne: false
+      referencedRelation: "pessoa"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "placa_na_operacao_montado_por_fkey"
+      columns: ["montado_por"]
+isOneToOne: false
+      referencedRelation: "pessoa_para_leitura"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "placa_na_operacao_operacao_id_fkey"
+      columns: ["operacao_id"]
+isOneToOne: false
+      referencedRelation: "operacao"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"posse_do_ativo": {
                   Row: {
                     "ativo_id": string,"criado_em": string,"excluido_em": string | null,"excluido_por": string | null,"fim": string | null,"fim_origem": Database["config"]['Enums']["origem_da_data"] | null,"id": string,"inicio": string,"inicio_origem": Database["config"]['Enums']["origem_da_data"],"motivo_da_exclusao": string | null,"periodo": unknown,"pessoa_dona_id": string | null,"regime": Database["nucleo"]['Enums']["regime_de_posse"],"versao": number
@@ -933,7 +1042,21 @@ isOneToOne: false
                 }
           }
           Views: {
-            "alerta_de_vinculo": {
+            "alerta_de_cr": {
+                  Row: {
+                    "alerta": string | null,"cr_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                           "alerta"?: never,"cr_id"?: string | null
+                         }
+                        Update: {
+                           "alerta"?: never,"cr_id"?: string | null
+                         }
+                        Relationships: [
+                    
+                  ]
+                },"alerta_de_vinculo": {
                   Row: {
                     "alerta": string | null,"ativo_id": string | null
                   }
@@ -947,13 +1070,7 @@ isOneToOne: false
                   }
                   ComputedFields: never
                   Relationships: [
-                    {
-      foreignKeyName: "cr_do_ativo_cr_id_fkey"
-      columns: ["cr_id"]
-isOneToOne: false
-      referencedRelation: "cr"
-      referencedColumns: ["id"]
-    }
+                    
                   ]
                 },"pessoa_para_leitura": {
                   Row: {
@@ -1004,6 +1121,9 @@ isOneToOne: false
 "conferir_conjunto":
 { Args: { "p_cavalo_id": string }; Returns: undefined
                            },
+"cr_em":
+{ Args: { "p_ativo_id": string,"p_em": string }; Returns: string
+                           },
 "desatrelar":
 { Args: { "p_cavalo_id": string,"p_em": string,"p_implementos"?: (string)[] }; Returns: number
                            },
@@ -1043,6 +1163,14 @@ isOneToOne: false
 "normalizar_renavam":
 { Args: { "p_texto": string }; Returns: string
                            },
+"operacao_e_degrau_em":
+{ Args: { "p_ativo_id": string,"p_em": string }; Returns: {
+              "degrau": string,"operacao_id": string
+            }[]
+                           },
+"operacao_em":
+{ Args: { "p_ativo_id": string,"p_em": string }; Returns: string
+                           },
 "placa_valida":
 { Args: { "p_texto": string }; Returns: boolean
                            },
@@ -1077,12 +1205,15 @@ isOneToOne: false
 "situacao_em":
 { Args: { "p_ativo_id": string,"p_em": string }; Returns: string
                            },
+"tipo_do_cr":
+{ Args: { "p_participa_da_frota": boolean,"p_veiculo_obrigatorio": boolean }; Returns: Database["nucleo"]['Enums']["tipo_de_cr"]
+                           },
 "vincular_usuario":
 { Args: { "p_email": string,"p_perfil": string,"p_pessoa_id": string }; Returns: undefined
                            }
           }
           Enums: {
-            "com_quem_da_custodia": "gestor"|"operacional","funcao_do_implemento": "semirreboque"|"dolly","regime_de_posse": "propria"|"acionista"|"agregado"|"terceiro"|"alugada","tipo_de_ativo": "cavalo"|"implemento"|"equipamento"|"caminhao"|"apoio"
+            "com_quem_da_custodia": "gestor"|"operacional","funcao_do_implemento": "semirreboque"|"dolly","regime_de_posse": "propria"|"acionista"|"agregado"|"terceiro"|"alugada","tipo_de_ativo": "cavalo"|"implemento"|"equipamento"|"caminhao"|"apoio","tipo_de_cr": "servico"|"frota_de_placa"|"frota_sem_placa"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -1214,7 +1345,7 @@ export type CompositeTypes<
 export const Constants = {
   "config": {
           Enums: {
-            "origem_da_data": ["derivada", "observada", "informada"]
+            "origem_da_data": ["derivada", "observada", "informada"],"origem_do_campo": ["sankhya", "derivada", "informada"]
           }
         },"graphql_public": {
           Enums: {
@@ -1222,7 +1353,7 @@ export const Constants = {
           }
         },"nucleo": {
           Enums: {
-            "com_quem_da_custodia": ["gestor", "operacional"],"funcao_do_implemento": ["semirreboque", "dolly"],"regime_de_posse": ["propria", "acionista", "agregado", "terceiro", "alugada"],"tipo_de_ativo": ["cavalo", "implemento", "equipamento", "caminhao", "apoio"]
+            "com_quem_da_custodia": ["gestor", "operacional"],"funcao_do_implemento": ["semirreboque", "dolly"],"regime_de_posse": ["propria", "acionista", "agregado", "terceiro", "alugada"],"tipo_de_ativo": ["cavalo", "implemento", "equipamento", "caminhao", "apoio"],"tipo_de_cr": ["servico", "frota_de_placa", "frota_sem_placa"]
           }
         },"public": {
           Enums: {
