@@ -31,7 +31,11 @@ Modelo de entrada:
   12. **Testes antigos ajustados (regra mudou de propósito):** o alicerce (00) e os de chaves (10), régua (20) e pendências (31) passaram de "authenticated sem acesso" para "anon sem acesso; usuário sem vínculo lê zero linhas; authenticated só a lista de exceções"; os gestores dos testes ganharam o papel; a lista fechada de alertas ganhou `correcao_tardia_de_status`; o teste de qualidade da fundação passou a permitir o grant a `authenticated` só na migration de políticas e grants.
 - **Testes vistos falhando antes:** o novo `50-permissoes-e-rls` (62) e os antigos (sem `usage` nos schemas, sem as tabelas); o Vitest do espelho sem o módulo. **Mutações** (cada uma acusada e restaurada com `db reset`): `ativo_ler` aberta (falham 6), documento aberto (3), `UPDATE` do tipo liberado (2), escopo de filial desligado (3), uma função a mais executável (1).
 - **Fica para a 3.7:** correção de campo com origem, a função atômica de cadastro (ativo, posse, gestor e evento inicial numa transação, com o gestor enxergando a placa nova), as demais funções atômicas (Entregar ao Operacional, receber), idempotência e versão nas gravações, e os campos Função, Carroceria e Eixos do implemento no "Cadastrar placa".
-- **Quem decidiu:** Alexandre (as regras da 3.6); os itens numerados aguardam o checkpoint.
+- **Checkpoint aprovado com ajustes (Alexandre, 05/11/2026):**
+  - **Perder o papel tira o acesso na hora:** o escopo "minha carteira" passa a exigir também o papel de gestor de frota; sem o papel, o gestor lê zero, não altera e não registra evento, sem depender de sessão nova. O vínculo inativado tem o mesmo efeito.
+  - **O token não concede nada sozinho:** JWT válido sem vínculo lê zero e não cria; token sem a claim `sub` lê zero e não cria; perfil, escopo ou papel forjados no `user_metadata` (ou no `app_metadata`) são ignorados, porque o acesso sai do vínculo e da tabela de permissões.
+  - **Registrado para a 3.9:** nenhuma tela de cadastro grava direto sem a função atômica da 3.7; a mensagem para quem não tem vínculo; a dúvida se a Diretoria vê o documento completo (hoje só o mascarado).
+- **Quem decidiu:** Alexandre (as regras da 3.6 e os ajustes do checkpoint).
 
 ---
 

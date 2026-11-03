@@ -9,7 +9,7 @@
 begin;
 \ir apoio/como_usuario.psql
 
-select plan(62);
+select plan(76);
 
 -- Os ids ficam em configurações da transação (o papel authenticated não lê tabela temporária).
 create function pg_temp.id(p_nome text) returns uuid language sql as $$
@@ -40,6 +40,16 @@ begin
   update nucleo.ativo set chassi = p_chassi where id = p_ativo;
   get diagnostics v = row_count;
   return v;
+end;
+$$;
+
+-- Age como authenticated com as claims dadas (para testar token sem `sub` ou com metadados forjados).
+create function pg_temp.como_claims(p_claims jsonb) returns void language plpgsql as $$
+begin
+  perform set_config('request.jwt.claims', p_claims::text, true);
+  perform set_config('request.jwt.claim.sub', coalesce(p_claims ->> 'sub', ''), true);
+  perform set_config('request.jwt.claim.role', 'authenticated', true);
+  set local role authenticated;
 end;
 $$;
 
@@ -387,6 +397,49 @@ reset role;
 select tests.como_anonimo();
 select throws_ok('select 1 from nucleo.ativo', '42501', null, 'anon não lê placas');
 select throws_ok('select 1 from config.status', '42501', null, 'anon não lê catálogos');
+reset role;
+
+-- ---- o token não concede nada sozinho: só o vínculo e a tabela de permissões ----
+select tests.como(pg_temp.id('estranho'));
+select throws_ok($$insert into config.carroceria (nome) values ('Sem vínculo')$$, '42501', null, 'JWT válido sem vínculo no Eixo não cria nada');
+reset role;
+select pg_temp.como_claims('{"role": "authenticated"}');
+select is((select count(*) from nucleo.ativo), 0::bigint, 'token sem a claim sub não lê placas');
+select is((select count(*) from config.status), 0::bigint, 'token sem a claim sub não lê catálogos');
+select throws_ok($$insert into config.carroceria (nome) values ('Sem sub')$$, '42501', null, 'token sem a claim sub não cria nada');
+reset role;
+select pg_temp.como_claims(jsonb_build_object(
+  'sub', pg_temp.id('estranho'), 'role', 'authenticated',
+  'user_metadata', jsonb_build_object('perfil', 'administrador', 'escopo', 'tudo', 'papel', 'gestor_de_frota'),
+  'app_metadata', jsonb_build_object('perfil', 'administrador')
+));
+select is((select count(*) from nucleo.ativo), 0::bigint, 'metadados forjados no token (perfil, escopo, papel) não dão acesso a placas');
+select ok(not config.pode('frota', 'ver'), 'metadados forjados não dão permissão (config.pode lê a tabela, não o token)');
+select is((select count(*) from nucleo.pessoa_documento), 0::bigint, 'metadados forjados não abrem o documento completo');
+select throws_ok($$insert into config.carroceria (nome) values ('Forjado')$$, '42501', null, 'metadados forjados não deixam cadastrar');
+reset role;
+
+-- ---- perder o papel ou o vínculo tira o acesso na hora (sem sessão nova) ----
+delete from nucleo.papel_da_pessoa where pessoa_id = pg_temp.id('pessoa_ga') and papel = 'gestor_de_frota';
+select tests.como(pg_temp.id('ga'));
+select is(
+  (select count(*) from nucleo.ativo where id in (pg_temp.id('pa'), pg_temp.id('pc'))),
+  0::bigint, 'o gestor sem o papel de gestor de frota deixa de ver a carteira na hora'
+);
+select is(pg_temp.alterar_chassi(pg_temp.id('pa'), 'SEM PAPEL'), 0, 'e não altera mais a placa');
+select throws_ok(
+  $$select nucleo.registrar_evento(pg_temp.id('pa'), 'DOp', '2026-03-01 00:00-03')$$,
+  '42501', null, 'e não registra mais evento'
+);
+reset role;
+update nucleo.usuario set ativo = false where pessoa_id = pg_temp.id('pessoa_gb');
+select tests.como(pg_temp.id('gb'));
+select is((select count(*) from nucleo.ativo where id = pg_temp.id('pb')), 0::bigint, 'o vínculo inativado tira a carteira na hora');
+select is(pg_temp.alterar_chassi(pg_temp.id('pb'), 'INATIVO'), 0, 'e não altera mais a placa');
+select throws_ok(
+  $$select nucleo.registrar_evento(pg_temp.id('pb'), 'SMo', '2026-03-01 00:00-03')$$,
+  '42501', null, 'e não registra mais evento'
+);
 reset role;
 
 -- ---- vincular usuário (no Studio, como dono do banco) ----

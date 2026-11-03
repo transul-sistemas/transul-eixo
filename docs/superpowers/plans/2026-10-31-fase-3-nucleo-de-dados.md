@@ -486,6 +486,9 @@ O texto completo está em `docs/decisoes.md` (entradas de 04/11/2026). Aqui fica
 - **3.7:** a função atômica de cadastro (ativo, posse, gestor e evento inicial numa transação), para o gestor enxergar a placa nova logo depois de criá-la (sob RLS, a placa sem gestor vigente não aparece para ele).
 - **3.8:** `exigirPermissao()` passa a ler `config.pode` com a sessão real; o teste que compara a navegação com o seed já existe no espelho (`lib/seguranca/permissoes.test.ts`).
 - **3.9:** medir as políticas com `config.ve_ativo` na lista de cerca de 5.000 ativos (com `EXPLAIN`), junto da medição da `situacao_atual`.
+- **3.9, bloqueio:** **nenhuma tela de cadastro usa a gravação direta do gestor** sem a função atômica de cadastro da 3.7 (a placa nova sem gestor vigente some para ele).
+- **3.9, sem vínculo:** quando o usuário entra sem vínculo no Eixo, a tela diz "Seu acesso ainda não foi liberado. Fale com o administrador." (hoje ele só veria listas vazias).
+- **3.9, a decidir:** a Diretoria vê o documento completo? Hoje só o Administrador tem `pessoas.ver_documento`; a Diretoria vê o mascarado. Se mudar, é uma linha no seed (e no espelho).
 
 ## Disponibilizar e receber (05/11/2026)
 

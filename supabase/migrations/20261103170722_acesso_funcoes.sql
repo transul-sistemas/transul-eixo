@@ -74,7 +74,8 @@ $$;
 revoke all on function config.pode_algum(text[], text) from public;
 
 -- O usuário alcança este ativo com a ação, em algum dos módulos, pelo escopo da permissão?
---  tudo: sempre; minha_carteira: é o gestor vigente; operacao: a operação do ativo é uma das suas;
+--  tudo: sempre; minha_carteira: é o gestor vigente e tem o papel de gestor de frota (perder o papel
+--  tira o acesso na hora); operacao: a operação do ativo é uma das suas;
 --  filial: a custódia vigente é do Operacional de uma das suas filiais.
 create function config.ve_ativo(p_ativo_id uuid, p_modulos text[], p_acao text)
 returns boolean
@@ -92,7 +93,9 @@ as $$
   )
   select
     exists (select 1 from escopos where escopo = 'tudo')
-    or (exists (select 1 from escopos where escopo = 'minha_carteira') and exists (
+    or (exists (select 1 from escopos where escopo = 'minha_carteira')
+        and exists (select 1 from nucleo.papel_da_pessoa pp join eu on eu.pessoa_id = pp.pessoa_id where pp.papel = 'gestor_de_frota')
+        and exists (
       select 1 from nucleo.gestor_da_carteira g join eu on eu.pessoa_id = g.gestor_id
        where g.ativo_id = p_ativo_id and g.excluido_em is null and g.periodo @> now()))
     or (exists (select 1 from escopos where escopo = 'operacao') and exists (
