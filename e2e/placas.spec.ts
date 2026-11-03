@@ -1087,12 +1087,12 @@ test.describe("lista de placas: Mais filtros (sigla exata e inclui baixadas)", (
     await expect(visoes).toHaveAttribute("title", "Entra na próxima entrega");
   });
 
-  test("o painel lista as 26 siglas, com o nome por extenso, agrupadas pelo chip de origem", async ({
+  test("o painel lista as 25 siglas, com o nome por extenso, agrupadas pelo chip de origem", async ({
     page,
   }) => {
     await abrirHidratada(page, ROTA);
     await abrirMais(page);
-    await expect(painelMais(page).getByRole("checkbox")).toHaveCount(27); // 26 siglas + baixadas
+    await expect(painelMais(page).getByRole("checkbox")).toHaveCount(26); // 25 siglas + baixadas
     for (const grupo of ["Em atividade", "Atenção", "Impedida", "Pátio", "Fora"]) {
       await expect(painelMais(page).getByRole("group", { name: grupo, exact: true })).toBeVisible();
     }

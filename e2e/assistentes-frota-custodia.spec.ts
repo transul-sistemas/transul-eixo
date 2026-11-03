@@ -2,10 +2,14 @@ import { expect, test } from "@playwright/test";
 import { abrirHidratada } from "./apoio";
 import {
   abrirLista,
+  abrirOCadastro,
+  cadastro,
   disponibilizacao,
   FICHA,
+  irAteConferirOCadastro,
   LISTA,
   passoAtual,
+  placaUnica,
   recebimento,
   sessaoIsolada,
 } from "./apoio-assistentes-frota";
@@ -95,26 +99,29 @@ test.describe("disponibilizar ao Operacional", () => {
     page,
     context,
   }) => {
-    await abrirLista(page, "?chip=patio&chip=cavalo");
-    const placa = (await page
-      .locator("[data-espiar-placa]")
-      .first()
-      .getAttribute("data-espiar-placa"))!;
+    // A placa é só deste teste: um cavalo novo, que nasce em PÁT (não a primeira da lista).
+    const placa = placaUnica();
+    await abrirOCadastro(page);
+    await irAteConferirOCadastro(page, { placa });
+    await cadastro(page).getByRole("button", { name: "Cadastrar placa" }).click();
+    await expect(cadastro(page).getByTestId("assistente-concluido")).toHaveText(
+      "Placa cadastrada.",
+    );
     await abrirHidratada(page, FICHA(placa));
     await page.getByRole("button", { name: "Disponibilizar ao Operacional" }).click();
     const outra = await context.newPage();
     await abrirHidratada(outra, FICHA(placa));
     await outra.getByRole("button", { name: "Disponibilizar ao Operacional" }).click();
-    for (const [aba, filial] of [
-      [outra, "Filial Exemplo A"],
-      [page, "Filial Exemplo B"],
-    ] as const) {
+    const preencherEGravar = async (aba: typeof page, filial: string) => {
       const d = disponibilizacao(aba);
       await d.getByLabel("Filial", { exact: true }).selectOption({ label: filial });
       await d.getByRole("button", { name: "Continuar" }).click();
       await d.getByRole("button", { name: "Disponibilizar ao Operacional" }).click();
-    }
+    };
+    // A outra aba grava primeiro e conclui; só então esta grava, com a versão que tinha aberto.
+    await preencherEGravar(outra, "Filial Exemplo A");
     await expect(disponibilizacao(outra).getByTestId("assistente-concluido")).toBeVisible();
+    await preencherEGravar(page, "Filial Exemplo B");
     await expect(disponibilizacao(page).getByRole("alert")).toContainText("mudou");
   });
 });
