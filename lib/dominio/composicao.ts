@@ -27,7 +27,7 @@ export const CONFIGURACOES_DE_CONJUNTO: readonly ConfiguracaoDeConjunto[] = [
     codigo: "simples",
     unidades: 1,
     comDolly: false,
-    eixosDosSemirreboques: [2, 3],
+    eixosDosSemirreboques: [1, 2, 3, 4, 5, 6],
     eixosDoDolly: null,
   },
   { codigo: "bi", unidades: 2, comDolly: false, eixosDosSemirreboques: [2], eixosDoDolly: null },

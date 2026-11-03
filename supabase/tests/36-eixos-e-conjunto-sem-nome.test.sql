@@ -4,7 +4,7 @@
 -- dolly fora do meio, mais de três unidades e conjunto misto.
 begin;
 
-select plan(14);
+select plan(20);
 
 create temp table ids (nome text primary key, id uuid not null);
 
@@ -83,13 +83,14 @@ select lives_ok($$select pg_temp.semi('e6', 806, 6::smallint)$$, 'implemento de 
 select throws_ok($$select pg_temp.semi('e7', 807, 7::smallint)$$, '23514', null, 'implemento de 7 eixos é recusado');
 
 select pg_temp.semi('e4b', 808, 4::smallint);
+select pg_temp.semi('e4c', 809, 4::smallint);
 select pg_temp.semi('t3a', 831, 3::smallint);
 select pg_temp.semi('t3b', 832, 3::smallint);
 select pg_temp.semi('t2a', 821, 2::smallint);
 select pg_temp.semi('t2b', 822, 2::smallint);
 select pg_temp.dolly('d2', 841, 2::smallint);
 select pg_temp.dolly('d3', 842, 3::smallint);
-select pg_temp.cavalo(c, n) from (values ('k1', 851), ('k2', 852), ('k3', 853), ('k4', 854)) as v (c, n);
+select pg_temp.cavalo(c, n) from (values ('k1', 851), ('k2', 852), ('k3', 853), ('k4', 854), ('k5', 855), ('k6', 856), ('k7', 857), ('k8', 858)) as v (c, n);
 set constraints all immediate;
 set constraints all deferred;
 
@@ -133,6 +134,27 @@ select throws_ok(
     end $b$$q$,
   '23514', 'Os semirreboques do conjunto têm de ter o mesmo número de eixos.', 'semirreboques de eixos diferentes continuam recusados'
 );
+-- ---- simples: um semirreboque, sem dolly, de 1 a 6 eixos (ajuste do checkpoint 3.4b) ----
+select lives_ok(
+  $q$do $b$ begin
+      perform pg_temp.engatar('k5', 'e1', 1::smallint);
+      perform pg_temp.engatar('k6', 'e4c', 1::smallint);
+      perform pg_temp.engatar('k7', 'e5', 1::smallint);
+      perform pg_temp.engatar('k8', 'e6', 1::smallint);
+      set constraints all immediate; set constraints all deferred;
+    end $b$$q$,
+  'simples de 1, 4, 5 e 6 eixos engatam'
+);
+select is(nucleo.nome_do_conjunto(pg_temp.id('k5')), 'Graneleira', 'simples de 1 eixo tem o nome da carroceria');
+select is(nucleo.nome_do_conjunto(pg_temp.id('k6')), 'Graneleira', 'simples de 4 eixos tem o nome da carroceria');
+select is(nucleo.nome_do_conjunto(pg_temp.id('k7')), 'Graneleira', 'simples de 5 eixos tem o nome da carroceria');
+select is(nucleo.nome_do_conjunto(pg_temp.id('k8')), 'Graneleira', 'simples de 6 eixos tem o nome da carroceria');
+select ok(
+  not exists (select 1 from nucleo.alerta_de_vinculo where alerta = 'conjunto_sem_nome'
+               and ativo_id in (pg_temp.id('k5'), pg_temp.id('k6'), pg_temp.id('k7'), pg_temp.id('k8'))),
+  'simples de 1 a 6 eixos não gera o alerta conjunto_sem_nome'
+);
+
 select ok(
   not exists (select 1 from nucleo.alerta_de_vinculo where alerta = 'conjunto_sem_nome'
                and ativo_id not in (pg_temp.id('k1'), pg_temp.id('k2'), pg_temp.id('k3'))),

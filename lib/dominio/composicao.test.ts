@@ -90,6 +90,9 @@ describe("estrutura do conjunto (regra da equipe, 03/11/2026)", () => {
 describe("configuracaoDoConjunto: a configuração pela estrutura, nunca pelo total de eixos", () => {
   it("reconhece as quatro", () => {
     expect(configuracaoDoConjunto([semi(1, 3)])).toBe("simples");
+    for (const eixos of [1, 2, 3, 4, 5, 6]) {
+      expect(configuracaoDoConjunto([semi(1, eixos)]), `simples de ${eixos} eixos`).toBe("simples");
+    }
     expect(configuracaoDoConjunto([semi(1, 2), semi(2, 2)])).toBe("bi");
     expect(configuracaoDoConjunto([semi(1, 3), semi(2, 3)])).toBe("bitrezao");
     expect(configuracaoDoConjunto([semi(1, 2), dolly(2), semi(3, 2)])).toBe("rodo");
@@ -103,7 +106,7 @@ describe("configuracaoDoConjunto: a configuração pela estrutura, nunca pelo to
   it("estrutura sem configuração conhecida fica sem nome definido", () => {
     expect(configuracaoDoConjunto([semi(1, 4), semi(2, 4)])).toBe("sem_nome_definido");
     expect(configuracaoDoConjunto([semi(1, 3), dolly(2), semi(3, 3)])).toBe("sem_nome_definido");
-    expect(configuracaoDoConjunto([semi(1, 6)])).toBe("sem_nome_definido");
+    expect(configuracaoDoConjunto([semi(1, 4), semi(2, 4)])).toBe("sem_nome_definido");
   });
 });
 

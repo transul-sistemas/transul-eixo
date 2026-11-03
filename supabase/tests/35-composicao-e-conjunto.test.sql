@@ -89,7 +89,7 @@ select has_function('nucleo', 'nome_do_conjunto', array['uuid', 'timestamp with 
 select bag_eq(
   $$select codigo, unidades::int, com_dolly, eixos_dos_semirreboques::int[], eixos_do_dolly::int
       from config.configuracao_de_conjunto$$,
-  $$values ('simples', 1, false, array[2, 3], null::int),
+  $$values ('simples', 1, false, array[1, 2, 3, 4, 5, 6], null::int),
            ('bi', 2, false, array[2], null::int),
            ('bitrezao', 2, false, array[3], null::int),
            ('rodo', 3, true, array[2], 2)$$,

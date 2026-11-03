@@ -855,6 +855,14 @@ Registro de direção, só em texto: nenhum código nem migration. Não muda a f
   1. **Dolly com eixos diferentes de 2 dentro do rodo** não é recusado: o conjunto fica "sem nome definido", como qualquer estrutura sem configuração (li "a exigência de dolly com 2 eixos vale só dentro do rodo" como exigência para o nome Rodotrem, não como recusa).
   2. **O alerta `conjunto_sem_nome` aparece no cavalo** (o mestre), não em cada implemento.
   3. **"Sem nome definido" só quando os eixos são conhecidos:** se faltar o eixo de algum semirreboque, o nome continua "pendente" (com o alerta `implemento_sem_eixos`).
-  4. **Simples de 1, 4, 5 ou 6 eixos** também fica "sem nome definido" (a configuração `simples` aceita só 2 ou 3).
+  4. ~~Simples de 1, 4, 5 ou 6 eixos fica "sem nome definido"~~ **Substituída no checkpoint:** o simples aceita de 1 a 6 eixos (ver a entrada seguinte).
 - **Testes vistos falhando antes:** o novo `36-eixos-e-conjunto-sem-nome` (14) falhou nos CHECKs antigos de eixos; o `35` (74) falhou no dolly de 3 eixos e no rodo de 3 eixos recusado; o `31` falhou sem o nome `conjunto_sem_nome`; o Vitest de `composicao` falhou sem a migration nova e com a recusa antiga.
 - **Quem decidiu:** Alexandre (a faixa de eixos e o "sem nome definido"); os itens numerados aguardam o checkpoint.
+
+## 04/11/2026 — Checkpoint 3.4b aprovado com ajustes: simples de 1 a 6 eixos
+
+- **Decisão (Alexandre, 04/11/2026):** a configuração `simples` (um único semirreboque, sem dolly) aceita **de 1 a 6 eixos**, não só 2 ou 3. **Bi** continua só com semirreboques de 2 eixos, **bitrezão** só com 3, **rodo** só com semirreboques de 2 e dolly de 2; fora disso, "sem nome definido" com o alerta `conjunto_sem_nome`.
+- **Onde mudou:** migration nova `simples_de_1_a_6_eixos` (as anteriores não foram editadas), o seed de `config.configuracao_de_conjunto`, o espelho `CONFIGURACOES_DE_CONJUNTO` (`lib/dominio/composicao.ts`, conferido contra o seed por teste), o `CLAUDE.md` e a tabela do plano.
+- **Testes vistos falhando antes:** simples de 1, 4, 5 e 6 eixos com o nome da carroceria e sem alerta (pgTAP `36`); o seed esperado em `35`; o Vitest de `configuracaoDoConjunto`. O bi de 4 eixos cada continua "sem nome definido" com alerta.
+- **`plan` do arquivo 36:** escrito com `plan(15)`, corrigido para `plan(14)` antes da primeira execução (eram 14 asserções, incluindo o implemento de 7 eixos recusado); agora `plan(20)`, igual às executadas, sem `skip` nem `todo`.
+- **Quem decidiu:** Alexandre.

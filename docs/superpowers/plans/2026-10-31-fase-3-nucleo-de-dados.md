@@ -405,7 +405,7 @@ O nome do conjunto olha quatro coisas, nunca o total de eixos: **unidades engata
 
 | Configuração | Unidades | Semirreboques | Dolly | Eixos de cada semirreboque | Eixos do dolly |
 | --- | --- | --- | --- | --- | --- |
-| `simples` | 1 | 1 | não | 2 ou 3 | - |
+| `simples` | 1 | 1 | não | 1 a 6 (ajuste de 04/11/2026; era 2 ou 3) | - |
 | `bi` | 2 | 2 | não | 2 | - |
 | `bitrezao` | 2 | 2 | não | 3 | - |
 | `rodo` | 3 | 2 | sim, entre os dois | 2 | 2 |
