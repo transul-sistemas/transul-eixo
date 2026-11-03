@@ -55,12 +55,14 @@ insert into config.carroceria (nome) values
   ('Prancha'),
   ('Tanque');
 
--- As quatro configurações de conjunto. A regra que reconhece cada uma é da equipe e entra na 3.4.
-insert into config.configuracao_de_conjunto (codigo, nome) values
-  ('simples', 'Simples'),
-  ('bi', 'Bi'),
-  ('bitrezao', 'Bitrezão'),
-  ('rodo', 'Rodo');
+-- As quatro configurações de conjunto, reconhecidas pela estrutura (regra da equipe, 03/11/2026):
+-- unidades engatadas (o dolly conta), presença de dolly, eixos aceitos nos semirreboques (todos iguais
+-- entre si) e eixos do dolly.
+insert into config.configuracao_de_conjunto (codigo, nome, unidades, com_dolly, eixos_dos_semirreboques, eixos_do_dolly) values
+  ('simples', 'Simples', 1, false, '{2,3}', null),
+  ('bi', 'Bi', 2, false, '{2}', null),
+  ('bitrezao', 'Bitrezão', 2, false, '{3}', null),
+  ('rodo', 'Rodo', 3, true, '{2}', 2);
 
 -- Os 12 nomes de conjunto (Graneleira, Sider e Basculante). Baú frigorífico, Prancha e Tanque não
 -- têm nome de conjunto.

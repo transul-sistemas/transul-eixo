@@ -38,14 +38,14 @@ export type Database = {
                   ]
                 },"configuracao_de_conjunto": {
                   Row: {
-                    "codigo": string,"com_dolly": boolean | null,"eixos_por_implemento": number | null,"nome": string,"quantidade_de_implementos": number | null,"versao": number
+                    "codigo": string,"com_dolly": boolean,"eixos_do_dolly": number | null,"eixos_dos_semirreboques": (number)[],"nome": string,"unidades": number,"versao": number
                   }
                   ComputedFields: never
                   Insert: {
-                    "codigo": string,"com_dolly"?: boolean | null,"eixos_por_implemento"?: number | null,"nome": string,"quantidade_de_implementos"?: number | null,"versao"?: number
+                    "codigo": string,"com_dolly": boolean,"eixos_do_dolly"?: number | null,"eixos_dos_semirreboques": (number)[],"nome": string,"unidades": number,"versao"?: number
                   }
                   Update: {
-                    "codigo"?: string,"com_dolly"?: boolean | null,"eixos_por_implemento"?: number | null,"nome"?: string,"quantidade_de_implementos"?: number | null,"versao"?: number
+                    "codigo"?: string,"com_dolly"?: boolean,"eixos_do_dolly"?: number | null,"eixos_dos_semirreboques"?: (number)[],"nome"?: string,"unidades"?: number,"versao"?: number
                   }
                   Relationships: [
                     
@@ -177,7 +177,7 @@ isOneToOne: false
           }
           Functions: {
             "nome_do_conjunto":
-{ Args: { "p_carroceria_id": string,"p_eixos": number,"p_quantidade_de_implementos": number }; Returns: string
+{ Args: { "p_carroceria_id": string,"p_com_dolly": boolean,"p_eixos_do_dolly": number,"p_eixos_dos_semirreboques": number,"p_unidades": number }; Returns: string
                            }
           }
           Enums: {
@@ -208,14 +208,14 @@ isOneToOne: false
           Tables: {
             "ativo": {
                   Row: {
-                    "carroceria_id": string | null,"chassi": string | null,"codveiculo": number | null,"criado_em": string,"excluido_em": string | null,"excluido_por": string | null,"id": string,"modelo_id": string | null,"motivo_da_exclusao": string | null,"numero_de_serie": string | null,"renavam": string | null,"tipo": Database["nucleo"]['Enums']["tipo_de_ativo"],"versao": number
+                    "carroceria_id": string | null,"chassi": string | null,"codveiculo": number | null,"criado_em": string,"eixos": number | null,"excluido_em": string | null,"excluido_por": string | null,"funcao": Database["nucleo"]['Enums']["funcao_do_implemento"] | null,"id": string,"modelo_id": string | null,"motivo_da_exclusao": string | null,"numero_de_serie": string | null,"renavam": string | null,"tipo": Database["nucleo"]['Enums']["tipo_de_ativo"],"versao": number
                   }
                   ComputedFields: never
                   Insert: {
-                    "carroceria_id"?: string | null,"chassi"?: string | null,"codveiculo"?: number | null,"criado_em"?: string,"excluido_em"?: string | null,"excluido_por"?: string | null,"id"?: string,"modelo_id"?: string | null,"motivo_da_exclusao"?: string | null,"numero_de_serie"?: string | null,"renavam"?: string | null,"tipo": Database["nucleo"]['Enums']["tipo_de_ativo"],"versao"?: number
+                    "carroceria_id"?: string | null,"chassi"?: string | null,"codveiculo"?: number | null,"criado_em"?: string,"eixos"?: number | null,"excluido_em"?: string | null,"excluido_por"?: string | null,"funcao"?: Database["nucleo"]['Enums']["funcao_do_implemento"] | null,"id"?: string,"modelo_id"?: string | null,"motivo_da_exclusao"?: string | null,"numero_de_serie"?: string | null,"renavam"?: string | null,"tipo": Database["nucleo"]['Enums']["tipo_de_ativo"],"versao"?: number
                   }
                   Update: {
-                    "carroceria_id"?: string | null,"chassi"?: string | null,"codveiculo"?: number | null,"criado_em"?: string,"excluido_em"?: string | null,"excluido_por"?: string | null,"id"?: string,"modelo_id"?: string | null,"motivo_da_exclusao"?: string | null,"numero_de_serie"?: string | null,"renavam"?: string | null,"tipo"?: Database["nucleo"]['Enums']["tipo_de_ativo"],"versao"?: number
+                    "carroceria_id"?: string | null,"chassi"?: string | null,"codveiculo"?: number | null,"criado_em"?: string,"eixos"?: number | null,"excluido_em"?: string | null,"excluido_por"?: string | null,"funcao"?: Database["nucleo"]['Enums']["funcao_do_implemento"] | null,"id"?: string,"modelo_id"?: string | null,"motivo_da_exclusao"?: string | null,"numero_de_serie"?: string | null,"renavam"?: string | null,"tipo"?: Database["nucleo"]['Enums']["tipo_de_ativo"],"versao"?: number
                   }
                   Relationships: [
                     
@@ -244,6 +244,38 @@ isOneToOne: false
 isOneToOne: false
       referencedRelation: "operacao_do_ativo"
       referencedColumns: ["ativo_id"]
+    }
+                  ]
+                },"composicao": {
+                  Row: {
+                    "cavalo_id": string,"cavalo_tipo": Database["nucleo"]['Enums']["tipo_de_ativo"],"criado_em": string,"excluido_em": string | null,"excluido_por": string | null,"fim": string | null,"fim_origem": Database["config"]['Enums']["origem_da_data"] | null,"id": string,"implemento_id": string,"implemento_tipo": Database["nucleo"]['Enums']["tipo_de_ativo"],"inicio": string,"inicio_origem": Database["config"]['Enums']["origem_da_data"],"motivo_da_exclusao": string | null,"operacao_na_saida_id": string | null,"periodo": unknown,"posicao": number,"versao": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "cavalo_id": string,"cavalo_tipo"?: never,"criado_em"?: string,"excluido_em"?: string | null,"excluido_por"?: string | null,"fim"?: string | null,"fim_origem"?: Database["config"]['Enums']["origem_da_data"] | null,"id"?: string,"implemento_id": string,"implemento_tipo"?: never,"inicio": string,"inicio_origem": Database["config"]['Enums']["origem_da_data"],"motivo_da_exclusao"?: string | null,"operacao_na_saida_id"?: string | null,"periodo"?: never,"posicao": number,"versao"?: number
+                  }
+                  Update: {
+                    "cavalo_id"?: string,"cavalo_tipo"?: never,"criado_em"?: string,"excluido_em"?: string | null,"excluido_por"?: string | null,"fim"?: string | null,"fim_origem"?: Database["config"]['Enums']["origem_da_data"] | null,"id"?: string,"implemento_id"?: string,"implemento_tipo"?: never,"inicio"?: string,"inicio_origem"?: Database["config"]['Enums']["origem_da_data"],"motivo_da_exclusao"?: string | null,"operacao_na_saida_id"?: string | null,"periodo"?: never,"posicao"?: number,"versao"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "composicao_cavalo_fk"
+      columns: ["cavalo_id","cavalo_tipo"]
+isOneToOne: false
+      referencedRelation: "ativo"
+      referencedColumns: ["id","tipo"]
+    },{
+      foreignKeyName: "composicao_implemento_fk"
+      columns: ["implemento_id","implemento_tipo"]
+isOneToOne: false
+      referencedRelation: "ativo"
+      referencedColumns: ["id","tipo"]
+    },{
+      foreignKeyName: "composicao_operacao_na_saida_id_fkey"
+      columns: ["operacao_na_saida_id"]
+isOneToOne: false
+      referencedRelation: "operacao"
+      referencedColumns: ["id"]
     }
                   ]
                 },"cr": {
@@ -296,12 +328,6 @@ isOneToOne: false
 isOneToOne: false
       referencedRelation: "cr"
       referencedColumns: ["id"]
-    },{
-      foreignKeyName: "cr_do_ativo_cr_id_fkey"
-      columns: ["cr_id"]
-isOneToOne: false
-      referencedRelation: "operacao_do_ativo"
-      referencedColumns: ["cr_id"]
     }
                   ]
                 },"custodia": {
@@ -360,6 +386,26 @@ isOneToOne: false
 isOneToOne: false
       referencedRelation: "pessoa"
       referencedColumns: ["id"]
+    }
+                  ]
+                },"meta_do_conjunto": {
+                  Row: {
+                    "cavalo_id": string,"cavalo_tipo": Database["nucleo"]['Enums']["tipo_de_ativo"],"criado_em": string,"excluido_em": string | null,"excluido_por": string | null,"fim": string | null,"fim_origem": Database["config"]['Enums']["origem_da_data"] | null,"id": string,"inicio": string,"inicio_origem": Database["config"]['Enums']["origem_da_data"],"motivo_da_exclusao": string | null,"periodo": unknown,"valor": number,"versao": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "cavalo_id": string,"cavalo_tipo"?: never,"criado_em"?: string,"excluido_em"?: string | null,"excluido_por"?: string | null,"fim"?: string | null,"fim_origem"?: Database["config"]['Enums']["origem_da_data"] | null,"id"?: string,"inicio": string,"inicio_origem": Database["config"]['Enums']["origem_da_data"],"motivo_da_exclusao"?: string | null,"periodo"?: never,"valor": number,"versao"?: number
+                  }
+                  Update: {
+                    "cavalo_id"?: string,"cavalo_tipo"?: never,"criado_em"?: string,"excluido_em"?: string | null,"excluido_por"?: string | null,"fim"?: string | null,"fim_origem"?: Database["config"]['Enums']["origem_da_data"] | null,"id"?: string,"inicio"?: string,"inicio_origem"?: Database["config"]['Enums']["origem_da_data"],"motivo_da_exclusao"?: string | null,"periodo"?: never,"valor"?: number,"versao"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "meta_cavalo_fk"
+      columns: ["cavalo_id","cavalo_tipo"]
+isOneToOne: false
+      referencedRelation: "ativo"
+      referencedColumns: ["id","tipo"]
     }
                   ]
                 },"operacao": {
@@ -545,15 +591,15 @@ isOneToOne: false
                   ]
                 },"operacao_do_ativo": {
                   Row: {
-                    "ativo_id": string,"cr_id": string | null,"operacao_id": string | null
+                    "ativo_id": string,"cr_id": string | null,"degrau": string | null,"operacao_id": string | null
                   }
                   ComputedFields: never
                   Relationships: [
                     {
-      foreignKeyName: "cr_operacao_id_fkey"
-      columns: ["operacao_id"]
+      foreignKeyName: "cr_do_ativo_cr_id_fkey"
+      columns: ["cr_id"]
 isOneToOne: false
-      referencedRelation: "operacao"
+      referencedRelation: "cr"
       referencedColumns: ["id"]
     }
                   ]
@@ -589,11 +635,20 @@ isOneToOne: false
             "concluir_transferencia":
 { Args: { "p_em": string,"p_transferencia_id": string }; Returns: string
                            },
+"conferir_conjunto":
+{ Args: { "p_cavalo_id": string }; Returns: undefined
+                           },
 "documento_valido":
 { Args: { "p_texto": string }; Returns: boolean
                            },
 "mascarar_documento":
 { Args: { "p_texto": string }; Returns: string
+                           },
+"meta_do_conjunto_de":
+{ Args: { "p_ativo_id": string,"p_em"?: string }; Returns: number
+                           },
+"nome_do_conjunto":
+{ Args: { "p_cavalo_id": string,"p_em"?: string }; Returns: string
                            },
 "normalizar_documento":
 { Args: { "p_texto": string }; Returns: string
@@ -615,7 +670,7 @@ isOneToOne: false
                            }
           }
           Enums: {
-            "com_quem_da_custodia": "gestor"|"operacional","regime_de_posse": "propria"|"acionista"|"agregado"|"terceiro"|"alugada","tipo_de_ativo": "cavalo"|"implemento"|"equipamento"|"caminhao"|"apoio"
+            "com_quem_da_custodia": "gestor"|"operacional","funcao_do_implemento": "semirreboque"|"dolly","regime_de_posse": "propria"|"acionista"|"agregado"|"terceiro"|"alugada","tipo_de_ativo": "cavalo"|"implemento"|"equipamento"|"caminhao"|"apoio"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -755,7 +810,7 @@ export const Constants = {
           }
         },"nucleo": {
           Enums: {
-            "com_quem_da_custodia": ["gestor", "operacional"],"regime_de_posse": ["propria", "acionista", "agregado", "terceiro", "alugada"],"tipo_de_ativo": ["cavalo", "implemento", "equipamento", "caminhao", "apoio"]
+            "com_quem_da_custodia": ["gestor", "operacional"],"funcao_do_implemento": ["semirreboque", "dolly"],"regime_de_posse": ["propria", "acionista", "agregado", "terceiro", "alugada"],"tipo_de_ativo": ["cavalo", "implemento", "equipamento", "caminhao", "apoio"]
           }
         },"public": {
           Enums: {

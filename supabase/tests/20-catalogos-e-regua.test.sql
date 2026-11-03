@@ -37,7 +37,7 @@ select is(
   9::bigint,
   'as nove tabelas do catálogo existem em config'
 );
-select has_function('config', 'nome_do_conjunto', array['uuid', 'integer', 'integer'], 'existe config.nome_do_conjunto');
+select has_function('config', 'nome_do_conjunto', array['uuid', 'integer', 'boolean', 'integer', 'integer'], 'existe config.nome_do_conjunto(carroceria, unidades, dolly, eixos dos semirreboques, eixos do dolly)');
 select ok(
   (select count(*) from information_schema.columns
     where table_schema = 'nucleo' and table_name = 'ativo' and column_name in ('carroceria_id', 'modelo_id')) = 2,
@@ -160,50 +160,50 @@ select bag_eq(
 select ok(
   (select count(*) from information_schema.columns
     where table_schema = 'config' and table_name = 'configuracao_de_conjunto'
-      and column_name in ('quantidade_de_implementos', 'com_dolly', 'eixos_por_implemento')) = 3,
-  'as colunas da regra de reconhecimento (pela estrutura: implementos, dolly e eixos por implemento) existem'
+      and column_name in ('unidades', 'com_dolly', 'eixos_dos_semirreboques', 'eixos_do_dolly')) = 4
+  and not exists (select 1 from information_schema.columns
+    where table_schema = 'config' and table_name = 'configuracao_de_conjunto'
+      and column_name in ('quantidade_de_implementos', 'eixos_por_implemento')),
+  'as colunas da regra pela estrutura (unidades, dolly, eixos dos semirreboques e do dolly) existem; as da 3.1 saíram'
 );
 select is(
-  (
-    select count(*) from config.configuracao_de_conjunto
-    where quantidade_de_implementos is not null or com_dolly is not null or eixos_por_implemento is not null
-  ),
+  (select count(*) from config.configuracao_de_conjunto where unidades is null or eixos_dos_semirreboques is null),
   0::bigint,
-  'a regra de reconhecimento está vazia: ela é da equipe e não foi inventada'
+  'a regra da equipe (03/11/2026) está semeada em todas as configurações'
 );
 
 select is(
-  config.nome_do_conjunto((select id from config.carroceria where nome = 'Graneleira'), 2, 7),
-  'sem nome',
-  'Graneleira com nome de conjunto, regra vazia: "sem nome"'
+  config.nome_do_conjunto((select id from config.carroceria where nome = 'Graneleira'), 2, false, 2, null),
+  'Bitrem',
+  'Graneleira, dois semirreboques de 2 eixos sem dolly: Bitrem'
 );
 select is(
-  config.nome_do_conjunto((select id from config.carroceria where nome = 'Sider'), 1, null),
-  'sem nome',
-  'Sider com nome de conjunto, regra vazia: "sem nome"'
+  config.nome_do_conjunto((select id from config.carroceria where nome = 'Sider'), 1, false, 3, null),
+  'Sider',
+  'Sider, um semirreboque de 3 eixos: Sider (simples)'
 );
 select is(
-  config.nome_do_conjunto((select id from config.carroceria where nome = 'Basculante'), 3, 9),
-  'sem nome',
-  'Basculante com nome de conjunto, regra vazia: "sem nome", com qualquer quantidade'
+  config.nome_do_conjunto((select id from config.carroceria where nome = 'Basculante'), 3, true, 2, 2),
+  'Rodocaçamba',
+  'Basculante, dois semirreboques de 2 eixos e dolly de 2: Rodocaçamba'
 );
 select is(
-  config.nome_do_conjunto((select id from config.carroceria where nome = 'Prancha'), 2, null),
+  config.nome_do_conjunto((select id from config.carroceria where nome = 'Prancha'), 2, false, 2, null),
   'Prancha, 2 implementos',
-  'carroceria sem nome de conjunto: só a carroceria e a quantidade'
+  'carroceria sem nome de conjunto: a carroceria e a quantidade de semirreboques'
 );
 select is(
-  config.nome_do_conjunto((select id from config.carroceria where nome = 'Baú frigorífico'), 1, null),
+  config.nome_do_conjunto((select id from config.carroceria where nome = 'Baú frigorífico'), 1, false, 3, null),
   'Baú frigorífico, 1 implemento',
   'no singular, "1 implemento"'
 );
 select is(
-  config.nome_do_conjunto((select id from config.carroceria where nome = 'Tanque'), 3, 9),
-  'Tanque, 3 implementos',
-  'Tanque também só mostra a carroceria e a quantidade'
+  config.nome_do_conjunto((select id from config.carroceria where nome = 'Graneleira'), 2, false, null, null),
+  'pendente',
+  'sem os eixos dos semirreboques, o nome fica pendente (nunca presumido)'
 );
 select is(
-  config.nome_do_conjunto(null, 2, 7),
+  config.nome_do_conjunto(null, 2, false, 2, null),
   null,
   'sem carroceria, sem nome'
 );
@@ -267,10 +267,10 @@ select ok(
 
 -- ---- ativo: carroceria obrigatória no implemento, opcional no caminhão, proibida nos demais; modelo opcional ----
 select throws_ok(
-  $$insert into nucleo.ativo (tipo, renavam) values ('implemento', pg_temp.renavam(11))$$,
+  $$insert into nucleo.ativo (tipo, funcao, renavam) values ('implemento', 'semirreboque', pg_temp.renavam(11))$$,
   '23514',
   null,
-  'implemento sem carroceria é recusado'
+  'semirreboque sem carroceria é recusado'
 );
 select throws_ok(
   $$insert into nucleo.ativo (tipo, renavam, carroceria_id)
@@ -280,9 +280,9 @@ select throws_ok(
   'carroceria em cavalo é recusada'
 );
 select lives_ok(
-  $$insert into nucleo.ativo (tipo, renavam, carroceria_id)
-    values ('implemento', pg_temp.renavam(13), (select id from config.carroceria where nome = 'Sider'))$$,
-  'implemento com carroceria passa'
+  $$insert into nucleo.ativo (tipo, funcao, renavam, carroceria_id)
+    values ('implemento', 'semirreboque', pg_temp.renavam(13), (select id from config.carroceria where nome = 'Sider'))$$,
+  'semirreboque com carroceria passa'
 );
 select lives_ok(
   $$insert into nucleo.ativo (tipo, renavam, carroceria_id)
@@ -352,7 +352,7 @@ select tests.como(current_setting('tests.u1')::uuid);
 select throws_ok('select 1 from config.status', '42501', null, 'authenticated não lê a régua sem permissão explícita');
 reset role;
 select tests.como_anonimo();
-select throws_ok('select config.nome_do_conjunto(null, 1, 1)', '42501', null, 'anon não executa config.nome_do_conjunto');
+select throws_ok('select config.nome_do_conjunto(null, 1, false, 2, null)', '42501', null, 'anon não executa config.nome_do_conjunto');
 reset role;
 
 select * from finish();
