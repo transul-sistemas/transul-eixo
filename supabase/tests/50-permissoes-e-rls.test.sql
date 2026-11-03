@@ -186,7 +186,11 @@ select set_eq(
     'config.papel.papel_ler', 'config.papel.papel_criar', 'config.papel.papel_alterar',
     'config.parametro.parametro_ler', 'config.parametro.parametro_criar', 'config.parametro.parametro_alterar',
     'config.funcao_executavel.funcao_executavel_ler', 'config.funcao_executavel.funcao_executavel_criar', 'config.funcao_executavel.funcao_executavel_alterar',
-    'auditoria.evento.auditoria_evento_ler'
+    'auditoria.evento.auditoria_evento_ler',
+    -- 3.7 (testadas em 70-dados-do-ativo.test.sql)
+    'config.campo_corrigivel.campo_corrigivel_ler', 'nucleo.sinal_do_sankhya.sinal_do_sankhya_ler',
+    'nucleo.correcao_de_campo.correcao_de_campo_ler',
+    'nucleo.fila_de_excecoes.fila_de_excecoes_ler', 'nucleo.fila_de_excecoes.fila_de_excecoes_alterar'
   ],
   'as políticas de cada tabela, com o nome de cada uma (todas testadas abaixo ou na matriz)'
 );

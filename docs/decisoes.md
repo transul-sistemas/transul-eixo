@@ -8,6 +8,34 @@ Modelo de entrada:
 
 ---
 
+## 05/11/2026 — Fatia 3.7 (dados do ativo com origem e gravações atômicas)
+
+- **O que entrou (duas migrations novas: `origem_correcao_local`, só o valor novo do enum, e `dados_do_ativo`):**
+  - **O valor mora no ativo, com a origem de cada campo.** Modelo, carroceria, eixos, tara, PBT, CMT, ano de fabricação, ano do modelo, valor FIPE e valor manual, cada um com `<campo>_origem` (`sankhya`, `derivada`, `informada`, `correcao_local`). O nome do conjunto, os alertas e as telas continuam lendo só `nucleo.ativo` (nada mudou neles). Massas em kg, inteiras e positivas; tara menor que o PBT; CMT só em cavalo e caminhão; ano do modelo igual ao de fabricação ou o seguinte; valor FIPE (com mês de referência) só em cavalo e caminhão; valor manual (com fonte e data) só nos demais. Dinheiro em `numeric(15,2)`.
+  - **O Sankhya é só sinal.** `nucleo.sinal_do_sankhya` guarda o último valor dito pelo Sankhya por campo (no tipo do Eixo, com o texto bruto: NUMEIXOS, TIPOCAR/CODTIPCAR, nome do modelo). `nucleo.receber_sinal_do_sankhya` (só os workers; sem grant ao app) grava o sinal e só o aplica no ativo onde a origem ainda é `sankhya` ou vazia; devolve `aplicado` ou `mantido`.
+  - **Correção local:** `nucleo.corrigir_campo` (motivo obrigatório; quem, quando, por quê e o valor anterior em `nucleo.correcao_de_campo`; uma ativa por campo; corrigir de novo revoga a anterior) e `nucleo.revogar_correcao` (com motivo; volta ao último sinal do Sankhya ou, sem sinal, ao valor de antes). **Nenhuma gravação direta apaga a correção, nem a do dono do banco** (gatilho `t12_origem_dos_campos`). O valor que veio do Sankhya não se edita direto: vira correção, com motivo. Quem age como usuário sempre grava `informada` (a origem não se escolhe).
+  - **Chaves fora:** placa, RENAVAM, CPF, CNPJ, série e chassi não estão em `config.campo_corrigivel` e são recusadas com a mensagem "não aceita correção local".
+  - **Pendente, nunca presumido:** a visão `nucleo.campo_pendente` lista o campo vazio que o tipo exige. **Relatório:** `nucleo.divergencia_de_campo` (Sankhya × Eixo). **Fila:** `nucleo.fila_de_excecoes` (o que não se deduz), lida e resolvida por quem edita Cadastros, com a resolução escrita.
+  - **Funções atômicas, com chave de envio e versão:** `nucleo.cadastrar_ativo` (ativo, placa, posse, gestor, evento inicial, CR e operação numa transação; **CR e operação obrigatórios**; o gestor só na própria carteira, salvo escopo "tudo"), `nucleo.criar_cr` (o "+" de CR: CODCENCUS obrigatório e único, nasce "a conferir"), `nucleo.entregar_ao_operacional` (versão conferida; só cavalo ou caminhão, pelo catálogo do DOp; só de PÁT ou ETv; fecha a custódia aberta, abre a do Operacional da filial e grava o DOp com a mesma hora) e `corrigir_campo`. A chave de envio agora guarda o resultado (`auditoria.envio.resultado`): a mesma chave devolve o mesmo id (`auditoria.reservar_envio` e `auditoria.concluir_envio`).
+  - **Acesso:** cinco políticas novas com nome; sete funções novas na lista de exceções, cada uma justificada; o UPDATE do ativo ganhou as colunas novas de valor, **nunca as de origem**.
+  - **Espelho em TypeScript:** `lib/dominio/campos-do-ativo.ts` (campos corrigíveis, chaves, pendência por tipo, FIPE ou manual, anos), conferido contra a migration no Vitest.
+- **Testes vistos falhando antes:** pgTAP 70 (71 de 71 falhando: nada existia) e o Vitest do espelho (módulo inexistente). **Mutações (todas pegas):** correção apagável por gravação direta; correção sem motivo; operação opcional no cadastro; sinal que sobrescreve a correção; chave corrigível; cadastro sem idempotência.
+- **Decisões minhas a confirmar:**
+  1. **O valor efetivo fica no ativo** (o sinal do Sankhya fica à parte), em vez de uma visão "efetiva" sobre o valor do Sankhya: assim o nome do conjunto e todo o resto já leem o valor corrigido.
+  2. **Onde o vazio fica pendente:** modelo e anos em todos os tipos; eixos, tara e PBT em cavalo, implemento e caminhão; CMT e valor FIPE em cavalo e caminhão; valor manual em implemento, equipamento e apoio; carroceria nunca (já é obrigatória no semirreboque; opcional no caminhão).
+  3. **Valor informado no Eixo vence o sinal do Sankhya** (fica `mantido` e aparece na divergência), igual à correção local.
+  4. **Correção sem alçada de aprovação:** motivo, quem e quando bastam para os dados do ativo (a alçada da regra 3 fica para os fatos financeiros).
+  5. **No cadastro, o gestor escolhe a operação sem precisar do módulo Operações** (a operação é obrigatória no cadastro; a montagem posterior segue com Operações).
+  6. **Erros:** conflito de versão `40001` ("Este registro mudou desde que você o abriu…"); chave de envio usada noutra gravação `23505`; falta de permissão `42501`.
+  7. **Anos plausíveis de 1950 a 2100** no banco (o assistente hoje pede um "ano" só, de 1980 ao ano seguinte). **O código FIPE** que o assistente pede não tem coluna ainda.
+  8. **Revogar não tem chave de envio** (revogar duas vezes dá "já foi revogada").
+- **Gravações que ainda não têm chave de envio:** `registrar_evento`, `engatar`, `desatrelar`, `registrar_baixa`, `receber_transferencia` e `concluir_transferencia` já são atômicas, mas sem `p_chave` (mudar a assinatura é migration nova; proponho fazer junto da troca de fonte, na 3.9).
+- **Só listado, nenhuma tela alterada (entra com a troca de fonte, 3.9):** os campos Função, Carroceria e Eixos do implemento e o passo de Operação obrigatório no assistente "Cadastrar placa" afetam `app/(sistema)/frota/placas/assistentes/cadastrar-placa.tsx` (passos "Veículo", "Valor" e "Posse"; hoje `operacaoId` e `crId` são opcionais e há um "ano" só), `assistentes-da-frota.tsx`, `app/(sistema)/frota/placas/acoes.ts`, `lib/dominio/esquemas/placa.ts` (`esquemaCadastrarPlaca`) e o teste dele, `lib/dados/entradas-dos-assistentes.ts`, `escrita.ts`, `fonte.ts`, `fonte-de-exemplo.ts` (e testes), o armazém de exemplo (`lib/exemplo/armazem.ts` e teste) e os e2e `e2e/apoio-assistentes-frota.ts`, `assistentes-frota.spec.ts`, `assistentes-frota.casca.spec.ts`, `assistentes-frota.visual(.casca).spec.ts`, `assistentes-frota.resultado(.casca).spec.ts` e `assistentes-frota-custodia.spec.ts` (Entregar ao Operacional).
+- **Fica para a 3.8:** o login e `exigirPermissao()` lendo `config.pode` com a sessão real (as funções de gravação já conferem a permissão por dentro).
+- **Quem decidiu:** Alexandre (o escopo da 3.7, 05/11/2026); os itens numerados aguardam o checkpoint.
+
+---
+
 ## 05/11/2026 — Fatia 3.6c (operação por montagem)
 
 - **O que entrou (migration nova `operacao_por_montagem`):**

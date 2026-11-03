@@ -481,6 +481,14 @@ O texto completo está em `docs/decisoes.md` (entradas de 04/11/2026). Aqui fica
 - **Consulta de placa no "Cadastrar placa":** descartada por ora (depende de API paga ou canal oficial autorizado pela diretoria).
 - **"Receber placa" na opção B (ajuste da tela na 3.9):** a tela ainda faz tudo numa etapa e troca o gestor ao concluir. Mudam: `app/(sistema)/frota/placas/assistentes/receber-placa.tsx` (duas etapas e três respostas por pendência, com nota); `esquemaRecebimento` em `lib/dominio/esquemas/placa.ts` (pendências com `resolvida: boolean`); `lib/dominio/custodia.ts` (`SituacaoDoPedido` e `podeReceberPedido`); o `receber` do armazém de exemplo (`lib/exemplo/armazem.ts`, que troca o gestor no recebimento); `receberPlacaAcao` (`app/(sistema)/frota/placas/acoes.ts`) e `lib/dados/entradas-dos-assistentes.ts`; as ações da ficha (`lib/dominio/acoes-do-momento.ts` e `components/ficha/acoes-da-ficha.tsx`, que não têm "concluir" para pedido em conferência); e os e2e de custódia (`e2e/assistentes-frota-custodia.spec.ts`, além de `assistentes-frota.casca.spec.ts`, `assistentes-frota.visual.spec.ts` e `ficha.spec.ts`).
 
+## Dados do ativo (05/11/2026): fatia 3.7
+
+O texto completo está em `docs/decisoes.md` (entrada "Fatia 3.7").
+
+- **3.7 (banco e domínio, sem e2e):** origem por campo no ativo (modelo, carroceria, eixos, tara, PBT, CMT, anos, valor FIPE e valor manual); sinal do Sankhya à parte (aplicado só onde ninguém corrigiu); correção local com motivo que a sincronização não apaga; chaves sem correção; pendência por tipo; relatório de divergência; fila de exceções; funções atômicas `cadastrar_ativo` (CR e operação obrigatórios), `criar_cr` (CODCENCUS obrigatório, "a conferir"), `entregar_ao_operacional` e `corrigir_campo`, com chave de envio (que agora devolve o resultado) e versão.
+- **3.9:** o assistente "Cadastrar placa" ganha Função, Carroceria e Eixos do implemento e o passo de Operação obrigatório, e grava pela `cadastrar_ativo` (a lista dos arquivos e e2e afetados está na decisão); as gravações antigas (`registrar_evento`, `engatar`, `desatrelar`, `registrar_baixa`, receber e concluir a transferência) ganham a chave de envio.
+- **Pendente:** configuração de tração (4x2, 6x2, 6x4, 8x2, 8x4) como catálogo próprio, proposta da seção "Conformidade da composição", não entrou na 3.7 (a confirmar com Alexandre).
+
 ## CR e operação (05/11/2026): fatia 3.6c
 
 O texto completo está em `docs/decisoes.md` (entrada de 05/11/2026). **Substitui** a regra da 3.3 de que a operação da placa é a do CR vigente.

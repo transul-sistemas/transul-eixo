@@ -36,6 +36,20 @@ export type Database = {
                   Relationships: [
                     
                   ]
+                },"campo_corrigivel": {
+                  Row: {
+                    "campo": string,"coluna_da_origem": string,"ordem": number,"pendente_em": (Database["nucleo"]['Enums']["tipo_de_ativo"])[],"rotulo": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "campo": string,"coluna_da_origem": string,"ordem": number,"pendente_em"?: (Database["nucleo"]['Enums']["tipo_de_ativo"])[],"rotulo": string
+                  }
+                  Update: {
+                    "campo"?: string,"coluna_da_origem"?: string,"ordem"?: number,"pendente_em"?: (Database["nucleo"]['Enums']["tipo_de_ativo"])[],"rotulo"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
                 },"carroceria": {
                   Row: {
                     "criado_em": string,"excluido_em": string | null,"excluido_por": string | null,"id": string,"motivo_da_exclusao": string | null,"nome": string,"versao": number
@@ -332,7 +346,7 @@ isOneToOne: false
                            }
           }
           Enums: {
-            "origem_da_data": "derivada"|"observada"|"informada","origem_do_campo": "sankhya"|"derivada"|"informada"
+            "origem_da_data": "derivada"|"observada"|"informada","origem_do_campo": "sankhya"|"derivada"|"informada"|"correcao_local"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -359,14 +373,14 @@ isOneToOne: false
           Tables: {
             "ativo": {
                   Row: {
-                    "carroceria_id": string | null,"chassi": string | null,"codveiculo": number | null,"criado_em": string,"eixos": number | null,"excluido_em": string | null,"excluido_por": string | null,"funcao": Database["nucleo"]['Enums']["funcao_do_implemento"] | null,"id": string,"modelo_id": string | null,"motivo_da_exclusao": string | null,"numero_de_serie": string | null,"renavam": string | null,"tipo": Database["nucleo"]['Enums']["tipo_de_ativo"],"versao": number
+                    "ano_fabricacao": number | null,"ano_fabricacao_origem": Database["config"]['Enums']["origem_do_campo"] | null,"ano_modelo": number | null,"ano_modelo_origem": Database["config"]['Enums']["origem_do_campo"] | null,"carroceria_id": string | null,"carroceria_origem": Database["config"]['Enums']["origem_do_campo"] | null,"chassi": string | null,"cmt_kg": number | null,"cmt_kg_origem": Database["config"]['Enums']["origem_do_campo"] | null,"codveiculo": number | null,"criado_em": string,"eixos": number | null,"eixos_origem": Database["config"]['Enums']["origem_do_campo"] | null,"excluido_em": string | null,"excluido_por": string | null,"funcao": Database["nucleo"]['Enums']["funcao_do_implemento"] | null,"id": string,"modelo_id": string | null,"modelo_origem": Database["config"]['Enums']["origem_do_campo"] | null,"motivo_da_exclusao": string | null,"numero_de_serie": string | null,"pbt_kg": number | null,"pbt_kg_origem": Database["config"]['Enums']["origem_do_campo"] | null,"renavam": string | null,"tara_kg": number | null,"tara_kg_origem": Database["config"]['Enums']["origem_do_campo"] | null,"tipo": Database["nucleo"]['Enums']["tipo_de_ativo"],"valor_fipe": number | null,"valor_fipe_origem": Database["config"]['Enums']["origem_do_campo"] | null,"valor_fipe_referencia": string | null,"valor_manual": number | null,"valor_manual_em": string | null,"valor_manual_fonte": string | null,"valor_manual_origem": Database["config"]['Enums']["origem_do_campo"] | null,"versao": number
                   }
                   ComputedFields: never
                   Insert: {
-                    "carroceria_id"?: string | null,"chassi"?: string | null,"codveiculo"?: number | null,"criado_em"?: string,"eixos"?: number | null,"excluido_em"?: string | null,"excluido_por"?: string | null,"funcao"?: Database["nucleo"]['Enums']["funcao_do_implemento"] | null,"id"?: string,"modelo_id"?: string | null,"motivo_da_exclusao"?: string | null,"numero_de_serie"?: string | null,"renavam"?: string | null,"tipo": Database["nucleo"]['Enums']["tipo_de_ativo"],"versao"?: number
+                    "ano_fabricacao"?: number | null,"ano_fabricacao_origem"?: Database["config"]['Enums']["origem_do_campo"] | null,"ano_modelo"?: number | null,"ano_modelo_origem"?: Database["config"]['Enums']["origem_do_campo"] | null,"carroceria_id"?: string | null,"carroceria_origem"?: Database["config"]['Enums']["origem_do_campo"] | null,"chassi"?: string | null,"cmt_kg"?: number | null,"cmt_kg_origem"?: Database["config"]['Enums']["origem_do_campo"] | null,"codveiculo"?: number | null,"criado_em"?: string,"eixos"?: number | null,"eixos_origem"?: Database["config"]['Enums']["origem_do_campo"] | null,"excluido_em"?: string | null,"excluido_por"?: string | null,"funcao"?: Database["nucleo"]['Enums']["funcao_do_implemento"] | null,"id"?: string,"modelo_id"?: string | null,"modelo_origem"?: Database["config"]['Enums']["origem_do_campo"] | null,"motivo_da_exclusao"?: string | null,"numero_de_serie"?: string | null,"pbt_kg"?: number | null,"pbt_kg_origem"?: Database["config"]['Enums']["origem_do_campo"] | null,"renavam"?: string | null,"tara_kg"?: number | null,"tara_kg_origem"?: Database["config"]['Enums']["origem_do_campo"] | null,"tipo": Database["nucleo"]['Enums']["tipo_de_ativo"],"valor_fipe"?: number | null,"valor_fipe_origem"?: Database["config"]['Enums']["origem_do_campo"] | null,"valor_fipe_referencia"?: string | null,"valor_manual"?: number | null,"valor_manual_em"?: string | null,"valor_manual_fonte"?: string | null,"valor_manual_origem"?: Database["config"]['Enums']["origem_do_campo"] | null,"versao"?: number
                   }
                   Update: {
-                    "carroceria_id"?: string | null,"chassi"?: string | null,"codveiculo"?: number | null,"criado_em"?: string,"eixos"?: number | null,"excluido_em"?: string | null,"excluido_por"?: string | null,"funcao"?: Database["nucleo"]['Enums']["funcao_do_implemento"] | null,"id"?: string,"modelo_id"?: string | null,"motivo_da_exclusao"?: string | null,"numero_de_serie"?: string | null,"renavam"?: string | null,"tipo"?: Database["nucleo"]['Enums']["tipo_de_ativo"],"versao"?: number
+                    "ano_fabricacao"?: number | null,"ano_fabricacao_origem"?: Database["config"]['Enums']["origem_do_campo"] | null,"ano_modelo"?: number | null,"ano_modelo_origem"?: Database["config"]['Enums']["origem_do_campo"] | null,"carroceria_id"?: string | null,"carroceria_origem"?: Database["config"]['Enums']["origem_do_campo"] | null,"chassi"?: string | null,"cmt_kg"?: number | null,"cmt_kg_origem"?: Database["config"]['Enums']["origem_do_campo"] | null,"codveiculo"?: number | null,"criado_em"?: string,"eixos"?: number | null,"eixos_origem"?: Database["config"]['Enums']["origem_do_campo"] | null,"excluido_em"?: string | null,"excluido_por"?: string | null,"funcao"?: Database["nucleo"]['Enums']["funcao_do_implemento"] | null,"id"?: string,"modelo_id"?: string | null,"modelo_origem"?: Database["config"]['Enums']["origem_do_campo"] | null,"motivo_da_exclusao"?: string | null,"numero_de_serie"?: string | null,"pbt_kg"?: number | null,"pbt_kg_origem"?: Database["config"]['Enums']["origem_do_campo"] | null,"renavam"?: string | null,"tara_kg"?: number | null,"tara_kg_origem"?: Database["config"]['Enums']["origem_do_campo"] | null,"tipo"?: Database["nucleo"]['Enums']["tipo_de_ativo"],"valor_fipe"?: number | null,"valor_fipe_origem"?: Database["config"]['Enums']["origem_do_campo"] | null,"valor_fipe_referencia"?: string | null,"valor_manual"?: number | null,"valor_manual_em"?: string | null,"valor_manual_fonte"?: string | null,"valor_manual_origem"?: Database["config"]['Enums']["origem_do_campo"] | null,"versao"?: number
                   }
                   Relationships: [
                     
@@ -389,6 +403,12 @@ isOneToOne: false
 isOneToOne: false
       referencedRelation: "ativo"
       referencedColumns: ["id"]
+    },{
+      foreignKeyName: "baixa_do_ativo_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: false
+      referencedRelation: "campo_pendente"
+      referencedColumns: ["ativo_id"]
     },{
       foreignKeyName: "baixa_do_ativo_ativo_id_fkey"
       columns: ["ativo_id"]
@@ -426,6 +446,68 @@ isOneToOne: false
       columns: ["operacao_na_saida_id"]
 isOneToOne: false
       referencedRelation: "operacao"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"correcao_de_campo": {
+                  Row: {
+                    "ativo_id": string,"campo": string,"corrigido_em": string,"corrigido_por": string | null,"id": string,"motivo": string,"motivo_da_revogacao": string | null,"origem_anterior": Database["config"]['Enums']["origem_do_campo"] | null,"revogada_em": string | null,"revogada_por": string | null,"valor_anterior": Json | null,"valor_local": NonNullable<Json>,"versao": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "ativo_id": string,"campo": string,"corrigido_em"?: string,"corrigido_por"?: string | null,"id"?: string,"motivo": string,"motivo_da_revogacao"?: string | null,"origem_anterior"?: Database["config"]['Enums']["origem_do_campo"] | null,"revogada_em"?: string | null,"revogada_por"?: string | null,"valor_anterior"?: Json | null,"valor_local": NonNullable<Json>,"versao"?: number
+                  }
+                  Update: {
+                    "ativo_id"?: string,"campo"?: string,"corrigido_em"?: string,"corrigido_por"?: string | null,"id"?: string,"motivo"?: string,"motivo_da_revogacao"?: string | null,"origem_anterior"?: Database["config"]['Enums']["origem_do_campo"] | null,"revogada_em"?: string | null,"revogada_por"?: string | null,"valor_anterior"?: Json | null,"valor_local"?: NonNullable<Json>,"versao"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "correcao_de_campo_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: false
+      referencedRelation: "ativo"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "correcao_de_campo_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: false
+      referencedRelation: "campo_pendente"
+      referencedColumns: ["ativo_id"]
+    },{
+      foreignKeyName: "correcao_de_campo_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: false
+      referencedRelation: "operacao_do_ativo"
+      referencedColumns: ["ativo_id"]
+    },{
+      foreignKeyName: "correcao_de_campo_campo_fkey"
+      columns: ["campo"]
+isOneToOne: false
+      referencedRelation: "campo_pendente"
+      referencedColumns: ["campo"]
+    },{
+      foreignKeyName: "correcao_de_campo_corrigido_por_fkey"
+      columns: ["corrigido_por"]
+isOneToOne: false
+      referencedRelation: "pessoa"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "correcao_de_campo_corrigido_por_fkey"
+      columns: ["corrigido_por"]
+isOneToOne: false
+      referencedRelation: "pessoa_para_leitura"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "correcao_de_campo_revogada_por_fkey"
+      columns: ["revogada_por"]
+isOneToOne: false
+      referencedRelation: "pessoa"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "correcao_de_campo_revogada_por_fkey"
+      columns: ["revogada_por"]
+isOneToOne: false
+      referencedRelation: "pessoa_para_leitura"
       referencedColumns: ["id"]
     }
                   ]
@@ -527,6 +609,12 @@ isOneToOne: false
       foreignKeyName: "cr_do_ativo_ativo_id_fkey"
       columns: ["ativo_id"]
 isOneToOne: false
+      referencedRelation: "campo_pendente"
+      referencedColumns: ["ativo_id"]
+    },{
+      foreignKeyName: "cr_do_ativo_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: false
       referencedRelation: "operacao_do_ativo"
       referencedColumns: ["ativo_id"]
     },{
@@ -565,6 +653,12 @@ isOneToOne: false
       foreignKeyName: "custodia_ativo_id_fkey"
       columns: ["ativo_id"]
 isOneToOne: false
+      referencedRelation: "campo_pendente"
+      referencedColumns: ["ativo_id"]
+    },{
+      foreignKeyName: "custodia_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: false
       referencedRelation: "operacao_do_ativo"
       referencedColumns: ["ativo_id"]
     }
@@ -587,6 +681,12 @@ isOneToOne: false
 isOneToOne: false
       referencedRelation: "ativo"
       referencedColumns: ["id"]
+    },{
+      foreignKeyName: "estado_de_status_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: false
+      referencedRelation: "campo_pendente"
+      referencedColumns: ["ativo_id"]
     },{
       foreignKeyName: "estado_de_status_ativo_id_fkey"
       columns: ["ativo_id"]
@@ -629,8 +729,64 @@ isOneToOne: false
       foreignKeyName: "evento_de_status_ativo_id_fkey"
       columns: ["ativo_id"]
 isOneToOne: false
+      referencedRelation: "campo_pendente"
+      referencedColumns: ["ativo_id"]
+    },{
+      foreignKeyName: "evento_de_status_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: false
       referencedRelation: "operacao_do_ativo"
       referencedColumns: ["ativo_id"]
+    }
+                  ]
+                },"fila_de_excecoes": {
+                  Row: {
+                    "ativo_id": string | null,"campo": string | null,"criado_em": string,"descricao": string,"id": string,"resolucao": string | null,"resolvida_em": string | null,"resolvida_por": string | null,"versao": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "ativo_id"?: string | null,"campo"?: string | null,"criado_em"?: string,"descricao": string,"id"?: string,"resolucao"?: string | null,"resolvida_em"?: string | null,"resolvida_por"?: string | null,"versao"?: number
+                  }
+                  Update: {
+                    "ativo_id"?: string | null,"campo"?: string | null,"criado_em"?: string,"descricao"?: string,"id"?: string,"resolucao"?: string | null,"resolvida_em"?: string | null,"resolvida_por"?: string | null,"versao"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "fila_de_excecoes_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: false
+      referencedRelation: "ativo"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "fila_de_excecoes_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: false
+      referencedRelation: "campo_pendente"
+      referencedColumns: ["ativo_id"]
+    },{
+      foreignKeyName: "fila_de_excecoes_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: false
+      referencedRelation: "operacao_do_ativo"
+      referencedColumns: ["ativo_id"]
+    },{
+      foreignKeyName: "fila_de_excecoes_campo_fkey"
+      columns: ["campo"]
+isOneToOne: false
+      referencedRelation: "campo_pendente"
+      referencedColumns: ["campo"]
+    },{
+      foreignKeyName: "fila_de_excecoes_resolvida_por_fkey"
+      columns: ["resolvida_por"]
+isOneToOne: false
+      referencedRelation: "pessoa"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "fila_de_excecoes_resolvida_por_fkey"
+      columns: ["resolvida_por"]
+isOneToOne: false
+      referencedRelation: "pessoa_para_leitura"
+      referencedColumns: ["id"]
     }
                   ]
                 },"gestor_da_carteira": {
@@ -651,6 +807,12 @@ isOneToOne: false
 isOneToOne: false
       referencedRelation: "ativo"
       referencedColumns: ["id"]
+    },{
+      foreignKeyName: "gestor_da_carteira_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: false
+      referencedRelation: "campo_pendente"
+      referencedColumns: ["ativo_id"]
     },{
       foreignKeyName: "gestor_da_carteira_ativo_id_fkey"
       columns: ["ativo_id"]
@@ -793,6 +955,12 @@ isOneToOne: false
       foreignKeyName: "placa_do_ativo_ativo_id_fkey"
       columns: ["ativo_id"]
 isOneToOne: false
+      referencedRelation: "campo_pendente"
+      referencedColumns: ["ativo_id"]
+    },{
+      foreignKeyName: "placa_do_ativo_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: false
       referencedRelation: "operacao_do_ativo"
       referencedColumns: ["ativo_id"]
     }
@@ -815,6 +983,12 @@ isOneToOne: false
 isOneToOne: false
       referencedRelation: "ativo"
       referencedColumns: ["id"]
+    },{
+      foreignKeyName: "placa_na_operacao_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: false
+      referencedRelation: "campo_pendente"
+      referencedColumns: ["ativo_id"]
     },{
       foreignKeyName: "placa_na_operacao_ativo_id_fkey"
       columns: ["ativo_id"]
@@ -863,6 +1037,12 @@ isOneToOne: false
       foreignKeyName: "posse_do_ativo_ativo_id_fkey"
       columns: ["ativo_id"]
 isOneToOne: false
+      referencedRelation: "campo_pendente"
+      referencedColumns: ["ativo_id"]
+    },{
+      foreignKeyName: "posse_do_ativo_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: false
       referencedRelation: "operacao_do_ativo"
       referencedColumns: ["ativo_id"]
     },{
@@ -877,6 +1057,44 @@ isOneToOne: false
 isOneToOne: false
       referencedRelation: "pessoa_para_leitura"
       referencedColumns: ["id"]
+    }
+                  ]
+                },"sinal_do_sankhya": {
+                  Row: {
+                    "ativo_id": string,"campo": string,"criado_em": string,"id": string,"valor": NonNullable<Json>,"valor_no_sankhya": string | null,"visto_em": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "ativo_id": string,"campo": string,"criado_em"?: string,"id"?: string,"valor": NonNullable<Json>,"valor_no_sankhya"?: string | null,"visto_em": string
+                  }
+                  Update: {
+                    "ativo_id"?: string,"campo"?: string,"criado_em"?: string,"id"?: string,"valor"?: NonNullable<Json>,"valor_no_sankhya"?: string | null,"visto_em"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "sinal_do_sankhya_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: false
+      referencedRelation: "ativo"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "sinal_do_sankhya_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: false
+      referencedRelation: "campo_pendente"
+      referencedColumns: ["ativo_id"]
+    },{
+      foreignKeyName: "sinal_do_sankhya_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: false
+      referencedRelation: "operacao_do_ativo"
+      referencedColumns: ["ativo_id"]
+    },{
+      foreignKeyName: "sinal_do_sankhya_campo_fkey"
+      columns: ["campo"]
+isOneToOne: false
+      referencedRelation: "campo_pendente"
+      referencedColumns: ["campo"]
     }
                   ]
                 },"transferencia": {
@@ -897,6 +1115,12 @@ isOneToOne: false
 isOneToOne: false
       referencedRelation: "ativo"
       referencedColumns: ["id"]
+    },{
+      foreignKeyName: "transferencia_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: false
+      referencedRelation: "campo_pendente"
+      referencedColumns: ["ativo_id"]
     },{
       foreignKeyName: "transferencia_ativo_id_fkey"
       columns: ["ativo_id"]
@@ -1058,6 +1282,46 @@ isOneToOne: false
                   Relationships: [
                     
                   ]
+                },"campo_pendente": {
+                  Row: {
+                    "ativo_id": string,"campo": string,"rotulo": string
+                  }
+                  ComputedFields: never
+                  Relationships: [
+                    
+                  ]
+                },"divergencia_de_campo": {
+                  Row: {
+                    "ativo_id": string,"campo": string,"origem_no_eixo": string | null,"rotulo": string,"texto_no_sankhya": string | null,"valor_no_eixo": Json | null,"valor_no_sankhya": NonNullable<Json>,"visto_em": string
+                  }
+                  ComputedFields: never
+                  Relationships: [
+                    {
+      foreignKeyName: "sinal_do_sankhya_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: false
+      referencedRelation: "ativo"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "sinal_do_sankhya_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: false
+      referencedRelation: "campo_pendente"
+      referencedColumns: ["ativo_id"]
+    },{
+      foreignKeyName: "sinal_do_sankhya_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: false
+      referencedRelation: "operacao_do_ativo"
+      referencedColumns: ["ativo_id"]
+    },{
+      foreignKeyName: "sinal_do_sankhya_campo_fkey"
+      columns: ["campo"]
+isOneToOne: false
+      referencedRelation: "campo_pendente"
+      referencedColumns: ["campo"]
+    }
+                  ]
                 },"operacao_do_ativo": {
                   Row: {
                     "ativo_id": string,"cr_id": string | null,"degrau": string | null,"operacao_id": string | null
@@ -1102,6 +1366,12 @@ isOneToOne: false
       foreignKeyName: "placa_do_ativo_ativo_id_fkey"
       columns: ["ativo_id"]
 isOneToOne: false
+      referencedRelation: "campo_pendente"
+      referencedColumns: ["ativo_id"]
+    },{
+      foreignKeyName: "placa_do_ativo_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: false
       referencedRelation: "operacao_do_ativo"
       referencedColumns: ["ativo_id"]
     }
@@ -1109,14 +1379,23 @@ isOneToOne: false
                 }
           }
           Functions: {
-            "concluir_transferencia":
+            "cadastrar_ativo":
+{ Args: { "p_carroceria_id"?: string,"p_chassi"?: string,"p_chave"?: string,"p_cr_id": string,"p_eixos"?: number,"p_em"?: string,"p_funcao"?: Database["nucleo"]['Enums']["funcao_do_implemento"],"p_gestor_id": string,"p_modelo_id"?: string,"p_numero_de_serie"?: string,"p_operacao_id": string,"p_pessoa_dona_id"?: string,"p_placa": string,"p_regime"?: Database["nucleo"]['Enums']["regime_de_posse"],"p_renavam": string,"p_situacao_inicial"?: string,"p_tipo": Database["nucleo"]['Enums']["tipo_de_ativo"] }; Returns: string
+                           },
+"concluir_transferencia":
 { Args: { "p_em": string,"p_transferencia_id": string }; Returns: string
                            },
 "conferir_conjunto":
 { Args: { "p_cavalo_id": string }; Returns: undefined
                            },
+"corrigir_campo":
+{ Args: { "p_ativo_id": string,"p_campo": string,"p_chave"?: string,"p_motivo": string,"p_valor": Json,"p_versao"?: number }; Returns: string
+                           },
 "cr_em":
 { Args: { "p_ativo_id": string,"p_em": string }; Returns: string
+                           },
+"criar_cr":
+{ Args: { "p_chave"?: string,"p_codcencus": number,"p_codigo": string,"p_nome": string }; Returns: string
                            },
 "desatrelar":
 { Args: { "p_cavalo_id": string,"p_em": string,"p_implementos"?: (string)[] }; Returns: number
@@ -1130,11 +1409,17 @@ isOneToOne: false
 "engatar":
 { Args: { "p_cavalo_id": string,"p_em": string,"p_implemento_id": string,"p_posicao": number }; Returns: string
                            },
+"entregar_ao_operacional":
+{ Args: { "p_ativo_id": string,"p_chave"?: string,"p_em": string,"p_filial_id": string,"p_versao": number }; Returns: string
+                           },
 "estado_em":
 { Args: { "p_ativo_id": string,"p_camada": string,"p_em": string }; Returns: string
                            },
 "garagem_em":
 { Args: { "p_ativo_id": string,"p_em": string }; Returns: string
+                           },
+"gravar_campo":
+{ Args: { "p_ativo_id": string,"p_campo": string,"p_motivo": string,"p_origem": Database["config"]['Enums']["origem_do_campo"],"p_valor": Json }; Returns: undefined
                            },
 "mascarar_documento":
 { Args: { "p_texto": string }; Returns: string
@@ -1171,6 +1456,9 @@ isOneToOne: false
 "placa_valida":
 { Args: { "p_texto": string }; Returns: boolean
                            },
+"receber_sinal_do_sankhya":
+{ Args: { "p_ativo_id": string,"p_campo": string,"p_valor": Json,"p_valor_no_sankhya"?: string,"p_visto_em"?: string }; Returns: string
+                           },
 "receber_transferencia":
 { Args: { "p_em": string,"p_transferencia_id": string }; Returns: undefined
                            },
@@ -1182,6 +1470,9 @@ isOneToOne: false
                            },
 "renavam_valido":
 { Args: { "p_texto": string }; Returns: boolean
+                           },
+"revogar_correcao":
+{ Args: { "p_correcao_id": string,"p_motivo": string }; Returns: undefined
                            },
 "sigla_valida":
 { Args: { "p_em_conjunto": boolean,"p_sigla": string,"p_tipo": Database["nucleo"]['Enums']["tipo_de_ativo"] }; Returns: boolean
@@ -1342,7 +1633,7 @@ export type CompositeTypes<
 export const Constants = {
   "config": {
           Enums: {
-            "origem_da_data": ["derivada", "observada", "informada"],"origem_do_campo": ["sankhya", "derivada", "informada"]
+            "origem_da_data": ["derivada", "observada", "informada"],"origem_do_campo": ["sankhya", "derivada", "informada", "correcao_local"]
           }
         },"graphql_public": {
           Enums: {
