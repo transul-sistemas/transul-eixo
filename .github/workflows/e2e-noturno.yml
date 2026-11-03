@@ -1,0 +1,58 @@
+name: e2e noturno
+
+# O e2e completo da main, uma vez por noite (6h UTC, 3h em São Paulo), só se houve commit nas últimas
+# 24 horas; o disparo manual sempre roda. A falha chega por e-mail do GitHub (ver docs/decisoes.md).
+on:
+  schedule:
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: e2e-noturno
+  cancel-in-progress: false
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - id: recente
+        env:
+          EVENTO: ${{ github.event_name }}
+        run: |
+          if [ "$EVENTO" = "workflow_dispatch" ]; then
+            echo "roda=true" >> "$GITHUB_OUTPUT"
+          elif [ -n "$(git log --since="24 hours ago" --oneline HEAD)" ]; then
+            echo "roda=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "roda=false" >> "$GITHUB_OUTPUT"
+            echo "Sem commit na main nas últimas 24 horas: e2e noturno não rodou." >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - uses: pnpm/action-setup@v4
+        if: steps.recente.outputs.roda == 'true'
+      - uses: actions/setup-node@v4
+        if: steps.recente.outputs.roda == 'true'
+        with:
+          node-version: 24
+          cache: pnpm
+      - if: steps.recente.outputs.roda == 'true'
+        run: pnpm install --frozen-lockfile
+      - if: steps.recente.outputs.roda == 'true'
+        run: pnpm build
+      - if: steps.recente.outputs.roda == 'true'
+        run: pnpm exec playwright install --with-deps chromium
+      - if: steps.recente.outputs.roda == 'true'
+        run: pnpm test:e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report-noturno
+          path: playwright-report/
+          retention-days: 7
