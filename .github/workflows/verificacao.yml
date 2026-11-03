@@ -1,0 +1,100 @@
+name: verificação
+
+# Decisão de 04/11/2026: push direto na main, sem pull request. A barreira é a verificação local
+# completa e o checkpoint; este workflow confere de novo, depois do push (ver docs/decisoes.md).
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: verificacao-${{ github.ref }}
+  # Em pull request, a execução nova substitui a anterior; na main, cada push termina a sua.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  app:
+    runs-on: ubuntu-latest
+    # A suíte de tela (1002 testes, 1 worker no CI) passou de 20 min: ver docs/decisoes.md.
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Histórico inteiro: o push compara o commit anterior da main (github.event.before).
+          fetch-depth: 0
+      - id: mudancas
+        # Só docs/**, supabase/** e *.md mudaram? Então o build, o navegador e o e2e (que só eles usam)
+        # são pulados; lint, tipos e testes unitários rodam sempre. Sem arquivos mudados, ou sem como
+        # saber (antes zerado ou fora do histórico), roda tudo.
+        env:
+          EVENTO: ${{ github.event_name }}
+          ANTES: ${{ github.event.before }}
+          DEPOIS: ${{ github.sha }}
+        run: |
+          if [ "$EVENTO" = "push" ]; then
+            if [ -z "$ANTES" ] || [ "$ANTES" = "0000000000000000000000000000000000000000" ] \
+              || ! git cat-file -e "$ANTES^{commit}" 2>/dev/null; then
+              arquivos=""
+            else
+              arquivos="$(git diff --name-only "$ANTES" "$DEPOIS" || true)"
+            fi
+          else
+            arquivos="$(git diff --name-only HEAD^1 HEAD 2>/dev/null || true)"
+          fi
+          echo "pula_e2e=$(printf '%s\n' "$arquivos" | bash scripts/ci/pula-e2e.sh)" >> "$GITHUB_OUTPUT"
+          echo "Arquivos mudados:"
+          echo "$arquivos"
+      - if: steps.mudancas.outputs.pula_e2e == 'true'
+        run: |
+          echo "Só docs/, supabase/ ou *.md mudaram. Build e e2e pulados; lint, tipos e testes unitários rodaram." >> "$GITHUB_STEP_SUMMARY"
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test
+      - if: steps.mudancas.outputs.pula_e2e != 'true'
+        run: pnpm build
+      - id: playwright
+        if: steps.mudancas.outputs.pula_e2e != 'true'
+        run: echo "versao=$(pnpm exec playwright --version | awk '{print $2}')" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@v4
+        if: steps.mudancas.outputs.pula_e2e != 'true'
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.versao }}-${{ hashFiles('pnpm-lock.yaml') }}
+      - if: steps.mudancas.outputs.pula_e2e != 'true'
+        run: pnpm exec playwright install --with-deps chromium
+      - if: steps.mudancas.outputs.pula_e2e != 'true'
+        run: pnpm test:e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
+
+  banco:
+    # Só Docker no runner: sem token, sem link e sem segredo (ver docs/decisoes.md).
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec supabase start
+      - run: pnpm exec supabase db lint --fail-on warning
+      - run: pnpm exec supabase test db
+      - run: pnpm run db:tipos
+      - run: git diff --exit-code -- lib/dados/tipos-do-banco.ts

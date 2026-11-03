@@ -21,5 +21,5 @@ export function liberadoParaEixoDados(caminho: string): boolean {
   if (LISTA_FIXA.includes(c)) return true;
   if (/^lib\/dados\/(fonte-de-exemplo|fonte)(\.test)?\.tsx?$/.test(c)) return true;
   if (/\.test\.tsx?$/.test(c)) return true;
-  return c.startsWith(".github/workflows/pull-request.yml");
+  return c.startsWith(".github/workflows/verificacao.yml");
 }

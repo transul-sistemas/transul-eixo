@@ -8,6 +8,42 @@ Modelo de entrada:
 
 ---
 
+## 04/11/2026 — Push direto na main, sem pull request (regra de trabalho)
+
+- **Decisão (Alexandre, 04/11/2026):** a partir do merge do PR `ci/direto` (o último por pull request), o trabalho entra **direto na `main`**, sem pull request, para ganhar velocidade. A barreira passa a ser a **verificação completa local** e o **checkpoint**.
+- **A regra:**
+  1. Desenvolver em **branch local**, com **teste antes**, vendo falhar.
+  2. **Verificação completa local antes de qualquer push:** Vitest, `tsc`, ESLint, Stylelint e Prettier; banco com `db reset` duas vezes, `supabase test db`, `supabase db lint --fail-on warning` e `pnpm db:tipos` em LF; **e2e só das telas alteradas** (o completo fica para o CI); fatia só de banco não roda e2e. **Nunca** push com teste vermelho local.
+  3. **Parar no checkpoint** com o resumo (o que foi criado, testes vistos falhando antes e resultado, decisões a confirmar).
+  4. **Só depois do "aprovado" de Alexandre, integrar por fast-forward:** `git checkout main`, `git pull --ff-only`, `git merge --ff-only <branch>`, `git push origin main`. Sem `--force`, sem push de segredos.
+  5. Depois do push, **etiqueta anotada por fatia** (`git tag -a fase-3-5 ...` e `git push origin --tags`) e **conferir o CI da `main` uma vez**, ao final.
+  6. **Se o CI da `main` falhar:** parar, avisar Alexandre e corrigir com **commit novo** ou **`git revert`**, nunca force. **Migration já enviada à `main` nunca se edita:** o erro vira migration nova.
+  7. Mensagens de commit claras, com o porquê quando não for óbvio.
+- **CI (`.github/workflows/verificacao.yml`, antes `pull-request.yml`):** roda em pull request **e em push na `main`**, com os jobs `app` e `banco` (nomes exigidos pelo ruleset). No push, os arquivos mudados vêm de `github.event.before..github.sha` (antes zerado ou fora do histórico: roda tudo). **Build, navegador e e2e são pulados quando só `docs/**`, `supabase/**` e `*.md` mudam** (a decisão é de `scripts/ci/pula-e2e.sh`, com teste de comportamento e de mutação); qualquer outro arquivo roda o **e2e completo**. Lint, tipos e unitários rodam sempre; o `banco` roda em todo push. `cancel-in-progress` só em pull request: na `main`, cada push termina a sua verificação.
+- **e2e noturno (`.github/workflows/e2e-noturno.yml`):** às 6h UTC (3h em São Paulo) e por disparo manual; encerra sem erro se não houve commit na `main` nas últimas 24 horas (o manual sempre roda); roda o e2e completo da `main`. A falha chega por **e-mail do GitHub** (no agendado, para quem editou o `cron` por último; ajustável em Notifications → Actions).
+- **Riscos aceitos:**
+  - **CI depois do fato:** um push quebrado já está na `main`; mitigado pela verificação local completa e pela correção por commit novo ou `git revert`.
+  - **Ambiente Windows × Linux** (por exemplo, fim de linha): a verificação local não garante o CI.
+  - **Sem revisão de diff por pull request:** o porquê fica nos commits, no checkpoint e neste registro.
+  - **Pular o e2e por `supabase/**` vale só até a 3.8** e deve ser **revisto antes da 3.9** (modo banco, quando migration passa a mudar tela).
+  - **Lembrete (Vercel):** antes de criar o projeto da Vercel, **produção publicada só de etiqueta ou de uma branch `release`**, nunca de toda a `main`.
+- **Etiquetas das fatias já concluídas:** `fase-3-0` (merge do #23), `fase-3-1` (`c0abd09`, #25), `fase-3-3` (`2b0a6c5`, #26), `fase-3-4` (`0db4256`, #27), `fase-3-4b` (`72fed11`, #29). A 3.2 foi absorvida pela 3.0, sem etiqueta. Enviadas depois do merge do PR `ci/direto`.
+- **Quem decidiu:** Alexandre (04/11/2026).
+
+## 04/11/2026 — Assistentes da Frota que faltam (em ordem)
+
+1. **Transferir placa (enviar):** o gestor que entrega cria o pedido: a placa (ou várias, em lote), o gestor de destino, o motivo e as pendências conhecidas. A tabela `nucleo.transferencia` (com `transferencia_pendencia`) da 3.3 já guarda isso.
+2. **Receber placa em duas etapas:** receber registra a chegada; concluir responde as pendências e troca o gestor (opção B). Ajuste da tela na 3.9.
+3. **Desatrelar e Engatar.**
+4. **Mudar situação.**
+5. **Registrar manutenção.**
+
+- **Sem o assistente de enviar, ninguém abre pedido real:** ele é **obrigatório antes do uso real**. O aviso em tempo real para quem recebe fica na **Central de Tarefas**.
+- **VAz:** a regra (rascunho: só cavalo e caminhão) segue **pendente de decisão de Alexandre**.
+- **Quem decidiu:** Alexandre (04/11/2026).
+
+---
+
 ## 04/11/2026 — Placa e conjunto: duas classificações
 
 - **A placa (solo)** guarda os **eixos** (1 a 6) e, no implemento, a **carroceria** (Sider, Graneleira, Basculante...). "Aí morre para a placa": nada de conjunto é dado da placa.

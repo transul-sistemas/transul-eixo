@@ -24,7 +24,7 @@ Projeto técnico completo: `docs/projeto-tecnico.md`. Em caso de dúvida, pergun
 
 - Use as skills: `brainstorming` antes de cada módulo; `writing-plans` e `executing-plans` para cada fase; `test-driven-development` em toda regra de negócio; `systematic-debugging` em todo erro; `verification-before-completion` antes de dizer "pronto"; `requesting-code-review` e `finishing-a-development-branch` em cada pull request; `frontend-design` em toda tela; `supabase` para o banco.
 - **Teste antes do código** em toda regra de `lib/dominio/`.
-- Uma branch por entrega. Nada entra na `main` sem pull request com lint, tipos, testes e verificador do Supabase sem alertas.
+- Uma branch local por entrega, integrada na `main` por fast-forward (push direto, sem pull request) só depois da verificação completa local e do "aprovado" no checkpoint; etiqueta anotada por fatia; nunca `--force` (regra completa em `docs/decisoes.md`, 04/11/2026).
 - Pare e peça aprovação nos checkpoints de cada plano.
 - **Nunca** coloque senha, chave ou token em arquivo, commit, log ou conversa. Use `.env.local` (fora do Git) e as variáveis da Vercel e do Supabase. Mantenha `.env.example` atualizado, sem valores.
 - Na dúvida entre duas leituras de uma regra de negócio, pergunte.
