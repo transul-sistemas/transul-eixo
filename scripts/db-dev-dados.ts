@@ -67,7 +67,41 @@ const CONSULTAS: { nome: string; sql: string }[] = [
     sql: "select * from nucleo.contar_chips_de_placas('', '{}', '{}', '{}', false)",
   },
   { nome: "detalhe de uma placa", sql: "select nucleo.detalhe_da_placa('DAA1A00')" },
+  // Diagnóstico: o custo de cada peça da linha, separado.
+  {
+    nome: "diagnóstico: só a situação, todas as placas",
+    sql: "select count(*) from nucleo.ativo a cross join lateral nucleo.situacao_com_causa(a.id, now()) s where a.excluido_em is null",
+  },
+  {
+    nome: "diagnóstico: só os alertas, todas as placas",
+    sql: "select count(*) from nucleo.alerta_de_vinculo",
+  },
+  {
+    nome: "diagnóstico: só a operação, todas as placas",
+    sql: "select count(*) from nucleo.ativo a where nucleo.operacao_em(a.id, now()) is not null",
+  },
 ];
+
+/** Cada consulta tem no máximo este tempo; acima, a medição registra "> limite" e segue. */
+const LIMITE_MS = 30_000;
+
+/** Roda com o limite, num savepoint (o estouro não derruba a transação). `null` = estourou. */
+async function cronometrar(cliente: pg.Client, sql: string): Promise<number | null> {
+  await cliente.query("savepoint consulta");
+  await cliente.query(`set local statement_timeout = ${LIMITE_MS}`);
+  const inicio = performance.now();
+  try {
+    await cliente.query(sql);
+    await cliente.query("release savepoint consulta");
+    return performance.now() - inicio;
+  } catch (erro) {
+    await cliente.query("rollback to savepoint consulta");
+    if ((erro as { code?: string }).code === "57014") return null;
+    throw erro;
+  }
+}
+
+const ms = (t: number | null) => (t === null ? `> ${LIMITE_MS}` : String(Math.round(t)));
 const PLANOS: { nome: string; sql: string }[] = [
   {
     nome: "total da lista (placas_filtradas)",
@@ -131,22 +165,39 @@ async function medir(cliente: pg.Client): Promise<string> {
         "|---|---:|---:|---:|",
       );
       for (const consulta of CONSULTAS) {
-        const tempos: number[] = [];
-        for (let i = 0; i < 5; i++) {
-          const inicio = performance.now();
-          await cliente.query(consulta.sql);
-          tempos.push(performance.now() - inicio);
+        const tempos: (number | null)[] = [];
+        for (let i = 0; i < 3; i++) {
+          const tempo = await cronometrar(cliente, consulta.sql);
+          tempos.push(tempo);
+          if (tempo === null) break;
         }
-        tempos.sort((a, b) => a - b);
+        const medidos = tempos.filter((t): t is number => t !== null).sort((a, b) => a - b);
+        const estourou = tempos.includes(null);
         linhas.push(
-          `| ${consulta.nome} | ${Math.round(tempos[2]!)} | ${Math.round(tempos[0]!)} | ${Math.round(tempos[4]!)} |`,
+          estourou
+            ? `| ${consulta.nome} | > ${LIMITE_MS} | | |`
+            : `| ${consulta.nome} | ${ms(medidos[1] ?? null)} | ${ms(medidos[0] ?? null)} | ${ms(medidos.at(-1) ?? null)} |`,
         );
+        console.log(`${perfil}: ${consulta.nome} medida.`);
       }
       linhas.push("");
       for (const plano of PLANOS) {
-        const { rows: explicado } = await cliente.query<{ "QUERY PLAN": string }>(
-          `explain (analyze, buffers) ${plano.sql}`,
-        );
+        // Com ANALYZE quando cabe no limite; senão, o plano estimado (sem rodar).
+        await cliente.query("savepoint plano");
+        await cliente.query(`set local statement_timeout = ${LIMITE_MS}`);
+        let explicado: { "QUERY PLAN": string }[];
+        try {
+          explicado = (
+            await cliente.query<{ "QUERY PLAN": string }>(`explain (analyze, buffers) ${plano.sql}`)
+          ).rows;
+          await cliente.query("release savepoint plano");
+        } catch {
+          await cliente.query("rollback to savepoint plano");
+          explicado = [
+            { "QUERY PLAN": `(estourou ${LIMITE_MS} ms com ANALYZE; plano estimado:)` },
+            ...(await cliente.query<{ "QUERY PLAN": string }>(`explain ${plano.sql}`)).rows,
+          ];
+        }
         linhas.push(
           `### Plano: ${plano.nome}`,
           "",
@@ -173,6 +224,7 @@ async function principal() {
   const cliente = new pg.Client({ connectionString: endereco });
   await cliente.connect();
   try {
+    const inicio = performance.now();
     await cliente.query("begin");
     await cliente.query(readFileSync("supabase/dev/dados.sql", "utf8"));
     const { rows } = await cliente.query<{ resumo: string }>(
@@ -180,7 +232,8 @@ async function principal() {
       [argumentos.quantidade],
     );
     await cliente.query("commit");
-    console.log(`Dados de desenvolvimento: ${rows[0]!.resumo}`);
+    const segundos = Math.round((performance.now() - inicio) / 1000);
+    console.log(`Dados de desenvolvimento: ${rows[0]!.resumo} Gerados em ${segundos} s.`);
     if (argumentos.medir) {
       const relatorio = await medir(cliente);
       console.log(relatorio);

@@ -166,7 +166,7 @@ jobs:
     # banco limpo com os ~200 ativos de desenvolvimento e o e2e pequeno do modo banco.
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 70
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
