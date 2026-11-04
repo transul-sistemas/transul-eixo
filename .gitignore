@@ -10,6 +10,8 @@ next-env.d.ts
 # testes
 playwright-report/
 test-results/
+# capturas das telas (geradas no CI do pull request, baixadas como artefato)
+capturas/
 # sessões e senhas sorteadas dos usuários de teste (fatia 3.8)
 e2e/.auth/
 

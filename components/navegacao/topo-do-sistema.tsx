@@ -2,7 +2,6 @@ import { connection } from "next/server";
 import { hojeEmSaoPaulo } from "@/components/formato/data";
 import { SinalDeHidratacao } from "@/components/tabela/sinal-de-hidratacao";
 import { exigirSessao } from "@/lib/seguranca/sessao-do-servidor";
-import { sair } from "@/app/(acesso)/acoes";
 import { TopoLigado } from "./topo";
 
 /**
@@ -14,7 +13,7 @@ export async function TopoDoSistema() {
   const { perfil } = await exigirSessao();
   return (
     <>
-      <TopoLigado hoje={hojeEmSaoPaulo(new Date())} perfil={perfil} aoSair={sair} />
+      <TopoLigado hoje={hojeEmSaoPaulo(new Date())} perfil={perfil} />
       <SinalDeHidratacao regiao="topo" />
     </>
   );

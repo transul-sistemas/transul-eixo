@@ -4,6 +4,7 @@ import {
   type CodigoDoPerfil,
   comBanco,
   emailDe,
+  restaurarSenha,
   senhaDe,
   sessaoDe,
   supabaseLocal,
@@ -137,53 +138,59 @@ test.describe("recuperação de senha pelo e-mail (Mailpit local)", () => {
       info.project.name !== "tela-1366",
       "muda a senha de um usuário de teste: roda só uma vez",
     );
-    const local = supabaseLocal();
-    const email = emailDe("sem_vinculo");
-    await fetch(`${local.correio}/api/v1/messages`, { method: "DELETE" });
-
-    await page.goto("/esqueci-a-senha");
-    await page.getByLabel("E-mail").fill(email);
-    await page.getByRole("button", { name: "Enviar o link" }).click();
-    await expect(page.getByRole("status")).toHaveText(/Se o e-mail estiver cadastrado/);
-
-    let link = "";
-    await expect(async () => {
-      const busca = (await (
-        await fetch(`${local.correio}/api/v1/search?query=${encodeURIComponent(`to:${email}`)}`)
-      ).json()) as {
-        messages: { ID: string }[];
-      };
-      const id = busca.messages[0]?.ID;
-      expect(id).toBeTruthy();
-      const mensagem = (await (await fetch(`${local.correio}/api/v1/message/${id}`)).json()) as {
-        HTML: string;
-      };
-      link = (/href="([^"]*token_hash[^"]*)"/.exec(mensagem.HTML)?.[1] ?? "").replace(
-        /&amp;/g,
-        "&",
-      );
-      expect(link).toContain("/auth/confirmar?proximo=/nova-senha");
-    }).toPass({ timeout: 30_000 });
-
-    await page.goto(link);
-    await expect(page).toHaveURL(/\/nova-senha$/);
-    await page.getByLabel("Senha nova", { exact: true }).fill("curta");
-    await page.getByLabel("Confirme a senha nova").fill("curta");
-    await page.getByRole("button", { name: "Salvar a senha nova" }).click();
-    await expect(
-      page.getByRole("alert").filter({ hasText: "no mínimo 12 caracteres" }),
-    ).toBeVisible();
-    const nova = `Nova-${Date.now()}-senha`;
-    await page.getByLabel("Senha nova", { exact: true }).fill(nova);
-    await page.getByLabel("Confirme a senha nova").fill(nova);
-    await page.getByRole("button", { name: "Salvar a senha nova" }).click();
-    // Sem vínculo: a senha nova vale, e o sistema mostra o acesso não liberado.
-    await expect(page).toHaveURL(/\/acesso-nao-liberado$/);
-    await page.getByRole("button", { name: "Sair" }).click();
-    await entrar(page, "sem_vinculo", nova);
-    await expect(page).toHaveURL(/\/acesso-nao-liberado$/);
+    // A senha do sem vínculo volta à do "preparar" no fim, passe ou falhe: o 1920 entra com ela.
+    try {
+      await recuperarSenhaPeloEmail(page);
+    } finally {
+      await restaurarSenha("sem_vinculo");
+    }
   });
 });
+
+async function recuperarSenhaPeloEmail(page: Page) {
+  const local = supabaseLocal();
+  const email = emailDe("sem_vinculo");
+  await fetch(`${local.correio}/api/v1/messages`, { method: "DELETE" });
+
+  await page.goto("/esqueci-a-senha");
+  await page.getByLabel("E-mail").fill(email);
+  await page.getByRole("button", { name: "Enviar o link" }).click();
+  await expect(page.getByRole("status")).toHaveText(/Se o e-mail estiver cadastrado/);
+
+  let link = "";
+  await expect(async () => {
+    const busca = (await (
+      await fetch(`${local.correio}/api/v1/search?query=${encodeURIComponent(`to:${email}`)}`)
+    ).json()) as {
+      messages: { ID: string }[];
+    };
+    const id = busca.messages[0]?.ID;
+    expect(id).toBeTruthy();
+    const mensagem = (await (await fetch(`${local.correio}/api/v1/message/${id}`)).json()) as {
+      HTML: string;
+    };
+    link = (/href="([^"]*token_hash[^"]*)"/.exec(mensagem.HTML)?.[1] ?? "").replace(/&amp;/g, "&");
+    expect(link).toContain("/auth/confirmar?proximo=/nova-senha");
+  }).toPass({ timeout: 30_000 });
+
+  await page.goto(link);
+  await expect(page).toHaveURL(/\/nova-senha$/);
+  await page.getByLabel("Senha nova", { exact: true }).fill("curta");
+  await page.getByLabel("Confirme a senha nova").fill("curta");
+  await page.getByRole("button", { name: "Salvar a senha nova" }).click();
+  await expect(
+    page.getByRole("alert").filter({ hasText: "no mínimo 12 caracteres" }),
+  ).toBeVisible();
+  const nova = `Nova-${Date.now()}-senha`;
+  await page.getByLabel("Senha nova", { exact: true }).fill(nova);
+  await page.getByLabel("Confirme a senha nova").fill(nova);
+  await page.getByRole("button", { name: "Salvar a senha nova" }).click();
+  // Sem vínculo: a senha nova vale, e o sistema mostra o acesso não liberado.
+  await expect(page).toHaveURL(/\/acesso-nao-liberado$/);
+  await page.getByRole("button", { name: "Sair" }).click();
+  await entrar(page, "sem_vinculo", nova);
+  await expect(page).toHaveURL(/\/acesso-nao-liberado$/);
+}
 
 for (const caso of [
   {

@@ -2,7 +2,7 @@
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { type ReactNode, useState, useSyncExternalStore } from "react";
-import { IconAdjustmentsHorizontal, IconLogout, IconMenu2 } from "@tabler/icons-react";
+import { IconAdjustmentsHorizontal, IconMenu2 } from "@tabler/icons-react";
 import {
   type ContextoGlobal,
   escreverContexto,
@@ -17,7 +17,6 @@ import { type Perfil, USUARIO_PROVISORIO } from "@/lib/navegacao/perfis";
 import { LinkComRetorno } from "@/components/tabela/link-com-retorno";
 import { migalhas } from "@/lib/navegacao/trilha";
 import { AlternadorDeTema } from "@/components/tema/alternador-de-tema";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { BuscaRapida } from "./busca-rapida";
 
@@ -34,8 +33,6 @@ export interface PropsDoTopo {
   opcoes?: OpcoesDoContexto;
   /** Chamado com a nova URL quando a pessoa muda o contexto. */
   aoNavegar?: (url: string) => void;
-  /** Encerra a sessão (Server Action). Sem ela, o botão Sair não aparece (demonstração, testes). */
-  aoSair?: () => Promise<void>;
 }
 
 function Controle({ rotulo, children }: { rotulo: string; children: ReactNode }) {
@@ -83,7 +80,6 @@ export function Topo({
   parametros = new URLSearchParams(),
   opcoes = OPCOES_PROVISORIAS,
   aoNavegar,
-  aoSair,
 }: PropsDoTopo) {
   const contexto = lerContexto(parametros, hoje, opcoes);
   const menuAberto = useSyncExternalStore(gaveta.assinar, gaveta.estaAberta, () => false);
@@ -199,30 +195,13 @@ export function Topo({
           aoNavegar={aoNavegar}
         />
         <AlternadorDeTema />
-        {aoSair ? (
-          <form action={aoSair}>
-            <Button
-              type="submit"
-              variant="outline"
-              title="Sair"
-              className="max-2xl:w-9 max-2xl:px-0 max-lg:h-10 max-sm:w-10"
-            >
-              <IconLogout aria-hidden className="2xl:hidden" />
-              <span className="max-2xl:sr-only">Sair</span>
-            </Button>
-          </form>
-        ) : null}
       </div>
     </header>
   );
 }
 
 /** O topo ligado ao navegador: lê a rota e a URL e troca a URL quando o contexto muda. */
-export function TopoLigado({
-  hoje,
-  perfil,
-  aoSair,
-}: Pick<PropsDoTopo, "hoje" | "perfil" | "aoSair">) {
+export function TopoLigado({ hoje, perfil }: Pick<PropsDoTopo, "hoje" | "perfil">) {
   const rota = usePathname();
   const lidos = useSearchParams();
   const router = useRouter();
@@ -233,7 +212,6 @@ export function TopoLigado({
       rota={rota}
       parametros={new URLSearchParams(lidos.toString())}
       aoNavegar={(url) => router.push(url)}
-      aoSair={aoSair}
     />
   );
 }

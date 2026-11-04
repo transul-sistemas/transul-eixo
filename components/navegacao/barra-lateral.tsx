@@ -4,6 +4,7 @@ import {
   IconChevronDown,
   IconLayoutSidebarLeftCollapse,
   IconLayoutSidebarLeftExpand,
+  IconLogout,
   IconPin,
   IconPinFilled,
   IconSearch,
@@ -52,6 +53,8 @@ export interface PropsDaBarra {
   /** Rota considerada atual (padrão: a da página). */
   rotaAtual?: string;
   estadoInicial?: Partial<Omit<EstadoDaBarra, "versao">>;
+  /** Encerra a sessão (Server Action). Sem ela, o botão Sair não aparece (demonstração, testes). */
+  aoSair?: () => Promise<void>;
 }
 
 function armazenamentoDoNavegador(): Storage | null {
@@ -176,6 +179,7 @@ export function BarraLateral({
   incorporada = false,
   rotaAtual,
   estadoInicial,
+  aoSair,
 }: PropsDaBarra) {
   const caminhoDaPagina = usePathname();
   const caminho = (rotaAtual ?? caminhoDaPagina ?? "").split(/[?#]/)[0] ?? "";
@@ -550,6 +554,26 @@ export function BarraLateral({
             )}
           </button>
         </div>
+        {/* O Sair mora aqui, não no topo (no 1366 e no celular ele fazia o topo quebrar linha), e
+            aparece também na gaveta. */}
+        {aoSair ? (
+          <div data-rodape-sair="" className="border-border shrink-0 border-t p-2">
+            <form action={aoSair}>
+              <button
+                type="submit"
+                aria-label={compacta ? "Sair" : undefined}
+                title={compacta ? "Sair" : undefined}
+                className={cn(
+                  "text-muted-foreground hover:bg-sidebar-accent focus-visible:ring-ring flex h-9 w-full items-center gap-2 rounded-lg px-2 outline-none focus-visible:ring-2",
+                  compacta && "justify-center",
+                )}
+              >
+                <IconLogout aria-hidden className="size-5" />
+                {compacta ? null : <span className="flex-1 text-left">Sair</span>}
+              </button>
+            </form>
+          </div>
+        ) : null}
       </aside>
     </>
   );

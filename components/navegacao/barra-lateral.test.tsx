@@ -143,3 +143,22 @@ describe("<BarraLateral>: incorporada (página de demonstração)", () => {
     expect(barra()).toContain('data-barra="principal"');
   });
 });
+
+// CI do PR #31 (04/11/2026): o Sair no topo fazia o topo quebrar linha no 1366 e no celular. O Sair
+// fica no rodapé da barra lateral, visível também na gaveta (abaixo de 1024 px).
+describe("<BarraLateral>: sair", () => {
+  const sair = async () => {};
+  it("com a ação de sair, o rodapé tem o botão Sair num formulário, também na gaveta", () => {
+    const html = barra({ aoSair: sair });
+    expect(html).toMatch(/<div data-rodape-sair=""[^>]*><form[^>]*>[\s\S]*?>Sair</);
+    expect(html).not.toMatch(/data-rodape-sair=""[^>]*class="[^"]*max-lg:hidden/);
+  });
+  it("compacta, o Sair vira só ícone com nome acessível", () => {
+    const html = barra({ aoSair: sair, estadoInicial: { compacta: true } });
+    expect(html).toContain('aria-label="Sair"');
+  });
+  it("sem a ação (demonstração, testes), não há botão Sair", () => {
+    expect(barra()).not.toContain(">Sair<");
+    expect(barra()).not.toContain('aria-label="Sair"');
+  });
+});

@@ -13,6 +13,26 @@ const ENDERECO = `http://localhost:${PORTA}`;
 const SUPABASE = supabaseLocal();
 const COMO_ADMINISTRADOR = { storageState: sessaoDe("administrador") };
 const PREPARAR = /preparar\.setup\.ts/;
+// As capturas das telas de acesso (e2e/*.capturas.ts) só existem com EIXO_CAPTURAS=1 (o passo
+// `pnpm test:capturas` do CI do pull request): o `pnpm test:e2e` nunca as roda.
+const CAPTURAS = /\.capturas\.ts$/;
+const TELAS_DAS_CAPTURAS = [
+  { nome: "1366", use: { ...devices["Desktop Chrome"], viewport: { width: 1366, height: 768 } } },
+  { nome: "1920", use: { ...devices["Desktop Chrome"], viewport: { width: 1920, height: 1080 } } },
+  {
+    nome: "tablet-820",
+    use: { ...devices["Desktop Chrome"], viewport: { width: 820, height: 1180 }, hasTouch: true },
+  },
+  { nome: "celular-390", use: { ...devices["Pixel 7"], viewport: { width: 390, height: 844 } } },
+];
+const PROJETOS_DAS_CAPTURAS = process.env.EIXO_CAPTURAS
+  ? TELAS_DAS_CAPTURAS.map((tela) => ({
+      name: `capturas-${tela.nome}`,
+      use: tela.use,
+      testMatch: CAPTURAS,
+      dependencies: ["preparar"],
+    }))
+  : [];
 
 export default defineConfig({
   testDir: "./e2e",
@@ -59,6 +79,7 @@ export default defineConfig({
       testMatch: SO_DA_CASCA,
       dependencies: ["preparar"],
     },
+    ...PROJETOS_DAS_CAPTURAS,
   ],
   webServer: {
     // No CI o passo anterior do workflow já rodou o build.

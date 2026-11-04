@@ -6,13 +6,14 @@ import { TopoDoSistema, TopoReservado } from "@/components/navegacao/topo-do-sis
 import { ArmadorDaVolta } from "@/components/tabela/retorno-da-lista-no-navegador";
 import { USUARIO_PROVISORIO } from "@/lib/navegacao/perfis";
 import { exigirSessao } from "@/lib/seguranca/sessao-do-servidor";
+import { sair } from "@/app/(acesso)/acoes";
 
 // A barra lateral mostra só os módulos do perfil da sessão (lido do banco a cada pedido). Ler a sessão
 // é dinâmico, então ela fica num Suspense, com o lugar reservado (a largura padrão, aberta).
 async function BarraLateralDaSessao() {
   const { perfil } = await exigirSessao();
   // A memória da barra continua com a chave provisória até a 3.9 (hipótese registrada).
-  return <BarraLateral perfil={perfil} usuario={USUARIO_PROVISORIO} />;
+  return <BarraLateral perfil={perfil} usuario={USUARIO_PROVISORIO} aoSair={sair} />;
 }
 
 function BarraLateralReservada() {

@@ -71,7 +71,8 @@ jobs:
           pnpm exec supabase status -o env \
             | sed -nE 's/^API_URL="?([^"]*)"?$/NEXT_PUBLIC_SUPABASE_URL=\1/p; s/^PUBLISHABLE_KEY="?([^"]*)"?$/NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=\1/p' \
             >> "$GITHUB_ENV"
-      - if: steps.mudancas.outputs.pula_e2e != 'true'
+      - id: build
+        if: steps.mudancas.outputs.pula_e2e != 'true'
         run: pnpm build
       - id: playwright
         if: steps.mudancas.outputs.pula_e2e != 'true'
@@ -85,6 +86,21 @@ jobs:
         run: pnpm exec playwright install --with-deps chromium
       - if: steps.mudancas.outputs.pula_e2e != 'true'
         run: pnpm test:e2e
+      # As capturas das telas de acesso (1366, 1920, tablet 820 e celular 390, claro e escuro), só no
+      # pull request, mesmo se o e2e falhar: o visual é conferido pelo artefato, sem rodar nada na
+      # máquina local (decisão de 04/11/2026, ver docs/decisoes.md).
+      - id: capturas
+        if: ${{ !cancelled() && github.event_name == 'pull_request' && steps.build.outcome == 'success' }}
+        env:
+          EIXO_CAPTURAS: "1"
+        run: pnpm test:capturas
+      - uses: actions/upload-artifact@v4
+        if: ${{ always() && github.event_name == 'pull_request' }}
+        with:
+          name: capturas-do-acesso
+          path: capturas/
+          retention-days: 7
+          if-no-files-found: warn
       - uses: actions/upload-artifact@v4
         if: failure()
         with:

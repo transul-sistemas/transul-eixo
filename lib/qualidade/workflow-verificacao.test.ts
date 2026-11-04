@@ -187,3 +187,40 @@ describe("e2e noturno: o e2e completo da main, uma vez por noite", () => {
     }
   });
 });
+
+// Decisão de 04/11/2026 (máquina sem memória livre): as capturas das telas de acesso saem do CI, só
+// no pull request, e chegam como artefato do GitHub (ver docs/decisoes.md).
+describe("workflow de verificação: capturas das telas de acesso no pull request", () => {
+  const capturas = passoCom("app", "id: capturas");
+  const envio = passoCom("app", "name: capturas-do-acesso");
+
+  it("o passo das capturas roda só no pull request, depois do e2e, mesmo se o e2e falhar", () => {
+    expect(capturas).not.toBe("");
+    expect(capturas).toContain("github.event_name == 'pull_request'");
+    expect(capturas).toContain("!cancelled()");
+    expect(capturas).toContain("steps.build.outcome == 'success'");
+    expect(capturas).toContain('EIXO_CAPTURAS: "1"');
+    expect(capturas).toContain("run: pnpm test:capturas");
+    const passos = passosDe(texto, "app");
+    const indice = (trecho: string) => passos.findIndex((p) => p.includes(trecho));
+    expect(indice("id: capturas")).toBeGreaterThan(indice("run: pnpm test:e2e"));
+  });
+
+  it("o build tem id (as capturas dependem dele) e continua só quando o e2e não é pulado", () => {
+    const build = passoCom("app", "run: pnpm build");
+    expect(build).toContain("id: build");
+    expect(build).toMatch(/if: steps\.mudancas\.outputs\.pula_e2e != 'true'/);
+  });
+
+  it("as capturas sobem como artefato sempre (no pull request), com retenção de 7 dias", () => {
+    expect(envio).toContain("actions/upload-artifact@v4");
+    expect(envio).toContain("always()");
+    expect(envio).toContain("github.event_name == 'pull_request'");
+    expect(envio).toContain("path: capturas/");
+    expect(envio).toContain("retention-days: 7");
+  });
+
+  it("o e2e noturno (main) não tira capturas", () => {
+    expect(noturno).not.toContain("capturas");
+  });
+});

@@ -71,3 +71,12 @@ describe("<Topo>: trilha e tema", () => {
     expect(topo()).not.toMatch(/#[0-9a-fA-F]{3,8}/);
   });
 });
+
+// CI do PR #31 (04/11/2026): o Sair no topo fazia o topo quebrar linha no 1366 e no celular.
+describe("<Topo>: o Sair não mora no topo", () => {
+  it("o topo não tem botão Sair (ele fica no rodapé da barra lateral)", () => {
+    const html = topo();
+    expect(html).not.toContain(">Sair<");
+    expect(html).not.toContain('title="Sair"');
+  });
+});

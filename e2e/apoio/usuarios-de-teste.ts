@@ -76,6 +76,25 @@ export function senhaDe(codigo: CodigoDoPerfil): string {
   return senha;
 }
 
+/**
+ * Devolve ao usuário a senha guardada pelo "preparar". O teste de recuperação troca a senha do sem
+ * vínculo no projeto 1366; sem isto, o 1920 tentava entrar com a senha antiga (CI do PR #31).
+ */
+export async function restaurarSenha(codigo: CodigoDoPerfil): Promise<void> {
+  const local = supabaseLocal();
+  const admin = createClient(local.url, local.chaveSecreta, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+  const { data, error: erroDaLista } = await admin.auth.admin.listUsers({ perPage: 1000 });
+  if (erroDaLista) throw erroDaLista;
+  const usuario = data.users.find((u) => u.email === emailDe(codigo));
+  if (!usuario) throw new Error(`Usuário de teste ${codigo} não existe: rode o "preparar".`);
+  const { error } = await admin.auth.admin.updateUserById(usuario.id, {
+    password: senhaDe(codigo),
+  });
+  if (error) throw error;
+}
+
 export async function comBanco<T>(acao: (banco: Client) => Promise<T>): Promise<T> {
   const banco = new Client({ connectionString: supabaseLocal().banco });
   await banco.connect();
