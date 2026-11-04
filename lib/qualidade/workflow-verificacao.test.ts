@@ -137,9 +137,23 @@ describe("workflow de verificação: o que nunca se pula e o que se pula", () =>
     expect(texto).not.toMatch(/workers[:=]\s*2/);
   });
 
-  it("o job banco roda em todo push e pull request, sem condição", () => {
+  it("o job banco roda em todo push e pull request, sem condição (só o envio na falha tem if)", () => {
     expect(job("banco")).not.toContain("pula_e2e");
-    expect(job("banco")).not.toMatch(/\bif:/);
+    const comCondicao = passosDe(texto, "banco").filter((p) => /\bif:/.test(p));
+    for (const passo of comCondicao) {
+      expect(passo).toContain("actions/upload-artifact@");
+      expect(passo).toMatch(/if: failure\(\)/);
+    }
+  });
+
+  it("quando os tipos do banco divergem, o arquivo gerado sobe como artefato (7 dias)", () => {
+    const envio = passoCom("banco", "name: tipos-do-banco");
+    expect(envio).toContain("path: lib/dados/tipos-do-banco.ts");
+    expect(envio).toContain("retention-days: 7");
+    const passos = passosDe(texto, "banco");
+    expect(passos.findIndex((p) => p.includes("name: tipos-do-banco"))).toBeGreaterThan(
+      passos.findIndex((p) => p.includes("git diff --exit-code")),
+    );
   });
 });
 

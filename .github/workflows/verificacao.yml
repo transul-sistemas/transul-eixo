@@ -126,3 +126,11 @@ jobs:
       - run: pnpm exec supabase test db
       - run: pnpm run db:tipos
       - run: git diff --exit-code -- lib/dados/tipos-do-banco.ts
+      # Com a máquina sem memória livre, os tipos não se geram localmente: quando divergem, o arquivo
+      # gerado sobe como artefato para entrar no commit seguinte (ver docs/decisoes.md, 03/11/2026).
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: tipos-do-banco
+          path: lib/dados/tipos-do-banco.ts
+          retention-days: 7
