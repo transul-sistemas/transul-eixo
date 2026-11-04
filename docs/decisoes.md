@@ -8,6 +8,26 @@ Modelo de entrada:
 
 ---
 
+## 03/11/2026 — Fatia S0: ponte de consulta do Sankhya (somente leitura)
+
+- **O que entrou (só código; o banco não mudou):**
+  - `workers/sankhya/cliente.ts`: autenticação OAuth2 `client_credentials` com `X-Token` em `POST {SANKHYA_BASE_URL}/authenticate`, token renovado um minuto antes de vencer e de novo num 401 (uma vez, sem laço), consulta em `POST /gateway/v1/mge/service.sbr?serviceName=DbExplorerSP.executeQuery&outputType=json`, tempo máximo por chamada (120 s), erro do Sankhya (`status` "0") com a mensagem dele. **Nenhuma mensagem carrega o segredo, o X-Token ou o token** (`mascarar`). O contrato foi conferido no cliente da v1 (`consultas_api/_sankhya_client.py`, só leitura do código).
+  - `workers/sankhya/guarda.ts`: só SELECT ou WITH; uma consulta (o ponto e vírgula final sai); recusa INSERT, UPDATE, DELETE, MERGE, DROP, ALTER, CREATE, TRUNCATE, GRANT, REVOKE, EXEC, EXECUTE, CALL, BEGIN, DECLARE, COMMIT, ROLLBACK, `DBMS_` e `UTL_`; recusa comentário de bloco e comentário de linha que cite comando (o inofensivo sai antes do envio); recusa os campos proibidos do dicionário (senhas, PIX, banco, agência e conta, RG e identidade, filiação, estado civil, raça, sexo, identidade de gênero, deficiência, título eleitoral, certidão civil, e os responsáveis do CR); CPF e CNPJ só em contagem, nunca na consulta de linhas; nunca `SELECT *` (nem `T.*`); **só tabelas do dicionário** (`docs/sankhya`), com JOIN explícito; a consulta de linhas só em TSICUS, TMSMODELOVEI, TMSMARCAVEI e TGFVEI sem proprietário nem motorista; limite de linhas (padrão e máximo 5000).
+  - `pnpm sankhya:consulta consultas/<arquivo>.sql [--linhas N]` (`workers/sankhya/consulta.ts` e `executar.ts`): só arquivos `.sql` de `consultas/`; por padrão grava e mostra **só o resumo** (linhas e, por coluna, preenchidos, vazios, distintos, soma, mínimo e máximo); `--linhas N` grava até N linhas no arquivo de resultado, nunca na tela; o resultado fica em `importacao/resultados/` (fora do Git); **no CI nunca consulta o Sankhya real**.
+  - `consultas/`: (a) veículos ativos por modelo, eixos, tipo de veículo e carroceria; (b) veículos ativos sem eixos, sem carroceria (código e texto) e sem modelo; (c) CRs por código do pai e sinais, só contagens; (d) quantas descrições de CR de frota de ativo têm 1, 2, 3… CRs, sem mostrar descrições.
+  - Credenciais só por variável de ambiente, de `.env.sankhya.local` (ignorado pelo Git), carregado por `process.loadEnvFile` do Node (o formato do dotenv, sem dependência nova). `.env.example` ganhou os quatro nomes, sem valores.
+- **Testes vistos falhando antes:** os seis arquivos de teste da S0 (módulos inexistentes). **Mutações (30, todas pegas):** cada regra da guarda, a máscara (Bearer e segredos), a renovação no 401 e a margem do token, o tempo máximo, o erro do Sankhya, a trava do CI, o arquivo fora de `consultas/`, o corte e a gravação das linhas e o resumo.
+- **Decisões minhas a confirmar:**
+  1. **O limite envolve a consulta em `SELECT * FROM (...) WHERE ROWNUM <= N`** (o `*` só reprojeta as colunas já listadas por dentro; `ROWNUM` funciona em qualquer versão do Oracle, ao contrário do `FETCH FIRST`).
+  2. **Só tabelas do dicionário** (lista fechada); a consulta com vírgula no FROM é recusada (use JOIN).
+  3. **Comentário:** o de bloco é sempre recusado; o de linha passa se não citar comando e não é enviado.
+  4. **Tempo máximo de 120 s** por chamada (a v1 usava 300 s).
+  5. **Na consulta (b), zero conta como vazio** nos códigos (`NUMEIXOS`, `CODTIPCAR`, `CODMODELOVEI`).
+  6. **O runner é TypeScript rodado direto pelo Node 24** (sem compilar): `tsconfig` com `allowImportingTsExtensions` e `workers/sankhya/package.json` com `"type": "module"`.
+- **Segurança, achado:** o cliente da v1 tem **valores padrão de client id, secret e X-Token escritos no código** (vi só mascarados; nada foi copiado). Recomendo trocar essas credenciais no Sankhya e pedir credenciais novas, exclusivas do Eixo.
+- **Regra proposta para `/permissions` (negar ao Claude Code a leitura de `.env*`):** `Read(**/.env*)`, `Edit(**/.env*)`, `Write(**/.env*)`, `Bash(cat *.env*)`, `Bash(type *.env*)` e `Bash(Get-Content *.env*)` em `deny`.
+- **Quem decidiu:** Alexandre (o escopo da S0, 03/11/2026); os itens numerados aguardam o checkpoint.
+
 ## 03/11/2026 — Garagem e filial são duas dimensões; o CR de frota é do ativo
 
 - **Respostas de Alexandre (03/11/2026):**
