@@ -148,7 +148,7 @@ const CAVALO_E_IMPLEMENTO: readonly TipoDeAtivo[] = ["cavalo", "implemento"];
 
 /**
  * O Apêndice A do plano da Fase 3, aprovado por Alexandre em 31/10/2026: camada, `aplica_a` e tipos
- * válidos de cada uma das 25 siglas. O VAz saiu da régua em 05/11/2026 (o PÁT cobre o ativo parado).
+ * válidos de cada uma das 25 siglas. O VAz saiu da régua em 03/11/2026 (o PÁT cobre o ativo parado).
  * É o espelho do `supabase/seed.sql`: `lib/qualidade/catalogo-de-status.test.ts` confere os dois.
  */
 export const REGRAS_DAS_SIGLAS: Record<Sigla, RegraDaSigla> = {

@@ -8,6 +8,31 @@ Modelo de entrada:
 
 ---
 
+## 03/11/2026 — Garagem e filial são duas dimensões; o CR de frota é do ativo
+
+- **Respostas de Alexandre (03/11/2026):**
+  - **Os 49 CRs "CAIXA..."** de frota (veículo obrigatório e sem placa) são **equipamentos**: não são erro nem vão para a fila de exceções. **O CR de frota é do ativo** (placa ou equipamento; a chave do equipamento é a série). Por isso o valor `frota_de_placa` do tipo do CR passa a **`frota_de_ativo`** (migration `tipo_frota_de_ativo`, `alter type ... rename value`; as funções que citavam o valor no corpo foram recriadas; a mensagem passou a "Este CR de frota já pertence a outro ativo…"). Espelho `lib/dominio/cr.ts` e assinatura nova `a8823458d9dc448f92e48d710b52f760` no Vitest e no pgTAP. `frota_sem_placa` manteve o nome.
+  - **Placas de acionistas e de agregados** (regime de posse, 3.3): o CR delas fica fora da frota no Sankhya, e o Eixo não as chama de "serviço" sem mais. O Cód. Parceiro está **zerado** nos 1.714 CRs; o vínculo CR-acionista é pela **hierarquia** (`CODCENCUSPAI`, que não veio no export): pergunta para a primeira consulta direta (S0). Até lá, a importação os grava como **serviço com o sinal "possível CR de parceiro (a confirmar)"** (regra de importação; nada virou código).
+- **Garagem e filial (Alexandre, 03/11/2026):**
+  - **Garagem** (3: Matriz, Cordeirópolis, Parauapebas) é o **lugar**, a raiz da árvore de CRs: o primeiro dígito do código de 7 dígitos de frota (4 = FROTA - COR/SP, Cordeirópolis; 6 = FROTA - PAR/PA, Parauapebas; 2 = frota da Matriz, descrições "SLZ", **a confirmar**).
+  - **Filial do CR** (13 valores de `AD_GARAGEM`: Operação Matriz, Operação Sudeste…) é um **rótulo**: a mesma "Operação Matriz" aparece em CRs das raízes 2, 4 e 6.
+  - **Evidência (agregados, sem placas):** das 41 placas com mais de um CR, **26 mudam de garagem** (o dígito muda) e em 25 delas sobra um CR aberto e o resto bloqueado: **trocar de garagem cria CR novo**. **15 placas têm CR repetido sem trocar de garagem** (pergunta pendente para a equipe). Existem raízes de serviço de outras unidades (CON/MG e Benevides).
+- **O que entrou (migration nova `garagem_e_filial_do_cr`):**
+  - `config.garagem` (os 13 de `AD_GARAGEM`) → **`config.filial_do_cr`** (a tela chama de "Filial"); `nucleo.cr.garagem` → **`filial_do_cr`** (com origem); `nucleo.garagem_em` → **`nucleo.filial_do_cr_em`** (a função executável e as políticas foram renomeadas junto).
+  - **`config.garagem` novo** (as 3, com `digito_da_raiz` e conferência; Matriz "a conferir") e **`nucleo.cr.garagem_id`**, com origem e conferência. A garagem do CR de frota **deriva da raiz** (primeiro dígito do código de 7 dígitos) com origem `derivada` e "a conferir", até a ponte trazer `CODCENCUSPAI`; a garagem informada por alguém não é trocada pela derivação. **`nucleo.garagem_em`** (nova) dá a garagem do ativo pelo CR vigente: **calculada, nunca gravada no ativo**.
+  - **CR de frota com dígito fora de 2, 4 e 6 (há 3 com dígito 5) e CR de 8 dígitos (acionistas)** ficam sem garagem e entram na fila de exceções (`assunto = cr_sem_garagem`, uma aberta por CR); a fila ganhou `cr_id` e `assunto`.
+  - `config.filial` (3.1: custódia e escopo do Operacional) **não mudou**, até a resposta: **o Operacional atua por garagem ou por filial?**
+- **Decisões minhas a confirmar:**
+  1. A derivação vale só para **CR de frota** (`AD_FROTA` S); CR de serviço de 7 dígitos fica sem garagem e **não** vai para a fila (as raízes de serviço de outras unidades não são as 3 garagens).
+  2. **Todo CR de frota sem garagem** vai para a fila (inclusive os de código fora de 7 dígitos), além dos de 8 dígitos.
+  3. Trocar a garagem do CR sem dizer a origem conta como **informada**.
+  4. Cordeirópolis e Parauapebas nascem "conferidas" no catálogo; Matriz "a conferir". A garagem derivada de cada CR fica "a conferir" até a ponte.
+- **Testes:** novo `66-garagem-e-filial` (29 asserções); ajustados 20 (dez tabelas no catálogo, a filial do CR repetida, os índices), 50 (as políticas da filial do CR), 60 (filial do CR; `frota_de_ativo` e a mensagem nova), 65 (o rótulo `frota_de_ativo`) e 70 (a fila conta só a exceção do implemento). **Mutações (todas pegas):** raiz ignorada; sem fila; garagem informada sobrescrita; garagem do ativo pelo CR de hoje; CR de ativo compartilhado.
+- **Impacto nas telas (nada alterado; entra na 3.9):** hoje a "garagem" das telas é filha da filial (exemplo). Mudam: o passo "Local" do "Cadastrar placa" (`cadastrar-placa.tsx`), o "+" de garagem (`mini-cadastro-de-catalogo.tsx`), `app/(sistema)/frota/placas/acoes.ts` (e teste), `lib/dados/catalogos-locais.ts`, `escrita-tipos.ts`, `entradas-dos-assistentes.test.ts`, `escrita.test.ts`, o esquema `lib/dominio/esquemas/placa.ts` (e teste), o armazém e os catálogos de exemplo (`lib/exemplo/armazem.ts`, `catalogos.ts`, e testes) e os e2e `e2e/apoio-assistentes-frota.ts` e `assistentes-frota.spec.ts`. O resumo da placa não mostra garagem nem filial hoje; a garagem e a filial do CR passam a vir do CR vigente.
+- **Datas:** comentários com 04/11 e 05/11 corrigidos para 03/11 em `cr.ts`, `status.ts`, `siglas.ts`, `verificacao.yml`, `workflow-verificacao.test.ts`, `seed.sql` e nos testes 36 e 60. Ficaram os textos de descrição (não são comentários) em `status.test.ts`, no teste 20 e no teste 40; as migrations enviadas não se editam.
+- **Pendentes com a equipe:** por que 15 placas têm CR repetido sem trocar de garagem; a raiz 2 é a Matriz; o Operacional atua por garagem ou por filial.
+- **Quem decidiu:** Alexandre (respostas, garagem e filial, 03/11/2026); os itens numerados aguardam confirmação.
+
 ## 03/11/2026 — Fatia 3.7 (dados do ativo com origem e gravações atômicas)
 
 - **O que entrou (duas migrations novas: `origem_correcao_local`, só o valor novo do enum, e `dados_do_ativo`):**

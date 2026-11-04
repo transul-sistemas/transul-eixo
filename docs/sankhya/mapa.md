@@ -50,9 +50,22 @@ O usuário da API é somente leitura **por enquanto**. A garantia do Eixo é a t
 
 ## Centros de resultado, naturezas e TOPs (`TSICUS`, `TGFNAT`, `TGFTOP`)
 
-- **CR (`TSICUS`), vista em tela em 03/11/2026:** `CODCENCUS` é inteiro com máscara hierárquica (04.000.000 Frota COR/SP > 04.011.000 Frota implemento COR > 04.011.142, o CR da placa); `DESCRCENCUS` é a placa nos CRs de frota (só confere: fica velha na conversão Mercosul); "analítico" e "veículo obrigatório" ligados nos CRs de placa; `AD_BLOQUEADO`, `AD_GARAGEM`, `AD_OPERACAO` (vazio no CR de frota) e `AD_FROTA` ("Participa da Frota?"). O vínculo placa-CR é `TGFVEI.CODCENCUS`.
-- **Campos permitidos (CR):** `CODCENCUS`, `DESCRCENCUS`, `ATIVO`, `ANALITICO`, `VEICULO`, `CODCENCUSPAI`, `AD_FROTA`, `AD_BLOQUEADO`, `AD_OPERACAO`, `AD_GARAGEM`, `DTINCLUSAO`. **Não ler** `CODUSURESP` nem `CODPARCRESP` (dado de pessoa).
-- **Tipo do CR no Eixo (derivado, com origem; regra de 03/11/2026 pela lista real):** frota de placa (`AD_FROTA` = S e `VEICULO` = S); frota sem placa (`AD_FROTA` = S e `VEICULO` diferente de S); serviço (`AD_FROTA` = N **ou vazio**: o vazio é serviço, nunca pendente). Bloqueado: `AD_BLOQUEADO` = S; N ou vazio = não bloqueado. `AD_FROTA` e `AD_BLOQUEADO` são guardados como vieram (S, N ou vazio), com origem. `ATIVO` é guardado, mas não decide nada. O CR agrupador (`ANALITICO` = N) não aceita vínculo. A operação **não** vem do CR de frota: é montada no Eixo (decisão de 03/11/2026). Todos os CRs entram na importação, inclusive bloqueados.
+- **CR (`TSICUS`), vista em tela em 03/11/2026:** `CODCENCUS` é inteiro com máscara hierárquica (04.000.000 Frota COR/SP > 04.011.000 Frota implemento COR > 04.011.142, o CR do ativo); `DESCRCENCUS` é a placa nos CRs de frota (só confere, nunca decide: fica velha na conversão Mercosul). O vínculo ativo-CR é `TGFVEI.CODCENCUS`.
+- **Campos permitidos (CR):** `CODCENCUS`, `DESCRCENCUS`, `ATIVO`, `ANALITICO`, `VEICULO` (veículo obrigatório), `CODCENCUSPAI`, `GRAU`, `AD_FROTA`, `AD_BLOQUEADO`, `AD_OPERACAO`, `AD_GARAGEM`, `AD_IDEXTERNO`, `DTINCLUSAO`. **Não ler** `CODUSURESP` nem `CODPARCRESP` (dado de pessoa).
+- **Tipo do CR no Eixo (regra de 03/11/2026, pela lista real; derivado, com origem):**
+  - **frota de ativo** (`AD_FROTA` = S e `VEICULO` = S): o CR é do ativo, seja placa ou equipamento (a chave do equipamento é a série);
+  - **frota sem placa** (`AD_FROTA` = S e `VEICULO` diferente de S; o CR não é de um ativo): estoque, oficina, pneu, posto, manutenção;
+  - **serviço** (`AD_FROTA` = N **ou vazio**: o vazio é serviço, nunca pendente).
+- **Bloqueado:** `AD_BLOQUEADO` = S; N ou vazio = não bloqueado. `AD_FROTA` e `AD_BLOQUEADO` são guardados como vieram (S, N ou vazio), com origem. `ATIVO` é guardado, mas não decide nada. O CR agrupador (`ANALITICO` = N) não aceita vínculo.
+- **Operação:** não vem do CR (`AD_OPERACAO` está vazio em todos): é montada no Eixo.
+- **Regra do vigente:** ao mudar de centro, o antigo é bloqueado; o vigente é o não bloqueado; **mais de um não bloqueado vira alerta**. O bloqueio **não guarda data**. As datas de início e fim do centro na vigência vêm da origem **derivada** (primeiro e último lançamento do ativo naquele centro, no financeiro), **observada** (quando a sincronização viu a mudança de bloqueio) ou **informada** (assistente), e a origem é registrada junto da data.
+
+### Garagem e filial: duas dimensões (Alexandre, 03/11/2026)
+
+- **Garagem (3: Matriz, Cordeirópolis, Parauapebas)** é o **lugar** e vive na **árvore** de CRs: é a raiz do CR. Pelo primeiro dígito do código de 7 dígitos de frota: 4 = FROTA - COR/SP (Cordeirópolis); 6 = FROTA - PAR/PA (Parauapebas); 2 = frota da Matriz (descrições "SLZ", **a confirmar**). Com a ponte (S0), a raiz vem de `CODCENCUSPAI`; até lá o primeiro dígito, marcado "derivada, a confirmar". CRs de 8 dígitos (acionistas) e dígito fora de 2, 4 e 6 ficam **sem garagem** e vão para a fila de exceções (há 3 CRs de frota com dígito 5).
+- **Filial do CR (13 valores de `AD_GARAGEM`:** Operação Matriz, Operação Sudeste, Parauapebas - OZ Minerais, Veículos Vendidos, Parceiros…) é um **rótulo**, diferente do lugar: a mesma "Operação Matriz" aparece em CRs dos códigos 2, 4 e 6.
+- **A garagem e a filial do ativo são as do CR vigente, calculadas, nunca gravadas no ativo.**
+- Existem **raízes de serviço de outras unidades** (CON/MG e Benevides).
 
 ### A lista real dos CRs (03/11/2026, só agregados)
 
@@ -61,34 +74,33 @@ O usuário da API é somente leitura **por enquanto**. A garantia do Eixo é a t
 | Total | 1.714 CRs |
 | `ATIVO` | Sim em todos (não distingue nada) |
 | `AD_OPERACAO` | vazio em todos |
+| Cód. Parceiro | zerado em todos |
 | `AD_FROTA` (Participa da Frota) | Sim 1.140 (todos com código de 7 dígitos), Não 28, vazio 546; serviço = Não + vazio = 574 |
 | `VEICULO` (veículo obrigatório) | Sim 1.145, Não 569 |
 | `ANALITICO` | Sim 1.623, Não 91 (agrupadores, ex.: FRETES e os acionistas pai) |
 | `GRAU` 1 / 2 / 3 | 27 / 259 / 1.428 |
 | `AD_BLOQUEADO` | Sim 291, Não 253, vazio 1.170 |
-| `AD_GARAGEM` | preenchida em 1.225, vazia em 489 |
+| `AD_GARAGEM` (filial do CR) | preenchida em 1.225, vazia em 489 |
 
-- **Frota (AD_FROTA = Sim):** 1.093 analíticos com veículo obrigatório (CR de placa) e 47 sem (estoque, oficina, pneu, posto, manutenção).
-- **CRs de placa:** 1.005 com descrição de placa, 963 placas distintas; 41 placas com 2 ou mais CRs (83 CRs, 40 bloqueados); só 5 placas com 2 ou mais CRs abertos; em 39 das 41 as garagens dos CRs repetidos são iguais (só 2 mudaram de garagem).
-- **49 CRs "CAIXA..."** de frota com veículo obrigatório e sem placa.
+- **Frota (AD_FROTA = Sim):** 1.093 analíticos com veículo obrigatório (CR de ativo) e 47 sem (estoque, oficina, pneu, posto, manutenção).
+- **CRs de placa:** 1.005 com descrição de placa, 963 placas distintas; 41 placas com 2 ou mais CRs (83 CRs, 40 bloqueados); só 5 placas com 2 ou mais CRs abertos.
+- **Trocar de garagem cria CR novo:** das 41 placas com mais de um CR, **26 mudam de garagem** (o primeiro dígito muda) e em 25 delas sobra um CR aberto e o resto bloqueado. **15 placas têm CR repetido sem trocar de garagem.** Pela filial do CR (`AD_GARAGEM`), em 39 das 41 o rótulo é o mesmo.
+- **49 CRs "CAIXA..."** de frota com veículo obrigatório e sem placa: são **equipamentos** (resposta de Alexandre): o CR de frota é do ativo; não são erro nem vão para a fila de exceções.
 - **22 placas** só aparecem em CRs fora da frota.
-- **Fora da frota:** 272 CRs com descrição de placa (82 com garagem "Parceiros"), sob agrupadores com nome de pessoa.
-- **46 CRs** com descrição de placa e veículo obrigatório que não participam da frota: candidatos a erro de cadastro.
+- **Fora da frota:** 272 CRs com descrição de placa (82 com filial "Parceiros"), sob agrupadores com nome de pessoa: são **placas de acionistas e de agregados** (regime de posse). O vínculo CR-acionista é pela **hierarquia** (`CODCENCUSPAI`, que não veio no export). Até a primeira consulta direta, esses CRs entram como **serviço** com o sinal **"possível CR de parceiro (a confirmar)"**: o Eixo não os chama de serviço sem mais.
+- **46 CRs** com descrição de placa e veículo obrigatório que não participam da frota: candidatos a erro de cadastro (fila de exceções da importação).
 
 **Perguntas para a equipe (por Alexandre):**
-1. Por que uma placa tem 2 ou mais CRs (41 placas), se em 39 delas a garagem não mudou?
-2. Os 49 CRs "CAIXA..." de frota com veículo obrigatório e sem placa são equipamentos (com a série como chave)?
-3. Os 272 CRs com descrição de placa fora da frota, sob agrupadores com nome de pessoa, são a estrutura por acionista?
+1. Por que 15 placas têm CR repetido sem trocar de garagem?
+2. Na primeira consulta direta: a hierarquia (`CODCENCUSPAI`) liga cada CR de placa de acionista ou agregado ao agrupador do parceiro?
+3. A raiz 2 é mesmo a frota da Matriz ("SLZ")?
+4. O Operacional atua por garagem (3) ou por filial (13)? (Até a resposta, `config.filial` da 3.1, da custódia e do escopo, fica como está.)
 
-**Regras de saneamento da importação (a registrar; nada disso é código ainda):**
+**Regras de saneamento da importação (registradas; nada disso é código ainda):**
 - Entram **todos** os CRs, inclusive os bloqueados.
 - A descrição do CR (`DESCRCENCUS`) **só confere**, nunca decide.
-- CR suspeito (os 46 acima, o segundo CR aberto de uma placa, os "CAIXA..." até a resposta) vai para a **fila de exceções** da importação.
-- **Mapa de garagem para filial: pendente.** A frota tem 3 garagens; Alexandre vai informar a qual filial pertence cada um dos 13 valores.
+- CR suspeito (os 46 acima, o segundo CR aberto de uma placa, o CR de frota sem garagem) vai para a **fila de exceções** da importação. Os "CAIXA..." não: são equipamentos.
 
-- **Centro de resultado (`TSICUS`):** `CODCENCUS`, `DESCRCENCUS`, `ATIVO`, `ANALITICO`, `VEICULO` (veículo obrigatório), `CODCENCUSPAI`, `GRAU`, responsáveis.
-- **Campos `AD_` do centro:** `AD_BLOQUEADO` (bloquear a utilização), `AD_FROTA`, `AD_OPERACAO`, `AD_GARAGEM`, `AD_IDEXTERNO`.
-- **Regra do vigente:** ao mudar de centro, o antigo é bloqueado; o vigente é o não bloqueado; **mais de um não bloqueado vira alerta**. O bloqueio **não guarda data**. As datas de início e fim do centro na vigência vêm da origem **derivada** (primeiro e último lançamento do veículo naquele centro, no financeiro), **observada** (quando a sincronização viu a mudança de bloqueio) ou **informada** (assistente de transferência), e a origem é registrada junto da data.
 - **Naturezas (`TGFNAT`) e tipos de operação (`TGFTOP`):** classificam o lançamento; a view `TOPS` as lista.
 
 ## Abastecimento (`TCFABT`, `TCFABTITE`, `TGFPRO`)

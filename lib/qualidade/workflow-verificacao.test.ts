@@ -2,7 +2,7 @@ import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
-// O workflow de verificação (decisão de 04/11/2026: push direto na main) roda em pull request e em
+// O workflow de verificação (decisão de 03/11/2026: push direto na main) roda em pull request e em
 // push na main. Pula build, navegador e e2e quando só docs/**, supabase/** e *.md mudam, sem nunca
 // pular lint, tipos e testes unitários, e sem mudar o nome dos jobs que o ruleset exige.
 

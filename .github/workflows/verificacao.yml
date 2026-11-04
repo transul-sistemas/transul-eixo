@@ -1,6 +1,6 @@
 name: verificação
 
-# Decisão de 04/11/2026: push direto na main, sem pull request. A barreira é a verificação local
+# Decisão de 03/11/2026: push direto na main, sem pull request. A barreira é a verificação local
 # completa e o checkpoint; este workflow confere de novo, depois do push (ver docs/decisoes.md).
 on:
   pull_request:
