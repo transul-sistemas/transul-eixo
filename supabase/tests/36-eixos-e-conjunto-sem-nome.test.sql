@@ -1,4 +1,4 @@
--- Ajuste 3.4b (Alexandre, 04/11/2026): o implemento tem de 1 a 6 eixos por placa, e o conjunto cuja
+-- Ajuste 3.4b (Alexandre, 03/11/2026): o implemento tem de 1 a 6 eixos por placa, e o conjunto cuja
 -- estrutura não bate com nenhuma configuração conhecida deixa de ser recusado: fica "sem nome
 -- definido" e gera o alerta conjunto_sem_nome. Continuam recusados: semirreboques de eixos diferentes,
 -- dolly fora do meio, mais de três unidades e conjunto misto.

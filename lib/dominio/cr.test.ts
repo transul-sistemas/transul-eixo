@@ -12,8 +12,8 @@ describe("tipo do CR pelos sinais do Sankhya (espelho de nucleo.tipo_do_cr)", ()
     expect(tipoDoCr(null, true)).toBe("servico");
   });
 
-  it("AD_FROTA S: frota de placa com VEICULO S; frota sem placa com VEICULO diferente de S", () => {
-    expect(tipoDoCr(true, true)).toBe("frota_de_placa");
+  it("AD_FROTA S: frota de ativo (placa ou equipamento) com VEICULO S; frota sem placa com VEICULO diferente de S", () => {
+    expect(tipoDoCr(true, true)).toBe("frota_de_ativo");
     expect(tipoDoCr(true, false)).toBe("frota_sem_placa");
     expect(tipoDoCr(true, null)).toBe("frota_sem_placa");
   });
@@ -21,6 +21,6 @@ describe("tipo do CR pelos sinais do Sankhya (espelho de nucleo.tipo_do_cr)", ()
   it("a assinatura é a mesma constante que o pgTAP (60 e 65) confere no banco", () => {
     const md5 = createHash("md5").update(assinaturaDoTipoDoCr(), "utf8").digest("hex");
     expect(md5).toBe(ASSINATURA_DO_TIPO_DO_CR);
-    expect(ASSINATURA_DO_TIPO_DO_CR).toBe("cc0ddd63a7f39933c402d3bbfcc6baa2");
+    expect(ASSINATURA_DO_TIPO_DO_CR).toBe("a8823458d9dc448f92e48d710b52f760");
   });
 });

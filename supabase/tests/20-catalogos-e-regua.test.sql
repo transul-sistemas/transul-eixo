@@ -5,7 +5,7 @@ begin;
 
 \ir apoio/como_usuario.psql
 
-select plan(51);
+select plan(52);
 
 create temp table ids (nome text primary key, id uuid not null);
 
@@ -30,12 +30,12 @@ select is(
     from information_schema.tables
     where table_schema = 'config'
       and table_name = any (array[
-        'carroceria', 'marca', 'modelo', 'filial', 'garagem', 'camada_de_status',
+        'carroceria', 'marca', 'modelo', 'filial', 'garagem', 'filial_do_cr', 'camada_de_status',
         'status', 'configuracao_de_conjunto', 'nomenclatura_de_conjunto'
       ])
   ),
-  9::bigint,
-  'as nove tabelas do catálogo existem em config'
+  10::bigint,
+  'as dez tabelas do catálogo existem em config (a garagem e a filial do CR são duas, desde 03/11/2026)'
 );
 select has_function('config', 'nome_do_conjunto', array['uuid', 'integer', 'boolean', 'integer', 'integer'], 'existe config.nome_do_conjunto(carroceria, unidades, dolly, eixos dos semirreboques, eixos do dolly)');
 select ok(
@@ -243,15 +243,15 @@ select throws_ok(
   'filial repetida é recusada'
 );
 select throws_ok(
-  $$insert into config.garagem (codigo, rotulo, ordem) values ('C', 'Outra garagem', 1)$$,
+  $$insert into config.filial_do_cr (codigo, rotulo, ordem) values ('C', 'Outra filial', 1)$$,
   '23505',
   null,
-  'garagem repetida (o mesmo código do Sankhya) é recusada'
+  'filial do CR repetida (o mesmo código do Sankhya) é recusada'
 );
 select is(
-  (select count(*) from config.garagem where origem = 'sankhya' and conferencia = 'a_conferir'),
+  (select count(*) from config.filial_do_cr where origem = 'sankhya' and conferencia = 'a_conferir'),
   13::bigint,
-  'as 13 garagens do Sankhya estão semeadas, com origem Sankhya e "a conferir" (a garagem não é mais filha de filial)'
+  'as 13 filiais do CR do Sankhya (AD_GARAGEM) estão semeadas, com origem Sankhya e "a conferir"'
 );
 select throws_ok(
   $$insert into config.modelo (marca_id, nome, eixos) select id, 'R 450', 0 from ids where nome = 'scania'$$,
@@ -338,7 +338,8 @@ select throws_ok(
 
 -- ---- índices das chaves estrangeiras ----
 select has_index('config', 'modelo', 'modelo_marca_id_idx', 'marca_id', 'a marca do modelo tem índice');
-select has_index('nucleo', 'cr', 'cr_garagem_idx', 'garagem', 'a garagem do CR tem índice');
+select has_index('nucleo', 'cr', 'cr_filial_do_cr_idx', 'filial_do_cr', 'a filial do CR tem índice');
+select has_index('nucleo', 'cr', 'cr_garagem_id_idx', 'garagem_id', 'a garagem do CR tem índice');
 select has_index('config', 'status', 'status_camada_idx', 'camada', 'a camada da sigla tem índice');
 select has_index(
   'config', 'nomenclatura_de_conjunto', 'nomenclatura_de_conjunto_configuracao_idx', 'configuracao',

@@ -17,7 +17,7 @@ insert into config.camada_de_status (codigo, nome, prioridade) values
   ('atividade', 'Atividade', 5);
 
 -- As 25 siglas, na ordem da régua do CLAUDE.md. Camada, aplica_a e tipos válidos: Apêndice A do
--- plano da Fase 3 (aprovado em 31/10/2026). O VAz saiu da régua em 05/11/2026 (o PÁT cobre o ativo parado).
+-- plano da Fase 3 (aprovado em 31/10/2026). O VAz saiu da régua em 03/11/2026 (o PÁT cobre o ativo parado).
 insert into config.status (sigla, nome, chip, camada, baixada, aplica_a, tipos_validos, ordem) values
   ('ETc', 'Em trânsito carregado', 'em-atividade', 'atividade', false, 'conjunto', array['cavalo', 'caminhao']::nucleo.tipo_de_ativo[], 1),
   ('ETv', 'Em trânsito vazio', 'em-atividade', 'atividade', false, 'ambos', array['cavalo', 'caminhao']::nucleo.tipo_de_ativo[], 2),
@@ -56,7 +56,7 @@ insert into config.carroceria (nome) values
 
 -- As quatro configurações de conjunto, reconhecidas pela estrutura (regra da equipe, 03/11/2026):
 -- unidades engatadas (o dolly conta), presença de dolly, eixos aceitos nos semirreboques (todos iguais
--- entre si) e eixos do dolly. O simples aceita de 1 a 6 eixos (ajuste de 04/11/2026).
+-- entre si) e eixos do dolly. O simples aceita de 1 a 6 eixos (ajuste de 03/11/2026).
 insert into config.configuracao_de_conjunto (codigo, nome, unidades, com_dolly, eixos_dos_semirreboques, eixos_do_dolly) values
   ('simples', 'Simples', 1, false, '{1,2,3,4,5,6}', null),
   ('bi', 'Bi', 2, false, '{2}', null),
@@ -216,9 +216,16 @@ insert into config.parametro (chave, valor, descricao) values
   ('dias_do_alerta_de_correcao', '30', 'Por quantos dias o alerta de correção tardia fica visível.'),
   ('dias_parado_em_patio', '15', 'Dias em PÁT a partir dos quais o ativo gera o alerta parado_em_patio (padrão provisório).');
 
--- As 13 garagens do Sankhya (AD_GARAGEM do CR), com o rótulo e a ordem de lá. A sugestão para a
--- importação é só sugestão, a conferir: nada se deriva da garagem sem confirmação (3.6c, 05/11/2026).
-insert into config.garagem (codigo, rotulo, ordem, sugestao_na_importacao) values
+-- As 3 garagens (o lugar, a raiz da árvore de CRs), com o primeiro dígito do código de 7 dígitos de
+-- frota no Sankhya. A raiz 2 (Matriz, descrições "SLZ") ainda está a conferir (Alexandre, 03/11/2026).
+insert into config.garagem (codigo, rotulo, digito_da_raiz, conferencia) values
+  ('matriz', 'Matriz', 2, 'a_conferir'),
+  ('cordeiropolis', 'Cordeirópolis', 4, 'conferida'),
+  ('parauapebas', 'Parauapebas', 6, 'conferida');
+
+-- As 13 filiais do CR do Sankhya (AD_GARAGEM do CR), com o rótulo e a ordem de lá. São um rótulo, não o
+-- lugar. A sugestão para a importação é só sugestão, a conferir: nada se deriva dela sem confirmação.
+insert into config.filial_do_cr (codigo, rotulo, ordem, sugestao_na_importacao) values
   ('C', 'Operação Sudeste', 1, 'operacao'),
   ('M', 'Operação Matriz', 2, 'operacao'),
   ('P', 'Parauapebas - OZ Minerais', 3, 'operacao'),

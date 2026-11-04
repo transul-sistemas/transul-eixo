@@ -406,14 +406,14 @@ update nucleo.fila_de_excecoes set resolvida_em = now(), resolucao = 'Tentativa 
 reset role;
 select is((select count(*) from nucleo.fila_de_excecoes where resolvida_em is not null), 0::bigint, 'fila_de_excecoes_alterar: o gestor não resolve a fila');
 select tests.como(pg_temp.id('auth_adm'));
-select is((select count(*) from nucleo.fila_de_excecoes), 1::bigint, 'quem edita Cadastros vê a fila de exceções');
+select is((select count(*) from nucleo.fila_de_excecoes where ativo_id = pg_temp.id('i1')), 1::bigint, 'quem edita Cadastros vê a fila de exceções');
 select lives_ok(
-  $$update nucleo.fila_de_excecoes set resolvida_em = now(), resolucao = 'Conferido na placa: 3 eixos'$$,
+  $$update nucleo.fila_de_excecoes set resolvida_em = now(), resolucao = 'Conferido na placa: 3 eixos' where ativo_id = pg_temp.id('i1')$$,
   'e resolve, com a resolução escrita'
 );
 select is((select count(*) from config.campo_corrigivel), 11::bigint, 'campo_corrigivel: todo usuário vinculado lê a lista');
 reset role;
-select is((select count(*) from nucleo.fila_de_excecoes where resolvida_em is not null), 1::bigint, 'a exceção ficou resolvida');
+select is((select count(*) from nucleo.fila_de_excecoes where ativo_id = pg_temp.id('i1') and resolvida_em is not null), 1::bigint, 'a exceção ficou resolvida');
 
 select * from finish();
 

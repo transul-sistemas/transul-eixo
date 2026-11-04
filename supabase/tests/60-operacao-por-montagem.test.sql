@@ -1,4 +1,4 @@
--- Fatia 3.6c: o CR vem do Sankhya e a operação é montada por um usuário (decisão de 05/11/2026).
+-- Fatia 3.6c: o CR vem do Sankhya e a operação é montada por um usuário (decisão de 03/11/2026).
 --  * CR: codcencus obrigatório e único; tipo derivado de AD_FROTA e VEICULO (serviço, frota de placa,
 --    frota sem placa), com origem; o CR de frota de placa pertence a uma única placa, para sempre.
 --  * Operação: o vínculo placa-operação (com vigência, quem montou) e o vínculo CR de serviço-operação.
@@ -111,7 +111,7 @@ select is(
           order by coalesce(f::text, 'nulo') || '|' || coalesce(v::text, 'nulo') || '|' || coalesce(nucleo.tipo_do_cr(f, v)::text, 'pendente') collate "C"))
      from (values (null::boolean), (false), (true)) as a (f)
      cross join (values (null::boolean), (false), (true)) as b (v)),
-  'cc0ddd63a7f39933c402d3bbfcc6baa2',
+  'a8823458d9dc448f92e48d710b52f760',
   'o tipo do CR pelos dois sinais do Sankhya é o mesmo do espelho em TypeScript (mesma assinatura)'
 );
 
@@ -135,7 +135,7 @@ select throws_ok(
   '23502', null, 'CR sem o CODCENCUS do Sankhya é recusado'
 );
 select ok(
-  (select tipo = 'frota_de_placa' and tipo_origem = 'derivada' from nucleo.cr where id = pg_temp.id('A1')),
+  (select tipo = 'frota_de_ativo' and tipo_origem = 'derivada' from nucleo.cr where id = pg_temp.id('A1')),
   'AD_FROTA e VEICULO ligados: frota de placa (derivado)'
 );
 select is((select tipo::text from nucleo.cr where id = pg_temp.id('F')), 'frota_sem_placa', 'AD_FROTA ligado e VEICULO desligado: frota sem placa');
@@ -156,7 +156,7 @@ select lives_ok(
 select throws_ok(
   $$insert into nucleo.cr_do_ativo (ativo_id, cr_id, inicio, inicio_origem)
     values (pg_temp.id('c2'), pg_temp.id('A1'), '2026-04-01 00:00-03', 'informada')$$,
-  '23514', 'Este CR de frota de placa já pertence a outra placa: cada CR de placa é de uma placa só, para sempre.',
+  '23514', 'Este CR de frota já pertence a outro ativo: cada CR de ativo é de um ativo só, para sempre.',
   'o mesmo CR de frota de placa não vai para outra placa, nem depois'
 );
 select lives_ok(
@@ -172,7 +172,7 @@ select lives_ok(
 );
 select throws_ok(
   $$update nucleo.cr set veiculo_obrigatorio = true where id = pg_temp.id('F')$$,
-  '23514', 'Este CR de frota de placa já pertence a outra placa: cada CR de placa é de uma placa só, para sempre.',
+  '23514', 'Este CR de frota já pertence a outro ativo: cada CR de ativo é de um ativo só, para sempre.',
   'virar frota de placa um CR que está em duas placas é recusado'
 );
 select throws_ok($$delete from nucleo.cr where id = pg_temp.id('A1')$$, '23000', null, 'o CR antigo nunca se exclui de verdade');
@@ -194,18 +194,18 @@ select ok(
 select is((select degrau from nucleo.operacao_do_ativo where ativo_id = pg_temp.id('c1')), 'elenco', 'o degrau da placa montada é "elenco"');
 select is((select cr_id from nucleo.operacao_do_ativo where ativo_id = pg_temp.id('c1')), pg_temp.id('A2'), 'a visão mostra o CR vigente da própria placa');
 
--- ---- a garagem é do CR; a da placa é a do CR vigente (calculada, nunca gravada) ----
-update nucleo.cr set garagem = 'C' where id = pg_temp.id('A1');
-update nucleo.cr set garagem = 'M' where id = pg_temp.id('A2');
+-- ---- a filial do CR (AD_GARAGEM) é do CR; a da placa é a do CR vigente (calculada, nunca gravada) ----
+update nucleo.cr set filial_do_cr = 'C' where id = pg_temp.id('A1');
+update nucleo.cr set filial_do_cr = 'M' where id = pg_temp.id('A2');
 select ok(
-  (select count(*) from config.garagem) = 13
-  and (select rotulo from config.garagem where codigo = 'C') = 'Operação Sudeste',
-  'o catálogo das 13 garagens do Sankhya está semeado (código e rótulo)'
+  (select count(*) from config.filial_do_cr) = 13
+  and (select rotulo from config.filial_do_cr where codigo = 'C') = 'Operação Sudeste',
+  'o catálogo das 13 filiais do CR do Sankhya está semeado (código e rótulo)'
 );
 select ok(
-  nucleo.garagem_em(pg_temp.id('c1'), '2026-02-15 00:00-03') = 'C'
-  and nucleo.garagem_em(pg_temp.id('c1'), '2026-04-01 00:00-03') = 'M',
-  'a garagem da placa muda ao trocar o CR, e o histórico acompanha a vigência'
+  nucleo.filial_do_cr_em(pg_temp.id('c1'), '2026-02-15 00:00-03') = 'C'
+  and nucleo.filial_do_cr_em(pg_temp.id('c1'), '2026-04-01 00:00-03') = 'M',
+  'a filial do CR da placa muda ao trocar o CR, e o histórico acompanha a vigência'
 );
 select lives_ok(
   $q$do $b$ begin

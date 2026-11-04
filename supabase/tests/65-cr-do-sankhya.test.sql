@@ -7,7 +7,7 @@
 begin;
 \ir apoio/como_usuario.psql
 
-select plan(26);
+select plan(27);
 
 create function pg_temp.id(p_nome text) returns uuid language sql as $$
   select nullif(current_setting('t.' || p_nome, true), '')::uuid
@@ -70,6 +70,7 @@ end;
 $$;
 
 -- ---- estrutura ----
+select enum_has_labels('nucleo', 'tipo_de_cr', array['servico', 'frota_de_ativo', 'frota_sem_placa'], 'o CR de frota é do ativo (placa ou equipamento): frota_de_ativo');
 select has_column('nucleo', 'cr', 'ad_frota', 'o CR guarda o AD_FROTA bruto');
 select has_column('nucleo', 'cr', 'ad_frota_origem', 'com a origem');
 select has_column('nucleo', 'cr', 'ad_bloqueado', 'o CR guarda o AD_BLOQUEADO bruto');
@@ -79,7 +80,7 @@ select is(
           order by coalesce(f::text, 'nulo') || '|' || coalesce(v::text, 'nulo') || '|' || coalesce(nucleo.tipo_do_cr(f, v)::text, 'pendente') collate "C"))
      from (values (null::boolean), (false), (true)) as a (f)
      cross join (values (null::boolean), (false), (true)) as b (v)),
-  'cc0ddd63a7f39933c402d3bbfcc6baa2',
+  'a8823458d9dc448f92e48d710b52f760',
   'o tipo do CR é o mesmo do espelho em TypeScript (a assinatura nova, sem pendente)'
 );
 
@@ -104,7 +105,7 @@ set constraints all deferred;
 
 -- ---- o tipo pelos valores brutos ----
 select ok(
-  (select ad_frota = 'S' and ad_frota_origem = 'sankhya' and participa_da_frota and tipo = 'frota_de_placa' from nucleo.cr where id = pg_temp.id('P')),
+  (select ad_frota = 'S' and ad_frota_origem = 'sankhya' and participa_da_frota and tipo = 'frota_de_ativo' from nucleo.cr where id = pg_temp.id('P')),
   'AD_FROTA S e VEICULO S: frota de placa, com o valor bruto guardado'
 );
 select is((select tipo::text from nucleo.cr where id = pg_temp.id('F')), 'frota_sem_placa', 'AD_FROTA S e VEICULO N: frota sem placa');
