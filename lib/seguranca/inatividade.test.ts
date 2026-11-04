@@ -17,8 +17,8 @@ describe("inatividade", () => {
     expect(expirouPorInatividade(ultima, ultima + 8 * HORA)).toBe(true);
   });
 
-  it("sem marca de atividade, não expira (a marca nasce no primeiro pedido)", () => {
-    expect(expirouPorInatividade(null, 5)).toBe(false);
+  it("sessão válida sem a marca de atividade conta como expirada (a marca nasce ao entrar ou ao confirmar o link)", () => {
+    expect(expirouPorInatividade(null, 5)).toBe(true);
   });
 
   it("marca ilegível ou do futuro conta como expirada (ninguém estica a sessão mexendo no cookie)", () => {

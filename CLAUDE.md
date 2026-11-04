@@ -28,6 +28,7 @@ Projeto técnico completo: `docs/projeto-tecnico.md`. Em caso de dúvida, pergun
 - **Ritmo:** risco alto (banco, permissões e RLS, login, funções atômicas, ponte do Sankhya, dados reais) para no checkpoint e espera o "aprovado"; risco baixo (telas que reusam componentes, ajustes visuais, textos, documentação), com tudo verde, integra sozinho e relata depois; relatório curto; no simples e reversível, escolhe o mais simples, registra como hipótese e segue (regra completa em `docs/decisoes.md`, 03/11/2026).
 - Pare e peça aprovação nos checkpoints de cada plano.
 - **Nunca** coloque senha, chave ou token em arquivo, commit, log ou conversa. Use `.env.local` (fora do Git) e as variáveis da Vercel e do Supabase. Mantenha `.env.example` atualizado, sem valores.
+- **Nunca imprima a saída de `supabase status`** nem de comando que mostre chaves: leia só os nomes necessários e grave por script, sem imprimir (`pnpm env:local`); o `.claude/settings.json` nega `supabase status` direto (regra completa em `docs/decisoes.md`, 03/11/2026).
 - Na dúvida entre duas leituras de uma regra de negócio, pergunte.
 - **Validação visual em toda entrega:** ao fim de cada checkpoint, capturas em 1366 e 1920, claro e escuro, e a rota para abrir com `pnpm dev`. Sem aprovação do visual, a entrega não avança. Telas de dados usam `lib/exemplo/` (nunca importado fora de desenvolvimento e testes) até o Acompanhamento da Frota estar pronto.
 

@@ -492,6 +492,7 @@ Decisões de Alexandre sobre o plano (03/11/2026). A 3.8 começa só depois de a
 - **Telas:** `/entrar`, `/esqueci-a-senha`, `/nova-senha` e "Seu acesso ainda não foi liberado. Fale com o administrador." com o botão Sair. Depois do login, redirecionamento **só para caminhos internos** (teste do redirecionamento aberto). Cabeçalhos de segurança e verificação de origem nas Server Actions.
 - **Testes:** Vitest (`exigirPermissao()` com sessão simulada para cada perfil e ação; toda rota do sistema protegida; nenhuma `service_role` em `app/`); e2e com um usuário de cada perfil (Administrador, Diretoria, Gestor de frota, Operacional) criado no Auth local pelo `globalSetup` (a chave mestra só nesse script de teste), entrando pela tela: cada um vê só os seus módulos; sem vínculo vê a tela de acesso não liberado; senha errada; sair e entrar; recuperação pelo Inbucket; sessão expirada; redirecionamento aberto; papel rebaixado perde o acesso na hora. O job `app` do CI sobe o Supabase local como o `banco` (nomes inalterados). Capturas em 1366, 1920, tablet e celular, claro e escuro.
 - **Depois:** segundo fator (TOTP; obrigatório primeiro para Administrador e Diretoria), Google, o assistente "Novo usuário" e os e-mails de produção.
+- **Backlog antes da produção (registrado no checkpoint da 3.8):** CSP com nonce; HSTS só em produção; segundo fator (TOTP); Google; convite pelo app (por worker); e-mails (Resend e domínio); proteção contra senha vazada (Supabase Pro). Conferir os limites de tentativas do Auth no `eixo-prod`.
 
 ## Garagem e filial do CR (03/11/2026)
 

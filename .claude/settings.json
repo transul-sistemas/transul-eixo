@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "deny": [
+      "Bash(supabase status:*)",
+      "Bash(pnpm exec supabase status:*)",
+      "Bash(pnpm supabase status:*)",
+      "Bash(npx supabase status:*)",
+      "PowerShell(supabase status:*)",
+      "PowerShell(pnpm exec supabase status:*)",
+      "PowerShell(npx supabase status:*)"
+    ]
+  }
+}

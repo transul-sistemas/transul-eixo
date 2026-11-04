@@ -11,9 +11,12 @@ export function lerUltimaAtividade(valor: string | undefined): number | null {
   return /^\d+$/.test(valor) ? Number(valor) : Number.NaN;
 }
 
-/** [última, última + 8 h): no limite exato, expirou. Marca ilegível ou do futuro conta como expirada. */
+/**
+ * [última, última + 8 h): no limite exato, expirou. Sessão sem a marca (nula), com marca ilegível ou do
+ * futuro conta como expirada: a marca nasce ao entrar e ao confirmar o link do e-mail.
+ */
 export function expirouPorInatividade(ultima: number | null, agora: number): boolean {
-  if (ultima === null) return false;
+  if (ultima === null) return true;
   if (!Number.isFinite(ultima) || ultima > agora) return true;
   return agora - ultima >= LIMITE_DE_INATIVIDADE_MS;
 }

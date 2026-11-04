@@ -47,6 +47,12 @@ describe("configuração do Auth (supabase/config.toml)", () => {
   it("a entrada por e-mail continua ligada ([auth.email] enable_signup desligado desliga o login por e-mail)", () => {
     expect(secao(toml, "auth.email")).toMatch(/^enable_signup = true$/m);
   });
+  it("limites de tentativas do Auth: 30 entradas e 30 verificações por 5 minutos por IP; 30 e-mails por hora (local)", () => {
+    const limites = secao(toml, "auth.rate_limit");
+    expect(limites).toMatch(/^sign_in_sign_ups = 30$/m);
+    expect(limites).toMatch(/^token_verifications = 30$/m);
+    expect(limites).toMatch(/^email_sent = 30$/m);
+  });
   it("senha com no mínimo 12 caracteres", () => {
     expect(secao(toml, "auth")).toMatch(/^minimum_password_length = 12$/m);
   });

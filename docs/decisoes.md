@@ -8,6 +8,12 @@ Modelo de entrada:
 
 ---
 
+## 03/11/2026 — Regra de segurança: nunca imprimir saída que mostre chaves
+
+- **Decisão (Alexandre, 03/11/2026):** nunca imprimir a saída de `supabase status` nem de qualquer comando que mostre chaves. Ler só os nomes necessários e gravar por script, sem imprimir (`pnpm env:local` grava o endereço e a chave publicável do Supabase local em `.env.local`; o preparo dos e2e lê o que precisa do `supabase status` por dentro, sem mostrar). O `.claude/settings.json` do projeto **nega ao Claude Code** rodar `supabase status` direto (Bash e PowerShell, com `pnpm exec`, `pnpm` e `npx`); os scripts continuam funcionando porque chamam o comando por dentro.
+- **Deslize registrado (03/11/2026):** ao conferir o `sed` do CI da 3.8, um comando imprimiu na conversa a saída do `supabase status` com as chaves do **Supabase local** (as chaves padrão de demonstração do CLI, só do Docker desta máquina, sem acesso a nenhum projeto na nuvem). **Nenhuma ação necessária.**
+- **Quem decidiu:** Alexandre.
+
 ## 03/11/2026 — Fatia 3.8 (login)
 
 - **O que entrou:**
@@ -27,6 +33,12 @@ Modelo de entrada:
   4. Gestor de frota e Operacional não veem o Início no menu porque as telas dele estão "em breve" (já era assim); a tela inicial depois do login continua `/inicio/tarefas`.
   5. Sem CSP por enquanto (o Next usa scripts embutidos; exige nonce, fica para depois).
 - **Fica para depois:** segundo fator (TOTP; primeiro Administrador e Diretoria), Google, o assistente "Novo usuário" (por um worker), os e-mails de produção (Resend e domínio).
+- **Ajustes antes do checkpoint (Alexandre, 03/11/2026):**
+  - **Sessão válida sem a marca de atividade (cookie `eixo_ultima_atividade` ausente) ou com a marca adulterada (ilegível ou do futuro) conta como expirada e sai.** A marca nasce ao entrar e ao confirmar o link do e-mail (`/auth/confirmar`).
+  - **A ação de entrar aplica as regras do proxy** também para o vínculo inativo (o banco devolve perfil nulo): acesso não liberado. Coberto no Vitest e no e2e.
+  - **Limites de tentativas do Auth (local, `supabase/config.toml`):** 30 entradas e cadastros e 30 verificações de token por 5 minutos por IP; 150 renovações de token; 30 e-mails por hora (o padrão local era 2; subiu para o e2e de recuperação). Na nuvem, os limites são os do projeto (conferir ao ligar o `eixo-prod`).
+  - **Só do plano Pro em diante (Supabase):** proteção contra senha vazada (HaveIBeenPwned), limite de tempo da sessão (time-box) e de inatividade e uma sessão por usuário. Por isso a inatividade de 8 horas é do app.
+  - **Backlog antes da produção (3.8):** CSP (com nonce); HSTS só em produção (hoje o cabeçalho vai em todas as rotas, e o navegador o ignora em HTTP local); segundo fator (TOTP, obrigatório primeiro para Administrador e Diretoria); entrar com Google; convite pelo app (por um worker, com a chave secreta só lá); e-mails de produção (Resend e domínio); proteção contra senha vazada (exige o Supabase Pro).
 - **Quem decidiu:** Alexandre (as decisões do plano, 03/11/2026); as hipóteses aguardam o checkpoint.
 
 ## 03/11/2026 — Regra de ritmo: acelerar sem perder segurança

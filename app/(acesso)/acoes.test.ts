@@ -93,6 +93,13 @@ describe("entrar", () => {
 });
 
 describe("entrar: o destino passa pelas mesmas regras do proxy (o redirect da ação não passa por ele)", () => {
+  it("vínculo inativo (o banco devolve perfil nulo) também vai para acesso não liberado", async () => {
+    simulado.entrar.mockResolvedValue({ error: null });
+    simulado.perfil = null;
+    await expect(entrar({}, formulario({ email: "a@b.com", senha: "certa" }))).rejects.toThrow();
+    expect(simulado.redirecionado).toEqual(["/acesso-nao-liberado"]);
+  });
+
   it("sem vínculo vai para acesso não liberado", async () => {
     simulado.entrar.mockResolvedValue({ error: null });
     simulado.perfil = null;

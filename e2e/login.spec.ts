@@ -89,6 +89,17 @@ test.describe("sem sessão", () => {
     await expect(page).toHaveURL(/\/entrar\?proximo=/);
   });
 
+  test("sessão válida sem a marca de atividade (cookie apagado) também termina", async ({
+    page,
+  }) => {
+    await page.goto("/entrar");
+    await entrar(page, "gestor_de_frota");
+    await expect(page).toHaveURL(/\/inicio\/tarefas/);
+    await page.context().clearCookies({ name: "eixo_ultima_atividade" });
+    await page.goto("/frota/placas");
+    await expect(page).toHaveURL(/\/entrar\?motivo=inatividade/);
+  });
+
   test("quem não tem vínculo vê o acesso não liberado e pode sair", async ({ page }) => {
     await page.goto("/entrar");
     await entrar(page, "sem_vinculo");
