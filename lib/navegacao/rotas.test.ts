@@ -28,6 +28,8 @@ const paginas = paginasDe("app");
 const rotasDasPaginas = paginas.map(rotaDe);
 const telas = todasAsTelas();
 const rotasDeModulo = CATALOGO.map((m) => m.rota);
+// As telas de acesso (fatia 3.8) ficam fora do catálogo e fora da casca do sistema, em app/(acesso)/.
+const ROTAS_DE_ACESSO = ["/entrar", "/esqueci-a-senha", "/nova-senha", "/acesso-nao-liberado"];
 
 describe("rotas e catálogo", () => {
   it.each(telas.map((t) => [t.rota, t.id] as const))("a rota %s (%s) tem página", (rota) => {
@@ -40,6 +42,7 @@ describe("rotas e catálogo", () => {
     const foraDoCatalogo = rotasDasPaginas.filter(
       (rota) =>
         rota !== "/" &&
+        !ROTAS_DE_ACESSO.includes(rota) &&
         !rotasDeModulo.includes(rota) &&
         !telas.some((t) => t.rota === rota) &&
         !ehFicha(rota),
@@ -60,9 +63,14 @@ describe("rotas e catálogo", () => {
   it("não há duas páginas para a mesma rota", () => {
     expect(new Set(rotasDasPaginas).size).toBe(rotasDasPaginas.length);
   });
-  it("as páginas do sistema ficam em app/(sistema)/", () => {
-    const fora = paginas.filter((p) => p !== "app/page.tsx" && !p.startsWith("app/(sistema)/"));
+  it("as páginas do sistema ficam em app/(sistema)/; as de acesso, só em app/(acesso)/", () => {
+    const fora = paginas.filter(
+      (p) =>
+        p !== "app/page.tsx" && !p.startsWith("app/(sistema)/") && !p.startsWith("app/(acesso)/"),
+    );
     expect(fora).toEqual([]);
+    const deAcesso = paginas.filter((p) => p.startsWith("app/(acesso)/")).map(rotaDe);
+    expect([...deAcesso].sort()).toEqual([...ROTAS_DE_ACESSO].sort());
   });
   it("não sobrou pasta de módulo solta em app/", () => {
     const modulos = ["inicio", "frota", "operacional", "operacoes", "pessoas", "parceiros"];

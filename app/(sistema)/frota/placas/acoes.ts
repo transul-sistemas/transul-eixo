@@ -12,7 +12,7 @@ import {
 } from "@/lib/dados/escrita";
 import type { AtualDaAcao, ItemCriado, PlacaGravada } from "@/lib/dados/escrita-tipos";
 import { fonteDeEscrita } from "@/lib/dados/fonte";
-import { ErroDePermissao, exigirPermissao } from "@/lib/seguranca/exigir-permissao";
+import { ErroDePermissao, ErroDeSessao, exigirPermissao } from "@/lib/seguranca/exigir-permissao";
 import { gestorAtual } from "@/lib/seguranca/gestor-atual";
 import { erroDaAcao, type ResultadoDaAcao } from "@/lib/wizard/resultado";
 
@@ -35,9 +35,9 @@ async function executar<T>(
   caminhosAfetados: (linha: T) => string[],
 ): Promise<ResultadoDaAcao<T, AtualDaAcao>> {
   try {
-    exigirPermissao({ modulo: "frota", acao: "criar" });
+    await exigirPermissao({ modulo: "frota", acao: "criar" });
   } catch (erro) {
-    if (erro instanceof ErroDePermissao)
+    if (erro instanceof ErroDePermissao || erro instanceof ErroDeSessao)
       return erroDaAcao("sem_permissao", { mensagem: erro.message });
     throw erro;
   }

@@ -8,6 +8,27 @@ Modelo de entrada:
 
 ---
 
+## 03/11/2026 — Fatia 3.8 (login)
+
+- **O que entrou:**
+  - **Entrada por e-mail e senha** (Supabase Auth, `@supabase/ssr` 0.12.7 e `@supabase/supabase-js` 2.118.0, versões fixas). **Cadastro fechado** (`[auth] enable_signup = false`; o `enable_signup` de `[auth.email]` fica ligado: desligado, ele desliga a própria entrada por e-mail). **Senha de no mínimo 12 caracteres.** Erro único "E-mail ou senha incorretos", exista o e-mail ou não. O usuário continua nascendo no Studio, ligado à Pessoa por `nucleo.vincular_usuario`; sem convite pelo app.
+  - **Sessão:** cookies `httpOnly`, `Secure`, `SameSite=Lax` e **sem prazo** (sem "lembrar de mim": fechar o navegador encerra), em todo cookie que o Eixo grava (`lib/supabase/cookies.ts`; o `@supabase/ssr` grava 400 dias e `httpOnly` falso por padrão). **Inatividade de 8 horas no app** (`lib/seguranca/inatividade.ts` e `proxy.ts`): conferido na documentação do Supabase ("User sessions" e a página de preços), o limite de inatividade e o de tempo da sessão **só existem do plano Pro em diante**; no Auth local também ficou `inactivity_timeout = "8h"`.
+  - **`proxy.ts`:** renova a sessão (`getUser`), confere a inatividade e lê do banco, **a cada pedido**, com a chave do próprio usuário, o vínculo (`config.perfil_atual`) e se ele pode ver o módulo do caminho (`config.pode`). Sem sessão vai para `/entrar?proximo=…`; sem vínculo, para "acesso não liberado"; sem ver o módulo, 404. **Rebaixar o papel tira o acesso no pedido seguinte**, mesmo com o token válido (provado no e2e).
+  - **Cada página e cada Server Action confere de novo:** `exigirPermissao()` ficou assíncrona (`getUser`, nunca `getSession`, e `config.pode`); a casca do sistema, o topo, a ficha e a página de cada módulo leem o perfil da sessão (`lib/seguranca/sessao-do-servidor.ts`). O espelho em TypeScript fica só para montar menus. O `perfilAtual()` provisório saiu.
+  - **O redirect de uma Server Action não passa pelo proxy** (o destino é desenhado na mesma resposta): a ação de entrar e a de senha nova aplicam as mesmas regras (sem vínculo, acesso não liberado; sem ver o módulo, a tela inicial).
+  - **Telas:** `/entrar`, `/esqueci-a-senha`, `/nova-senha` e "Seu acesso ainda não foi liberado. Fale com o administrador." com o botão Sair (`app/(acesso)/`); botão **Sair** no topo do sistema. Redirecionamento depois do login **só para caminho interno** (`lib/seguranca/redirecionamento.ts`). Recuperação pelo fluxo PKCE com `token_hash` (`/auth/confirmar` e o modelo `supabase/templates/recuperar-senha.html`); no local, o Mailpit recebe.
+  - **Cabeçalhos de segurança** em todas as rotas (`X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`, `Strict-Transport-Security`); as Server Actions só aceitam a própria origem (o Next confere Origin × Host e ninguém alarga `serverActions.allowedOrigins`).
+  - **Chave secreta:** só no preparo dos e2e (`e2e/apoio/usuarios-de-teste.ts`, que lê do `supabase status`); a guarda das armadilhas passou a acusar também `SECRET_KEY` e `sb_secret_`, com a lista fechada de exceções. Ação pública (entrar, recuperar a senha) dispensa `exigirPermissao()` só com `// ação pública:` e a justificativa ao lado; o Zod continua obrigatório.
+  - **e2e:** o projeto "preparar" do Playwright cria no Auth local um usuário de cada perfil e um sem vínculo, com **senhas sorteadas a cada execução** (em `e2e/.auth/`, fora do Git), e guarda a sessão de cada perfil; os testes de tela entram como Administrador. O job `app` do CI sobe o Supabase local antes do build (nomes `app` e `banco` mantidos; prazo de 45 para 55 minutos). `pnpm env:local` grava o endereço e a chave publicável do Supabase local em `.env.local`.
+- **Hipóteses (simples e reversíveis):**
+  1. A memória da barra lateral e dos rascunhos continua com a chave `provisorio` até a 3.9 (quatro e2e dependem dela).
+  2. `gestorAtual()` (o gestor de quem usa, no armazém de exemplo) continua provisório até a 3.9, quando os dados vêm do banco.
+  3. A barra lateral fica num `Suspense` (o `cacheComponents` exige), com o lugar reservado na largura aberta; quem usa o modo compacto vê um ajuste na primeira pintura.
+  4. Gestor de frota e Operacional não veem o Início no menu porque as telas dele estão "em breve" (já era assim); a tela inicial depois do login continua `/inicio/tarefas`.
+  5. Sem CSP por enquanto (o Next usa scripts embutidos; exige nonce, fica para depois).
+- **Fica para depois:** segundo fator (TOTP; primeiro Administrador e Diretoria), Google, o assistente "Novo usuário" (por um worker), os e-mails de produção (Resend e domínio).
+- **Quem decidiu:** Alexandre (as decisões do plano, 03/11/2026); as hipóteses aguardam o checkpoint.
+
 ## 03/11/2026 — Regra de ritmo: acelerar sem perder segurança
 
 - **Decisão (Alexandre, 03/11/2026):**

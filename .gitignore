@@ -10,6 +10,8 @@ next-env.d.ts
 # testes
 playwright-report/
 test-results/
+# sessões e senhas sorteadas dos usuários de teste (fatia 3.8)
+e2e/.auth/
 
 # segredos: nunca versionar
 .env

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { MODULOS } from "@/lib/visual/tons";
 import { acharFicha, acharTela, CATALOGO, todasAsTelas } from "./catalogo";
-import { PERFIS, PERFIS_QUE_VEEM_EM_BREVE, perfilAtual, USUARIO_PROVISORIO } from "./perfis";
+import { PERFIS, PERFIS_QUE_VEEM_EM_BREVE, USUARIO_PROVISORIO } from "./perfis";
 
 const ultimoSegmento = (rota: string) => rota.split("/").at(-1);
 
@@ -167,9 +167,6 @@ describe("perfis", () => {
   });
   it("o usuário provisório (até haver login) tem um nome estável para a memória da barra", () => {
     expect(USUARIO_PROVISORIO).toBe("provisorio");
-  });
-  it("o perfil atual (provisório até a Fase 3) é um dos perfis", () => {
-    expect(PERFIS).toContain(perfilAtual());
   });
 });
 

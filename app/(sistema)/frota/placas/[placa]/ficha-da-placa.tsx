@@ -17,7 +17,7 @@ import { segmentosDaLinhaDoTempo } from "@/lib/dominio/linha-do-tempo";
 import { SIGLAS_DE_BAIXA } from "@/lib/dominio/status";
 import { ACOES, podeVerAcao } from "@/lib/navegacao/acoes";
 import { type AbaId, lerAba } from "@/lib/navegacao/ficha";
-import { perfilAtual } from "@/lib/navegacao/perfis";
+import { exigirSessao } from "@/lib/seguranca/sessao-do-servidor";
 import { connection } from "next/server";
 import { type ParametrosDaBusca, paraParametros, simulacaoDe } from "../pagina-de-placas";
 import { PlacaNaoEncontradaNaFicha } from "./placa-nao-encontrada";
@@ -39,6 +39,7 @@ export async function FichaDaPlaca({
   searchParams: ParametrosDaBusca;
 }) {
   await connection();
+  const { perfil } = await exigirSessao();
   const parametros = paraParametros(await searchParams);
   const hoje = hojeEmSaoPaulo(new Date());
   const ficha = await obterFicha(placa, hoje, { simulacao: simulacaoDe(parametros) });
@@ -78,7 +79,7 @@ export async function FichaDaPlaca({
   })
     .map((id) => ACOES.find((acao) => acao.id === id))
     .filter((acao) => acao !== undefined)
-    .filter((acao) => podeVerAcao(perfilAtual(), acao))
+    .filter((acao) => podeVerAcao(perfil, acao))
     .map(({ id, nome }) => ({ id, nome }));
 
   const conteudos: Record<AbaId, React.ReactNode> = {

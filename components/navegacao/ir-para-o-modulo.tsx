@@ -1,7 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { Suspense } from "react";
 import type { IdDoModulo } from "@/lib/navegacao/catalogo";
-import { perfilAtual } from "@/lib/navegacao/perfis";
+import { exigirSessao } from "@/lib/seguranca/sessao-do-servidor";
 import { destinoDoModulo } from "@/lib/navegacao/redirecionar";
 
 type ParametrosDaPagina = Promise<Record<string, string | string[] | undefined>>;
@@ -20,7 +20,8 @@ async function Destino({
       if (item !== undefined) parametros.append(chave, item);
     }
   }
-  const destino = destinoDoModulo(perfilAtual(), modulo, parametros);
+  const { perfil } = await exigirSessao();
+  const destino = destinoDoModulo(perfil, modulo, parametros);
   if (!destino) notFound();
   redirect(destino);
 }

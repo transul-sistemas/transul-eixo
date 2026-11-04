@@ -1,0 +1,14 @@
+<!doctype html>
+<html lang="pt-BR">
+  <body style="font-family: Arial, sans-serif; color: #0f1729">
+    <h2>Redefinir a senha do TranSul Eixo</h2>
+    <p>
+      Recebemos um pedido para redefinir a sua senha. O link vale por uma hora e só pode ser usado
+      uma vez.
+    </p>
+    <p>
+      <a href="{{ .RedirectTo }}&token_hash={{ .TokenHash }}&type=recovery">Redefinir a senha</a>
+    </p>
+    <p>Se você não pediu, ignore este e-mail: a senha atual continua valendo.</p>
+  </body>
+</html>

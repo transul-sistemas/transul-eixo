@@ -19,8 +19,9 @@ concurrency:
 jobs:
   app:
     runs-on: ubuntu-latest
-    # A suíte de tela (1002 testes, 1 worker no CI) passou de 20 min: ver docs/decisoes.md.
-    timeout-minutes: 45
+    # A suíte de tela (1002 testes, 1 worker no CI) passou de 20 min: ver docs/decisoes.md. Desde a 3.8
+    # o job também sobe o Supabase local (o login dos e2e).
+    timeout-minutes: 55
     steps:
       - uses: actions/checkout@v4
         with:
@@ -60,6 +61,16 @@ jobs:
       - run: pnpm lint
       - run: pnpm typecheck
       - run: pnpm test
+      # O login (fatia 3.8): o build e os e2e precisam do Supabase local. Só o endereço e a chave
+      # publicável (do Supabase local, sem segredo) vão para o app; a chave secreta fica no preparo dos
+      # e2e (e2e/apoio/usuarios-de-teste.ts), lida do `supabase status`.
+      - if: steps.mudancas.outputs.pula_e2e != 'true'
+        run: pnpm exec supabase start
+      - if: steps.mudancas.outputs.pula_e2e != 'true'
+        run: |
+          pnpm exec supabase status -o env \
+            | sed -nE 's/^API_URL="?([^"]*)"?$/NEXT_PUBLIC_SUPABASE_URL=\1/p; s/^PUBLISHABLE_KEY="?([^"]*)"?$/NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=\1/p' \
+            >> "$GITHUB_ENV"
       - if: steps.mudancas.outputs.pula_e2e != 'true'
         run: pnpm build
       - id: playwright

@@ -4,8 +4,8 @@ import { expect, test, type Page } from "@playwright/test";
 async function abrir(page: Page, rota: string) {
   await page.goto(rota);
   await page.waitForFunction(() => {
-    const barra = document.querySelector('aside[data-barra="principal"]');
-    return !!barra && Object.keys(barra).some((chave) => chave.startsWith("__reactFiber"));
+    // Pronta: hidratada e com os atalhos (Ctrl+B) ligados.
+    return !!document.querySelector('aside[data-barra="principal"][data-pronta]');
   });
 }
 

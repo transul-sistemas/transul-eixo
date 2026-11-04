@@ -105,6 +105,13 @@ describe("armadilha 9: toda política RLS tem teste pgTAP", () => {
 
 describe("armadilha 9: a chave mestra só existe nos workers", () => {
   it("acusa uso fora dos workers", () => {
+    expect(
+      chaveMestraForaDosWorkers([
+        { caminho: "app/a.ts", texto: "SUPABASE_SECRET_KEY" },
+        { caminho: "app/b.ts", texto: "sb_secret_abc" },
+        { caminho: "e2e/apoio/usuarios-de-teste.ts", texto: "SECRET_KEY" },
+      ]),
+    ).toEqual(["app/a.ts", "app/b.ts"]);
     expect(chaveMestraForaDosWorkers([{ caminho: "app/x.ts", texto: "service_role" }])).toEqual([
       "app/x.ts",
     ]);
@@ -150,6 +157,22 @@ export async function a(x: unknown) {
   });
   it("ignora arquivo que não é Server Action", () => {
     expect(serverActionSemGuarda("export const a = 1;")).toEqual([]);
+  });
+  it("ação pública (entrar, recuperar a senha) dispensa exigirPermissao só com a justificativa ao lado; o Zod continua", () => {
+    const publica = `"use server";
+// ação pública: quem entra ainda não tem sessão.
+export async function entrar(x: unknown) {
+  return esquema.safeParse(x);
+}`;
+    expect(serverActionSemGuarda(publica)).toEqual([]);
+    expect(
+      serverActionSemGuarda(
+        publica.replace("// ação pública: quem entra ainda não tem sessão.", "// ação pública:"),
+      ),
+    ).toEqual(["conferir permissão com exigirPermissao()"]);
+    expect(serverActionSemGuarda(publica.replace("esquema.safeParse(x)", "x"))).toEqual([
+      "validar a entrada com Zod (safeParse ou parse)",
+    ]);
   });
 });
 

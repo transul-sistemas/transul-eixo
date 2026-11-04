@@ -92,12 +92,23 @@ export function politicasSemTeste(migracoes: string, testes: string): string[] {
   return nomes.filter((nome) => !testes.includes(nome));
 }
 
-/** Arquivos que citam a chave mestra (`service_role`) fora de `workers/`. */
+/**
+ * Os únicos arquivos fora de `workers/` que podem citar a chave mestra: o teste que a procura no app
+ * e o script que cria os usuários de teste dos e2e (fatia 3.8; nunca o app).
+ */
+export const ARQUIVOS_QUE_PODEM_CITAR_A_CHAVE_MESTRA = [
+  "lib/qualidade/login.test.ts",
+  "e2e/apoio/usuarios-de-teste.ts",
+];
+
+/** Arquivos que citam a chave mestra (`service_role`, `SECRET_KEY`, `sb_secret_`) fora de `workers/`. */
 export function chaveMestraForaDosWorkers(
   arquivos: { caminho: string; texto: string }[],
 ): string[] {
   return arquivos
-    .filter((a) => !a.caminho.startsWith("workers/") && /service_role/i.test(a.texto))
+    .filter((a) => !a.caminho.startsWith("workers/"))
+    .filter((a) => !ARQUIVOS_QUE_PODEM_CITAR_A_CHAVE_MESTRA.includes(a.caminho))
+    .filter((a) => /service_role|SECRET_KEY|sb_secret_/i.test(a.texto))
     .map((a) => a.caminho);
 }
 
@@ -112,6 +123,9 @@ export function serverActionSemGuarda(texto: string): string[] {
   const faltas: string[] = [];
   if (!/\b(?:safeParse|parse)\(/.test(texto))
     faltas.push("validar a entrada com Zod (safeParse ou parse)");
-  if (!/\bexigirPermissao\(/.test(texto)) faltas.push("conferir permissão com exigirPermissao()");
+  // Ação pública (entrar, recuperar a senha): só com a justificativa escrita ao lado.
+  const publica = /\/\/ ação pública: \S.*/.test(texto);
+  if (!publica && !/\bexigirPermissao\(/.test(texto))
+    faltas.push("conferir permissão com exigirPermissao()");
   return faltas;
 }

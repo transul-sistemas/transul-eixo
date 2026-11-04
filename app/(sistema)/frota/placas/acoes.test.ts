@@ -14,10 +14,18 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock("next/cache", () => ({ revalidatePath: mocks.revalidatePath }));
-vi.mock("@/lib/navegacao/perfis", async (original) => ({
-  ...(await original<typeof import("@/lib/navegacao/perfis")>()),
-  perfilAtual: () => mocks.perfil.atual as Perfil,
-}));
+// A sessão simulada: o perfil decide pela tabela de permissões do seed (o espelho), como o banco faria.
+vi.mock("@/lib/seguranca/exigir-permissao", async (original) => {
+  const real = await original<typeof import("@/lib/seguranca/exigir-permissao")>();
+  return {
+    ...real,
+    exigirPermissao: async (permissao: Parameters<typeof real.exigirPermissao>[0]) => {
+      if (!real.temPermissao(mocks.perfil.atual as Perfil, permissao)) {
+        throw new real.ErroDePermissao(permissao.modulo, permissao.acao);
+      }
+    },
+  };
+});
 vi.mock("@/lib/dados/fonte", async (original) => ({
   ...(await original<typeof import("@/lib/dados/fonte")>()),
   fonteDeEscrita: async () => mocks.fonte.atual,
@@ -88,7 +96,7 @@ describe("cadastrarPlacaAcao", () => {
     expect(r.ok).toBe(false);
     if (!r.ok) {
       expect(r.erro.codigo).toBe("sem_permissao");
-      expect(r.erro.mensagem).toMatch(/Operacional/);
+      expect(r.erro.mensagem).toMatch(/não pode criar em Frota\. Peça a quem administra o acesso/);
     }
     expect(armazem().placasCadastradas()).toHaveLength(0);
     expect(mocks.revalidatePath).not.toHaveBeenCalled();

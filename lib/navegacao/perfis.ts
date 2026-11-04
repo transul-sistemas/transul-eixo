@@ -1,7 +1,7 @@
 import type { IdDoModulo } from "./catalogo";
 
-// Perfis conhecidos pela navegação. A permissão de verdade (RLS) é da Fase 3; até lá o perfil
-// é provisório e a regra de visibilidade já é testada para todos eles.
+// Perfis conhecidos pela navegação. O perfil de quem usa vem da sessão (lib/seguranca/sessao, lido do
+// banco a cada pedido); a regra de visibilidade é testada para todos eles.
 export const PERFIS = ["Administrador", "Diretoria", "Gestor de frota", "Operacional"] as const;
 
 export type Perfil = (typeof PERFIS)[number];
@@ -17,10 +17,5 @@ export const MODULOS_POR_PERFIL: Record<Perfil, "todos" | readonly IdDoModulo[]>
   Operacional: ["inicio", "operacional"],
 };
 
-/** Provisório: sem login ainda, quem usa o sistema é o Administrador. Troca na Fase 3. */
-export function perfilAtual(): Perfil {
-  return "Administrador";
-}
-
-/** Provisório até haver login: a memória da barra lateral é guardada por este nome. */
+/** A memória da barra lateral e dos rascunhos continua com este nome até a 3.9 (hipótese da 3.8). */
 export const USUARIO_PROVISORIO = "provisorio";

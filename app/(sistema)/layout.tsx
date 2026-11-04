@@ -4,7 +4,26 @@ import { AvisoDeDispositivo } from "@/components/navegacao/aviso-de-dispositivo"
 import { BarraLateral } from "@/components/navegacao/barra-lateral";
 import { TopoDoSistema, TopoReservado } from "@/components/navegacao/topo-do-sistema";
 import { ArmadorDaVolta } from "@/components/tabela/retorno-da-lista-no-navegador";
-import { perfilAtual, USUARIO_PROVISORIO } from "@/lib/navegacao/perfis";
+import { USUARIO_PROVISORIO } from "@/lib/navegacao/perfis";
+import { exigirSessao } from "@/lib/seguranca/sessao-do-servidor";
+
+// A barra lateral mostra só os módulos do perfil da sessão (lido do banco a cada pedido). Ler a sessão
+// é dinâmico, então ela fica num Suspense, com o lugar reservado (a largura padrão, aberta).
+async function BarraLateralDaSessao() {
+  const { perfil } = await exigirSessao();
+  // A memória da barra continua com a chave provisória até a 3.9 (hipótese registrada).
+  return <BarraLateral perfil={perfil} usuario={USUARIO_PROVISORIO} />;
+}
+
+function BarraLateralReservada() {
+  return (
+    <div
+      aria-hidden
+      data-barra-reservada=""
+      className="border-border bg-sidebar shrink-0 max-lg:hidden lg:sticky lg:top-0 lg:h-screen lg:w-72 lg:border-r"
+    />
+  );
+}
 
 // Telas de lista: a partir de 1024 px de largura e 640 px de altura a página tem a altura da janela e
 // só a tabela rola. Em janela baixa, a página rola como as outras (senão a tabela some).
@@ -18,7 +37,9 @@ export default function LayoutDoSistema({ children }: { children: ReactNode }) {
         Pular para o conteúdo
       </a>
       <ArmadorDaVolta />
-      <BarraLateral perfil={perfilAtual()} usuario={USUARIO_PROVISORIO} />
+      <Suspense fallback={<BarraLateralReservada />}>
+        <BarraLateralDaSessao />
+      </Suspense>
       <AreaPrincipal>
         <Suspense fallback={<TopoReservado />}>
           <TopoDoSistema />

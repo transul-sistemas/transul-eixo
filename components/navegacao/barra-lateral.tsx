@@ -220,6 +220,13 @@ export function BarraLateral({
     return () => document.removeEventListener("keydown", aoTeclar);
   }, [incorporada, loja]);
 
+  // A barra chega pelo streaming (a sessão é lida num Suspense): depois de os atalhos estarem ligados,
+  // ela se marca como pronta (os efeitos rodam na ordem; os testes de tela esperam por esta marca).
+  const raizDaBarra = useRef<HTMLElement>(null);
+  useEffect(() => {
+    raizDaBarra.current?.setAttribute("data-pronta", "");
+  }, []);
+
   // A gaveta fecha ao mudar de tela e quando a tela cresce.
   useEffect(() => {
     if (!incorporada) gaveta.fechar();
@@ -309,6 +316,7 @@ export function BarraLateral({
         />
       ) : null}
       <aside
+        ref={raizDaBarra}
         id={incorporada ? undefined : "menu-principal"}
         data-barra={incorporada ? "demonstracao" : "principal"}
         data-gaveta={incorporada ? undefined : emGaveta ? "aberta" : "fechada"}
