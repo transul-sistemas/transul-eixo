@@ -20,8 +20,9 @@ jobs:
   app:
     runs-on: ubuntu-latest
     # A suíte de tela (1002 testes, 1 worker no CI) passou de 20 min: ver docs/decisoes.md. Desde a 3.8
-    # o job também sobe o Supabase local (o login dos e2e).
-    timeout-minutes: 55
+    # o job também sobe o Supabase local (o login dos e2e). O CI do PR #31 levou 52 min: o prazo subiu
+    # para 70 como rede de segurança (aprovação da 3.8, 03/11/2026).
+    timeout-minutes: 70
     steps:
       - uses: actions/checkout@v4
         with:

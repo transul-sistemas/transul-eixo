@@ -2,6 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
 import { decidirFicha } from "@/lib/navegacao/proxy-da-ficha";
 import { type Decisao, decidirAcesso, moduloDoCaminho, rotaPublica } from "@/lib/seguranca/acesso";
+import { perfilDoCodigo } from "@/lib/seguranca/sessao";
 import {
   COOKIE_DE_ATIVIDADE,
   expirouPorInatividade,
@@ -50,10 +51,13 @@ export async function proxy(pedido: NextRequest) {
     );
 
   let temVinculo = false;
+  let perfil: ReturnType<typeof perfilDoCodigo> = null;
   let podeVerModulo = false;
-  if (usuario && !inativo && !rotaPublica(caminho)) {
-    const { data: perfil, error } = await supabase.schema("config").rpc("perfil_atual");
-    temVinculo = !error && typeof perfil === "string";
+  // Em /entrar, quem já entrou vai para a primeira tela do perfil: o vínculo é lido também ali.
+  if (usuario && !inativo && (!rotaPublica(caminho) || caminho === "/entrar")) {
+    const { data: codigo, error } = await supabase.schema("config").rpc("perfil_atual");
+    perfil = error ? null : perfilDoCodigo(codigo);
+    temVinculo = perfil !== null;
     const modulo = moduloDoCaminho(caminho);
     if (temVinculo && modulo) {
       const { data: pode, error: erroDoPode } = await supabase
@@ -66,6 +70,7 @@ export async function proxy(pedido: NextRequest) {
   const decisao = decidirAcesso(caminho, pedido.nextUrl.search, {
     temUsuario: usuario !== null,
     temVinculo,
+    perfil,
     podeVerModulo,
     inativo,
   });

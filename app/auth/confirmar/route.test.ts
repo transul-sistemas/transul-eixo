@@ -53,8 +53,8 @@ describe("/auth/confirmar", () => {
     );
   });
 
-  it("o próximo de fora vira a tela inicial", async () => {
+  it("o próximo de fora vira a raiz, e o proxy leva à primeira tela do perfil", async () => {
     const resposta = await GET(pedido("?proximo=//exemplo.com&token_hash=abc&type=recovery"));
-    expect(resposta.headers.get("location")).toBe("http://localhost:3000/inicio/tarefas");
+    expect(resposta.headers.get("location")).toBe("http://localhost:3000/");
   });
 });

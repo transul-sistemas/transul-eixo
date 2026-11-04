@@ -13,7 +13,8 @@ export async function GET(pedido: NextRequest) {
   const busca = pedido.nextUrl.searchParams;
   const token = busca.get("token_hash");
   const tipo = busca.get("type") as EmailOtpType | null;
-  const destino = caminhoInterno(busca.get("proximo"));
+  // Sem caminho interno, a raiz: o proxy leva à primeira tela do perfil.
+  const destino = caminhoInterno(busca.get("proximo")) ?? "/";
 
   if (token && tipo && TIPOS_ACEITOS.includes(tipo)) {
     const supabase = await criarClienteDoServidor();

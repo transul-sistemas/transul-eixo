@@ -95,8 +95,9 @@ describe("páginas das telas em breve", () => {
 });
 
 describe("a raiz", () => {
-  it("redireciona para Início › Tarefas", () => {
+  it("redireciona para a primeira tela do perfil da sessão (aprovação da 3.8)", () => {
     const codigo = readFileSync("app/page.tsx", "utf-8");
-    expect(codigo).toContain('redirect("/inicio/tarefas")');
+    expect(codigo).toContain("redirect(destinoInicial(perfil))");
+    expect(codigo).not.toContain('redirect("/inicio/tarefas")');
   });
 });

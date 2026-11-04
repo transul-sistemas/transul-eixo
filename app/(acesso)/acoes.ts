@@ -7,7 +7,8 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { moduloDoCaminho } from "@/lib/seguranca/acesso";
 import { COOKIE_DE_ATIVIDADE } from "@/lib/seguranca/inatividade";
-import { DESTINO_PADRAO, caminhoInterno } from "@/lib/seguranca/redirecionamento";
+import { caminhoInterno, destinoInicial } from "@/lib/seguranca/redirecionamento";
+import { perfilDoCodigo } from "@/lib/seguranca/sessao";
 import { opcoesDoCookie } from "@/lib/supabase/cookies";
 import { criarClienteDoServidor } from "@/lib/supabase/servidor";
 import { ESQUEMA_DE_ENTRADA, ESQUEMA_DE_NOVA_SENHA, ESQUEMA_DE_RECUPERACAO } from "./esquemas";
@@ -39,25 +40,30 @@ export async function entrar(
   if (error) return { erro: ERRO_DE_ENTRADA };
 
   (await cookies()).set(COOKIE_DE_ATIVIDADE, String(Date.now()), opcoesDoCookie({ path: "/" }));
-  redirect(await destinoDepoisDeEntrar(supabase, caminhoInterno(dados.data.proximo)));
+  redirect(await destinoDepoisDeEntrar(supabase, dados.data.proximo));
 }
 
 /**
  * O redirect da Server Action desenha o destino na mesma resposta, sem passar pelo proxy: as regras do
- * proxy valem aqui também (sem vínculo, acesso não liberado; sem ver o módulo, a tela inicial).
+ * proxy valem aqui também (sem vínculo, acesso não liberado; sem ver o módulo, a primeira tela do
+ * perfil). Sem "proximo", com um de fora ou com a raiz, a primeira tela do perfil (aprovação da 3.8).
  */
 async function destinoDepoisDeEntrar(
   supabase: Awaited<ReturnType<typeof criarClienteDoServidor>>,
-  destino: string,
+  proximo: string | undefined,
 ): Promise<string> {
-  const { data: perfil } = await supabase.schema("config").rpc("perfil_atual");
-  if (typeof perfil !== "string") return "/acesso-nao-liberado";
+  const { data: codigo } = await supabase.schema("config").rpc("perfil_atual");
+  const perfil = perfilDoCodigo(codigo);
+  if (!perfil) return "/acesso-nao-liberado";
+  const primeiraTela = destinoInicial(perfil);
+  const destino = proximo ? caminhoInterno(proximo) : null;
+  if (!destino) return primeiraTela;
   const modulo = moduloDoCaminho(destino.split(/[?#]/)[0] ?? destino);
-  if (!modulo) return destino;
+  if (!modulo) return primeiraTela;
   const { data: pode } = await supabase
     .schema("config")
     .rpc("pode", { p_modulo: modulo, p_acao: "ver" });
-  return pode === true ? destino : DESTINO_PADRAO;
+  return pode === true ? destino : primeiraTela;
 }
 
 export async function sair(): Promise<void> {
@@ -107,5 +113,5 @@ export async function definirNovaSenha(
     return {
       erro: "Não foi possível trocar a senha. Escolha outra (no mínimo 12 caracteres) e tente de novo.",
     };
-  redirect(await destinoDepoisDeEntrar(supabase, DESTINO_PADRAO));
+  redirect(await destinoDepoisDeEntrar(supabase, undefined));
 }

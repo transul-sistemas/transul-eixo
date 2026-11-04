@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { DESTINO_PADRAO, caminhoInterno } from "./redirecionamento";
+import { caminhoInterno } from "./redirecionamento";
 
 // Depois do login, o "proximo" só leva a um caminho interno do Eixo (o ataque de redirecionamento
 // aberto manda a pessoa, já logada, para um site de fora).
@@ -28,21 +28,22 @@ describe("caminhoInterno: o redirecionamento depois do login", () => {
     "/\texemplo.com",
     "/ /exemplo.com",
     "http:/exemplo.com",
-  ])("recusa %j e vai para a tela inicial", (valor) => {
-    expect(caminhoInterno(valor)).toBe(DESTINO_PADRAO);
+  ])("recusa %j (nulo: quem chama usa a primeira tela do perfil)", (valor) => {
+    expect(caminhoInterno(valor)).toBeNull();
   });
 
   it("normaliza o caminho antes de conferir (o /.. não escapa da regra das telas de entrada)", () => {
-    expect(caminhoInterno("/frota/../entrar")).toBe(DESTINO_PADRAO);
+    expect(caminhoInterno("/frota/../entrar")).toBeNull();
   });
 
   it("não volta para as telas de entrada (evita laço)", () => {
-    expect(caminhoInterno("/entrar")).toBe(DESTINO_PADRAO);
-    expect(caminhoInterno("/entrar?proximo=/frota")).toBe(DESTINO_PADRAO);
-    expect(caminhoInterno("/esqueci-a-senha")).toBe(DESTINO_PADRAO);
+    expect(caminhoInterno("/entrar")).toBeNull();
+    expect(caminhoInterno("/entrar?proximo=/frota")).toBeNull();
+    expect(caminhoInterno("/esqueci-a-senha")).toBeNull();
   });
 
-  it("a tela inicial é Início › Tarefas", () => {
-    expect(DESTINO_PADRAO).toBe("/inicio/tarefas");
+  it("a raiz (/) não é destino: vale a primeira tela do perfil (aprovação da 3.8)", () => {
+    expect(caminhoInterno("/")).toBeNull();
+    expect(caminhoInterno("/?periodo=2026-10")).toBeNull();
   });
 });

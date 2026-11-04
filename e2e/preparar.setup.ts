@@ -20,7 +20,8 @@ preparar("usuários de teste e a sessão de cada perfil", async ({ page }) => {
     await page.getByLabel("E-mail").fill(emailDe(perfil.codigo));
     await page.getByLabel("Senha", { exact: true }).fill(senhaDe(perfil.codigo));
     await page.getByRole("button", { name: "Entrar" }).click();
-    await expect(page).toHaveURL(/\/inicio\/tarefas/, { timeout: 60_000 });
+    // Cada perfil termina na sua primeira tela (aprovação da 3.8); basta ter saído do /entrar.
+    await expect(page).not.toHaveURL(/\/entrar/, { timeout: 60_000 });
     await page.context().storageState({ path: sessaoDe(perfil.codigo) });
   }
 });

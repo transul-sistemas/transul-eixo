@@ -8,6 +8,15 @@ Modelo de entrada:
 
 ---
 
+## 03/11/2026 — Checkpoint 3.8 aprovado com ajustes: destino por perfil e prazo do CI
+
+- **Destino depois do login por perfil (Alexandre, 03/11/2026):** a primeira tela é a do primeiro módulo que o perfil pode ver: **Administrador e Diretoria, Início › Tarefas; Gestor de frota, Frota › Placas; Operacional, Operacional › Pátio** (`destinoInicial`, `lib/seguranca/redirecionamento.ts`). Vale para o `/entrar` (sem "proximo", com um de fora ou com um módulo que o perfil não vê), para a senha nova, para a raiz `/` (no proxy e na página) e para quem já entrou e abre `/entrar` ou "acesso não liberado". Sempre uma tela, nunca a página do módulo (que redireciona de novo ou dá 404), e nunca uma rota que o proxy recusa ao perfil: sem laço. Logado sem vínculo que abre `/entrar` vai para "acesso não liberado". O link do e-mail com "proximo" de fora vai para `/`, e o proxy leva à primeira tela.
+- **Hipótese (simples e reversível):** o Operacional cai no **Pátio "em breve"**: todas as telas do Operacional estão em breve, e a página do módulo (`/operacional`) dá 404 para quem não vê telas em breve.
+- **Testes vistos falhando antes:** Vitest de `destinoInicial` e de `decidirAcesso` por perfil (raiz, `/entrar`, acesso não liberado, sem vínculo), das ações (cada perfil sem próximo, com `/`, de fora, sem permissão, fora dos módulos, senha nova), do `caminhoInterno` (agora nulo quando recusa) e da raiz; e2e "a primeira tela de cada perfil" (cada perfil entra no 1366, termina na sua tela, que abre, e a raiz e o `/entrar` levam ao mesmo lugar). **Mutações (9, todas pegas):** gestor de volta ao Início; Operacional na página do módulo; raiz aceita como destino; raiz sem redirecionar; proxy ignorando o perfil; sem vínculo em `/entrar`; ação aceitando caminho fora dos módulos (sobreviveu e ganhou teste); sem permissão voltando ao Início; raiz fixa.
+- **Prazo do job `app`: de 55 para 70 minutos** (rede de segurança: o CI do PR #31 levou 52 min).
+- **Capturas em job próprio (fica para o primeiro PR de rascunho da 3.9a, não agora):** as capturas saem do job `app` para um **job próprio e paralelo**, só no `pull_request`, que **não é verificação obrigatória** (os nomes `app` e `banco` continuam). Entram as capturas da **tela inicial logada** (1366 e celular com a gaveta aberta, claro e escuro) e da **barra lateral com o Sair**.
+- **Quem decidiu:** Alexandre.
+
 ## 03/11/2026 — Regra de memória: e2e completo e capturas pelo CI quando a máquina está sem memória
 
 - **Decisão (Alexandre, 03/11/2026):** a máquina ficou sem memória livre (Docker limitado a 4 GB pelo `.wslconfig`). Enquanto a memória disponível estiver **abaixo de 6 GB** (Gerenciador de Tarefas), **não se roda localmente** e2e, capturas, Supabase local nem `pnpm dev`: o **e2e completo e as capturas vão pelo CI do pull request** da branch. Localmente, só o leve: Vitest, `tsc`, lint e Prettier. Alexandre avisa quando a memória passar de 6 GB.

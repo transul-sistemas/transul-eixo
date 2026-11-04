@@ -5,7 +5,8 @@
 //  * sem permissão de ver o módulo (config.pode, lida do banco a cada pedido) é 404.
 
 import type { IdDoModulo } from "@/lib/navegacao/catalogo";
-import { DESTINO_PADRAO } from "./redirecionamento";
+import type { Perfil } from "@/lib/navegacao/perfis";
+import { DESTINO_PADRAO, destinoInicial } from "./redirecionamento";
 
 const ROTAS_PUBLICAS = ["/entrar", "/esqueci-a-senha", "/auth/confirmar"];
 const ROTAS_SEM_VINCULO = ["/acesso-nao-liberado", "/nova-senha"];
@@ -35,6 +36,8 @@ export function moduloDoCaminho(caminho: string): IdDoModulo | null {
 export interface EstadoDoPedido {
   temUsuario: boolean;
   temVinculo?: boolean;
+  /** O perfil do vínculo: decide a primeira tela (o destino de quem já entrou). */
+  perfil?: Perfil | null;
   podeVerModulo?: boolean;
   inativo?: boolean;
 }
@@ -47,19 +50,30 @@ export type Decisao =
 
 export function decidirAcesso(caminho: string, busca: string, estado: EstadoDoPedido): Decisao {
   const voltar = encodeURIComponent(`${caminho}${busca}`);
+  const primeiraTela = estado.perfil ? destinoInicial(estado.perfil) : DESTINO_PADRAO;
   if (rotaPublica(caminho)) {
-    return estado.temUsuario && casa(caminho, "/entrar") && !estado.inativo
-      ? { tipo: "redirecionar", para: DESTINO_PADRAO }
-      : { tipo: "seguir" };
+    if (!estado.temUsuario || !casa(caminho, "/entrar") || estado.inativo)
+      return { tipo: "seguir" };
+    return {
+      tipo: "redirecionar",
+      para: estado.temVinculo ? primeiraTela : "/acesso-nao-liberado",
+    };
   }
-  if (!estado.temUsuario) return { tipo: "redirecionar", para: `/entrar?proximo=${voltar}` };
+  if (!estado.temUsuario) {
+    return {
+      tipo: "redirecionar",
+      para: caminho === "/" ? "/entrar" : `/entrar?proximo=${voltar}`,
+    };
+  }
   if (estado.inativo) return { tipo: "sair", para: `/entrar?motivo=inatividade&proximo=${voltar}` };
   if (!estado.temVinculo) {
     return ROTAS_SEM_VINCULO.some((r) => casa(caminho, r))
       ? { tipo: "seguir" }
       : { tipo: "redirecionar", para: "/acesso-nao-liberado" };
   }
-  if (casa(caminho, "/acesso-nao-liberado")) return { tipo: "redirecionar", para: DESTINO_PADRAO };
+  if (caminho === "/" || casa(caminho, "/acesso-nao-liberado")) {
+    return { tipo: "redirecionar", para: primeiraTela };
+  }
   if (moduloDoCaminho(caminho) && !estado.podeVerModulo) return { tipo: "nao-encontrada" };
   return { tipo: "seguir" };
 }

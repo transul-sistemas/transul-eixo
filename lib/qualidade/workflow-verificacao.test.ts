@@ -132,8 +132,8 @@ describe("workflow de verificação: o que nunca se pula e o que se pula", () =>
     expect(passoCom("app", "pula_e2e == 'true'")).toContain("GITHUB_STEP_SUMMARY");
   });
 
-  it("o prazo de 55 minutos (desde a 3.8, com o Supabase local) e não usa workers: 2", () => {
-    expect(job("app")).toContain("timeout-minutes: 55");
+  it("o prazo de 70 minutos (rede de segurança desde a aprovação da 3.8) e não usa workers: 2", () => {
+    expect(job("app")).toContain("timeout-minutes: 70");
     expect(texto).not.toMatch(/workers[:=]\s*2/);
   });
 

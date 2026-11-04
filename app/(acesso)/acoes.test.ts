@@ -184,3 +184,74 @@ describe("definirNovaSenha", () => {
     expect(simulado.redirecionado).toEqual(["/inicio/tarefas"]);
   });
 });
+
+// Aprovação da 3.8 (03/11/2026): o destino depois do login é do perfil, nunca uma rota que dá 404 para
+// ele: sem "proximo", com "proximo" de fora, com "/" ou com um módulo que o perfil não vê.
+describe("entrar: o destino é a primeira tela do perfil", () => {
+  const casos = [
+    { codigo: "administrador", destino: "/inicio/tarefas" },
+    { codigo: "diretoria", destino: "/inicio/tarefas" },
+    { codigo: "gestor_de_frota", destino: "/frota/placas" },
+    { codigo: "operacional", destino: "/operacional/patio" },
+  ];
+
+  it.each(casos)("$codigo sem próximo vai para $destino", async ({ codigo, destino }) => {
+    simulado.entrar.mockResolvedValue({ error: null });
+    simulado.perfil = codigo;
+    await expect(entrar({}, formulario({ email: "a@b.com", senha: "certa" }))).rejects.toThrow();
+    expect(simulado.redirecionado).toEqual([destino]);
+  });
+
+  it.each(casos)(
+    "$codigo com próximo na raiz (/) vai para $destino",
+    async ({ codigo, destino }) => {
+      simulado.entrar.mockResolvedValue({ error: null });
+      simulado.perfil = codigo;
+      await expect(
+        entrar({}, formulario({ email: "a@b.com", senha: "certa", proximo: "/" })),
+      ).rejects.toThrow();
+      expect(simulado.redirecionado).toEqual([destino]);
+    },
+  );
+
+  it("o gestor com próximo de fora vai para Frota › Placas", async () => {
+    simulado.entrar.mockResolvedValue({ error: null });
+    simulado.perfil = "gestor_de_frota";
+    await expect(
+      entrar({}, formulario({ email: "a@b.com", senha: "certa", proximo: "//exemplo.com" })),
+    ).rejects.toThrow();
+    expect(simulado.redirecionado).toEqual(["/frota/placas"]);
+  });
+
+  it("o operacional com próximo de um módulo que não vê vai para Operacional", async () => {
+    simulado.entrar.mockResolvedValue({ error: null });
+    simulado.perfil = "operacional";
+    simulado.pode = false;
+    await expect(
+      entrar({}, formulario({ email: "a@b.com", senha: "certa", proximo: "/frota/placas" })),
+    ).rejects.toThrow();
+    expect(simulado.redirecionado).toEqual(["/operacional/patio"]);
+  });
+
+  it("o gestor com próximo fora dos módulos (acesso não liberado) vai para Frota › Placas", async () => {
+    simulado.entrar.mockResolvedValue({ error: null });
+    simulado.perfil = "gestor_de_frota";
+    await expect(
+      entrar({}, formulario({ email: "a@b.com", senha: "certa", proximo: "/acesso-nao-liberado" })),
+    ).rejects.toThrow();
+    expect(simulado.redirecionado).toEqual(["/frota/placas"]);
+  });
+
+  it("a senha nova do gestor também leva a Frota › Placas", async () => {
+    simulado.usuario = { id: "u1" };
+    simulado.perfil = "gestor_de_frota";
+    simulado.atualizar.mockResolvedValue({ error: null });
+    await expect(
+      definirNovaSenha(
+        {},
+        formulario({ senha: "senha-longa-123", confirmacao: "senha-longa-123" }),
+      ),
+    ).rejects.toThrow();
+    expect(simulado.redirecionado).toEqual(["/frota/placas"]);
+  });
+});

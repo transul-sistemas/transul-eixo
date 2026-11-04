@@ -72,7 +72,7 @@ test.describe("sem sessão", () => {
   test("8 horas sem uso: a sessão termina e /entrar explica", async ({ page, baseURL }) => {
     await page.goto("/entrar");
     await entrar(page, "operacional");
-    await expect(page).toHaveURL(/\/inicio\/tarefas/);
+    await expect(page).toHaveURL(/\/operacional\/patio$/);
     await page.context().addCookies([
       {
         name: "eixo_ultima_atividade",
@@ -95,7 +95,7 @@ test.describe("sem sessão", () => {
   }) => {
     await page.goto("/entrar");
     await entrar(page, "gestor_de_frota");
-    await expect(page).toHaveURL(/\/inicio\/tarefas/);
+    await expect(page).toHaveURL(/\/frota\/placas$/);
     await page.context().clearCookies({ name: "eixo_ultima_atividade" });
     await page.goto("/frota/placas");
     await expect(page).toHaveURL(/\/entrar\?motivo=inatividade/);
@@ -126,6 +126,33 @@ test.describe("sem sessão", () => {
     expect(data.user).toBeNull();
     expect(error?.message).toMatch(/signups not allowed/i);
   });
+});
+
+// Aprovação da 3.8 (03/11/2026): cada perfil entra sem "proximo" e termina na sua primeira tela, que
+// abre (sem 404); a raiz (/) leva ao mesmo lugar. Só no 1366 (cada entrada gasta uma tentativa do Auth).
+test.describe("a primeira tela de cada perfil", () => {
+  test.use(SEM_SESSAO);
+  for (const caso of [
+    { codigo: "administrador", destino: "/inicio/tarefas" },
+    { codigo: "diretoria", destino: "/inicio/tarefas" },
+    { codigo: "gestor_de_frota", destino: "/frota/placas" },
+    { codigo: "operacional", destino: "/operacional/patio" },
+  ] as const) {
+    test(`${caso.codigo} entra e termina em ${caso.destino}, que abre`, async ({ page }, info) => {
+      test.skip(info.project.name !== "tela-1366", "uma vez só: cada entrada gasta uma tentativa");
+      await page.goto("/entrar");
+      await entrar(page, caso.codigo);
+      const destino = new RegExp(`${caso.destino}$`);
+      await expect(page).toHaveURL(destino);
+      await expect(page.getByRole("heading", { name: "Página não encontrada" })).toHaveCount(0);
+      await expect(page.locator("main h1").first()).toBeVisible();
+      const raiz = await page.goto("/");
+      expect(raiz?.status()).toBe(200);
+      await expect(page).toHaveURL(destino);
+      await page.goto("/entrar");
+      await expect(page).toHaveURL(destino);
+    });
+  }
 });
 
 test.describe("recuperação de senha pelo e-mail (Mailpit local)", () => {

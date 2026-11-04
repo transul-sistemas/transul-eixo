@@ -1,6 +1,19 @@
 import { redirect } from "next/navigation";
+import { Suspense } from "react";
+import { destinoInicial } from "@/lib/seguranca/redirecionamento";
+import { exigirSessao } from "@/lib/seguranca/sessao-do-servidor";
 
-// A primeira tela do sistema é Início › Tarefas.
+// A raiz leva à primeira tela do perfil (aprovação da 3.8). O proxy já decide isso antes; esta página
+// é a segunda barreira. Ler a sessão é dinâmico, então fica num Suspense.
+async function Destino(): Promise<never> {
+  const { perfil } = await exigirSessao();
+  redirect(destinoInicial(perfil));
+}
+
 export default function Raiz() {
-  redirect("/inicio/tarefas");
+  return (
+    <Suspense fallback={null}>
+      <Destino />
+    </Suspense>
+  );
 }
