@@ -31,6 +31,7 @@ Modelo de entrada:
 ## 03/11/2026 — Regra de segurança: nunca imprimir saída que mostre chaves
 
 - **Decisão (Alexandre, 03/11/2026):** nunca imprimir a saída de `supabase status` nem de qualquer comando que mostre chaves. Ler só os nomes necessários e gravar por script, sem imprimir (`pnpm env:local` grava o endereço e a chave publicável do Supabase local em `.env.local`; o preparo dos e2e lê o que precisa do `supabase status` por dentro, sem mostrar). O `.claude/settings.json` do projeto **nega ao Claude Code** rodar `supabase status` direto (Bash e PowerShell, com `pnpm exec`, `pnpm` e `npx`); os scripts continuam funcionando porque chamam o comando por dentro.
+- **Segundo deslize registrado (03/11/2026, fatia 3.9a):** ao ler o log do job `modo-banco` do PR #32 para achar um erro, um `sed` de intervalo de linhas trouxe para a conversa a saída do `supabase start` do próprio CI, com as chaves do **Supabase local do runner** (as chaves padrão de demonstração do CLI, de um Docker descartável, sem acesso a nenhum projeto na nuvem). **Nenhuma ação necessária.** Daqui em diante, log do CI só se lê filtrado (`grep -v` de toda linha com chave, `Secret`, `Key` ou `sb_`), nunca por intervalo de linhas cru.
 - **Deslize registrado (03/11/2026):** ao conferir o `sed` do CI da 3.8, um comando imprimiu na conversa a saída do `supabase status` com as chaves do **Supabase local** (as chaves padrão de demonstração do CLI, só do Docker desta máquina, sem acesso a nenhum projeto na nuvem). **Nenhuma ação necessária.**
 - **Quem decidiu:** Alexandre.
 

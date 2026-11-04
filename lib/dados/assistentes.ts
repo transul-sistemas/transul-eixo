@@ -16,11 +16,13 @@ export interface PedidoDosDados {
   hoje: string;
   /** Na ficha: carrega a placa, o pedido e os candidatos mesmo sem o assistente estar aberto. */
   carregarDaPlaca?: boolean;
+  /** Quem usa (o id do usuário da sessão): a chave dos rascunhos. */
+  usuario: string;
 }
 
 export async function dadosDosAssistentes(
   fonte: FonteDeEscrita,
-  { assistente, placa, hoje, carregarDaPlaca = false }: PedidoDosDados,
+  { assistente, placa, hoje, carregarDaPlaca = false, usuario }: PedidoDosDados,
 ): Promise<DadosDosAssistentes> {
   const catalogos = await fonte.catalogos();
   const normalizada = placa !== null ? normalizarPlaca(placa) : null;
@@ -44,6 +46,7 @@ export async function dadosDosAssistentes(
       ? await fonte.placasQuePodemSerDisponibilizadas()
       : [];
   return {
+    usuario,
     hoje,
     anoAtual: Number(hoje.slice(0, 4)),
     catalogos,

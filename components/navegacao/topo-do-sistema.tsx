@@ -10,10 +10,10 @@ import { TopoLigado } from "./topo";
  */
 export async function TopoDoSistema() {
   await connection();
-  const { perfil } = await exigirSessao();
+  const { perfil, usuarioId } = await exigirSessao();
   return (
     <>
-      <TopoLigado hoje={hojeEmSaoPaulo(new Date())} perfil={perfil} />
+      <TopoLigado hoje={hojeEmSaoPaulo(new Date())} perfil={perfil} usuario={usuarioId} />
       <SinalDeHidratacao regiao="topo" />
     </>
   );

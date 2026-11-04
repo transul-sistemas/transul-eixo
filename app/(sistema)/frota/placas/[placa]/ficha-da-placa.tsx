@@ -23,6 +23,7 @@ import { type ParametrosDaBusca, paraParametros, simulacaoDe } from "../pagina-d
 import { PlacaNaoEncontradaNaFicha } from "./placa-nao-encontrada";
 import { VoltarALista } from "./voltar-a-lista";
 import { AssistentesDaFrota } from "../assistentes/assistentes-da-frota";
+import { AcoesEmBreve } from "../assistentes/acoes-em-breve";
 import { carregarDadosDosAssistentes } from "../assistentes/carregar-dados";
 
 /** A janela da faixa colorida: os últimos 30 dias, até agora. */
@@ -75,7 +76,7 @@ export async function FichaDaPlaca({
   const acoes = idsDasAcoesDoMomento({
     sigla: ficha.sigla,
     tipo: ficha.tipo,
-    pedidoPendente: dadosDosAssistentes?.pedido != null,
+    pedidoPendente: dadosDosAssistentes !== "em-breve" && dadosDosAssistentes?.pedido != null,
   })
     .map((id) => ACOES.find((acao) => acao.id === id))
     .filter((acao) => acao !== undefined)
@@ -150,7 +151,9 @@ export async function FichaDaPlaca({
           acoes={
             // Sempre montado: depois de gravar, as ações do momento mudam (ou somem) e o assistente
             // aberto não pode desmontar junto com elas.
-            dadosDosAssistentes ? (
+            dadosDosAssistentes === "em-breve" ? (
+              <AcoesEmBreve acoesDaFicha={acoes} />
+            ) : dadosDosAssistentes ? (
               <AssistentesDaFrota
                 dados={dadosDosAssistentes}
                 placaDaFicha={ficha.placa}

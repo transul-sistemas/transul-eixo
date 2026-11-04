@@ -13,7 +13,7 @@ import {
   periodoValido,
 } from "@/lib/navegacao/contexto";
 import { gaveta } from "@/lib/navegacao/gaveta";
-import { type Perfil, USUARIO_PROVISORIO } from "@/lib/navegacao/perfis";
+import type { Perfil } from "@/lib/navegacao/perfis";
 import { LinkComRetorno } from "@/components/tabela/link-com-retorno";
 import { migalhas } from "@/lib/navegacao/trilha";
 import { AlternadorDeTema } from "@/components/tema/alternador-de-tema";
@@ -24,8 +24,8 @@ export interface PropsDoTopo {
   /** Dia de hoje em São Paulo, `aaaa-mm-dd`: é de onde vem o período padrão. */
   hoje: string;
   perfil: Perfil;
-  /** De quem são os fixados e os recentes da busca rápida (provisório até haver login). */
-  usuario?: string;
+  /** De quem são os fixados e os recentes da busca rápida (o id do usuário da sessão). */
+  usuario: string;
   /** Rota da página (padrão da navegação): a trilha e os links partem dela. */
   rota: string;
   /** Parâmetros da URL: o contexto e o `?modo=` são lidos daqui. */
@@ -75,7 +75,7 @@ function Escolha({
 export function Topo({
   hoje,
   perfil,
-  usuario = USUARIO_PROVISORIO,
+  usuario,
   rota,
   parametros = new URLSearchParams(),
   opcoes = OPCOES_PROVISORIAS,
@@ -201,7 +201,11 @@ export function Topo({
 }
 
 /** O topo ligado ao navegador: lê a rota e a URL e troca a URL quando o contexto muda. */
-export function TopoLigado({ hoje, perfil }: Pick<PropsDoTopo, "hoje" | "perfil">) {
+export function TopoLigado({
+  hoje,
+  perfil,
+  usuario,
+}: Pick<PropsDoTopo, "hoje" | "perfil" | "usuario">) {
   const rota = usePathname();
   const lidos = useSearchParams();
   const router = useRouter();
@@ -209,6 +213,7 @@ export function TopoLigado({ hoje, perfil }: Pick<PropsDoTopo, "hoje" | "perfil"
     <Topo
       hoje={hoje}
       perfil={perfil}
+      usuario={usuario}
       rota={rota}
       parametros={new URLSearchParams(lidos.toString())}
       aoNavegar={(url) => router.push(url)}

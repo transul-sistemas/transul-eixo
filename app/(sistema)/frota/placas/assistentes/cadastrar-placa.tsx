@@ -24,7 +24,7 @@ import {
   TIPOS_DE_ATIVO,
 } from "@/lib/dominio/esquemas/placa";
 import { NOMES_DAS_SIGLAS, type Sigla } from "@/lib/dominio/status";
-import { USUARIO_PROVISORIO } from "@/lib/navegacao/perfis";
+import { useUsuarioDaSessao } from "@/components/navegacao/usuario-da-sessao";
 import type { DefinicaoDeAssistente } from "@/lib/wizard/passos";
 import { cadastrarPlacaAcao } from "../acoes";
 import { errosDoResolvedor } from "./erros-do-resolvedor";
@@ -172,6 +172,7 @@ export function CadastrarPlaca({
   aoFechar: () => void;
   focoFinal: RefObject<HTMLElement | null>;
 }) {
+  const usuario = useUsuarioDaSessao();
   const resolver = useMemo(
     () => criarResolver(dados.anoAtual, dados.hoje),
     [dados.anoAtual, dados.hoje],
@@ -190,7 +191,7 @@ export function CadastrarPlaca({
         const r = esquemaDoRascunho.safeParse(v);
         return r.success ? (r.data as Partial<ValoresDoCadastro>) : null;
       }}
-      usuario={USUARIO_PROVISORIO}
+      usuario={usuario}
       camposSensiveis={["renavam"]}
       focoFinal={focoFinal}
       rotuloConcluir="Cadastrar placa"

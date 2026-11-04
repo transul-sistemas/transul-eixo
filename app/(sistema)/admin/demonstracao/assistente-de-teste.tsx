@@ -17,7 +17,7 @@ import {
   type OpcaoDeSelecao,
 } from "@/components/wizard/campos";
 import { useAssistenteNaUrl } from "@/components/wizard/use-assistente-na-url";
-import { USUARIO_PROVISORIO } from "@/lib/navegacao/perfis";
+import { useUsuarioDaSessao } from "@/components/navegacao/usuario-da-sessao";
 import type { DefinicaoDeAssistente } from "@/lib/wizard/passos";
 import { erroDaAcao, sucesso } from "@/lib/wizard/resultado";
 
@@ -111,6 +111,7 @@ export interface RegistroDeEnvios {
 }
 
 export function AssistenteDeTeste() {
+  const usuario = useUsuarioDaSessao();
   const { aberto, abrir, fechar } = useAssistenteNaUrl("teste");
   const parametros = useSearchParams();
   const simular = parametros.get("simular");
@@ -173,7 +174,7 @@ export function AssistenteDeTeste() {
             const r = esquemaDoRascunho.safeParse(v);
             return r.success ? r.data : null;
           }}
-          usuario={USUARIO_PROVISORIO}
+          usuario={usuario}
           focoFinal={botao}
           rotuloConcluir="Cadastrar item"
           mensagemConcluido="Item cadastrado."
@@ -242,7 +243,7 @@ export function AssistenteDeTeste() {
                             }
                             valoresIniciais={{ nome: "" }}
                             validarRascunho={() => null}
-                            usuario={USUARIO_PROVISORIO}
+                            usuario={usuario}
                             variante="lateral"
                             rascunho={false}
                             fecharAoGravar

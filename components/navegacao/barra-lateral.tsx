@@ -55,6 +55,8 @@ export interface PropsDaBarra {
   estadoInicial?: Partial<Omit<EstadoDaBarra, "versao">>;
   /** Encerra a sessão (Server Action). Sem ela, o botão Sair não aparece (demonstração, testes). */
   aoSair?: () => Promise<void>;
+  /** Quem entrou: nome e e-mail no rodapé, acima do Sair. */
+  quem?: { nome: string; email: string | null };
 }
 
 function armazenamentoDoNavegador(): Storage | null {
@@ -180,6 +182,7 @@ export function BarraLateral({
   rotaAtual,
   estadoInicial,
   aoSair,
+  quem,
 }: PropsDaBarra) {
   const caminhoDaPagina = usePathname();
   const caminho = (rotaAtual ?? caminhoDaPagina ?? "").split(/[?#]/)[0] ?? "";
@@ -323,6 +326,7 @@ export function BarraLateral({
         ref={raizDaBarra}
         id={incorporada ? undefined : "menu-principal"}
         data-barra={incorporada ? "demonstracao" : "principal"}
+        data-usuario={incorporada ? undefined : usuario}
         data-gaveta={incorporada ? undefined : emGaveta ? "aberta" : "fechada"}
         data-compacta={compacta ? "true" : "false"}
         onClick={(evento) => {
@@ -558,11 +562,25 @@ export function BarraLateral({
             aparece também na gaveta. */}
         {aoSair ? (
           <div data-rodape-sair="" className="border-border shrink-0 border-t p-2">
+            {quem && !compacta ? (
+              <div className="min-w-0 px-2 pt-1 pb-2">
+                <p className="truncate font-medium">{quem.nome}</p>
+                {quem.email ? (
+                  <p className="text-muted-foreground truncate text-xs">{quem.email}</p>
+                ) : null}
+              </div>
+            ) : null}
             <form action={aoSair}>
               <button
                 type="submit"
                 aria-label={compacta ? "Sair" : undefined}
-                title={compacta ? "Sair" : undefined}
+                title={
+                  compacta
+                    ? quem
+                      ? `Sair (${[quem.nome, quem.email].filter(Boolean).join(", ")})`
+                      : "Sair"
+                    : undefined
+                }
                 className={cn(
                   "text-muted-foreground hover:bg-sidebar-accent focus-visible:ring-ring flex h-9 w-full items-center gap-2 rounded-lg px-2 outline-none focus-visible:ring-2",
                   compacta && "justify-center",

@@ -11,7 +11,13 @@ const barra = (props: Partial<Parameters<typeof BarraLateral>[0]> = {}) =>
   );
 const topo = (props: Partial<Parameters<typeof Topo>[0]> = {}) =>
   renderToStaticMarkup(
-    <Topo hoje="2026-10-29" perfil="Administrador" rota="/frota/placas" {...props} />,
+    <Topo
+      hoje="2026-10-29"
+      perfil="Administrador"
+      usuario="teste"
+      rota="/frota/placas"
+      {...props}
+    />,
   );
 
 describe("<BarraLateral>: gaveta (abaixo de 1024 px)", () => {

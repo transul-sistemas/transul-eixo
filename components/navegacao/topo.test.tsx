@@ -6,7 +6,7 @@ const HOJE = "2026-10-29";
 
 function topo(props: Partial<Parameters<typeof Topo>[0]> = {}) {
   return renderToStaticMarkup(
-    <Topo hoje={HOJE} perfil="Administrador" rota="/frota/placas" {...props} />,
+    <Topo hoje={HOJE} perfil="Administrador" usuario="teste" rota="/frota/placas" {...props} />,
   );
 }
 

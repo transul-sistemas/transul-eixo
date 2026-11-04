@@ -183,7 +183,11 @@ test.describe("busca rápida: sem termo", () => {
 
   test("sem nada para mostrar, convida a digitar", async ({ page }) => {
     await abrirHidratada(page, "/inicio/tarefas");
-    await page.evaluate(() => localStorage.removeItem("eixo:recentes:provisorio"));
+    await page.locator("#menu-principal[data-usuario]").waitFor({ state: "attached" });
+    await page.evaluate(() => {
+      const usuario = document.querySelector("#menu-principal")?.getAttribute("data-usuario");
+      localStorage.removeItem(`eixo:recentes:${usuario}`);
+    });
     await abrirBusca(page);
     await campo(page).fill("a");
     await campo(page).fill("");

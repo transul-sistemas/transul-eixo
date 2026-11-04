@@ -4,6 +4,7 @@ import { IconPlus } from "@tabler/icons-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { AcoesDaFicha } from "@/components/ficha/acoes-da-ficha";
+import { ProvedorDoUsuario } from "@/components/navegacao/usuario-da-sessao";
 import { Button } from "@/components/ui/button";
 import { useAssistenteNaUrl } from "@/components/wizard/use-assistente-na-url";
 import type { DadosDosAssistentes } from "@/lib/dados/escrita-tipos";
@@ -107,7 +108,7 @@ export function AssistentesDaFrota({
   const nomeDaPlaca = placaPedida ?? "";
 
   return (
-    <>
+    <ProvedorDoUsuario usuario={dados.usuario}>
       {comBotaoDeCadastrar ? (
         <Button ref={botao} onClick={cadastrar.abrir} aria-haspopup="dialog">
           <IconPlus data-icon="inline-start" />
@@ -187,6 +188,6 @@ export function AssistentesDaFrota({
           />
         )
       ) : null}
-    </>
+    </ProvedorDoUsuario>
   );
 }

@@ -57,6 +57,11 @@ describe("EIXO_DADOS nunca vai para a Vercel nem para produção", () => {
     const fora = usam.filter((c) => !liberadoParaEixoDados(c));
     expect(fora).toEqual([]);
   });
+  it("o e2e do modo banco (3.9a) liga o banco de forma explícita, e só ele", () => {
+    expect(liberadoParaEixoDados("playwright.banco.config.ts")).toBe(true);
+    expect(lerTexto("playwright.banco.config.ts")).toContain('EIXO_DADOS: "banco"');
+    expect(lerTexto("playwright.banco.config.ts")).not.toContain('EIXO_DADOS: "exemplo"');
+  });
   it("o servidor de testes liga o exemplo de forma explícita", () => {
     expect(lerTexto("playwright.config.ts")).toContain('EIXO_DADOS: "exemplo"');
   });

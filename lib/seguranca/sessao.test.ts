@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { ClienteDaSessao } from "./cliente-da-sessao";
-import { lerSessao, perfilDoCodigo } from "./sessao";
+import { lerPessoaDaSessao, lerSessao, perfilDoCodigo } from "./sessao";
 
 // A sessão do servidor (fatia 3.8): o usuário pelo getUser (valida no Auth, nunca o cookie cru) e o
 // perfil pelo banco (config.perfil_atual), lido a cada pedido.
@@ -48,5 +48,40 @@ describe("perfilDoCodigo", () => {
     expect(perfilDoCodigo("operacional")).toBe("Operacional");
     expect(perfilDoCodigo("outro")).toBeNull();
     expect(perfilDoCodigo(null)).toBeNull();
+  });
+});
+
+// Fatia 3.9a: a pessoa de quem entrou (nome para a barra lateral e o gestor da carteira), pelo banco
+// com a chave do próprio usuário: config.usuario_atual e nucleo.pessoa_para_leitura.
+describe("lerPessoaDaSessao", () => {
+  const clienteDaPessoa = (pessoaId: string | null, nome: string | null) => ({
+    schema: (esquema: "config" | "nucleo") =>
+      esquema === "config"
+        ? { rpc: async () => ({ data: pessoaId, error: null }) }
+        : {
+            from: () => ({
+              select: () => ({
+                eq: () => ({
+                  maybeSingle: async () => ({ data: nome ? { nome } : null, error: null }),
+                }),
+              }),
+            }),
+          },
+  });
+
+  it("a pessoa vinculada, com o nome", async () => {
+    expect(await lerPessoaDaSessao(clienteDaPessoa("p1", "Ana Ribeiro") as never)).toEqual({
+      pessoaId: "p1",
+      nome: "Ana Ribeiro",
+    });
+  });
+  it("sem vínculo, sem pessoa", async () => {
+    expect(await lerPessoaDaSessao(clienteDaPessoa(null, null) as never)).toBeNull();
+  });
+  it("pessoa sem nome legível fica com o texto do vazio", async () => {
+    expect(await lerPessoaDaSessao(clienteDaPessoa("p1", null) as never)).toEqual({
+      pessoaId: "p1",
+      nome: "Sem nome",
+    });
   });
 });

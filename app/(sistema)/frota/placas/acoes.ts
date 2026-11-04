@@ -11,7 +11,7 @@ import {
   executarReceber,
 } from "@/lib/dados/escrita";
 import type { AtualDaAcao, ItemCriado, PlacaGravada } from "@/lib/dados/escrita-tipos";
-import { fonteDeEscrita } from "@/lib/dados/fonte";
+import { ErroDeGravacaoEmBreve, fonteDeEscrita } from "@/lib/dados/fonte";
 import { ErroDePermissao, ErroDeSessao, exigirPermissao } from "@/lib/seguranca/exigir-permissao";
 import { gestorAtual } from "@/lib/seguranca/gestor-atual";
 import { erroDaAcao, type ResultadoDaAcao } from "@/lib/wizard/resultado";
@@ -54,9 +54,12 @@ async function executar<T>(
       fonte: await fonteDeEscrita(hojeEmSaoPaulo(agora)),
       agora: agoraEmSaoPaulo(agora),
       hoje: hojeEmSaoPaulo(agora),
-      gestorId: gestorAtual(),
+      gestorId: await gestorAtual(),
     });
   } catch (erro) {
+    // Modo banco: as gravações entram na 3.9b; a tela mostra o aviso, sem gravar.
+    if (erro instanceof ErroDeGravacaoEmBreve)
+      return erroDaAcao("falha", { mensagem: erro.message });
     console.error("ação de escrita falhou:", erro);
     return erroDaAcao("falha");
   }

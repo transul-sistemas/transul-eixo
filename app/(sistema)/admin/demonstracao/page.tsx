@@ -20,6 +20,8 @@ import { PaginaDeLeitura } from "@/components/layout/pagina-de-leitura";
 import { BarraLateral } from "@/components/navegacao/barra-lateral";
 import { Button } from "@/components/ui/button";
 import { MODULOS, STATUS, type Modulo, type Status } from "@/lib/visual/tons";
+import { ProvedorDoUsuario } from "@/components/navegacao/usuario-da-sessao";
+import { exigirSessao } from "@/lib/seguranca/sessao-do-servidor";
 import { AssistenteDeTeste } from "./assistente-de-teste";
 import { CampoDeExemplo } from "./campo-de-exemplo";
 
@@ -141,6 +143,16 @@ async function PausaSimulada({ parametros }: { parametros: Promise<{ lento?: str
   const ms = Number((await parametros).lento);
   if (ms > 0) await new Promise((resolve) => setTimeout(resolve, Math.min(ms, 10_000)));
   return null;
+}
+
+/** O assistente de teste com o rascunho de quem entrou (fatia 3.9a). */
+async function AssistenteDaSessao() {
+  const { usuarioId } = await exigirSessao();
+  return (
+    <ProvedorDoUsuario usuario={usuarioId}>
+      <AssistenteDeTeste />
+    </ProvedorDoUsuario>
+  );
 }
 
 export default function Demonstracao({
@@ -381,7 +393,7 @@ export default function Demonstracao({
             <PausaSimulada parametros={searchParams} />
           </Suspense>
           <Suspense fallback={null}>
-            <AssistenteDeTeste />
+            <AssistenteDaSessao />
           </Suspense>
         </Secao>
       </div>

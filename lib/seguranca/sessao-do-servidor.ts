@@ -4,7 +4,7 @@ import { connection } from "next/server";
 import { cache } from "react";
 import type { Perfil } from "@/lib/navegacao/perfis";
 import { criarClienteDoServidor } from "@/lib/supabase/servidor";
-import { lerSessao, type Sessao } from "./sessao";
+import { type ClienteDaPessoa, lerPessoaDaSessao, lerSessao, type Sessao } from "./sessao";
 
 // A sessão no servidor, uma vez por pedido (cache do React). Cada página do sistema confere de novo
 // aqui, além do proxy: sem sessão vai para /entrar; sem vínculo, para "acesso não liberado".
@@ -23,3 +23,10 @@ export async function exigirSessao(): Promise<Sessao & { perfil: Perfil }> {
   if (!sessao.perfil) redirect("/acesso-nao-liberado");
   return sessao as Sessao & { perfil: Perfil };
 }
+
+/** A pessoa de quem entrou (nome e id), uma vez por pedido; nula sem vínculo. */
+export const obterPessoaDaSessao = cache(async () => {
+  await connection();
+  const cliente = await criarClienteDoServidor();
+  return lerPessoaDaSessao(cliente as unknown as ClienteDaPessoa);
+});

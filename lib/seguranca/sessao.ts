@@ -25,3 +25,42 @@ export async function lerSessao(cliente: ClienteDaSessao): Promise<Sessao | null
   if (error) throw new Error(`Não foi possível ler o perfil: ${error.message}`);
   return { usuarioId: usuario.id, email: usuario.email ?? null, perfil: perfilDoCodigo(codigo) };
 }
+
+/** O pedaço do cliente que lê a pessoa de quem entrou (nos testes, um simulado com esta forma). */
+export interface ClienteDaPessoa {
+  schema(esquema: "config"): {
+    rpc(funcao: "usuario_atual"): PromiseLike<{ data: unknown; error: { message: string } | null }>;
+  };
+  schema(esquema: "nucleo"): {
+    from(tabela: "pessoa_para_leitura"): {
+      select(colunas: "nome"): {
+        eq(
+          coluna: "id",
+          valor: string,
+        ): {
+          maybeSingle(): PromiseLike<{
+            data: { nome: string | null } | null;
+            error: { message: string } | null;
+          }>;
+        };
+      };
+    };
+  };
+}
+
+/** A pessoa de quem entrou (fatia 3.9a): o id (o gestor da carteira) e o nome, ou nulo sem vínculo. */
+export async function lerPessoaDaSessao(
+  cliente: ClienteDaPessoa,
+): Promise<{ pessoaId: string; nome: string } | null> {
+  const { data: pessoaId, error } = await cliente.schema("config").rpc("usuario_atual");
+  if (error) throw new Error(`Não foi possível ler a pessoa: ${error.message}`);
+  if (typeof pessoaId !== "string") return null;
+  const { data, error: erroDoNome } = await cliente
+    .schema("nucleo")
+    .from("pessoa_para_leitura")
+    .select("nome")
+    .eq("id", pessoaId)
+    .maybeSingle();
+  if (erroDoNome) throw new Error(`Não foi possível ler o nome: ${erroDoNome.message}`);
+  return { pessoaId, nome: data?.nome ?? "Sem nome" };
+}

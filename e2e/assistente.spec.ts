@@ -296,9 +296,11 @@ test.describe("assistente: fechar é fechar e rascunho", () => {
 
   test("rascunho de versão antiga do formulário é descartado, com aviso", async ({ page }) => {
     await abrirHidratada(page, ROTA);
+    await page.locator("#menu-principal[data-usuario]").waitFor({ state: "attached" });
     await page.evaluate(() => {
+      const usuario = document.querySelector("#menu-principal")?.getAttribute("data-usuario");
       localStorage.setItem(
-        "eixo-rascunho:provisorio:teste:novo",
+        `eixo-rascunho:${usuario}:teste:novo`,
         JSON.stringify({ versaoDoEsquema: 0, passo: 1, valores: { nome: "Antigo" } }),
       );
     });

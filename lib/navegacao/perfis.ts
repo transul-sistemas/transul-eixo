@@ -16,6 +16,3 @@ export const MODULOS_POR_PERFIL: Record<Perfil, "todos" | readonly IdDoModulo[]>
   "Gestor de frota": ["inicio", "frota"],
   Operacional: ["inicio", "operacional"],
 };
-
-/** A memória da barra lateral e dos rascunhos continua com este nome até a 3.9 (hipótese da 3.8). */
-export const USUARIO_PROVISORIO = "provisorio";

@@ -192,7 +192,11 @@ test.describe("barra lateral: memória por usuário", () => {
 
   test("memória corrompida não quebra a barra", async ({ page }) => {
     await abrir(page, "/inicio/tarefas");
-    await page.evaluate(() => localStorage.setItem("eixo:barra:provisorio", "{isto não é json"));
+    await page.locator("#menu-principal[data-usuario]").waitFor({ state: "attached" });
+    await page.evaluate(() => {
+      const usuario = document.querySelector("#menu-principal")?.getAttribute("data-usuario");
+      localStorage.setItem(`eixo:barra:${usuario}`, "{isto não é json");
+    });
     await page.reload();
     await expect(menu(page).locator("button[aria-expanded]")).toHaveCount(9);
     await expect(barra(page)).toHaveAttribute("data-compacta", "false");

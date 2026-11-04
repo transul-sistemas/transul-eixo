@@ -108,6 +108,8 @@ export interface CandidatoDoConjunto {
 export type AtualDaAcao = PlacaGravada | PedidoDeTransferencia;
 
 export interface DadosDosAssistentes {
+  /** Quem usa (o id do usuário da sessão): a chave dos rascunhos. */
+  usuario: string;
   /** `aaaa-mm-dd` em São Paulo. */
   hoje: string;
   anoAtual: number;

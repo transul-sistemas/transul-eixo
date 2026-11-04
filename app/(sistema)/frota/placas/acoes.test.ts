@@ -26,10 +26,18 @@ vi.mock("@/lib/seguranca/exigir-permissao", async (original) => {
     },
   };
 });
-vi.mock("@/lib/dados/fonte", async (original) => ({
-  ...(await original<typeof import("@/lib/dados/fonte")>()),
-  fonteDeEscrita: async () => mocks.fonte.atual,
-}));
+vi.mock("@/lib/dados/fonte", async (original) => {
+  const real = await original<typeof import("@/lib/dados/fonte")>();
+  return {
+    ...real,
+    fonteDeEscrita: async () => {
+      if (mocks.fonte.atual === "em-breve") throw new real.ErroDeGravacaoEmBreve();
+      return mocks.fonte.atual;
+    },
+  };
+});
+// O gestor de quem grava (no exemplo, o de destino do pedido de transferência de exemplo).
+vi.mock("@/lib/seguranca/gestor-atual", () => ({ gestorAtual: async () => "gestor-2" }));
 
 import {
   cadastrarPlacaAcao,
@@ -240,5 +248,24 @@ describe("criarItemDeCatalogoAcao", () => {
         .catalogos()
         .marcas.some((m) => m.nome === "DAF"),
     ).toBe(false);
+  });
+});
+
+// Fatia 3.9a: no modo banco as gravações ficam em breve até a 3.9b.
+describe("modo banco: gravação em breve", () => {
+  it("a ação devolve o aviso de em breve, sem gravar nem invalidar o cache", async () => {
+    mocks.perfil.atual = "Administrador";
+    mocks.fonte.atual = "em-breve";
+    mocks.revalidatePath.mockClear();
+    const resultado = await cadastrarPlacaAcao({ chaveDeEnvio: CHAVE, dados: cadastro });
+    expect(resultado).toEqual({
+      ok: false,
+      erro: {
+        codigo: "falha",
+        mensagem:
+          "Gravar pelo banco entra em breve. Por enquanto, as telas mostram os dados sem alterar.",
+      },
+    });
+    expect(mocks.revalidatePath).not.toHaveBeenCalled();
   });
 });

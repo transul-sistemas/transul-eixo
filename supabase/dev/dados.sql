@@ -194,8 +194,10 @@ begin
         p_modelo_id => case when v_k % 6 = 3 and v_pos = 2 then null else v_modelos_implemento[1 + v_k % 2] end
       );
     end loop;
+    -- Todas as unidades no mesmo instante: o conjunto é conferido em cada instante (o rodotrem só é
+    -- válido com os três engatados).
     for v_pos in 1..coalesce(array_length(v_ids, 1), 0) loop
-      perform nucleo.engatar(v_cavalo, v_ids[v_pos], v_pos::smallint, v_t + interval '1 hour' + v_pos * interval '1 minute');
+      perform nucleo.engatar(v_cavalo, v_ids[v_pos], v_pos::smallint, v_t + interval '1 hour');
     end loop;
 
     -- A situação do cavalo (conjunto ou solo), e algumas entregas ao Operacional.

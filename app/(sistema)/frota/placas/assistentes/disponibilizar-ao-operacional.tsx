@@ -9,7 +9,7 @@ import type { DadosDosAssistentes } from "@/lib/dados/escrita-tipos";
 import type { Catalogos, ItemCriado, PlacaGravada } from "@/lib/dados/escrita-tipos";
 import { esquemaDisponibilizacao } from "@/lib/dominio/esquemas/placa";
 import { NOMES_DAS_SIGLAS } from "@/lib/dominio/status";
-import { USUARIO_PROVISORIO } from "@/lib/navegacao/perfis";
+import { useUsuarioDaSessao } from "@/components/navegacao/usuario-da-sessao";
 import type { DefinicaoDeAssistente } from "@/lib/wizard/passos";
 import { disponibilizarPlacaAcao } from "../acoes";
 import { errosDoResolvedor } from "./erros-do-resolvedor";
@@ -45,6 +45,7 @@ export function DisponibilizarAoOperacional({
   aoFechar: () => void;
   focoFinal?: RefObject<HTMLElement | null>;
 }) {
+  const usuario = useUsuarioDaSessao();
   const resolver: Resolver<Valores> = async (valores) => {
     const r = esquemaDisponibilizacao.safeParse({
       placa: placa.placa,
@@ -67,7 +68,7 @@ export function DisponibilizarAoOperacional({
       resolver={resolver}
       valoresIniciais={{ filialId: placa.filialId ?? "" }}
       validarRascunho={() => null}
-      usuario={USUARIO_PROVISORIO}
+      usuario={usuario}
       registro={placa.placa}
       rascunho={false}
       focoFinal={focoFinal}

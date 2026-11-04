@@ -40,6 +40,7 @@ import {
 } from "@/lib/navegacao/tabela";
 import { STATUS } from "@/lib/visual/tons";
 import { AssistentesDaFrota } from "./assistentes/assistentes-da-frota";
+import { AcoesEmBreve } from "./assistentes/acoes-em-breve";
 import { carregarDadosDosAssistentes } from "./assistentes/carregar-dados";
 
 export type ParametrosDaBusca = Promise<Record<string, string | string[] | undefined>>;
@@ -184,7 +185,9 @@ export async function PaginaDePlacas({ searchParams }: { searchParams: Parametro
         titulo={titulo}
         descricao={descricao}
         acoes={
-          dadosDosAssistentes ? (
+          dadosDosAssistentes === "em-breve" ? (
+            <AcoesEmBreve comBotaoDeCadastrar />
+          ) : dadosDosAssistentes ? (
             <AssistentesDaFrota dados={dadosDosAssistentes} comBotaoDeCadastrar />
           ) : undefined
         }

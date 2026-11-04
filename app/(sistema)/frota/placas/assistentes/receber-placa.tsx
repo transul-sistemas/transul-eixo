@@ -18,7 +18,7 @@ import type { Catalogos, ItemCriado, PlacaGravada } from "@/lib/dados/escrita-ti
 import type { PedidoDeTransferencia } from "@/lib/dominio/custodia";
 import { esquemaRecebimento, siglasIniciaisDoTipo } from "@/lib/dominio/esquemas/placa";
 import { NOMES_DAS_SIGLAS, type Sigla } from "@/lib/dominio/status";
-import { USUARIO_PROVISORIO } from "@/lib/navegacao/perfis";
+import { useUsuarioDaSessao } from "@/components/navegacao/usuario-da-sessao";
 import type { DefinicaoDeAssistente } from "@/lib/wizard/passos";
 import { receberPlacaAcao } from "../acoes";
 import { errosDoResolvedor } from "./erros-do-resolvedor";
@@ -83,6 +83,7 @@ export function ReceberPlaca({
   aoFechar: () => void;
   focoFinal?: RefObject<HTMLElement | null>;
 }) {
+  const usuario = useUsuarioDaSessao();
   const esquema = useMemo(
     () =>
       esquemaRecebimento(
@@ -135,7 +136,7 @@ export function ReceberPlaca({
       resolver={resolver}
       valoresIniciais={valoresIniciais}
       validarRascunho={() => null}
-      usuario={USUARIO_PROVISORIO}
+      usuario={usuario}
       registro={placa.placa}
       rascunho={false}
       focoFinal={focoFinal}

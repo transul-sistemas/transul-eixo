@@ -172,12 +172,14 @@ test.describe("casca pequena: gaveta do menu", () => {
 
   test("o modo compacto guardado do computador não vale na gaveta", async ({ page }) => {
     await abrirHidratada(page, "/inicio/tarefas");
-    await page.evaluate(() =>
+    await page.locator("#menu-principal[data-usuario]").waitFor({ state: "attached" });
+    await page.evaluate(() => {
+      const usuario = document.querySelector("#menu-principal")?.getAttribute("data-usuario");
       localStorage.setItem(
-        "eixo:barra:provisorio",
+        `eixo:barra:${usuario}`,
         JSON.stringify({ versao: 1, compacta: true, gruposAbertos: [], fixados: [] }),
-      ),
-    );
+      );
+    });
     await page.reload();
     await abrirHidratada(page, "/inicio/tarefas");
     await abrirMenu(page).click();

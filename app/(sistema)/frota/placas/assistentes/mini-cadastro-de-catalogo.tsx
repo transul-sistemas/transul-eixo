@@ -6,7 +6,7 @@ import { Assistente } from "@/components/wizard/assistente";
 import { Campo, CLASSE_DO_CAMPO, type OpcaoDeSelecao } from "@/components/wizard/campos";
 import type { ItemCriado } from "@/lib/dados/escrita-tipos";
 import { esquemaItemDeCatalogo, type TipoDeItemDeCatalogo } from "@/lib/dominio/esquemas/placa";
-import { USUARIO_PROVISORIO } from "@/lib/navegacao/perfis";
+import { useUsuarioDaSessao } from "@/components/navegacao/usuario-da-sessao";
 import type { DefinicaoDeAssistente } from "@/lib/wizard/passos";
 import { criarItemDeCatalogoAcao } from "../acoes";
 import { errosDoResolvedor } from "./erros-do-resolvedor";
@@ -69,6 +69,7 @@ export function MiniCadastroDeCatalogo({
   aoFechar: () => void;
   focoFinal: RefObject<HTMLElement | null>;
 }) {
+  const usuario = useUsuarioDaSessao();
   const textos = TEXTOS[tipo];
   const definicao: DefinicaoDeAssistente = {
     id: `catalogo-${tipo}`,
@@ -96,7 +97,7 @@ export function MiniCadastroDeCatalogo({
       resolver={resolver}
       valoresIniciais={{ nome: "" }}
       validarRascunho={() => null}
-      usuario={USUARIO_PROVISORIO}
+      usuario={usuario}
       variante="lateral"
       rascunho={false}
       fecharAoGravar
