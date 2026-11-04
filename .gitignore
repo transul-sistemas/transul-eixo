@@ -12,6 +12,8 @@ playwright-report/
 test-results/
 # capturas das telas (geradas no CI do pull request, baixadas como artefato)
 capturas/
+# medição da lista de placas (gerada no CI do pull request, artefato)
+medicao-da-lista.md
 # sessões e senhas sorteadas dos usuários de teste (fatia 3.8)
 e2e/.auth/
 

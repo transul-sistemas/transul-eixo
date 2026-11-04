@@ -14,7 +14,7 @@ const noturno = readFileSync(".github/workflows/e2e-noturno.yml", "utf-8");
 const jobDe = (fonte: string, nome: string) => {
   const inicio = fonte.indexOf(`\n  ${nome}:\n`);
   const resto = fonte.slice(inicio + 1);
-  const proximo = resto.slice(1).search(/\n  [a-z]+:\n/);
+  const proximo = resto.slice(1).search(/\n  [a-z-]+:\n/);
   return proximo === -1 ? resto : resto.slice(0, proximo + 1);
 };
 const job = (nome: string) => jobDe(texto, nome);
@@ -204,37 +204,59 @@ describe("e2e noturno: o e2e completo da main, uma vez por noite", () => {
 
 // Decisão de 03/11/2026 (máquina sem memória livre): as capturas das telas de acesso saem do CI, só
 // no pull request, e chegam como artefato do GitHub (ver docs/decisoes.md).
-describe("workflow de verificação: capturas das telas de acesso no pull request", () => {
-  const capturas = passoCom("app", "id: capturas");
-  const envio = passoCom("app", "name: capturas-do-acesso");
+describe("workflow de verificação: jobs só do pull request (capturas e modo banco)", () => {
+  const ehDoPullRequest = (nome: string) =>
+    expect(job(nome)).toMatch(/\n    if: github\.event_name == 'pull_request'\n/);
 
-  it("o passo das capturas roda só no pull request, depois do e2e, mesmo se o e2e falhar", () => {
-    expect(capturas).not.toBe("");
-    expect(capturas).toContain("github.event_name == 'pull_request'");
-    expect(capturas).toContain("!cancelled()");
-    expect(capturas).toContain("steps.build.outcome == 'success'");
+  it("o app não tira mais capturas: elas têm job próprio e paralelo", () => {
+    expect(job("app")).not.toContain("capturas");
+    expect(job("capturas")).not.toMatch(/\n    needs:/);
+    ehDoPullRequest("capturas");
+  });
+
+  it("as capturas rodam o pnpm test:capturas com EIXO_CAPTURAS e sobem sempre, por 7 dias", () => {
+    const capturas = passoCom("capturas", "run: pnpm test:capturas");
     expect(capturas).toContain('EIXO_CAPTURAS: "1"');
-    expect(capturas).toContain("run: pnpm test:capturas");
-    const passos = passosDe(texto, "app");
-    const indice = (trecho: string) => passos.findIndex((p) => p.includes(trecho));
-    expect(indice("id: capturas")).toBeGreaterThan(indice("run: pnpm test:e2e"));
-  });
-
-  it("o build tem id (as capturas dependem dele) e continua só quando o e2e não é pulado", () => {
-    const build = passoCom("app", "run: pnpm build");
-    expect(build).toContain("id: build");
-    expect(build).toMatch(/if: steps\.mudancas\.outputs\.pula_e2e != 'true'/);
-  });
-
-  it("as capturas sobem como artefato sempre (no pull request), com retenção de 7 dias", () => {
+    for (const anterior of ["supabase start", "run: pnpm build", "playwright install"]) {
+      expect(passoCom("capturas", anterior), anterior).not.toBe("");
+    }
+    const envio = passoCom("capturas", "name: capturas-do-acesso");
     expect(envio).toContain("actions/upload-artifact@v4");
-    expect(envio).toContain("always()");
-    expect(envio).toContain("github.event_name == 'pull_request'");
+    expect(envio).toContain("if: always()");
     expect(envio).toContain("path: capturas/");
     expect(envio).toContain("retention-days: 7");
   });
 
-  it("o e2e noturno (main) não tira capturas", () => {
+  it("o modo banco mede 5.000 ativos, volta ao banco limpo, gera os 200 e roda o e2e do modo banco", () => {
+    ehDoPullRequest("modo-banco");
+    const passos = passosDe(texto, "modo-banco");
+    const indice = (trecho: string) => passos.findIndex((p) => p.includes(trecho));
+    for (const trecho of [
+      "run: pnpm db:carga",
+      "GITHUB_STEP_SUMMARY",
+      "name: medicao-da-lista",
+      "supabase db reset",
+      "run: pnpm db:dev-dados",
+      "run: pnpm build",
+      "run: pnpm test:e2e-banco",
+    ]) {
+      expect(indice(trecho), trecho).toBeGreaterThan(-1);
+    }
+    expect(indice("run: pnpm db:carga")).toBeLessThan(indice("supabase db reset"));
+    expect(indice("supabase db reset")).toBeLessThan(indice("run: pnpm db:dev-dados"));
+    expect(indice("run: pnpm db:dev-dados")).toBeLessThan(indice("run: pnpm test:e2e-banco"));
+    expect(passoCom("modo-banco", "name: medicao-da-lista")).toContain("retention-days: 7");
+  });
+
+  // A chave mestra fora de workers/ já é barrada para o repositório inteiro (lib/qualidade/armadilhas).
+  it("os jobs do pull request nunca falam com projeto na nuvem", () => {
+    for (const nome of ["capturas", "modo-banco"]) {
+      expect(job(nome)).not.toMatch(/supabase (link|login|db push)/);
+    }
+  });
+
+  it("o e2e noturno (main) não tira capturas nem roda o modo banco", () => {
     expect(noturno).not.toContain("capturas");
+    expect(noturno).not.toContain("e2e-banco");
   });
 });

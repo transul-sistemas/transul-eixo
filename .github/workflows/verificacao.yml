@@ -87,21 +87,6 @@ jobs:
         run: pnpm exec playwright install --with-deps chromium
       - if: steps.mudancas.outputs.pula_e2e != 'true'
         run: pnpm test:e2e
-      # As capturas das telas de acesso (1366, 1920, tablet 820 e celular 390, claro e escuro), só no
-      # pull request, mesmo se o e2e falhar: o visual é conferido pelo artefato, sem rodar nada na
-      # máquina local (decisão de 03/11/2026, ver docs/decisoes.md).
-      - id: capturas
-        if: ${{ !cancelled() && github.event_name == 'pull_request' && steps.build.outcome == 'success' }}
-        env:
-          EIXO_CAPTURAS: "1"
-        run: pnpm test:capturas
-      - uses: actions/upload-artifact@v4
-        if: ${{ always() && github.event_name == 'pull_request' }}
-        with:
-          name: capturas-do-acesso
-          path: capturas/
-          retention-days: 7
-          if-no-files-found: warn
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
@@ -133,4 +118,92 @@ jobs:
         with:
           name: tipos-do-banco
           path: lib/dados/tipos-do-banco.ts
+          retention-days: 7
+
+  # Os jobs abaixo rodam só no pull request e NÃO são verificação obrigatória (o ruleset exige só app e
+  # banco). Decisão de 03/11/2026 (aprovação da 3.8 e fatia 3.9a, ver docs/decisoes.md).
+  capturas:
+    # As capturas das telas (acesso, tela inicial logada e a barra com o Sair), claro e escuro, em
+    # 1366, 1920, tablet 820 e celular 390: o visual é conferido pelo artefato, sem rodar nada na
+    # máquina local. Paralelo ao app.
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec supabase start
+      - run: |
+          pnpm exec supabase status -o env \
+            | sed -nE 's/^API_URL="?([^"]*)"?$/NEXT_PUBLIC_SUPABASE_URL=\1/p; s/^PUBLISHABLE_KEY="?([^"]*)"?$/NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=\1/p' \
+            >> "$GITHUB_ENV"
+      - run: pnpm build
+      - id: playwright
+        run: echo "versao=$(pnpm exec playwright --version | awk '{print $2}')" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.versao }}-${{ hashFiles('pnpm-lock.yaml') }}
+      - run: pnpm exec playwright install --with-deps chromium
+      - env:
+          EIXO_CAPTURAS: "1"
+        run: pnpm test:capturas
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: capturas-do-acesso
+          path: capturas/
+          retention-days: 7
+          if-no-files-found: warn
+
+  modo-banco:
+    # A carga de 5.000 ativos com a medição da lista (tempos e planos no resumo e no artefato), depois o
+    # banco limpo com os ~200 ativos de desenvolvimento e o e2e pequeno do modo banco.
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec supabase start
+      - run: pnpm db:carga
+      - if: always()
+        run: if [ -f medicao-da-lista.md ]; then cat medicao-da-lista.md >> "$GITHUB_STEP_SUMMARY"; fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: medicao-da-lista
+          path: medicao-da-lista.md
+          retention-days: 7
+          if-no-files-found: warn
+      - run: pnpm exec supabase db reset
+      - run: pnpm db:dev-dados
+      - run: |
+          pnpm exec supabase status -o env \
+            | sed -nE 's/^API_URL="?([^"]*)"?$/NEXT_PUBLIC_SUPABASE_URL=\1/p; s/^PUBLISHABLE_KEY="?([^"]*)"?$/NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=\1/p' \
+            >> "$GITHUB_ENV"
+      - run: pnpm build
+      - id: playwright
+        run: echo "versao=$(pnpm exec playwright --version | awk '{print $2}')" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.versao }}-${{ hashFiles('pnpm-lock.yaml') }}
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm test:e2e-banco
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report-banco
+          path: playwright-report/
           retention-days: 7

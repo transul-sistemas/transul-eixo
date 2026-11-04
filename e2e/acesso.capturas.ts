@@ -1,5 +1,5 @@
 import { expect, type Page, type TestInfo, test } from "@playwright/test";
-import { emailDe, senhaDe } from "./apoio/usuarios-de-teste";
+import { emailDe, senhaDe, sessaoDe } from "./apoio/usuarios-de-teste";
 
 // As capturas das telas de acesso (fatia 3.8), claro e escuro, em cada largura de projeto
 // (capturas-1366, -1920, -tablet-820 e -celular-390). Só rodam no CI do pull request
@@ -63,4 +63,37 @@ test("acesso não liberado e nova senha (sessão do sem vínculo)", async ({ pag
   await expect(page).toHaveURL(/\/nova-senha$/);
   await expect(page.getByRole("button", { name: "Salvar a senha nova" })).toBeVisible();
   await capturar(page, info, "nova-senha");
+});
+
+// Aprovação da 3.8 (03/11/2026): a tela inicial logada (1366 e celular com a gaveta aberta, claro e
+// escuro) e a barra lateral com o Sair no rodapé.
+test.describe("tela inicial logada", () => {
+  test.use({ storageState: sessaoDe("administrador") });
+
+  test("tela inicial e barra lateral com o Sair", async ({ page }, info) => {
+    const largura = info.project.name.replace(/^capturas-/, "");
+    test.skip(!["1366", "celular-390"].includes(largura), "só 1366 e celular");
+    await page.goto("/inicio/tarefas");
+    await expect(page.getByRole("heading", { level: 1 }).first()).toBeVisible();
+    if (largura === "celular-390") {
+      await page.getByRole("button", { name: "Abrir menu" }).click();
+      await expect(
+        page.locator("#menu-principal").getByRole("button", { name: "Sair" }),
+      ).toBeVisible();
+      await capturar(page, info, "inicio-gaveta-aberta");
+      return;
+    }
+    await expect(
+      page.locator("#menu-principal").getByRole("button", { name: "Sair" }),
+    ).toBeVisible();
+    await capturar(page, info, "inicio");
+    for (const tema of TEMAS) {
+      await page.emulateMedia({ colorScheme: tema.esquema });
+      if (tema.esquema === "dark") await expect(page.locator("html")).toHaveClass(/\bdark\b/);
+      else await expect(page.locator("html")).not.toHaveClass(/\bdark\b/);
+      await page
+        .locator("#menu-principal")
+        .screenshot({ path: `${PASTA}/${largura}-${tema.nome}-barra-lateral-com-sair.png` });
+    }
+  });
 });

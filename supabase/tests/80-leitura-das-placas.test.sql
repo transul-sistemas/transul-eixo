@@ -9,10 +9,10 @@ begin;
 select plan(43);
 
 create function pg_temp.id(p_nome text) returns uuid language sql as $$
-  select nullif(current_setting('t.' || p_nome, true), '')::uuid
+  select nullif(current_setting('t.' || lower(regexp_replace(p_nome, '[^A-Za-z0-9]', '_', 'g')), true), '')::uuid
 $$;
 create function pg_temp.guardar(p_nome text, p_id uuid) returns uuid language sql as $$
-  select set_config('t.' || p_nome, p_id::text, true)::uuid
+  select set_config('t.' || lower(regexp_replace(p_nome, '[^A-Za-z0-9]', '_', 'g')), p_id::text, true)::uuid
 $$;
 create function pg_temp.renavam(p_n bigint) returns text language plpgsql as $$
 declare
