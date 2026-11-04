@@ -184,6 +184,27 @@ describe("consultar", () => {
   });
 });
 
+describe("alertas do banco", () => {
+  it("alerta que a tela não conhece lança (nunca some calado)", async () => {
+    const { c } = cliente({
+      listar_placas: {
+        data: {
+          linhas: [{ ...LINHA, alertas: ["alerta_novo_do_banco"] }],
+          total: 1,
+          pagina: 1,
+          paginas: 1,
+          tam: 25,
+        },
+        error: null,
+      },
+      contar_chips_de_placas: { data: [], error: null },
+    });
+    await expect(
+      fonteDoBanco(async () => c).consultar(consulta(), "2026-11-03", {}),
+    ).rejects.toThrow(/alerta_novo_do_banco/);
+  });
+});
+
 describe("obter e obterFicha", () => {
   const DETALHE = {
     ...LINHA,

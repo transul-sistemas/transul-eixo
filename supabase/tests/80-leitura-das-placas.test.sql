@@ -6,7 +6,7 @@
 begin;
 \ir apoio/como_usuario.psql
 
-select plan(43);
+select plan(44);
 
 create function pg_temp.id(p_nome text) returns uuid language sql as $$
   select nullif(current_setting('t.' || lower(regexp_replace(p_nome, '[^A-Za-z0-9]', '_', 'g')), true), '')::uuid
@@ -186,6 +186,10 @@ select is(
 select is(
   (select em from nucleo.historia_da_placa('AAA1A11') order by em limit 1),
   '2026-01-10T08:00', 'a história em hora de parede de São Paulo'
+);
+select is(
+  (select array_agg(sigla order by em) from nucleo.historia_da_placa('AAA1A12')),
+  array['PÁT', 'DOp'], 'a história do implemento engatado segue o cavalo, só onde muda'
 );
 
 -- ---- Gestor A: só a própria carteira ----

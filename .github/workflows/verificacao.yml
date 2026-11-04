@@ -207,3 +207,6 @@ jobs:
           name: playwright-report-banco
           path: playwright-report/
           retention-days: 7
+      # Por último (recriam o banco): as mutações nos guardas do SQL; cada uma tem de derrubar o pgTAP.
+      - if: ${{ !cancelled() }}
+        run: node scripts/ci/mutacoes-sql.mjs
