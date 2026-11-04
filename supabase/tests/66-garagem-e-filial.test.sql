@@ -9,7 +9,7 @@
 begin;
 \ir apoio/como_usuario.psql
 
-select plan(29);
+select plan(30);
 
 create function pg_temp.id(p_nome text) returns uuid language sql as $$
   select nullif(current_setting('t.' || p_nome, true), '')::uuid
@@ -78,6 +78,10 @@ select set_eq(
   $$select codigo || ':' || digito_da_raiz from config.garagem$$,
   array['matriz:2', 'cordeiropolis:4', 'parauapebas:6'],
   'as 3 garagens, cada uma com o dígito da raiz no Sankhya'
+);
+select is(
+  (select count(*) from config.garagem where conferencia = 'conferida'),
+  3::bigint, 'as 3 garagens nascem conferidas (Alexandre as informou); o que fica a conferir é a regra do dígito, no CR'
 );
 
 -- ---- a garagem do CR pela raiz ----

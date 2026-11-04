@@ -62,7 +62,7 @@ O usuário da API é somente leitura **por enquanto**. A garantia do Eixo é a t
 
 ### Garagem e filial: duas dimensões (Alexandre, 03/11/2026)
 
-- **Garagem (3: Matriz, Cordeirópolis, Parauapebas)** é o **lugar** e vive na **árvore** de CRs: é a raiz do CR. Pelo primeiro dígito do código de 7 dígitos de frota: 4 = FROTA - COR/SP (Cordeirópolis); 6 = FROTA - PAR/PA (Parauapebas); 2 = frota da Matriz (descrições "SLZ", **a confirmar**). Com a ponte (S0), a raiz vem de `CODCENCUSPAI`; até lá o primeiro dígito, marcado "derivada, a confirmar". CRs de 8 dígitos (acionistas) e dígito fora de 2, 4 e 6 ficam **sem garagem** e vão para a fila de exceções (há 3 CRs de frota com dígito 5).
+- **Garagem (3: Matriz, Cordeirópolis, Parauapebas)** é o **lugar** e vive na **árvore** de CRs: é a raiz do CR. Pelo primeiro dígito do código de 7 dígitos de frota: 4 = FROTA - COR/SP (Cordeirópolis); 6 = FROTA - PAR/PA (Parauapebas); 2 = frota da Matriz (descrições "SLZ"). As 3 garagens são conferidas (informadas por Alexandre); o que fica **a confirmar** é a regra do primeiro dígito: com a ponte (S0), a raiz vem de `CODCENCUSPAI`; até lá o primeiro dígito, marcado em cada CR "derivada, a confirmar". CRs de 8 dígitos (acionistas) e dígito fora de 2, 4 e 6 ficam **sem garagem** e vão para a fila de exceções (há 3 CRs de frota com dígito 5).
 - **Filial do CR (13 valores de `AD_GARAGEM`:** Operação Matriz, Operação Sudeste, Parauapebas - OZ Minerais, Veículos Vendidos, Parceiros…) é um **rótulo**, diferente do lugar: a mesma "Operação Matriz" aparece em CRs dos códigos 2, 4 e 6.
 - **A garagem e a filial do ativo são as do CR vigente, calculadas, nunca gravadas no ativo.**
 - Existem **raízes de serviço de outras unidades** (CON/MG e Benevides).

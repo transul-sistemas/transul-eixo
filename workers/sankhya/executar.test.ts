@@ -121,6 +121,19 @@ describe("executor da consulta (pnpm sankhya:consulta)", () => {
     expect(enviados).toEqual([]);
   });
 
+  it("a guarda confere o SQL do usuário antes do limite: o SELECT * do envelope é só da guarda", async () => {
+    const arquivo = consulta("ok.sql", "SELECT C.CODCENCUS FROM TSICUS C");
+    await executar(arquivo);
+    expect(enviados[0]).toBe(
+      "SELECT * FROM (\nSELECT C.CODCENCUS FROM TSICUS C\n) WHERE ROWNUM <= 5000",
+    );
+    const comAsterisco = consulta(
+      "asterisco.sql",
+      "SELECT * FROM (SELECT C.CODCENCUS FROM TSICUS C) WHERE ROWNUM <= 10",
+    );
+    await expect(executar(comAsterisco)).rejects.toThrow("select_asterisco");
+  });
+
   it("consulta recusada pela guarda nunca chega ao Sankhya", async () => {
     const arquivo = consulta("ruim.sql", "SELECT * FROM TGFVEI");
     await expect(executar(arquivo)).rejects.toThrow("select_asterisco");

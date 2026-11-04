@@ -80,7 +80,7 @@ const NOMES = {
 } as const;
 
 describe("siglas e chips", () => {
-  it("as 25 siglas são exatamente as da régua do CLAUDE.md (VAz saiu em 05/11/2026)", () => {
+  it("as 25 siglas são exatamente as da régua do CLAUDE.md (VAz saiu em 03/11/2026)", () => {
     expect([...SIGLAS].sort()).toEqual([...REGUA_DO_CLAUDE].sort());
     expect(SIGLAS).toHaveLength(25);
     expect(SIGLAS).not.toContain("VAz");

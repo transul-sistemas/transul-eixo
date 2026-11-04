@@ -8,6 +8,17 @@ Modelo de entrada:
 
 ---
 
+## 03/11/2026 — Regra de ritmo: acelerar sem perder segurança
+
+- **Decisão (Alexandre, 03/11/2026):**
+  1. **Risco alto** (banco, permissões e RLS, login, funções atômicas, ponte do Sankhya, dados reais) continua **parando no checkpoint** e esperando o "aprovado". **Risco baixo** (telas que reusam componentes existentes, ajustes visuais, textos, documentação), com **tudo verde** na verificação local, **integra sozinho** (fast-forward, push direto, etiqueta, CI da main conferido uma vez) e o relato vai **depois**; se algo falhar, para e avisa.
+  2. **Relatórios curtos:** uma tabela de testes por arquivo, o que foi criado em poucas linhas e só as decisões que dependem de Alexandre.
+  3. **Não perguntar o que já está decidido:** no simples e reversível, escolher a opção mais simples, registrar como **hipótese** e seguir; parar só para risco alto ou irreversível.
+  4. **A 3.10 se funde na 3.9.** Ordem depois da 3.8: **3.9** (ligar o banco às telas; Receber em duas etapas; "Entregar ao Operacional"; Cadastrar placa com Função, Carroceria, Eixos e Operação obrigatória; garagem e filial novas; faixa "Para receber"); depois os assistentes que faltam (enviar, mudar situação, desatrelar e engatar, registrar manutenção). Sugerir o modelo (Opus ou Sonnet) a cada fatia.
+- **Hipóteses enquanto não houver resposta:** o Operacional continua **por filial** (`config.filial`, da 3.1); a raiz 2 é a Matriz (a regra do dígito, a conferir).
+- **Pergunta pendente com a equipe:** por que 15 placas têm CR repetido sem trocar de garagem.
+- **Quem decidiu:** Alexandre.
+
 ## 03/11/2026 — Fatia S0: ponte de consulta do Sankhya (somente leitura)
 
 - **O que entrou (só código; o banco não mudou):**
@@ -24,9 +35,10 @@ Modelo de entrada:
   4. **Tempo máximo de 120 s** por chamada (a v1 usava 300 s).
   5. **Na consulta (b), zero conta como vazio** nos códigos (`NUMEIXOS`, `CODTIPCAR`, `CODMODELOVEI`).
   6. **O runner é TypeScript rodado direto pelo Node 24** (sem compilar): `tsconfig` com `allowImportingTsExtensions` e `workers/sankhya/package.json` com `"type": "module"`.
-- **Segurança, achado:** o cliente da v1 tem **valores padrão de client id, secret e X-Token escritos no código** (vi só mascarados; nada foi copiado). Recomendo trocar essas credenciais no Sankhya e pedir credenciais novas, exclusivas do Eixo.
+- **Segurança, achado (confirmado no clone local da v1, 03/11/2026):** o cliente da v1 (`consultas_api/_sankhya_client.py`) guarda **credenciais padrão no código** (client id, secret e X-Token como valor padrão das variáveis). Foram lidas só mascaradas e **nenhuma foi copiada**. **Recomendação ao Sankhya: trocar (rotacionar) as credenciais da v1.** As do Eixo são **novas e exclusivas**, só em `.env.sankhya.local` (fora do Git) e nas variáveis do worker.
 - **Regra proposta para `/permissions` (negar ao Claude Code a leitura de `.env*`):** `Read(**/.env*)`, `Edit(**/.env*)`, `Write(**/.env*)`, `Bash(cat *.env*)`, `Bash(type *.env*)` e `Bash(Get-Content *.env*)` em `deny`.
 - **Quem decidiu:** Alexandre (o escopo da S0, 03/11/2026); os itens numerados aguardam o checkpoint.
+- **Checkpoint aprovado com ajustes (Alexandre, 03/11/2026):** as 3 garagens conferidas (a regra do dígito fica a confirmar, por CR); as descrições de teste com 04/11 e 05/11 passaram a 03/11 (`status.test.ts`, testes 20 e 40 do banco); o achado das credenciais da v1 registrado acima. **Confirmado (com teste):** a guarda confere a consulta escrita pelo usuário **antes** de envolvê-la no limite de linhas; o "nunca `SELECT *`" vale para o que o usuário escreve (um `SELECT *` no arquivo é recusado, mesmo com o mesmo formato do envelope); o `SELECT * FROM (...) WHERE ROWNUM <= N` é só da guarda e só reprojeta as colunas já listadas.
 
 ## 03/11/2026 — Garagem e filial são duas dimensões; o CR de frota é do ativo
 
@@ -39,14 +51,14 @@ Modelo de entrada:
   - **Evidência (agregados, sem placas):** das 41 placas com mais de um CR, **26 mudam de garagem** (o dígito muda) e em 25 delas sobra um CR aberto e o resto bloqueado: **trocar de garagem cria CR novo**. **15 placas têm CR repetido sem trocar de garagem** (pergunta pendente para a equipe). Existem raízes de serviço de outras unidades (CON/MG e Benevides).
 - **O que entrou (migration nova `garagem_e_filial_do_cr`):**
   - `config.garagem` (os 13 de `AD_GARAGEM`) → **`config.filial_do_cr`** (a tela chama de "Filial"); `nucleo.cr.garagem` → **`filial_do_cr`** (com origem); `nucleo.garagem_em` → **`nucleo.filial_do_cr_em`** (a função executável e as políticas foram renomeadas junto).
-  - **`config.garagem` novo** (as 3, com `digito_da_raiz` e conferência; Matriz "a conferir") e **`nucleo.cr.garagem_id`**, com origem e conferência. A garagem do CR de frota **deriva da raiz** (primeiro dígito do código de 7 dígitos) com origem `derivada` e "a conferir", até a ponte trazer `CODCENCUSPAI`; a garagem informada por alguém não é trocada pela derivação. **`nucleo.garagem_em`** (nova) dá a garagem do ativo pelo CR vigente: **calculada, nunca gravada no ativo**.
+  - **`config.garagem` novo** (as 3, com `digito_da_raiz` e conferência; todas conferidas, ajuste do checkpoint) e **`nucleo.cr.garagem_id`**, com origem e conferência. A garagem do CR de frota **deriva da raiz** (primeiro dígito do código de 7 dígitos) com origem `derivada` e "a conferir", até a ponte trazer `CODCENCUSPAI`; a garagem informada por alguém não é trocada pela derivação. **`nucleo.garagem_em`** (nova) dá a garagem do ativo pelo CR vigente: **calculada, nunca gravada no ativo**.
   - **CR de frota com dígito fora de 2, 4 e 6 (há 3 com dígito 5) e CR de 8 dígitos (acionistas)** ficam sem garagem e entram na fila de exceções (`assunto = cr_sem_garagem`, uma aberta por CR); a fila ganhou `cr_id` e `assunto`.
   - `config.filial` (3.1: custódia e escopo do Operacional) **não mudou**, até a resposta: **o Operacional atua por garagem ou por filial?**
 - **Decisões minhas a confirmar:**
   1. A derivação vale só para **CR de frota** (`AD_FROTA` S); CR de serviço de 7 dígitos fica sem garagem e **não** vai para a fila (as raízes de serviço de outras unidades não são as 3 garagens).
   2. **Todo CR de frota sem garagem** vai para a fila (inclusive os de código fora de 7 dígitos), além dos de 8 dígitos.
   3. Trocar a garagem do CR sem dizer a origem conta como **informada**.
-  4. Cordeirópolis e Parauapebas nascem "conferidas" no catálogo; Matriz "a conferir". A garagem derivada de cada CR fica "a conferir" até a ponte.
+  4. ~~Matriz "a conferir" no catálogo~~ **Ajuste do checkpoint da S0 (Alexandre, 03/11/2026): as 3 garagens nascem conferidas** (Alexandre as informou). O que fica "a conferir" é a **regra do primeiro dígito** (2 = Matriz, 4 = Cordeirópolis, 6 = Parauapebas), marcada em cada CR (`garagem_conferencia`) até a ponte trazer `CODCENCUSPAI`.
 - **Testes:** novo `66-garagem-e-filial` (29 asserções); ajustados 20 (dez tabelas no catálogo, a filial do CR repetida, os índices), 50 (as políticas da filial do CR), 60 (filial do CR; `frota_de_ativo` e a mensagem nova), 65 (o rótulo `frota_de_ativo`) e 70 (a fila conta só a exceção do implemento). **Mutações (todas pegas):** raiz ignorada; sem fila; garagem informada sobrescrita; garagem do ativo pelo CR de hoje; CR de ativo compartilhado.
 - **Impacto nas telas (nada alterado; entra na 3.9):** hoje a "garagem" das telas é filha da filial (exemplo). Mudam: o passo "Local" do "Cadastrar placa" (`cadastrar-placa.tsx`), o "+" de garagem (`mini-cadastro-de-catalogo.tsx`), `app/(sistema)/frota/placas/acoes.ts` (e teste), `lib/dados/catalogos-locais.ts`, `escrita-tipos.ts`, `entradas-dos-assistentes.test.ts`, `escrita.test.ts`, o esquema `lib/dominio/esquemas/placa.ts` (e teste), o armazém e os catálogos de exemplo (`lib/exemplo/armazem.ts`, `catalogos.ts`, e testes) e os e2e `e2e/apoio-assistentes-frota.ts` e `assistentes-frota.spec.ts`. O resumo da placa não mostra garagem nem filial hoje; a garagem e a filial do CR passam a vir do CR vigente.
 - **Datas:** comentários com 04/11 e 05/11 corrigidos para 03/11 em `cr.ts`, `status.ts`, `siglas.ts`, `verificacao.yml`, `workflow-verificacao.test.ts`, `seed.sql` e nos testes 36 e 60. Ficaram os textos de descrição (não são comentários) em `status.test.ts`, no teste 20 e no teste 40; as migrations enviadas não se editam.

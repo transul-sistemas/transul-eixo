@@ -216,10 +216,10 @@ insert into config.parametro (chave, valor, descricao) values
   ('dias_do_alerta_de_correcao', '30', 'Por quantos dias o alerta de correção tardia fica visível.'),
   ('dias_parado_em_patio', '15', 'Dias em PÁT a partir dos quais o ativo gera o alerta parado_em_patio (padrão provisório).');
 
--- As 3 garagens (o lugar, a raiz da árvore de CRs), com o primeiro dígito do código de 7 dígitos de
--- frota no Sankhya. A raiz 2 (Matriz, descrições "SLZ") ainda está a conferir (Alexandre, 03/11/2026).
+-- As 3 garagens (o lugar, a raiz da árvore de CRs), informadas por Alexandre (03/11/2026): conferidas. O
+-- que fica a conferir é a regra do primeiro dígito do código do CR (2, 4, 6), marcada em cada CR.
 insert into config.garagem (codigo, rotulo, digito_da_raiz, conferencia) values
-  ('matriz', 'Matriz', 2, 'a_conferir'),
+  ('matriz', 'Matriz', 2, 'conferida'),
   ('cordeiropolis', 'Cordeirópolis', 4, 'conferida'),
   ('parauapebas', 'Parauapebas', 6, 'conferida');
 

@@ -143,7 +143,7 @@ select throws_ok(
 select lives_ok($$select pg_temp.ev('k1', 'ACe', '2026-02-05 00:00-03')$$, 'caminhão vale só pelos tipos (nunca tem composição)');
 select throws_ok(
   $$select pg_temp.ev('i6', 'VAz', '2026-02-05 00:00-03')$$,
-  '23514', 'A situação VAz não existe na régua.', 'o VAz saiu da régua (05/11/2026): o PÁT cobre o ativo parado'
+  '23514', 'A situação VAz não existe na régua.', 'o VAz saiu da régua (03/11/2026): o PÁT cobre o ativo parado'
 );
 select throws_ok(
   $$select pg_temp.ev('a1', 'SMo', '2026-02-05 00:00-03')$$,

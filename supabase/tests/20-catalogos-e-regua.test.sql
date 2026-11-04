@@ -50,7 +50,7 @@ select set_eq(
   $$values ('ETc'), ('ETv'), ('CAr'), ('DEs'), ('DOp'), ('ACe'), ('ADe'), ('CAn'), ('MAc'), ('MAt'),
            ('MAv'), ('MAN'), ('REF'), ('SIN'), ('FOg'), ('FEr'), ('SMo'), ('SDo'), ('PÁT'),
            ('DOC'), ('ALU'), ('EMP'), ('VEN'), ('SUC'), ('VND')$$,
-  'existem exatamente as 25 siglas do CLAUDE.md (o VAz saiu em 05/11/2026)'
+  'existem exatamente as 25 siglas do CLAUDE.md (o VAz saiu em 03/11/2026)'
 );
 select is(
   (select array_agg(codigo order by prioridade) from config.camada_de_status),
