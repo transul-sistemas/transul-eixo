@@ -10,6 +10,13 @@ import {
   type PaginaDePlacas,
 } from "./placas";
 
+// Sem EIXO_DADOS=exemplo a fonte é o banco (3.9a): aqui, um cliente que sempre falha.
+vi.mock("@/lib/supabase/servidor", () => ({
+  criarClienteDoServidor: async () => ({
+    schema: () => ({ rpc: async () => ({ data: null, error: { message: "sem banco no teste" } }) }),
+  }),
+}));
+
 const HOJE = "2026-10-29";
 const TODAS = placasDeExemplo(HOJE);
 const SEM_BAIXADAS = TODAS.filter((p) => !SIGLAS_DE_BAIXA.includes(p.sigla));
@@ -252,9 +259,9 @@ describe("listarPlacas: página", () => {
 });
 
 describe("listarPlacas: fonte", () => {
-  it("sem EIXO_DADOS=exemplo recusa rodar", async () => {
+  it("sem EIXO_DADOS=exemplo vai ao banco (e o erro dele chega)", async () => {
     vi.stubEnv("EIXO_DADOS", "");
-    await expect(listar()).rejects.toThrow("A fonte de exemplo só roda com EIXO_DADOS=exemplo");
+    await expect(listar()).rejects.toThrow("sem banco no teste");
   });
   it("simula falha e lentidão só para testar os estados da tela", async () => {
     await expect(listarPlacas(consulta(), HOJE, { simulacao: { falha: true } })).rejects.toThrow(
@@ -264,12 +271,12 @@ describe("listarPlacas: fonte", () => {
     await listarPlacas(consulta(), HOJE, { simulacao: { lentoMs: 120 } });
     expect(Date.now() - antes).toBeGreaterThanOrEqual(110);
   });
-  it("lento e falha não têm efeito fora da fonte de exemplo: a fonte recusa antes de obedecer", async () => {
+  it("lento e falha não têm efeito fora da fonte de exemplo: o banco não obedece à simulação", async () => {
     vi.stubEnv("EIXO_DADOS", "");
     const antes = Date.now();
     await expect(
       listarPlacas(consulta(), HOJE, { simulacao: { falha: true, lentoMs: 800 } }),
-    ).rejects.toThrow("A fonte de exemplo só roda com EIXO_DADOS=exemplo");
+    ).rejects.toThrow("sem banco no teste");
     expect(Date.now() - antes).toBeLessThan(400);
   });
   it("devolve o formato da página", async () => {

@@ -5,6 +5,13 @@ import { eventosDeExemplo } from "@/lib/exemplo/eventos";
 import { placasDeExemplo } from "@/lib/exemplo/placas";
 import { listarPlacas, obterFicha, obterPlaca } from "./placas";
 
+// Sem EIXO_DADOS=exemplo a fonte é o banco (3.9a): aqui, um cliente que sempre falha.
+vi.mock("@/lib/supabase/servidor", () => ({
+  criarClienteDoServidor: async () => ({
+    schema: () => ({ rpc: async () => ({ data: null, error: { message: "sem banco no teste" } }) }),
+  }),
+}));
+
 const HOJE = "2026-10-29";
 const TODAS = placasDeExemplo(HOJE);
 
@@ -47,9 +54,9 @@ describe("obterFicha: a ficha da placa (detalhe e história)", () => {
     expect(faixas.at(-1)?.sigla).toBe(ficha?.sigla);
   });
 
-  it("sem EIXO_DADOS=exemplo recusa, com a mesma mensagem da lista", async () => {
+  it("sem EIXO_DADOS=exemplo vai ao banco (e o erro dele chega)", async () => {
     vi.stubEnv("EIXO_DADOS", "");
-    await expect(obterFicha("AAA0A04", HOJE)).rejects.toThrow(/EIXO_DADOS=exemplo/);
+    await expect(obterFicha("AAA0A04", HOJE)).rejects.toThrow(/sem banco no teste/);
   });
 
   it("falha (simulação da tela) falha a ficha; falhaNoPainel não, porque é só do painel", async () => {

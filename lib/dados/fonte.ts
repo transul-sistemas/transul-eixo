@@ -23,6 +23,25 @@ import type {
 
 export const MENSAGEM_SO_COM_EXEMPLO = "A fonte de exemplo só roda com EIXO_DADOS=exemplo";
 
+/** As gravações no modo banco entram na 3.9b; até lá, a tela mostra o aviso e não grava. */
+export const MENSAGEM_GRAVACAO_EM_BREVE =
+  "Gravar pelo banco entra em breve. Por enquanto, as telas mostram os dados sem alterar.";
+
+export class ErroDeGravacaoEmBreve extends Error {
+  constructor() {
+    super(MENSAGEM_GRAVACAO_EM_BREVE);
+    this.name = "ErroDeGravacaoEmBreve";
+  }
+}
+
+/**
+ * De onde vêm os dados: o exemplo só com `EIXO_DADOS=exemplo` (desenvolvimento rápido e os e2e
+ * atuais); fora disso, sempre o banco. Em produção a variável nunca existe, então é sempre o banco.
+ */
+export function modoDosDados(): "exemplo" | "banco" {
+  return process.env.EIXO_DADOS === "exemplo" ? "exemplo" : "banco";
+}
+
 export interface FonteDePlacas {
   consultar(
     consulta: ConsultaDeTabela,
@@ -35,13 +54,14 @@ export interface FonteDePlacas {
   obterFicha(placa: string, hoje: string, opcoes: OpcoesDaConsulta): Promise<FichaDaPlaca | null>;
 }
 
-/**
- * Escolhe de onde vêm as placas. Hoje só existe a fonte de exemplo, e só com `EIXO_DADOS=exemplo`
- * (nunca definida na Vercel). A fonte do banco entra na Fase 3, e só este arquivo muda.
- */
+/** Escolhe de onde vêm as placas: o exemplo, ou o banco com a sessão de quem usa (RLS). */
 export async function fonteDePlacas(): Promise<FonteDePlacas> {
-  if (process.env.EIXO_DADOS !== "exemplo") {
-    throw new Error(`${MENSAGEM_SO_COM_EXEMPLO}; a fonte do banco entra na Fase 3.`);
+  if (modoDosDados() === "banco") {
+    const [{ fonteDoBanco }, { criarClienteDoServidor }] = await Promise.all([
+      import("./fonte-do-banco"),
+      import("@/lib/supabase/servidor"),
+    ]);
+    return fonteDoBanco(criarClienteDoServidor);
   }
   const { fonteDeExemplo } = await import("./fonte-de-exemplo");
   return fonteDeExemplo;
@@ -83,11 +103,9 @@ export interface FonteDeEscrita {
   placasQuePodemSerDisponibilizadas(): Promise<{ placa: string; nome: string }[]>;
 }
 
-/** Escolhe onde se grava. Igual à leitura: só a fonte de exemplo, e só com `EIXO_DADOS=exemplo`. */
+/** Escolhe onde se grava: o exemplo; no modo banco, as gravações entram na 3.9b ("em breve"). */
 export async function fonteDeEscrita(hoje: string): Promise<FonteDeEscrita> {
-  if (process.env.EIXO_DADOS !== "exemplo") {
-    throw new Error(`${MENSAGEM_SO_COM_EXEMPLO}; a fonte do banco entra na Fase 3.`);
-  }
+  if (modoDosDados() === "banco") throw new ErroDeGravacaoEmBreve();
   const { escritaDeExemplo } = await import("./fonte-de-exemplo");
   return await escritaDeExemplo(hoje);
 }

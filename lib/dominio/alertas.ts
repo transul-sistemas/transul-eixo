@@ -15,8 +15,29 @@ export interface DadosParaAlertas {
   semCavalo: boolean;
 }
 
+/**
+ * Os alertas que o banco calcula (nucleo.alerta_de_vinculo): no modo banco, a lista e a ficha mostram
+ * estes, com o texto da tela. A regra de cada um vive só no banco.
+ */
+export const TEXTOS_DOS_ALERTAS_DO_BANCO = {
+  sem_cr: "Sem CR vigente",
+  buraco_em_cr: "Período sem CR",
+  buraco_em_custodia: "Período sem custódia",
+  implemento_sem_eixos: "Implemento sem os eixos",
+  conjunto_sem_nome: "Conjunto sem nome definido",
+  correcao_tardia_de_status: "Situação corrigida fora do prazo",
+  parado_em_patio: "Parada no pátio além do prazo",
+  ativo_sem_operacao: "Sem operação",
+} as const;
+export type CodigoDeAlertaDoBanco = keyof typeof TEXTOS_DOS_ALERTAS_DO_BANCO;
+
 export type CodigoDeAlerta =
-  "modelo-a-definir" | "crlv-vencido" | "sem-motorista" | "implemento-solto" | "cr-sobreposto";
+  | "modelo-a-definir"
+  | "crlv-vencido"
+  | "sem-motorista"
+  | "implemento-solto"
+  | "cr-sobreposto"
+  | CodigoDeAlertaDoBanco;
 
 export interface Alerta {
   codigo: CodigoDeAlerta;
@@ -56,4 +77,13 @@ export function alertasDaPlaca(dados: DadosParaAlertas, hoje: string): Alerta[] 
     alertas.push({ codigo: "cr-sobreposto", texto: "Dois CRs vigentes ao mesmo tempo" });
   }
   return alertas;
+}
+
+/** O alerta do banco com o texto da tela; um código que a tela não conhece lança (nunca some calado). */
+export function alertaDoBanco(codigo: string): Alerta {
+  if (!(codigo in TEXTOS_DOS_ALERTAS_DO_BANCO)) {
+    throw new Error(`Alerta do banco desconhecido pela tela: ${codigo}`);
+  }
+  const conhecido = codigo as CodigoDeAlertaDoBanco;
+  return { codigo: conhecido, texto: TEXTOS_DOS_ALERTAS_DO_BANCO[conhecido] };
 }

@@ -4,6 +4,13 @@ import { placasDeExemplo } from "@/lib/exemplo/placas";
 import type { ConsultaDeTabela } from "@/lib/navegacao/tabela";
 import { dadosDoPainel, listarPlacas, obterPlaca } from "./placas";
 
+// Sem EIXO_DADOS=exemplo a fonte é o banco (3.9a): aqui, um cliente que sempre falha.
+vi.mock("@/lib/supabase/servidor", () => ({
+  criarClienteDoServidor: async () => ({
+    schema: () => ({ rpc: async () => ({ data: null, error: { message: "sem banco no teste" } }) }),
+  }),
+}));
+
 const HOJE = "2026-10-29";
 const TODAS = placasDeExemplo(HOJE);
 
@@ -80,9 +87,9 @@ describe("obterPlaca: o detalhe de uma placa para o painel de espiar", () => {
     expect(detalhe?.operacao).toBeNull();
   });
 
-  it("sem EIXO_DADOS=exemplo recusa, com a mesma mensagem da lista", async () => {
+  it("sem EIXO_DADOS=exemplo vai ao banco (e o erro dele chega)", async () => {
     vi.stubEnv("EIXO_DADOS", "");
-    await expect(obterPlaca("AAA0A04", HOJE)).rejects.toThrow(/EIXO_DADOS=exemplo/);
+    await expect(obterPlaca("AAA0A04", HOJE)).rejects.toThrow(/sem banco no teste/);
   });
 
   it("falhaNoPainel falha só o detalhe, não a lista", async () => {
@@ -136,7 +143,7 @@ describe("dadosDoPainel: o que a página entrega ao painel, sem nunca derrubar a
     registro.mockRestore();
   });
 
-  it("sem EIXO_DADOS=exemplo também vira erro do painel, não exceção", async () => {
+  it("erro do banco também vira erro do painel, não exceção", async () => {
     vi.stubEnv("EIXO_DADOS", "");
     expect(await dadosDoPainel("AAA0A04", HOJE)).toEqual({ placa: "AAA0A04", situacao: "erro" });
   });

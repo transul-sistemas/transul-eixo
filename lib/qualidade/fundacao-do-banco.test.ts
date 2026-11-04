@@ -134,9 +134,41 @@ describe("migrations da fundação", () => {
       ),
     );
     expect(comGrant[0]).toBe("20261103170725_politicas_e_grants.sql");
-    const semPolitica = comGrant.filter(
-      (n) => !/create\s+policy\b/i.test(lerArquivo(`supabase/migrations/${n}`)),
-    );
+    const semPolitica = comGrant.filter((n) => {
+      const sql = lerArquivo(`supabase/migrations/${n}`);
+      return !/create\s+policy\b/i.test(sql) && !soVisaoComRlsDeQuemConsulta(sql);
+    });
     expect(semPolitica).toEqual([]);
   });
+
+  // 3.9a: uma visão security_invoker não tem política própria (a RLS é a das tabelas que ela lê).
+  it("sem política, só se o grant de tabela for todo de visão security_invoker criada no arquivo", () => {
+    const visao =
+      "create view nucleo.v with (security_invoker = true) as select 1;\ngrant select on nucleo.v to authenticated;";
+    expect(soVisaoComRlsDeQuemConsulta(visao)).toBe(true);
+    expect(
+      soVisaoComRlsDeQuemConsulta(
+        "create view nucleo.v as select 1;\ngrant select on nucleo.v to authenticated;",
+      ),
+    ).toBe(false);
+    expect(
+      soVisaoComRlsDeQuemConsulta(`${visao}\ngrant select on nucleo.ativo to authenticated;`),
+    ).toBe(false);
+  });
 });
+
+/** Todo grant de tabela a authenticated no arquivo é de visão security_invoker criada nele. */
+function soVisaoComRlsDeQuemConsulta(sql: string): boolean {
+  const alvos = [
+    ...sql.matchAll(
+      /grant\s+[^;]*?\bon\s+(?!function\b|schema\b)(?:table\s+)?([a-z_]+\.[a-z_]+)[^;]*\bto\s+authenticated\b/gi,
+    ),
+  ].map((m) => m[1]!.toLowerCase());
+  if (alvos.length === 0) return false;
+  return alvos.every((alvo) =>
+    new RegExp(
+      `create\\s+view\\s+${alvo.replace(".", "\\.")}\\s+with\\s*\\(\\s*security_invoker\\s*=\\s*true\\s*\\)`,
+      "i",
+    ).test(sql),
+  );
+}
