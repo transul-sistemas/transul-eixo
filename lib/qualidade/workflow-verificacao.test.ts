@@ -188,7 +188,7 @@ describe("e2e noturno: o e2e completo da main, uma vez por noite", () => {
   });
 });
 
-// Decisão de 04/11/2026 (máquina sem memória livre): as capturas das telas de acesso saem do CI, só
+// Decisão de 03/11/2026 (máquina sem memória livre): as capturas das telas de acesso saem do CI, só
 // no pull request, e chegam como artefato do GitHub (ver docs/decisoes.md).
 describe("workflow de verificação: capturas das telas de acesso no pull request", () => {
   const capturas = passoCom("app", "id: capturas");

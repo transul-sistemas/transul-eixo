@@ -144,7 +144,7 @@ describe("<BarraLateral>: incorporada (página de demonstração)", () => {
   });
 });
 
-// CI do PR #31 (04/11/2026): o Sair no topo fazia o topo quebrar linha no 1366 e no celular. O Sair
+// CI do PR #31 (03/11/2026): o Sair no topo fazia o topo quebrar linha no 1366 e no celular. O Sair
 // fica no rodapé da barra lateral, visível também na gaveta (abaixo de 1024 px).
 describe("<BarraLateral>: sair", () => {
   const sair = async () => {};

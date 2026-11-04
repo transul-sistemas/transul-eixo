@@ -88,7 +88,7 @@ jobs:
         run: pnpm test:e2e
       # As capturas das telas de acesso (1366, 1920, tablet 820 e celular 390, claro e escuro), só no
       # pull request, mesmo se o e2e falhar: o visual é conferido pelo artefato, sem rodar nada na
-      # máquina local (decisão de 04/11/2026, ver docs/decisoes.md).
+      # máquina local (decisão de 03/11/2026, ver docs/decisoes.md).
       - id: capturas
         if: ${{ !cancelled() && github.event_name == 'pull_request' && steps.build.outcome == 'success' }}
         env:
