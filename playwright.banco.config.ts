@@ -14,7 +14,12 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? [["github"], ["html", { open: "never" }]] : "list",
-  use: { baseURL: ENDERECO, trace: "retain-on-failure" },
+  use: {
+    baseURL: ENDERECO,
+    trace: "retain-on-failure",
+    locale: "pt-BR",
+    timezoneId: "America/Sao_Paulo",
+  },
   projects: [
     // O mesmo preparo do e2e de sempre: um usuário de cada perfil, ligado às pessoas que o gerador
     // de dados já criou (o gestor e o Operacional do e2e, pelo CPF).
