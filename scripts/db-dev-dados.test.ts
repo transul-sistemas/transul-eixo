@@ -27,15 +27,11 @@ describe("bancoLocal: só o banco da própria máquina", () => {
 });
 
 describe("lerArgumentos", () => {
-  it("200 por padrão, sem medir", () => {
-    expect(lerArgumentos([])).toEqual({ quantidade: 200, medir: false, saida: null });
+  it("200 por padrão", () => {
+    expect(lerArgumentos([])).toEqual({ quantidade: 200 });
   });
-  it("a carga de 5.000 com a medição e o arquivo de saída", () => {
-    expect(lerArgumentos(["--quantidade", "5000", "--medir", "--saida", "medicao.md"])).toEqual({
-      quantidade: 5000,
-      medir: true,
-      saida: "medicao.md",
-    });
+  it("a carga de 5.000", () => {
+    expect(lerArgumentos(["--quantidade", "5000"])).toEqual({ quantidade: 5000 });
   });
   it.each([["0"], ["-1"], ["20001"], ["abc"], ["1.5"]])("recusa a quantidade %s", (q) => {
     expect(() => lerArgumentos(["--quantidade", q])).toThrow(/1 a 20000/);

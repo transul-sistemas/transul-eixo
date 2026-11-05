@@ -17,7 +17,8 @@
     "test:capturas": "playwright test --project=preparar --project=capturas-1366 --project=capturas-1920 --project=capturas-tablet-820 --project=capturas-celular-390",
     "db:tipos": "node scripts/db-tipos.mjs",
     "db:dev-dados": "node scripts/db-dev-dados.ts",
-    "db:carga": "node scripts/db-dev-dados.ts --quantidade 5000 --medir --saida medicao-da-lista.md",
+    "db:carga": "node scripts/db-dev-dados.ts --quantidade 5000",
+    "db:diagnostico": "node scripts/db-diagnostico.ts",
     "env:local": "node scripts/env-local.mjs",
     "sankhya:consulta": "node workers/sankhya/consulta.ts"
   },

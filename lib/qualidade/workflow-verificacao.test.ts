@@ -227,25 +227,33 @@ describe("workflow de verificação: jobs só do pull request (capturas e modo b
     expect(envio).toContain("retention-days: 7");
   });
 
-  it("o modo banco mede 5.000 ativos, volta ao banco limpo, gera os 200 e roda o e2e do modo banco", () => {
+  it("o modo banco gera os ~200 ativos e roda o e2e do modo banco (sem a carga, que tem job próprio)", () => {
     ehDoPullRequest("modo-banco");
     const passos = passosDe(texto, "modo-banco");
     const indice = (trecho: string) => passos.findIndex((p) => p.includes(trecho));
     for (const trecho of [
-      "run: pnpm db:carga",
-      "GITHUB_STEP_SUMMARY",
-      "name: medicao-da-lista",
-      "supabase db reset",
       "run: pnpm db:dev-dados",
       "run: pnpm build",
       "run: pnpm test:e2e-banco",
     ]) {
       expect(indice(trecho), trecho).toBeGreaterThan(-1);
     }
-    expect(indice("run: pnpm db:carga")).toBeLessThan(indice("supabase db reset"));
-    expect(indice("supabase db reset")).toBeLessThan(indice("run: pnpm db:dev-dados"));
     expect(indice("run: pnpm db:dev-dados")).toBeLessThan(indice("run: pnpm test:e2e-banco"));
-    expect(passoCom("modo-banco", "name: medicao-da-lista")).toContain("retention-days: 7");
+    expect(job("modo-banco")).not.toContain("db:carga");
+  });
+
+  it("a medição tem job curto e próprio: 201, 1.000 e 5.000 ativos, banco recriado entre eles", () => {
+    ehDoPullRequest("medicao");
+    expect(job("medicao")).not.toMatch(/\n    needs:/);
+    expect(job("medicao")).not.toContain("pnpm build");
+    expect(job("medicao")).not.toContain("playwright");
+    const passo = passoCom("medicao", "db-diagnostico.ts");
+    expect(passo).toContain("for n in 201 1000 5000");
+    expect(passo).toContain("supabase db reset");
+    expect(passo).toContain("--quantidade");
+    const envio = passoCom("medicao", "name: diagnostico-da-lista");
+    expect(envio).toContain("if: always()");
+    expect(envio).toContain("retention-days: 7");
   });
 
   it("o modo banco roda as mutações do SQL por último (elas recriam o banco)", () => {

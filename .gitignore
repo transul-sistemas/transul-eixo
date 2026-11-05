@@ -14,6 +14,7 @@ test-results/
 capturas/
 # medição da lista de placas (gerada no CI do pull request, artefato)
 medicao-da-lista.md
+diagnostico-da-lista.md
 # sessões e senhas sorteadas dos usuários de teste (fatia 3.8)
 e2e/.auth/
 

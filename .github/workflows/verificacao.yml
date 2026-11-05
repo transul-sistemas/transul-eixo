@@ -162,11 +162,11 @@ jobs:
           if-no-files-found: warn
 
   modo-banco:
-    # A carga de 5.000 ativos com a medição da lista (tempos e planos no resumo e no artefato), depois o
-    # banco limpo com os ~200 ativos de desenvolvimento e o e2e pequeno do modo banco.
+    # Os ~200 ativos de desenvolvimento, o e2e pequeno do modo banco e as mutações do SQL (a medição
+    # tem job próprio, o medicao).
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
-    timeout-minutes: 70
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -176,17 +176,6 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec supabase start
-      - run: pnpm db:carga
-      - if: always()
-        run: if [ -f medicao-da-lista.md ]; then cat medicao-da-lista.md >> "$GITHUB_STEP_SUMMARY"; fi
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: medicao-da-lista
-          path: medicao-da-lista.md
-          retention-days: 7
-          if-no-files-found: warn
-      - run: pnpm exec supabase db reset
       - run: pnpm db:dev-dados
       - run: |
           pnpm exec supabase status -o env \
@@ -210,3 +199,33 @@ jobs:
       # Por último (recriam o banco): as mutações nos guardas do SQL; cada uma tem de derrubar o pgTAP.
       - if: ${{ !cancelled() }}
         run: node scripts/ci/mutacoes-sql.mjs
+
+  medicao:
+    # O diagnóstico da lista de placas num job curto (sem build nem navegador): 201, 1.000 e 5.000
+    # ativos, com o banco recriado entre eles; sem limite de tempo nas consultas medidas. O relatório
+    # sobe sempre, mesmo parcial (decisão de 03/11/2026, fatia 3.9a).
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec supabase start
+      - run: |
+          for n in 201 1000 5000; do
+            pnpm exec supabase db reset > /dev/null 2>&1
+            node scripts/db-dev-dados.ts --quantidade "$n"
+            node scripts/db-diagnostico.ts --rotulo "$n" --saida diagnostico-da-lista.md > /dev/null
+          done
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: diagnostico-da-lista
+          path: diagnostico-da-lista.md
+          retention-days: 7
+          if-no-files-found: warn
