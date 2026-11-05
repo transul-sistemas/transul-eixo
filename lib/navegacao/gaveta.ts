@@ -34,3 +34,8 @@ export function criarLojaDaGaveta(): LojaDaGaveta {
 
 /** A gaveta do sistema. Só muda por clique e tecla, no navegador. */
 export const gaveta = criarLojaDaGaveta();
+
+/** A gaveta fecha ao trocar de tela; a primeira montagem da barra (o mesmo caminho) não é troca. */
+export function trocouDeTela(anterior: string, atual: string): boolean {
+  return anterior !== atual;
+}

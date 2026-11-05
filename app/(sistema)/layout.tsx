@@ -10,8 +10,11 @@ import { sair } from "@/app/(acesso)/acoes";
 // A barra lateral mostra só os módulos do perfil da sessão (lido do banco a cada pedido). Ler a sessão
 // é dinâmico, então ela fica num Suspense, com o lugar reservado (a largura padrão, aberta).
 async function BarraLateralDaSessao() {
-  const { perfil, usuarioId, email } = await exigirSessao();
-  const pessoa = await obterPessoaDaSessao();
+  // A sessão e a pessoa em paralelo: a barra chega mais cedo.
+  const [{ perfil, usuarioId, email }, pessoa] = await Promise.all([
+    exigirSessao(),
+    obterPessoaDaSessao(),
+  ]);
   // A memória da barra é de quem entrou (fatia 3.9a); nome e e-mail no rodapé, acima do Sair.
   return (
     <BarraLateral

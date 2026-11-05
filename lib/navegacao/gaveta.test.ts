@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { criarLojaDaGaveta } from "./gaveta";
+import { criarLojaDaGaveta, trocouDeTela } from "./gaveta";
 
 describe("gaveta do menu (celular e tablet)", () => {
   it("começa fechada", () => {
@@ -47,5 +47,16 @@ describe("gaveta do menu (celular e tablet)", () => {
     const b = criarLojaDaGaveta();
     a.abrir();
     expect(b.estaAberta()).toBe(false);
+  });
+});
+
+// Fatia 3.9a: a barra lateral chega por streaming; se a pessoa tocou em "Abrir menu" antes, a primeira
+// montagem da barra não pode fechar a gaveta. Só a troca de tela fecha.
+describe("trocouDeTela", () => {
+  it("na primeira montagem (o mesmo caminho), não", () => {
+    expect(trocouDeTela("/inicio/tarefas", "/inicio/tarefas")).toBe(false);
+  });
+  it("noutro caminho, sim", () => {
+    expect(trocouDeTela("/inicio/tarefas", "/frota/placas")).toBe(true);
   });
 });

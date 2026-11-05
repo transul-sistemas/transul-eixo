@@ -29,7 +29,7 @@ import {
   type EstadoDaBarra,
   somarContadores,
 } from "@/lib/navegacao/estado-da-barra";
-import { gaveta } from "@/lib/navegacao/gaveta";
+import { gaveta, trocouDeTela } from "@/lib/navegacao/gaveta";
 import { criarLoja } from "@/lib/navegacao/loja-da-barra";
 import type { Perfil } from "@/lib/navegacao/perfis";
 import { modulosVisiveis, podeAbrir } from "@/lib/navegacao/visibilidade";
@@ -234,9 +234,12 @@ export function BarraLateral({
     raizDaBarra.current?.setAttribute("data-pronta", "");
   }, []);
 
-  // A gaveta fecha ao mudar de tela e quando a tela cresce.
+  // A gaveta fecha ao mudar de tela e quando a tela cresce. A primeira montagem não é troca de tela:
+  // a barra chega por streaming e não pode desfazer o toque em "Abrir menu" feito antes dela (3.9a).
+  const caminhoAnterior = useRef(caminho);
   useEffect(() => {
-    if (!incorporada) gaveta.fechar();
+    if (!incorporada && trocouDeTela(caminhoAnterior.current, caminho)) gaveta.fechar();
+    caminhoAnterior.current = caminho;
   }, [caminho, incorporada]);
   useEffect(() => {
     if (!incorporada && telaGrande) gaveta.fechar();
