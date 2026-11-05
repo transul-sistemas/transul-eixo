@@ -1293,3 +1293,8 @@ Registro de direção, só em texto: nenhum código nem migration. Não muda a f
 - **Login de Alexandre como Administrador:** rodado `querys/02-tornar-alexandre-administrador.sql`; a conferência devolveu `administrador | true`.
 - **Pasta `querys/`:** o SQL avulso saiu de `supabase/sql/` para `querys/`. Migrações, seed e testes ficam em `supabase/`, porque a CLI só os lê de lá.
 - **Pendente (painel, Alexandre):** expor `nucleo` e `config` em Settings → API → Exposed schemas (a API devolvia HTTP 406) e trocar a senha do banco, que passou pela conversa.
+
+## 05/11/2026 — Commits direto na `main`
+
+- **Decisão (Alexandre, 05/11/2026):** todo commit vai direto na `main`, com push na hora. Não há mais branch por entrega, pull request nem espera do "aprovado" no checkpoint para integrar. Substitui a regra de 03/11/2026. Continuam valendo a etiqueta por fatia e o "nunca `--force`".
+- **Aplicado:** a branch `fase-3-9a-fonte-do-banco` entrou na `main` por fast-forward (typecheck, lint e 2170 testes do Vitest verdes antes).
