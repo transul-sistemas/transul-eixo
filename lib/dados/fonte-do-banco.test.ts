@@ -254,3 +254,36 @@ describe("obter e obterFicha", () => {
     ]);
   });
 });
+
+// Plano B do recálculo agendado (3.9a): sem agendador, as linhas vencidas (vigência futura que chegou)
+// são recalculadas antes de ler a lista e o detalhe.
+describe("as linhas vencidas antes da leitura", () => {
+  it("a lista e o detalhe chamam atualizar_leitura_vencida antes de ler", async () => {
+    const { c, rpc } = cliente({
+      listar_placas: {
+        data: { linhas: [], total: 0, pagina: 1, paginas: 1, tam: 25 },
+        error: null,
+      },
+      contar_chips_de_placas: { data: [], error: null },
+    });
+    const fonte = fonteDoBanco(async () => c);
+    await fonte.consultar(consulta(), "2026-11-03", {});
+    const chamadas = rpc.mock.calls.map((chamada) => chamada[0]);
+    expect(chamadas[0]).toBe("atualizar_leitura_vencida");
+    expect(chamadas.slice(1).sort()).toEqual(["contar_chips_de_placas", "listar_placas"]);
+    rpc.mockClear();
+    await fonte.obter("AAA1A11", "2026-11-03", {});
+    expect(rpc.mock.calls.map((chamada) => chamada[0])).toEqual([
+      "atualizar_leitura_vencida",
+      "detalhe_da_placa",
+    ]);
+  });
+  it("se a atualização falhar, a leitura segue (a linha vencida volta na próxima)", async () => {
+    const { c } = cliente({
+      atualizar_leitura_vencida: { data: null, error: { message: "ocupado" } },
+      detalhe_da_placa: { data: null, error: null },
+    });
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
+    expect(await fonteDoBanco(async () => c).obter("AAA1A11", "2026-11-03", {})).toBeNull();
+  });
+});

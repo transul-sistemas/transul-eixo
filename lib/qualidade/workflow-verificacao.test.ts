@@ -251,6 +251,10 @@ describe("workflow de verificação: jobs só do pull request (capturas e modo b
     expect(passo).toContain("for n in 201 1000 5000");
     expect(passo).toContain("supabase db reset");
     expect(passo).toContain("--quantidade");
+    // A carga em lote: 2.000 ativos numa transação, com e sem os gatilhos (a regra fica para decisão).
+    const carga = passoCom("medicao", "--sem-gatilhos");
+    expect(carga).toContain("--quantidade 2000");
+    expect(carga).toContain("supabase db reset");
     const envio = passoCom("medicao", "name: diagnostico-da-lista");
     expect(envio).toContain("if: always()");
     expect(envio).toContain("retention-days: 7");

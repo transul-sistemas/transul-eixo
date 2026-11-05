@@ -8,7 +8,7 @@
 begin;
 \ir apoio/como_usuario.psql
 
-select plan(27);
+select plan(35);
 
 create function pg_temp.id(p_nome text) returns uuid language sql as $$
   select nullif(current_setting('t.' || lower(regexp_replace(p_nome, '[^A-Za-z0-9]', '_', 'g')), true), '')::uuid
@@ -147,6 +147,19 @@ select nucleo.registrar_baixa(pg_temp.id('ap1'), 'VND', '2026-01-14 08:00-03', '
 select pg_temp.disparar();
 select is(pg_temp.divergentes(), 0::bigint, 'baixa (baixa do ativo, gestor e posse)');
 
+select nucleo.registrar_evento(pg_temp.id('k2'), 'ETv', '2026-01-14 09:00-03');
+update nucleo.evento_de_status set excluido_em = now(), motivo_da_exclusao = 'Registrado por engano'
+ where id = (select id from nucleo.evento_de_status
+              where ativo_id = pg_temp.id('k2') and camada = 'atividade' and excluido_em is null
+              order by em desc limit 1);
+select pg_temp.disparar();
+select ok(
+  pg_temp.divergentes() = 0
+  and (select sigla from nucleo.leitura_da_placa where ativo_id = pg_temp.id('k2')) = 'PÁT'
+  and (select ultima_correcao_tardia_em from nucleo.leitura_da_placa where ativo_id = pg_temp.id('k2')) is not null,
+  'correção de evento: a situação volta e a correção tardia fica guardada'
+);
+
 update nucleo.cr_do_ativo set fim = '2026-01-15 08:00-03', fim_origem = 'informada'
  where ativo_id = pg_temp.id('k2') and fim is null;
 insert into nucleo.cr_do_ativo (ativo_id, cr_id, inicio, inicio_origem)
@@ -185,11 +198,16 @@ select ok(
   'só a custódia muda (outra filial)'
 );
 
-update nucleo.ativo set eixos = 3 where id = pg_temp.id('i2');
+update nucleo.ativo set eixos = 3, ano_fabricacao = 2020, ano_modelo = 2021
+ where id = pg_temp.id('i2');
 select pg_temp.disparar();
 select ok(
   pg_temp.divergentes() = 0 and not (select 'implemento_sem_eixos' = any (alertas_vigentes) from nucleo.leitura_da_placa where ativo_id = pg_temp.id('i2')),
   'dado do ativo (eixos): o alerta some'
+);
+select ok(
+  current_user = 'postgres' and (select ano from nucleo.leitura_da_placa where ativo_id = pg_temp.id('i2')) = 2021,
+  'a gravação direta pelo dono do banco (sem login) também dispara os gatilhos'
 );
 
 update nucleo.placa_do_ativo set fim = '2026-01-18 08:00-03', fim_origem = 'informada'
@@ -267,8 +285,61 @@ select throws_ok($$select count(*) from nucleo.leitura_da_placa$$, '42501', null
 reset role;
 
 -- ---- reconstrução e recálculo agendado ----
+create temp table pelos_gatilhos as select to_jsonb(l) - 'recalculado_em' as linha from nucleo.leitura_da_placa l;
 select is(nucleo.reconstruir_leitura_das_placas(), 6, 'a reconstrução total refaz uma linha por ativo');
+select set_eq(
+  $$select to_jsonb(l) - 'recalculado_em' from nucleo.leitura_da_placa l$$,
+  $$select linha from pelos_gatilhos$$,
+  'a reconstrução total produz a mesma tabela que os gatilhos, linha a linha'
+);
 select is(pg_temp.divergentes(), 0::bigint, 'e continua igual ao calculado');
+
+-- ---- segurança: o que authenticated executa entre as funções da 3.9a (nada a mais) ----
+select set_eq(
+  $$select p.oid::regprocedure::text from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+     where n.nspname in ('nucleo', 'config')
+       and p.proname in ('texto_simples', 'placas_filtradas', 'listar_placas', 'contar_chips_de_placas', 'ativo_da_placa',
+                         'detalhe_da_placa', 'historia_da_placa', 'alertas_vigentes_do_ativo', 'inicio_do_pat',
+                         'ultima_correcao_tardia_em', 'alerta_parado_em_patio', 'alerta_correcao_tardia', 'alertas_com_prazos',
+                         'alertas_do_ativo', 've_todas_as_placas', 'minha_carteira_de_placas', 'minhas_operacoes_de_placas',
+                         'minhas_filiais_de_placas', 'atualizar_leitura_vencida', 'linha_calculada_da_placa',
+                         'proximo_recalculo_do_ativo', 'recalcular_so_a_linha', 'recalcular_linha_da_placa',
+                         'recalcular_pela_mudanca', 'reconstruir_leitura_das_placas', 'recalcular_linhas_vencidas', 'linhas_divergentes')
+       and has_function_privilege('authenticated', p.oid, 'EXECUTE')$$,
+  array['nucleo.texto_simples(text)', 'nucleo.placas_filtradas(text,text[],text[],text[],boolean)',
+        'nucleo.listar_placas(text,text[],text[],text[],boolean,text,boolean,integer,integer)',
+        'nucleo.contar_chips_de_placas(text,text[],text[],text[],boolean)', 'nucleo.ativo_da_placa(text)',
+        'nucleo.detalhe_da_placa(text)', 'nucleo.historia_da_placa(text)',
+        'nucleo.alertas_vigentes_do_ativo(uuid,timestamp with time zone)', 'nucleo.inicio_do_pat(uuid)',
+        'nucleo.ultima_correcao_tardia_em(uuid)', 'nucleo.alerta_parado_em_patio(timestamp with time zone,timestamp with time zone)',
+        'nucleo.alerta_correcao_tardia(timestamp with time zone,timestamp with time zone)',
+        'nucleo.alertas_com_prazos(text[],timestamp with time zone,timestamp with time zone,boolean,timestamp with time zone)',
+        'nucleo.alertas_do_ativo(uuid,timestamp with time zone)', 'config.ve_todas_as_placas()',
+        'config.minha_carteira_de_placas()', 'config.minhas_operacoes_de_placas()', 'config.minhas_filiais_de_placas()',
+        'nucleo.atualizar_leitura_vencida()'],
+  'authenticated executa só as leituras, os ajudantes que a política usa e a atualização das vencidas'
+);
+
+-- ---- vigência futura, com o relógio simulado por parâmetro (plano B: as vencidas antes da leitura) ----
+insert into nucleo.cr (codcencus, codigo, participa_da_frota, veiculo_obrigatorio) values (8198, 'M98', true, true);
+update nucleo.cr_do_ativo set fim = date_trunc('second', now()) + interval '10 days', fim_origem = 'informada'
+ where ativo_id = pg_temp.id('k1') and fim is null and excluido_em is null;
+insert into nucleo.cr_do_ativo (ativo_id, cr_id, inicio, inicio_origem)
+  values (pg_temp.id('k1'), (select id from nucleo.cr where codigo = 'M98'), date_trunc('second', now()) + interval '10 days', 'informada');
+select pg_temp.disparar();
+select ok(
+  (select proximo_recalculo from nucleo.leitura_da_placa where ativo_id = pg_temp.id('k1')) = date_trunc('second', now()) + interval '10 days'
+  and (select cr from nucleo.leitura_da_placa where ativo_id = pg_temp.id('k1')) = 'M1',
+  'CR que começa no futuro: a linha ainda mostra o CR de agora e guarda o instante da troca'
+);
+select is(nucleo.recalcular_linhas_vencidas(500, now() + interval '9 days'), 0, 'antes do instante, nenhuma linha vence');
+select ok(nucleo.recalcular_linhas_vencidas(500, date_trunc('second', now()) + interval '10 days 1 second') >= 1, 'chegado o instante, a linha vence e é recalculada');
+select ok(
+  (select cr from nucleo.leitura_da_placa where ativo_id = pg_temp.id('k1')) = 'M98'
+  and (select to_jsonb(l) - 'recalculado_em' from nucleo.leitura_da_placa l where l.ativo_id = pg_temp.id('k1'))
+      = to_jsonb(nucleo.linha_calculada_da_placa(pg_temp.id('k1'), date_trunc('second', now()) + interval '10 days 1 second')) - 'recalculado_em',
+  'e fica igual à calculada naquele instante'
+);
 
 select * from finish();
 rollback;

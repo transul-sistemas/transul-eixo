@@ -222,6 +222,14 @@ jobs:
             node scripts/db-dev-dados.ts --quantidade "$n"
             node scripts/db-diagnostico.ts --rotulo "$n" --saida diagnostico-da-lista.md > /dev/null
           done
+      # A carga em lote: 2.000 ativos numa transação, com e sem os gatilhos da leitura mantida.
+      - run: |
+          echo "" >> diagnostico-da-lista.md
+          echo "## Carga em lote (2.000 ativos numa transação)" >> diagnostico-da-lista.md
+          for modo in "" "--sem-gatilhos"; do
+            pnpm exec supabase db reset > /dev/null 2>&1
+            node scripts/db-dev-dados.ts --quantidade 2000 $modo | grep "Dados de desenvolvimento" >> diagnostico-da-lista.md
+          done
       - uses: actions/upload-artifact@v4
         if: always()
         with:

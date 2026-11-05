@@ -9,6 +9,7 @@ const LISTA_FIXA: readonly string[] = [
   "playwright.config.ts",
   "playwright.banco.config.ts",
   "docs/decisoes.md",
+  "docs/como-abrir-o-eixo.md",
 ];
 
 /** Todo plano é documentação de trabalho e cita a variável à vontade: liberado por padrão. */

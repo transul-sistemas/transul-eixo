@@ -57,6 +57,10 @@ describe("EIXO_DADOS nunca vai para a Vercel nem para produção", () => {
     const fora = usam.filter((c) => !liberadoParaEixoDados(c));
     expect(fora).toEqual([]);
   });
+  it("o roteiro de abrir o Eixo no computador (3.9a) pode citar a variável", () => {
+    expect(liberadoParaEixoDados("docs/como-abrir-o-eixo.md")).toBe(true);
+    expect(liberadoParaEixoDados("docs/outro-roteiro.md")).toBe(false);
+  });
   it("o e2e do modo banco (3.9a) liga o banco de forma explícita, e só ele", () => {
     expect(liberadoParaEixoDados("playwright.banco.config.ts")).toBe(true);
     expect(lerTexto("playwright.banco.config.ts")).toContain('EIXO_DADOS: "banco"');

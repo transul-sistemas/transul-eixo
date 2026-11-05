@@ -19,15 +19,33 @@ export function bancoLocal(endereco: string): boolean {
   return ["127.0.0.1", "localhost", "[::1]"].includes(url.hostname);
 }
 
-/** `--quantidade 5000` (200 por padrão). */
-export function lerArgumentos(argv: readonly string[]): { quantidade: number } {
+/** `--quantidade 5000` (200 por padrão) e `--sem-gatilhos` (só para medir a carga em lote). */
+export function lerArgumentos(argv: readonly string[]): {
+  quantidade: number;
+  semGatilhos: boolean;
+} {
   const i = argv.indexOf("--quantidade");
   const quantidade = Number(i >= 0 ? (argv[i + 1] ?? "") : "200");
   if (!Number.isInteger(quantidade) || quantidade < 1 || quantidade > 20000) {
     throw new Error("--quantidade vai de 1 a 20000.");
   }
-  return { quantidade };
+  return { quantidade, semGatilhos: argv.includes("--sem-gatilhos") };
 }
+
+/** As tabelas com o gatilho da leitura mantida (supabase/migrations, fatia 3.9a). */
+const TABELAS_COM_GATILHO = [
+  "ativo",
+  "placa_do_ativo",
+  "gestor_da_carteira",
+  "cr_do_ativo",
+  "placa_na_operacao",
+  "custodia",
+  "estado_de_status",
+  "composicao",
+  "cr",
+  "pessoa",
+  "operacao",
+];
 
 function enderecoDoBancoLocal(): string {
   const texto = execSync("pnpm exec supabase status -o env", {
@@ -53,13 +71,35 @@ async function principal() {
     const inicio = performance.now();
     await cliente.query("begin");
     await cliente.query(readFileSync("supabase/dev/dados.sql", "utf8"));
+    // Só para medir a carga em lote: sem os gatilhos, a leitura mantida é reconstruída no fim, na
+    // mesma transação, e os gatilhos voltam antes do commit.
+    if (argumentos.semGatilhos) {
+      for (const tabela of TABELAS_COM_GATILHO) {
+        await cliente.query(`alter table nucleo.${tabela} disable trigger t99_leitura_da_placa`);
+      }
+    }
     const { rows } = await cliente.query<{ resumo: string }>(
       "select pg_temp.gerar_dados($1) as resumo",
       [argumentos.quantidade],
     );
+    if (argumentos.semGatilhos) {
+      await cliente.query("select nucleo.reconstruir_leitura_das_placas()");
+      for (const tabela of TABELAS_COM_GATILHO) {
+        await cliente.query(`alter table nucleo.${tabela} enable trigger t99_leitura_da_placa`);
+      }
+    } else {
+      // Com os gatilhos, o recálculo é adiado ao fim da transação: entra na medida.
+      await cliente.query("set constraints all immediate");
+    }
     await cliente.query("commit");
     const segundos = Math.round((performance.now() - inicio) / 1000);
-    console.log(`Dados de desenvolvimento: ${rows[0]!.resumo} Gerados em ${segundos} s.`);
+    const modo = argumentos.semGatilhos
+      ? "sem os gatilhos (reconstrução no fim)"
+      : "com os gatilhos";
+    console.log(
+      `Dados de desenvolvimento: ${rows[0]!.resumo} Gerados em ${segundos} s, ${modo}` +
+        ` (${Math.round((performance.now() - inicio) / argumentos.quantidade)} ms por ativo).`,
+    );
   } catch (erro) {
     await cliente.query("rollback").catch(() => undefined);
     throw erro;

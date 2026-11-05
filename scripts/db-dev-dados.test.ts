@@ -27,11 +27,20 @@ describe("bancoLocal: só o banco da própria máquina", () => {
 });
 
 describe("lerArgumentos", () => {
-  it("200 por padrão", () => {
-    expect(lerArgumentos([])).toEqual({ quantidade: 200 });
+  it("200 por padrão, com os gatilhos", () => {
+    expect(lerArgumentos([])).toEqual({ quantidade: 200, semGatilhos: false });
   });
   it("a carga de 5.000", () => {
-    expect(lerArgumentos(["--quantidade", "5000"])).toEqual({ quantidade: 5000 });
+    expect(lerArgumentos(["--quantidade", "5000"])).toEqual({
+      quantidade: 5000,
+      semGatilhos: false,
+    });
+  });
+  it("a medição da carga em lote sem os gatilhos (reconstrói no fim)", () => {
+    expect(lerArgumentos(["--quantidade", "2000", "--sem-gatilhos"])).toEqual({
+      quantidade: 2000,
+      semGatilhos: true,
+    });
   });
   it.each([["0"], ["-1"], ["20001"], ["abc"], ["1.5"]])("recusa a quantidade %s", (q) => {
     expect(() => lerArgumentos(["--quantidade", q])).toThrow(/1 a 20000/);
@@ -61,5 +70,19 @@ describe("o gerador fica fora da produção", () => {
     const conecta = script.indexOf("new pg.Client(");
     expect(confere).toBeGreaterThan(-1);
     expect(conecta).toBeGreaterThan(confere);
+  });
+});
+
+describe("carga sem os gatilhos (só para medir; a regra fica para decisão)", () => {
+  const script = readFileSync("scripts/db-dev-dados.ts", "utf8");
+  it("desliga os gatilhos, reconstrói e religa antes do commit, na mesma transação", () => {
+    const desliga = script.indexOf("disable trigger t99_leitura_da_placa");
+    const reconstroi = script.indexOf("nucleo.reconstruir_leitura_das_placas()");
+    const religa = script.indexOf("enable trigger t99_leitura_da_placa");
+    const commit = script.indexOf('cliente.query("commit")');
+    expect(desliga).toBeGreaterThan(-1);
+    expect(reconstroi).toBeGreaterThan(desliga);
+    expect(religa).toBeGreaterThan(reconstroi);
+    expect(commit).toBeGreaterThan(religa);
   });
 });

@@ -70,6 +70,15 @@ async function chamar<T>(cliente: ClienteDeLeitura, funcao: string, argumentos: 
   return data as T;
 }
 
+/**
+ * Plano B do recálculo agendado (3.9a): sem agendador, antes de ler recalcula as linhas cuja vigência
+ * futura já chegou (em lote, no banco). Se falhar, a leitura segue; a linha vencida volta na próxima.
+ */
+async function atualizarVencidas(cliente: ClienteDeLeitura): Promise<void> {
+  const { error } = await cliente.schema("nucleo").rpc("atualizar_leitura_vencida");
+  if (error) console.error("atualizar_leitura_vencida falhou:", error.message);
+}
+
 function sigla(valor: string): Sigla {
   if (!(SIGLAS as readonly string[]).includes(valor)) {
     throw new Error(`Situação que a tela não conhece: ${valor}`);
@@ -143,6 +152,7 @@ export function fonteDoBanco(cliente: () => Promise<ClienteDeLeitura>): FonteDeP
   return {
     async consultar(consulta): Promise<PaginaDePlacas> {
       const c = await cliente();
+      await atualizarVencidas(c);
       const base = filtros(consulta);
       const [pagina, chips] = await Promise.all([
         chamar<{
@@ -173,13 +183,16 @@ export function fonteDoBanco(cliente: () => Promise<ClienteDeLeitura>): FonteDeP
       };
     },
     async obter(placa): Promise<DetalheDaPlaca | null> {
-      const d = await chamar<DetalheDoBanco | null>(await cliente(), "detalhe_da_placa", {
+      const c = await cliente();
+      await atualizarVencidas(c);
+      const d = await chamar<DetalheDoBanco | null>(c, "detalhe_da_placa", {
         p_placa: placa,
       });
       return d ? paraDetalhe(d) : null;
     },
     async obterFicha(placa): Promise<FichaDaPlaca | null> {
       const c = await cliente();
+      await atualizarVencidas(c);
       const d = await chamar<DetalheDoBanco | null>(c, "detalhe_da_placa", { p_placa: placa });
       if (!d) return null;
       const historia = await chamar<{ sigla: string; em: string }[]>(c, "historia_da_placa", {

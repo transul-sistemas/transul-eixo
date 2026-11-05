@@ -7,6 +7,7 @@ import { appendFileSync, readFileSync, writeFileSync } from "node:fs";
 
 const LEITURA = "supabase/migrations/20261104200000_leitura_das_placas.sql";
 const MANTIDA = "supabase/migrations/20261105100000_leitura_mantida_das_placas.sql";
+const RELOGIO = "supabase/migrations/20261105120000_leitura_mantida_relogio.sql";
 const TESTES =
   "supabase/tests/80-leitura-das-placas.test.sql supabase/tests/81-leitura-mantida.test.sql";
 const FONTES = [
@@ -56,6 +57,20 @@ const MUTACOES = [
     false,
     MANTIDA,
   ],
+  [
+    "linhas vencidas nunca recalculadas",
+    "where l.proximo_recalculo <= p_em",
+    "where false",
+    false,
+    RELOGIO,
+  ],
+  [
+    "recálculo com relógio liberado para quem entrou",
+    "grant execute on function nucleo.atualizar_leitura_vencida() to authenticated;",
+    "grant execute on function nucleo.atualizar_leitura_vencida() to authenticated;\ngrant execute on function nucleo.recalcular_linhas_vencidas(integer, timestamptz) to authenticated;",
+    false,
+    RELOGIO,
+  ],
   ...FONTES.map((tabela) => [
     `sem o gatilho de ${tabela}`,
     `create constraint trigger t99_leitura_da_placa after insert or update on nucleo.${tabela}
@@ -89,7 +104,7 @@ const silencioso = (comando) => {
 };
 
 const originais = new Map(
-  [LEITURA, MANTIDA].map((arquivo) => [arquivo, readFileSync(arquivo, "utf8")]),
+  [LEITURA, MANTIDA, RELOGIO].map((arquivo) => [arquivo, readFileSync(arquivo, "utf8")]),
 );
 const linhas = ["## Mutações no SQL (pgTAP 80 e 81)", "", "| Mutação | Resultado |", "|---|---|"];
 let sobreviventes = 0;
