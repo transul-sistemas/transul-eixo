@@ -132,10 +132,10 @@ select nucleo.engatar(pg_temp.id('k1'), pg_temp.id('i1'), 1::smallint, '2026-01-
 select pg_temp.disparar();
 select is(pg_temp.divergentes(), 0::bigint, 'engatar (composição): o cavalo e o implemento ficam iguais ao calculado');
 
-select nucleo.registrar_evento(pg_temp.id('k1'), 'ETc', '2026-01-12 08:00-03');
+select nucleo.registrar_evento(pg_temp.id('k1'), 'ETv', '2026-01-12 08:00-03');
 select pg_temp.disparar();
 select ok(
-  pg_temp.divergentes() = 0 and (select sigla from nucleo.leitura_da_placa where ativo_id = pg_temp.id('i1')) = 'ETc',
+  pg_temp.divergentes() = 0 and (select sigla from nucleo.leitura_da_placa where ativo_id = pg_temp.id('i1')) = 'ETv',
   'evento do cavalo (estado de status): o implemento engatado herda a situação'
 );
 

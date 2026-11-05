@@ -191,7 +191,9 @@ select set_eq(
     -- 3.7 (testadas em 70-dados-do-ativo.test.sql)
     'config.campo_corrigivel.campo_corrigivel_ler', 'nucleo.sinal_do_sankhya.sinal_do_sankhya_ler',
     'nucleo.correcao_de_campo.correcao_de_campo_ler',
-    'nucleo.fila_de_excecoes.fila_de_excecoes_ler', 'nucleo.fila_de_excecoes.fila_de_excecoes_alterar'
+    'nucleo.fila_de_excecoes.fila_de_excecoes_ler', 'nucleo.fila_de_excecoes.fila_de_excecoes_alterar',
+    -- 3.9a: a leitura mantida das placas (equivalência com ve_ativo no pgTAP 81).
+    'nucleo.leitura_da_placa.leitura_da_placa_ler'
   ],
   'as políticas de cada tabela, com o nome de cada uma (todas testadas abaixo ou na matriz)'
 );

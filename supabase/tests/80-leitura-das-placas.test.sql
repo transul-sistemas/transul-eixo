@@ -152,7 +152,7 @@ set local enable_indexscan = off;
 set local enable_sort = off;
 select is(
   (select array_agg(p order by p) from (
-     select pg_temp.placas(pg_temp.lista(p_ordem => o, p_pagina => g, p_tam => 1))[1] as p
+     select (pg_temp.placas(pg_temp.lista(p_ordem => o, p_pagina => g, p_tam => 1)))[1] as p
        from unnest(array['motorista', 'tipo', 'km']) o, generate_series(1, 4) g) x),
   array['AAA1A11', 'AAA1A11', 'AAA1A11', 'AAA1A12', 'AAA1A12', 'AAA1A12', 'AAA1A13', 'AAA1A13', 'AAA1A13', 'BBB2B22', 'BBB2B22', 'BBB2B22'],
   'com muitos empates e outro plano, as páginas 1..N não repetem nem omitem placa'
