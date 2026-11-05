@@ -10,13 +10,13 @@ import { Placa } from "@/components/placa";
 import { CelulaDaPlaca } from "./celula-da-placa";
 import { guardarRetornoDaLista } from "./retorno-da-lista-no-navegador";
 import {
-  CAMPOS_ORDENAVEIS_DE_PLACAS,
-  DEFINICOES_DAS_COLUNAS_DE_PLACAS,
+  camposOrdenaveisDePlacas,
+  colunasDePlacas,
   type LinhaDePlaca,
   NOMES_DOS_TIPOS,
   TITULOS_DAS_COLUNAS_DE_PLACAS,
 } from "@/lib/dados/placas-tipos";
-import { colunasVisiveis, type DefinicaoDeColuna } from "@/lib/navegacao/colunas-da-tabela";
+import { colunasVisiveis } from "@/lib/navegacao/colunas-da-tabela";
 import { lerTabela, mudarConsulta, type PadraoDaTabela } from "@/lib/navegacao/tabela";
 import { useLista } from "./pendencia-da-lista";
 import { type ColunaDeTabela, type Ordem, TabelaDeDados } from "./tabela-de-dados";
@@ -124,17 +124,19 @@ export function TabelaDePlacas({
   linhas,
   ordem,
   padrao,
-  definicoes = DEFINICOES_DAS_COLUNAS_DE_PLACAS,
-  campos = CAMPOS_ORDENAVEIS_DE_PLACAS,
+  modo = "exemplo",
 }: {
   linhas: LinhaDePlaca[];
   ordem: Ordem;
   padrao: PadraoDaTabela;
-  /** As colunas do modo dos dados (no banco, sem KM nem motorista). */
-  definicoes?: readonly DefinicaoDeColuna[];
-  /** Os campos de ordem do modo dos dados. */
-  campos?: readonly string[];
+  /**
+   * O modo dos dados (no banco, sem KM, motorista nem CRLV). Um texto, não as listas: listas vindas do
+   * servidor são novas a cada navegação e refariam as colunas (o foco do Espiar se perdia ao fechar).
+   */
+  modo?: "exemplo" | "banco";
 }) {
+  const definicoes = colunasDePlacas(modo);
+  const campos = camposOrdenaveisDePlacas(modo);
   const rota = usePathname();
   const parametros = useSearchParams();
   const router = useRouter();

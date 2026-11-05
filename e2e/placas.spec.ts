@@ -411,18 +411,18 @@ test.describe("lista de placas: colunas escolhíveis e reordenáveis", () => {
   const cookie = async (page: Page) =>
     decodeURIComponent((await page.context().cookies()).find((c) => c.name === NOME)?.value ?? "");
 
-  test("o menu lista as 14 colunas: Placa fixa, KM, CR e Valor FIPE desligadas", async ({
+  test("o menu lista as 15 colunas: Placa fixa, KM, CR, Valor FIPE, Filial e Garagem desligadas", async ({
     page,
   }) => {
     await abrirHidratada(page, ROTA);
     await abrir(page);
-    await expect(painel(page).getByRole("checkbox")).toHaveCount(14);
+    await expect(painel(page).getByRole("checkbox")).toHaveCount(15);
     await expect(caixa(page, "Placa")).toBeChecked();
     await expect(caixa(page, "Placa")).toBeDisabled();
     for (const nome of ["Tipo", "Modelo", "Gestor", "Operação", "Situação", "Alertas"]) {
       await expect(caixa(page, nome)).toBeChecked();
     }
-    for (const nome of ["KM", "CR", "Valor FIPE", "Filial"]) {
+    for (const nome of ["KM", "CR", "Valor FIPE", "Filial", "Garagem"]) {
       await expect(caixa(page, nome)).not.toBeChecked();
     }
   });

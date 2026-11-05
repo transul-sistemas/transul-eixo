@@ -39,3 +39,10 @@ describe("camposOrdenaveisDePlacas", () => {
     );
   });
 });
+
+describe("referência estável", () => {
+  it.each(["exemplo", "banco"] as const)("em %s, a mesma lista a cada chamada (a tabela não refaz as colunas)", (modo) => {
+    expect(colunasDePlacas(modo)).toBe(colunasDePlacas(modo));
+    expect(camposOrdenaveisDePlacas(modo)).toBe(camposOrdenaveisDePlacas(modo));
+  });
+});

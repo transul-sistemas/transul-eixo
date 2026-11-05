@@ -156,15 +156,18 @@ export const NOMES_DOS_TIPOS: Record<TipoDeAtivo, string> = {
 export const PADRAO_DA_LISTA_DE_PLACAS = { tam: 25, ordem: "placa" } as const;
 
 /** As colunas da lista no modo dos dados: no banco, sem KM nem motorista (ainda sem fonte). */
+const COLUNAS_NO_BANCO: readonly DefinicaoDeColuna[] = DEFINICOES_DAS_COLUNAS_DE_PLACAS.filter(
+  (d) => d.id !== "km" && d.id !== "motorista",
+);
+// Listas fixas (a mesma referência sempre): a tabela usa a lista como dependência de memória.
 export function colunasDePlacas(modo: "exemplo" | "banco"): readonly DefinicaoDeColuna[] {
-  return modo === "banco"
-    ? DEFINICOES_DAS_COLUNAS_DE_PLACAS.filter((d) => d.id !== "km" && d.id !== "motorista")
-    : DEFINICOES_DAS_COLUNAS_DE_PLACAS;
+  return modo === "banco" ? COLUNAS_NO_BANCO : DEFINICOES_DAS_COLUNAS_DE_PLACAS;
 }
 
 /** Os campos de ordem da lista no modo dos dados: no banco, sem KM, motorista nem CRLV. */
+const CAMPOS_NO_BANCO: readonly string[] = CAMPOS_ORDENAVEIS_DE_PLACAS.filter(
+  (c) => c !== "km" && c !== "motorista" && c !== "crlv",
+);
 export function camposOrdenaveisDePlacas(modo: "exemplo" | "banco"): readonly string[] {
-  return modo === "banco"
-    ? CAMPOS_ORDENAVEIS_DE_PLACAS.filter((c) => c !== "km" && c !== "motorista" && c !== "crlv")
-    : CAMPOS_ORDENAVEIS_DE_PLACAS;
+  return modo === "banco" ? CAMPOS_NO_BANCO : CAMPOS_ORDENAVEIS_DE_PLACAS;
 }

@@ -152,6 +152,9 @@ async function principal() {
                (select count(*) from nucleo.gestor_da_carteira c, g where c.gestor_id = g.id and c.fim is null and c.excluido_em is null)::text as placas`)
     ).rows[0]!;
     escrever(`Gestor medido: Ana Ribeiro, ${quem.placas} placas na carteira.`);
+    // Dispara agora os gatilhos adiados das pessoas de medição (senão o ALTER TABLE das escritas recusa).
+    await cliente.query("set constraints all immediate");
+    await cliente.query("set constraints all deferred");
     const semAlertas = linhaSemAlertas(readFileSync(MIGRATION, "utf8"));
 
     for (const [perfil, id] of [
@@ -255,12 +258,12 @@ async function principal() {
         select
           (select c.cavalo_id from nucleo.composicao c
             where c.excluido_em is null and c.periodo @> now()
-              and nucleo.situacao_atual(c.cavalo_id) in ('PÁT', 'ETv')
+              and nucleo.situacao_atual(c.cavalo_id) in ('PÁT', 'ETv', 'DOp')
               and (select count(*) from nucleo.composicao x where x.cavalo_id = c.cavalo_id and x.excluido_em is null and x.periodo @> now()) = 1
             order by c.cavalo_id limit 1) as cavalo,
           (select c.implemento_id from nucleo.composicao c
             where c.excluido_em is null and c.periodo @> now()
-              and nucleo.situacao_atual(c.cavalo_id) in ('PÁT', 'ETv')
+              and nucleo.situacao_atual(c.cavalo_id) in ('PÁT', 'ETv', 'DOp')
               and (select count(*) from nucleo.composicao x where x.cavalo_id = c.cavalo_id and x.excluido_em is null and x.periodo @> now()) = 1
             order by c.cavalo_id limit 1) as implemento,
           (select a.id from nucleo.ativo a

@@ -343,6 +343,15 @@ isOneToOne: false
             "ativo_sem_gestor":
 { Args: { "p_ativo_id": string }; Returns: boolean
                            },
+"minha_carteira_de_placas":
+{ Args: Record<PropertyKey, never>; Returns: string
+                           },
+"minhas_filiais_de_placas":
+{ Args: Record<PropertyKey, never>; Returns: (string)[]
+                           },
+"minhas_operacoes_de_placas":
+{ Args: Record<PropertyKey, never>; Returns: (string)[]
+                           },
 "nome_do_conjunto":
 { Args: { "p_carroceria_id": string,"p_com_dolly": boolean,"p_eixos_do_dolly": number,"p_eixos_dos_semirreboques": number,"p_unidades": number }; Returns: string
                            },
@@ -363,6 +372,9 @@ isOneToOne: false
                            },
 "ve_ativo":
 { Args: { "p_acao": string,"p_ativo_id": string,"p_modulos": (string)[] }; Returns: boolean
+                           },
+"ve_todas_as_placas":
+{ Args: Record<PropertyKey, never>; Returns: boolean
                            }
           }
           Enums: {
@@ -421,6 +433,12 @@ isOneToOne: false
       foreignKeyName: "baixa_do_ativo_ativo_id_fkey"
       columns: ["ativo_id"]
 isOneToOne: false
+      referencedRelation: "alerta_de_vinculo"
+      referencedColumns: ["ativo_id"]
+    },{
+      foreignKeyName: "baixa_do_ativo_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: false
       referencedRelation: "ativo"
       referencedColumns: ["id"]
     },{
@@ -429,12 +447,6 @@ isOneToOne: false
 isOneToOne: false
       referencedRelation: "campo_pendente"
       referencedColumns: ["ativo_id"]
-    },{
-      foreignKeyName: "baixa_do_ativo_ativo_id_fkey"
-      columns: ["ativo_id"]
-isOneToOne: false
-      referencedRelation: "linha_de_placa"
-      referencedColumns: ["id"]
     },{
       foreignKeyName: "baixa_do_ativo_ativo_id_fkey"
       columns: ["ativo_id"]
@@ -491,6 +503,12 @@ isOneToOne: false
       foreignKeyName: "correcao_de_campo_ativo_id_fkey"
       columns: ["ativo_id"]
 isOneToOne: false
+      referencedRelation: "alerta_de_vinculo"
+      referencedColumns: ["ativo_id"]
+    },{
+      foreignKeyName: "correcao_de_campo_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: false
       referencedRelation: "ativo"
       referencedColumns: ["id"]
     },{
@@ -499,12 +517,6 @@ isOneToOne: false
 isOneToOne: false
       referencedRelation: "campo_pendente"
       referencedColumns: ["ativo_id"]
-    },{
-      foreignKeyName: "correcao_de_campo_ativo_id_fkey"
-      columns: ["ativo_id"]
-isOneToOne: false
-      referencedRelation: "linha_de_placa"
-      referencedColumns: ["id"]
     },{
       foreignKeyName: "correcao_de_campo_ativo_id_fkey"
       columns: ["ativo_id"]
@@ -635,6 +647,12 @@ isOneToOne: false
       foreignKeyName: "cr_do_ativo_ativo_id_fkey"
       columns: ["ativo_id"]
 isOneToOne: false
+      referencedRelation: "alerta_de_vinculo"
+      referencedColumns: ["ativo_id"]
+    },{
+      foreignKeyName: "cr_do_ativo_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: false
       referencedRelation: "ativo"
       referencedColumns: ["id"]
     },{
@@ -643,12 +661,6 @@ isOneToOne: false
 isOneToOne: false
       referencedRelation: "campo_pendente"
       referencedColumns: ["ativo_id"]
-    },{
-      foreignKeyName: "cr_do_ativo_ativo_id_fkey"
-      columns: ["ativo_id"]
-isOneToOne: false
-      referencedRelation: "linha_de_placa"
-      referencedColumns: ["id"]
     },{
       foreignKeyName: "cr_do_ativo_ativo_id_fkey"
       columns: ["ativo_id"]
@@ -685,6 +697,12 @@ isOneToOne: false
       foreignKeyName: "custodia_ativo_id_fkey"
       columns: ["ativo_id"]
 isOneToOne: false
+      referencedRelation: "alerta_de_vinculo"
+      referencedColumns: ["ativo_id"]
+    },{
+      foreignKeyName: "custodia_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: false
       referencedRelation: "ativo"
       referencedColumns: ["id"]
     },{
@@ -693,12 +711,6 @@ isOneToOne: false
 isOneToOne: false
       referencedRelation: "campo_pendente"
       referencedColumns: ["ativo_id"]
-    },{
-      foreignKeyName: "custodia_ativo_id_fkey"
-      columns: ["ativo_id"]
-isOneToOne: false
-      referencedRelation: "linha_de_placa"
-      referencedColumns: ["id"]
     },{
       foreignKeyName: "custodia_ativo_id_fkey"
       columns: ["ativo_id"]
@@ -723,6 +735,12 @@ isOneToOne: false
       foreignKeyName: "estado_de_status_ativo_id_fkey"
       columns: ["ativo_id"]
 isOneToOne: false
+      referencedRelation: "alerta_de_vinculo"
+      referencedColumns: ["ativo_id"]
+    },{
+      foreignKeyName: "estado_de_status_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: false
       referencedRelation: "ativo"
       referencedColumns: ["id"]
     },{
@@ -731,12 +749,6 @@ isOneToOne: false
 isOneToOne: false
       referencedRelation: "campo_pendente"
       referencedColumns: ["ativo_id"]
-    },{
-      foreignKeyName: "estado_de_status_ativo_id_fkey"
-      columns: ["ativo_id"]
-isOneToOne: false
-      referencedRelation: "linha_de_placa"
-      referencedColumns: ["id"]
     },{
       foreignKeyName: "estado_de_status_ativo_id_fkey"
       columns: ["ativo_id"]
@@ -773,6 +785,12 @@ isOneToOne: false
       foreignKeyName: "evento_de_status_ativo_id_fkey"
       columns: ["ativo_id"]
 isOneToOne: false
+      referencedRelation: "alerta_de_vinculo"
+      referencedColumns: ["ativo_id"]
+    },{
+      foreignKeyName: "evento_de_status_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: false
       referencedRelation: "ativo"
       referencedColumns: ["id"]
     },{
@@ -781,12 +799,6 @@ isOneToOne: false
 isOneToOne: false
       referencedRelation: "campo_pendente"
       referencedColumns: ["ativo_id"]
-    },{
-      foreignKeyName: "evento_de_status_ativo_id_fkey"
-      columns: ["ativo_id"]
-isOneToOne: false
-      referencedRelation: "linha_de_placa"
-      referencedColumns: ["id"]
     },{
       foreignKeyName: "evento_de_status_ativo_id_fkey"
       columns: ["ativo_id"]
@@ -811,6 +823,12 @@ isOneToOne: false
       foreignKeyName: "fila_de_excecoes_ativo_id_fkey"
       columns: ["ativo_id"]
 isOneToOne: false
+      referencedRelation: "alerta_de_vinculo"
+      referencedColumns: ["ativo_id"]
+    },{
+      foreignKeyName: "fila_de_excecoes_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: false
       referencedRelation: "ativo"
       referencedColumns: ["id"]
     },{
@@ -819,12 +837,6 @@ isOneToOne: false
 isOneToOne: false
       referencedRelation: "campo_pendente"
       referencedColumns: ["ativo_id"]
-    },{
-      foreignKeyName: "fila_de_excecoes_ativo_id_fkey"
-      columns: ["ativo_id"]
-isOneToOne: false
-      referencedRelation: "linha_de_placa"
-      referencedColumns: ["id"]
     },{
       foreignKeyName: "fila_de_excecoes_ativo_id_fkey"
       columns: ["ativo_id"]
@@ -879,6 +891,12 @@ isOneToOne: false
       foreignKeyName: "gestor_da_carteira_ativo_id_fkey"
       columns: ["ativo_id"]
 isOneToOne: false
+      referencedRelation: "alerta_de_vinculo"
+      referencedColumns: ["ativo_id"]
+    },{
+      foreignKeyName: "gestor_da_carteira_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: false
       referencedRelation: "ativo"
       referencedColumns: ["id"]
     },{
@@ -887,12 +905,6 @@ isOneToOne: false
 isOneToOne: false
       referencedRelation: "campo_pendente"
       referencedColumns: ["ativo_id"]
-    },{
-      foreignKeyName: "gestor_da_carteira_ativo_id_fkey"
-      columns: ["ativo_id"]
-isOneToOne: false
-      referencedRelation: "linha_de_placa"
-      referencedColumns: ["id"]
     },{
       foreignKeyName: "gestor_da_carteira_ativo_id_fkey"
       columns: ["ativo_id"]
@@ -911,6 +923,44 @@ isOneToOne: false
 isOneToOne: false
       referencedRelation: "pessoa_para_leitura"
       referencedColumns: ["id"]
+    }
+                  ]
+                },"leitura_da_placa": {
+                  Row: {
+                    "alertas_vigentes": (string)[],"ano": number | null,"ativo_id": string,"baixada_em": string | null,"busca": string,"causa_id": string | null,"cavalo": string | null,"cr": string | null,"desde": string | null,"filial": string | null,"filial_da_custodia_id": string | null,"garagem": string | null,"gestor": string | null,"gestor_id": string | null,"grupo": string | null,"implementos": (string)[],"inicio_do_pat": string | null,"modelo": string,"nome_da_situacao": string | null,"operacao": string | null,"operacao_id": string | null,"placa": string,"proximo_recalculo": string | null,"recalculado_em": string,"renavam": string | null,"sigla": string,"tipo": string,"ultima_correcao_tardia_em": string | null,"valor_fipe": number | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "alertas_vigentes": (string)[],"ano"?: number | null,"ativo_id": string,"baixada_em"?: string | null,"busca": string,"causa_id"?: string | null,"cavalo"?: string | null,"cr"?: string | null,"desde"?: string | null,"filial"?: string | null,"filial_da_custodia_id"?: string | null,"garagem"?: string | null,"gestor"?: string | null,"gestor_id"?: string | null,"grupo"?: string | null,"implementos": (string)[],"inicio_do_pat"?: string | null,"modelo": string,"nome_da_situacao"?: string | null,"operacao"?: string | null,"operacao_id"?: string | null,"placa": string,"proximo_recalculo"?: string | null,"recalculado_em"?: string,"renavam"?: string | null,"sigla": string,"tipo": string,"ultima_correcao_tardia_em"?: string | null,"valor_fipe"?: number | null
+                  }
+                  Update: {
+                    "alertas_vigentes"?: (string)[],"ano"?: number | null,"ativo_id"?: string,"baixada_em"?: string | null,"busca"?: string,"causa_id"?: string | null,"cavalo"?: string | null,"cr"?: string | null,"desde"?: string | null,"filial"?: string | null,"filial_da_custodia_id"?: string | null,"garagem"?: string | null,"gestor"?: string | null,"gestor_id"?: string | null,"grupo"?: string | null,"implementos"?: (string)[],"inicio_do_pat"?: string | null,"modelo"?: string,"nome_da_situacao"?: string | null,"operacao"?: string | null,"operacao_id"?: string | null,"placa"?: string,"proximo_recalculo"?: string | null,"recalculado_em"?: string,"renavam"?: string | null,"sigla"?: string,"tipo"?: string,"ultima_correcao_tardia_em"?: string | null,"valor_fipe"?: number | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "leitura_da_placa_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: true
+      referencedRelation: "alerta_de_vinculo"
+      referencedColumns: ["ativo_id"]
+    },{
+      foreignKeyName: "leitura_da_placa_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: true
+      referencedRelation: "ativo"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "leitura_da_placa_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: true
+      referencedRelation: "campo_pendente"
+      referencedColumns: ["ativo_id"]
+    },{
+      foreignKeyName: "leitura_da_placa_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: true
+      referencedRelation: "operacao_do_ativo"
+      referencedColumns: ["ativo_id"]
     }
                   ]
                 },"meta_do_conjunto": {
@@ -1029,6 +1079,12 @@ isOneToOne: true
       foreignKeyName: "placa_do_ativo_ativo_id_fkey"
       columns: ["ativo_id"]
 isOneToOne: false
+      referencedRelation: "alerta_de_vinculo"
+      referencedColumns: ["ativo_id"]
+    },{
+      foreignKeyName: "placa_do_ativo_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: false
       referencedRelation: "ativo"
       referencedColumns: ["id"]
     },{
@@ -1037,12 +1093,6 @@ isOneToOne: false
 isOneToOne: false
       referencedRelation: "campo_pendente"
       referencedColumns: ["ativo_id"]
-    },{
-      foreignKeyName: "placa_do_ativo_ativo_id_fkey"
-      columns: ["ativo_id"]
-isOneToOne: false
-      referencedRelation: "linha_de_placa"
-      referencedColumns: ["id"]
     },{
       foreignKeyName: "placa_do_ativo_ativo_id_fkey"
       columns: ["ativo_id"]
@@ -1067,6 +1117,12 @@ isOneToOne: false
       foreignKeyName: "placa_na_operacao_ativo_id_fkey"
       columns: ["ativo_id"]
 isOneToOne: false
+      referencedRelation: "alerta_de_vinculo"
+      referencedColumns: ["ativo_id"]
+    },{
+      foreignKeyName: "placa_na_operacao_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: false
       referencedRelation: "ativo"
       referencedColumns: ["id"]
     },{
@@ -1075,12 +1131,6 @@ isOneToOne: false
 isOneToOne: false
       referencedRelation: "campo_pendente"
       referencedColumns: ["ativo_id"]
-    },{
-      foreignKeyName: "placa_na_operacao_ativo_id_fkey"
-      columns: ["ativo_id"]
-isOneToOne: false
-      referencedRelation: "linha_de_placa"
-      referencedColumns: ["id"]
     },{
       foreignKeyName: "placa_na_operacao_ativo_id_fkey"
       columns: ["ativo_id"]
@@ -1123,6 +1173,12 @@ isOneToOne: false
       foreignKeyName: "posse_do_ativo_ativo_id_fkey"
       columns: ["ativo_id"]
 isOneToOne: false
+      referencedRelation: "alerta_de_vinculo"
+      referencedColumns: ["ativo_id"]
+    },{
+      foreignKeyName: "posse_do_ativo_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: false
       referencedRelation: "ativo"
       referencedColumns: ["id"]
     },{
@@ -1131,12 +1187,6 @@ isOneToOne: false
 isOneToOne: false
       referencedRelation: "campo_pendente"
       referencedColumns: ["ativo_id"]
-    },{
-      foreignKeyName: "posse_do_ativo_ativo_id_fkey"
-      columns: ["ativo_id"]
-isOneToOne: false
-      referencedRelation: "linha_de_placa"
-      referencedColumns: ["id"]
     },{
       foreignKeyName: "posse_do_ativo_ativo_id_fkey"
       columns: ["ativo_id"]
@@ -1173,6 +1223,12 @@ isOneToOne: false
       foreignKeyName: "sinal_do_sankhya_ativo_id_fkey"
       columns: ["ativo_id"]
 isOneToOne: false
+      referencedRelation: "alerta_de_vinculo"
+      referencedColumns: ["ativo_id"]
+    },{
+      foreignKeyName: "sinal_do_sankhya_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: false
       referencedRelation: "ativo"
       referencedColumns: ["id"]
     },{
@@ -1181,12 +1237,6 @@ isOneToOne: false
 isOneToOne: false
       referencedRelation: "campo_pendente"
       referencedColumns: ["ativo_id"]
-    },{
-      foreignKeyName: "sinal_do_sankhya_ativo_id_fkey"
-      columns: ["ativo_id"]
-isOneToOne: false
-      referencedRelation: "linha_de_placa"
-      referencedColumns: ["id"]
     },{
       foreignKeyName: "sinal_do_sankhya_ativo_id_fkey"
       columns: ["ativo_id"]
@@ -1217,6 +1267,12 @@ isOneToOne: false
       foreignKeyName: "transferencia_ativo_id_fkey"
       columns: ["ativo_id"]
 isOneToOne: false
+      referencedRelation: "alerta_de_vinculo"
+      referencedColumns: ["ativo_id"]
+    },{
+      foreignKeyName: "transferencia_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: false
       referencedRelation: "ativo"
       referencedColumns: ["id"]
     },{
@@ -1225,12 +1281,6 @@ isOneToOne: false
 isOneToOne: false
       referencedRelation: "campo_pendente"
       referencedColumns: ["ativo_id"]
-    },{
-      foreignKeyName: "transferencia_ativo_id_fkey"
-      columns: ["ativo_id"]
-isOneToOne: false
-      referencedRelation: "linha_de_placa"
-      referencedColumns: ["id"]
     },{
       foreignKeyName: "transferencia_ativo_id_fkey"
       columns: ["ativo_id"]
@@ -1386,7 +1436,7 @@ isOneToOne: false
                   ]
                 },"alerta_de_vinculo": {
                   Row: {
-                    "alerta": string | null,"ativo_id": string | null
+                    "alerta": string | null,"ativo_id": string
                   }
                   ComputedFields: never
                   Relationships: [
@@ -1410,6 +1460,12 @@ isOneToOne: false
       foreignKeyName: "sinal_do_sankhya_ativo_id_fkey"
       columns: ["ativo_id"]
 isOneToOne: false
+      referencedRelation: "alerta_de_vinculo"
+      referencedColumns: ["ativo_id"]
+    },{
+      foreignKeyName: "sinal_do_sankhya_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: false
       referencedRelation: "ativo"
       referencedColumns: ["id"]
     },{
@@ -1418,12 +1474,6 @@ isOneToOne: false
 isOneToOne: false
       referencedRelation: "campo_pendente"
       referencedColumns: ["ativo_id"]
-    },{
-      foreignKeyName: "sinal_do_sankhya_ativo_id_fkey"
-      columns: ["ativo_id"]
-isOneToOne: false
-      referencedRelation: "linha_de_placa"
-      referencedColumns: ["id"]
     },{
       foreignKeyName: "sinal_do_sankhya_ativo_id_fkey"
       columns: ["ativo_id"]
@@ -1440,11 +1490,41 @@ isOneToOne: false
                   ]
                 },"linha_de_placa": {
                   Row: {
-                    "alertas": (string)[] | null,"ano": number | null,"baixada": boolean | null,"busca": string | null,"cavalo": string | null,"cr": string | null,"desde": string | null,"dias_no_status": number | null,"filial": string | null,"gestor": string | null,"grupo": string | null,"id": string,"implementos": (string)[] | null,"modelo": string | null,"nome_da_situacao": string | null,"operacao": string | null,"placa": string | null,"renavam": string | null,"sigla": string | null,"tipo": string | null,"valor_fipe": number | null
+                    "alertas": (string)[] | null,"ano": number | null,"baixada": boolean | null,"busca": string,"cavalo": string | null,"cr": string | null,"desde": string | null,"dias_no_status": number | null,"filial": string | null,"garagem": string | null,"gestor": string | null,"grupo": string | null,"id": string,"implementos": (string)[],"modelo": string,"nome_da_situacao": string | null,"operacao": string | null,"placa": string,"renavam": string | null,"sigla": string,"tipo": string,"valor_fipe": number | null
                   }
                   ComputedFields: never
-                  Relationships: [
-                    
+                  Insert: {
+                           "alertas"?: never,"ano"?: number | null,"baixada"?: never,"busca"?: string | null,"cavalo"?: string | null,"cr"?: string | null,"desde"?: string | null,"dias_no_status"?: never,"filial"?: string | null,"garagem"?: string | null,"gestor"?: string | null,"grupo"?: string | null,"id"?: string | null,"implementos"?: (string)[] | null,"modelo"?: string | null,"nome_da_situacao"?: string | null,"operacao"?: string | null,"placa"?: string | null,"renavam"?: string | null,"sigla"?: string | null,"tipo"?: string | null,"valor_fipe"?: number | null
+                         }
+                        Update: {
+                           "alertas"?: never,"ano"?: number | null,"baixada"?: never,"busca"?: string | null,"cavalo"?: string | null,"cr"?: string | null,"desde"?: string | null,"dias_no_status"?: never,"filial"?: string | null,"garagem"?: string | null,"gestor"?: string | null,"grupo"?: string | null,"id"?: string | null,"implementos"?: (string)[] | null,"modelo"?: string | null,"nome_da_situacao"?: string | null,"operacao"?: string | null,"placa"?: string | null,"renavam"?: string | null,"sigla"?: string | null,"tipo"?: string | null,"valor_fipe"?: number | null
+                         }
+                        Relationships: [
+                    {
+      foreignKeyName: "leitura_da_placa_ativo_id_fkey"
+      columns: ["id"]
+isOneToOne: true
+      referencedRelation: "alerta_de_vinculo"
+      referencedColumns: ["ativo_id"]
+    },{
+      foreignKeyName: "leitura_da_placa_ativo_id_fkey"
+      columns: ["id"]
+isOneToOne: true
+      referencedRelation: "ativo"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "leitura_da_placa_ativo_id_fkey"
+      columns: ["id"]
+isOneToOne: true
+      referencedRelation: "campo_pendente"
+      referencedColumns: ["ativo_id"]
+    },{
+      foreignKeyName: "leitura_da_placa_ativo_id_fkey"
+      columns: ["id"]
+isOneToOne: true
+      referencedRelation: "operacao_do_ativo"
+      referencedColumns: ["ativo_id"]
+    }
                   ]
                 },"operacao_do_ativo": {
                   Row: {
@@ -1484,6 +1564,12 @@ isOneToOne: false
       foreignKeyName: "placa_do_ativo_ativo_id_fkey"
       columns: ["ativo_id"]
 isOneToOne: false
+      referencedRelation: "alerta_de_vinculo"
+      referencedColumns: ["ativo_id"]
+    },{
+      foreignKeyName: "placa_do_ativo_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: false
       referencedRelation: "ativo"
       referencedColumns: ["id"]
     },{
@@ -1496,12 +1582,6 @@ isOneToOne: false
       foreignKeyName: "placa_do_ativo_ativo_id_fkey"
       columns: ["ativo_id"]
 isOneToOne: false
-      referencedRelation: "linha_de_placa"
-      referencedColumns: ["id"]
-    },{
-      foreignKeyName: "placa_do_ativo_ativo_id_fkey"
-      columns: ["ativo_id"]
-isOneToOne: false
       referencedRelation: "operacao_do_ativo"
       referencedColumns: ["ativo_id"]
     }
@@ -1509,7 +1589,22 @@ isOneToOne: false
                 }
           }
           Functions: {
-            "ativo_da_placa":
+            "alerta_correcao_tardia":
+{ Args: { "p_em": string,"p_ultima": string }; Returns: boolean
+                           },
+"alerta_parado_em_patio":
+{ Args: { "p_em": string,"p_inicio_do_pat": string }; Returns: boolean
+                           },
+"alertas_com_prazos":
+{ Args: { "p_baixada": boolean,"p_em": string,"p_inicio_do_pat": string,"p_ultima_correcao": string,"p_vigentes": (string)[] }; Returns: (string)[]
+                           },
+"alertas_do_ativo":
+{ Args: { "p_ativo_id": string,"p_em": string }; Returns: (string)[]
+                           },
+"alertas_vigentes_do_ativo":
+{ Args: { "p_ativo_id": string,"p_em": string }; Returns: (string)[]
+                           },
+"ativo_da_placa":
 { Args: { "p_placa": string }; Returns: string
                            },
 "cadastrar_ativo":
@@ -1570,6 +1665,52 @@ isOneToOne: false
               "em": string,"sigla": string
             }[]
                            },
+"inicio_do_pat":
+{ Args: { "p_ativo_id": string }; Returns: string
+                           },
+"linha_calculada_da_placa":
+{ Args: { "p_ativo_id": string }; Returns: {
+              "alertas_vigentes": (string)[],
+"ano": number | null,
+"ativo_id": string,
+"baixada_em": string | null,
+"busca": string,
+"causa_id": string | null,
+"cavalo": string | null,
+"cr": string | null,
+"desde": string | null,
+"filial": string | null,
+"filial_da_custodia_id": string | null,
+"garagem": string | null,
+"gestor": string | null,
+"gestor_id": string | null,
+"grupo": string | null,
+"implementos": (string)[],
+"inicio_do_pat": string | null,
+"modelo": string,
+"nome_da_situacao": string | null,
+"operacao": string | null,
+"operacao_id": string | null,
+"placa": string,
+"proximo_recalculo": string | null,
+"recalculado_em": string,
+"renavam": string | null,
+"sigla": string,
+"tipo": string,
+"ultima_correcao_tardia_em": string | null,
+"valor_fipe": number | null
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "leitura_da_placa"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
+"linhas_divergentes":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "ativo_id": string,"motivo": string
+            }[]
+                           },
 "listar_placas":
 { Args: { "p_baixadas": boolean,"p_busca": string,"p_decrescente": boolean,"p_grupos": (string)[],"p_ordem": string,"p_pagina": number,"p_siglas": (string)[],"p_tam": number,"p_tipos": (string)[] }; Returns: Json
                            },
@@ -1613,23 +1754,24 @@ isOneToOne: false
               "alertas": (string)[] | null,
 "ano": number | null,
 "baixada": boolean | null,
-"busca": string | null,
+"busca": string,
 "cavalo": string | null,
 "cr": string | null,
 "desde": string | null,
 "dias_no_status": number | null,
 "filial": string | null,
+"garagem": string | null,
 "gestor": string | null,
 "grupo": string | null,
 "id": string,
-"implementos": (string)[] | null,
-"modelo": string | null,
+"implementos": (string)[],
+"modelo": string,
 "nome_da_situacao": string | null,
 "operacao": string | null,
-"placa": string | null,
+"placa": string,
 "renavam": string | null,
-"sigla": string | null,
-"tipo": string | null,
+"sigla": string,
+"tipo": string,
 "valor_fipe": number | null
             }[]
                           SetofOptions: {
@@ -1638,11 +1780,26 @@ isOneToOne: false
         isOneToOne: false
         isSetofReturn: true
       } },
+"proximo_recalculo_do_ativo":
+{ Args: { "p_ativo_id": string }; Returns: string
+                           },
+"recalcular_linha_da_placa":
+{ Args: { "p_ativo_id": string }; Returns: undefined
+                           },
+"recalcular_linhas_vencidas":
+{ Args: Record<PropertyKey, never>; Returns: number
+                           },
+"recalcular_so_a_linha":
+{ Args: { "p_ativo_id": string }; Returns: undefined
+                           },
 "receber_sinal_do_sankhya":
 { Args: { "p_ativo_id": string,"p_campo": string,"p_valor": Json,"p_valor_no_sankhya"?: string,"p_visto_em"?: string }; Returns: string
                            },
 "receber_transferencia":
 { Args: { "p_em": string,"p_transferencia_id": string }; Returns: undefined
+                           },
+"reconstruir_leitura_das_placas":
+{ Args: Record<PropertyKey, never>; Returns: number
                            },
 "registrar_baixa":
 { Args: { "p_ativo_id": string,"p_em": string,"p_motivo": string,"p_sigla": string }; Returns: undefined
@@ -1680,6 +1837,9 @@ isOneToOne: false
                            },
 "tipo_do_cr":
 { Args: { "p_participa_da_frota": boolean,"p_veiculo_obrigatorio": boolean }; Returns: Database["nucleo"]['Enums']["tipo_de_cr"]
+                           },
+"ultima_correcao_tardia_em":
+{ Args: { "p_ativo_id": string }; Returns: string
                            },
 "vincular_usuario":
 { Args: { "p_email": string,"p_perfil": string,"p_pessoa_id": string }; Returns: undefined

@@ -22,7 +22,9 @@ test.describe("Administrador", () => {
     await expect(linhas(page).first()).toContainText(/D[A-Z]{2}\d[A-Z]\d{2}/);
     expect(await total(page)).toBeGreaterThan(150);
     await expect(page.getByRole("button", { name: "Cadastrar placa" })).toBeDisabled();
-    await expect(page.getByText("Em breve", { exact: true })).toBeVisible();
+    await expect(
+      page.locator("[data-acoes-em-breve]").getByText("Em breve", { exact: true }),
+    ).toBeVisible();
   });
 
   test("a busca filtra no servidor", async ({ page }) => {

@@ -224,8 +224,7 @@ export async function PaginaDePlacas({ searchParams }: { searchParams: Parametro
             linhas={pagina.linhas}
             ordem={consulta.ordem}
             padrao={padrao}
-            definicoes={definicoes}
-            campos={campos}
+            modo={modo}
           />
         )}
         <Paginador
