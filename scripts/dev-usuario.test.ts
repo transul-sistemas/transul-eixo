@@ -21,12 +21,13 @@ describe("lerArgumentosDoUsuario", () => {
       "alexandre@exemplo.com",
     );
   });
-  it.each([["--perfil", "dono"], ["--perfil", ""], ["--email", "não é e-mail"]])(
-    "recusa %s %j",
-    (nome, valor) => {
-      expect(() => lerArgumentosDoUsuario([nome, valor])).toThrow();
-    },
-  );
+  it.each([
+    ["--perfil", "dono"],
+    ["--perfil", ""],
+    ["--email", "não é e-mail"],
+  ])("recusa %s %j", (nome, valor) => {
+    expect(() => lerArgumentosDoUsuario([nome, valor])).toThrow();
+  });
 });
 
 describe("validarSenha", () => {
