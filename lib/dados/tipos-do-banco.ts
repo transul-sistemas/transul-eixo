@@ -1607,6 +1607,9 @@ isOneToOne: false
 "ativo_da_placa":
 { Args: { "p_placa": string }; Returns: string
                            },
+"atualizar_leitura_vencida":
+{ Args: Record<PropertyKey, never>; Returns: number
+                           },
 "cadastrar_ativo":
 { Args: { "p_carroceria_id"?: string,"p_chassi"?: string,"p_chave"?: string,"p_cr_id": string,"p_eixos"?: number,"p_em"?: string,"p_funcao"?: Database["nucleo"]['Enums']["funcao_do_implemento"],"p_gestor_id": string,"p_modelo_id"?: string,"p_numero_de_serie"?: string,"p_operacao_id": string,"p_pessoa_dona_id"?: string,"p_placa": string,"p_regime"?: Database["nucleo"]['Enums']["regime_de_posse"],"p_renavam": string,"p_situacao_inicial"?: string,"p_tipo": Database["nucleo"]['Enums']["tipo_de_ativo"] }; Returns: string
                            },
@@ -1669,7 +1672,7 @@ isOneToOne: false
 { Args: { "p_ativo_id": string }; Returns: string
                            },
 "linha_calculada_da_placa":
-{ Args: { "p_ativo_id": string }; Returns: {
+{ Args: { "p_ativo_id": string,"p_em"?: string }; Returns: {
               "alertas_vigentes": (string)[],
 "ano": number | null,
 "ativo_id": string,
@@ -1781,16 +1784,16 @@ isOneToOne: false
         isSetofReturn: true
       } },
 "proximo_recalculo_do_ativo":
-{ Args: { "p_ativo_id": string }; Returns: string
+{ Args: { "p_ativo_id": string,"p_em"?: string }; Returns: string
                            },
 "recalcular_linha_da_placa":
-{ Args: { "p_ativo_id": string }; Returns: undefined
+{ Args: { "p_ativo_id": string,"p_em"?: string }; Returns: undefined
                            },
 "recalcular_linhas_vencidas":
-{ Args: Record<PropertyKey, never>; Returns: number
+{ Args: { "p_em"?: string,"p_limite"?: number }; Returns: number
                            },
 "recalcular_so_a_linha":
-{ Args: { "p_ativo_id": string }; Returns: undefined
+{ Args: { "p_ativo_id": string,"p_em"?: string }; Returns: undefined
                            },
 "receber_sinal_do_sankhya":
 { Args: { "p_ativo_id": string,"p_campo": string,"p_valor": Json,"p_valor_no_sankhya"?: string,"p_visto_em"?: string }; Returns: string
