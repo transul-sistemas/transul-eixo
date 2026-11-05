@@ -300,3 +300,19 @@ describe("os outros estados do painel", () => {
     expect(t).not.toMatch(/desculp/i);
   });
 });
+
+// Fatia 3.9a: no modo banco, KM, motorista e CRLV ainda não têm fonte: "Sem dados ainda", não um traço
+// (o traço diria que a placa não tem motorista).
+describe("<ResumoDaPlaca>: campos sem fonte no modo banco", () => {
+  it("motorista, CRLV e KM mostram Sem dados ainda", async () => {
+    const d = { ...(await detalhe("AAA0A04")), semFonte: ["km", "motorista", "crlv"] as const };
+    const c = campos(html(d));
+    expect(c["Motorista"]).toBe("Sem dados ainda");
+    expect(c["CRLV vence em"]).toBe("Sem dados ainda");
+    expect(c["KM"]).toBe("Sem dados ainda");
+  });
+  it("a garagem aparece ao lado da filial", async () => {
+    const d = { ...(await detalhe("AAA0A04")), garagem: "Cordeirópolis" };
+    expect(campos(html(d))["Garagem"]).toBe("Cordeirópolis");
+  });
+});

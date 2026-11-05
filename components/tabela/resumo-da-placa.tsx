@@ -53,6 +53,8 @@ function Campo({ rotulo, children }: { rotulo: string; children: ReactNode }) {
 
 const textoOuTraco = (valor: string | null) => (valor === null || valor === "" ? SEM_VALOR : valor);
 
+/** Campo que ainda não tem fonte no banco (fatia 3.9a): diferente do traço, que diz "não tem". */
+const SEM_DADOS_AINDA = "Sem dados ainda";
 export function haDias(dias: number): string {
   if (dias <= 0) return "hoje";
   return dias === 1 ? "há 1 dia" : `há ${dias} dias`;
@@ -146,6 +148,7 @@ export function SecoesDoResumo({
   disposicao?: "pilha" | "grade";
 }) {
   const crlvVencido = detalhe.alertas.some((alerta) => alerta.codigo === "crlv-vencido");
+  const semFonte = detalhe.semFonte ?? [];
   const grade = disposicao === "grade";
   return (
     <div className={grade ? "grid gap-4 lg:grid-cols-2 2xl:grid-cols-3" : undefined}>
@@ -203,10 +206,15 @@ export function SecoesDoResumo({
 
       <Secao titulo="Dados" grade={grade}>
         <Campos>
-          <Campo rotulo="Motorista">{textoOuTraco(detalhe.motorista)}</Campo>
+          <Campo rotulo="Motorista">
+            {semFonte.includes("motorista") ? SEM_DADOS_AINDA : textoOuTraco(detalhe.motorista)}
+          </Campo>
           <Campo rotulo="Filial">{detalhe.filial}</Campo>
+          <Campo rotulo="Garagem">{textoOuTraco(detalhe.garagem)}</Campo>
           <Campo rotulo="CRLV vence em">
-            {detalhe.crlvVenceEm === null ? (
+            {semFonte.includes("crlv") ? (
+              SEM_DADOS_AINDA
+            ) : detalhe.crlvVenceEm === null ? (
               SEM_VALOR
             ) : (
               <>
@@ -216,7 +224,11 @@ export function SecoesDoResumo({
             )}
           </Campo>
           <Campo rotulo="KM">
-            <span className="tabular-nums">{formatarKm(detalhe.km)}</span>
+            {semFonte.includes("km") ? (
+              SEM_DADOS_AINDA
+            ) : (
+              <span className="tabular-nums">{formatarKm(detalhe.km)}</span>
+            )}
           </Campo>
           <Campo rotulo="Valor FIPE">
             <Moeda valor={detalhe.valorFipeCentavos} className="text-left" />

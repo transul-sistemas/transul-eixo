@@ -17,9 +17,9 @@ import { SeletorDeColunas } from "@/components/tabela/seletor-de-colunas";
 import { ProvedorDaLista } from "@/components/tabela/pendencia-da-lista";
 import { TabelaDePlacas } from "@/components/tabela/tabela-de-placas";
 import {
-  CAMPOS_ORDENAVEIS_DE_PLACAS,
+  camposOrdenaveisDePlacas,
+  colunasDePlacas,
   dadosDoPainel,
-  DEFINICOES_DAS_COLUNAS_DE_PLACAS,
   IDS_DAS_COLUNAS_DE_PLACAS,
   listarPlacas,
   NOMES_DOS_TIPOS,
@@ -42,6 +42,7 @@ import { STATUS } from "@/lib/visual/tons";
 import { AssistentesDaFrota } from "./assistentes/assistentes-da-frota";
 import { AcoesEmBreve } from "./assistentes/acoes-em-breve";
 import { carregarDadosDosAssistentes } from "./assistentes/carregar-dados";
+import { modoDosDados } from "@/lib/dados/fonte";
 
 export type ParametrosDaBusca = Promise<Record<string, string | string[] | undefined>>;
 
@@ -160,7 +161,11 @@ export async function PaginaDePlacas({ searchParams }: { searchParams: Parametro
     IDS_DAS_COLUNAS_DE_PLACAS,
   );
   const padrao = { tam: preferencias.tam, ordem: PADRAO_DA_LISTA_DE_PLACAS.ordem };
-  const consulta = lerTabela(parametros, padrao, CAMPOS_ORDENAVEIS_DE_PLACAS);
+  // No modo banco, KM, motorista e CRLV ainda não têm fonte: somem as colunas e a ordem por eles.
+  const modo = modoDosDados();
+  const campos = camposOrdenaveisDePlacas(modo);
+  const definicoes = colunasDePlacas(modo);
+  const consulta = lerTabela(parametros, padrao, campos);
   const hoje = hojeEmSaoPaulo(new Date());
   const opcoes = { simulacao: simulacaoDe(parametros) };
   // O painel busca em paralelo com a lista e nunca a derruba: se falha, o erro fica no painel.
@@ -197,9 +202,7 @@ export async function PaginaDePlacas({ searchParams }: { searchParams: Parametro
             chips={chipsDaLista(pagina.contagens)}
             apresentacaoDosGrupos={GRUPOS_DA_LISTA}
             filtrosExtras={["sigla", "baixadas"]}
-            maisFiltros={
-              <MaisFiltrosDePlacas padrao={padrao} campos={CAMPOS_ORDENAVEIS_DE_PLACAS} />
-            }
+            maisFiltros={<MaisFiltrosDePlacas padrao={padrao} campos={campos} />}
           />
         }
       >
@@ -217,7 +220,13 @@ export async function PaginaDePlacas({ searchParams }: { searchParams: Parametro
             />
           )
         ) : (
-          <TabelaDePlacas linhas={pagina.linhas} ordem={consulta.ordem} padrao={padrao} />
+          <TabelaDePlacas
+            linhas={pagina.linhas}
+            ordem={consulta.ordem}
+            padrao={padrao}
+            definicoes={definicoes}
+            campos={campos}
+          />
         )}
         <Paginador
           pagina={pagina.pagina}
@@ -226,14 +235,11 @@ export async function PaginaDePlacas({ searchParams }: { searchParams: Parametro
           tam={pagina.tam}
           itens="placas"
           padrao={padrao}
-          campos={CAMPOS_ORDENAVEIS_DE_PLACAS}
+          campos={campos}
           ferramentas={
             <>
               <ModoFoco />
-              <SeletorDeColunas
-                definicoes={DEFINICOES_DAS_COLUNAS_DE_PLACAS}
-                titulos={TITULOS_DAS_COLUNAS_DE_PLACAS}
-              />
+              <SeletorDeColunas definicoes={definicoes} titulos={TITULOS_DAS_COLUNAS_DE_PLACAS} />
               <DensidadeDaTabela />
             </>
           }

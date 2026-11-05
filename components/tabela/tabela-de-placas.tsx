@@ -16,7 +16,7 @@ import {
   NOMES_DOS_TIPOS,
   TITULOS_DAS_COLUNAS_DE_PLACAS,
 } from "@/lib/dados/placas-tipos";
-import { colunasVisiveis } from "@/lib/navegacao/colunas-da-tabela";
+import { colunasVisiveis, type DefinicaoDeColuna } from "@/lib/navegacao/colunas-da-tabela";
 import { lerTabela, mudarConsulta, type PadraoDaTabela } from "@/lib/navegacao/tabela";
 import { useLista } from "./pendencia-da-lista";
 import { type ColunaDeTabela, type Ordem, TabelaDeDados } from "./tabela-de-dados";
@@ -97,6 +97,7 @@ const CELULAS: Record<
   alertas: { campoDeOrdem: "alertas", celula: (linha) => <Alertas linha={linha} /> },
   motorista: { campoDeOrdem: "motorista", celula: (linha) => textoOuTraco(linha.motorista) },
   filial: { campoDeOrdem: "filial", celula: (linha) => linha.filial },
+  garagem: { celula: (linha) => textoOuTraco(linha.garagem) },
   dias: {
     campoDeOrdem: "dias",
     classe: "text-right tabular-nums",
@@ -123,10 +124,16 @@ export function TabelaDePlacas({
   linhas,
   ordem,
   padrao,
+  definicoes = DEFINICOES_DAS_COLUNAS_DE_PLACAS,
+  campos = CAMPOS_ORDENAVEIS_DE_PLACAS,
 }: {
   linhas: LinhaDePlaca[];
   ordem: Ordem;
   padrao: PadraoDaTabela;
+  /** As colunas do modo dos dados (no banco, sem KM nem motorista). */
+  definicoes?: readonly DefinicaoDeColuna[];
+  /** Os campos de ordem do modo dos dados. */
+  campos?: readonly string[];
 }) {
   const rota = usePathname();
   const parametros = useSearchParams();
@@ -136,7 +143,7 @@ export function TabelaDePlacas({
   const ordemEscolhida = lista?.preferencias.ordemDasColunas ?? null;
   const colunas = useMemo(
     () =>
-      colunasVisiveis(DEFINICOES_DAS_COLUNAS_DE_PLACAS, {
+      colunasVisiveis(definicoes, {
         colunas: colunasEscolhidas,
         ordemDasColunas: ordemEscolhida,
       }).map<ColunaDeTabela<LinhaDePlaca>>(({ id, soEmTelaLarga }) => {
@@ -150,7 +157,7 @@ export function TabelaDePlacas({
             .join(" "),
         };
       }),
-    [colunasEscolhidas, ordemEscolhida],
+    [colunasEscolhidas, ordemEscolhida, definicoes],
   );
 
   const espiar = lista?.espiar;
@@ -160,17 +167,13 @@ export function TabelaDePlacas({
   );
 
   function ordenarPor(campo: string) {
-    const atual = lerTabela(
-      new URLSearchParams(parametros.toString()),
-      padrao,
-      CAMPOS_ORDENAVEIS_DE_PLACAS,
-    ).ordem;
+    const atual = lerTabela(new URLSearchParams(parametros.toString()), padrao, campos).ordem;
     const sentido = atual.campo === campo && atual.sentido === "asc" ? "desc" : "asc";
     const novos = mudarConsulta(
       new URLSearchParams(parametros.toString()),
       { ordem: { campo, sentido } },
       padrao,
-      CAMPOS_ORDENAVEIS_DE_PLACAS,
+      campos,
     ).toString();
     const ir = () => router.push(novos ? `${rota}?${novos}` : rota, { scroll: false });
     if (lista) lista.iniciar(ir);

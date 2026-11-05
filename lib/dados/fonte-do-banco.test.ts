@@ -34,6 +34,7 @@ const LINHA = {
   alertas: ["sem_cr", "parado_em_patio"],
   valor_fipe: 450000.5,
   filial: "Matriz",
+  garagem: "Cordeirópolis",
   ano: 2022,
   renavam: "00000000801",
   baixada: false,
@@ -125,6 +126,7 @@ describe("consultar", () => {
       motorista: null,
       crlvVenceEm: null,
       filial: "Matriz",
+      garagem: "Cordeirópolis",
     });
     expect(pagina.contagens).toMatchObject({
       "em-atividade": 1,
@@ -223,6 +225,8 @@ describe("obter e obterFicha", () => {
       desde: "2026-01-12T08:00",
       crs: [{ codigo: "CR1", nome: "CR1", inicio: "2026-01-10", fim: null }],
       crsVigentes: [{ codigo: "CR1", nome: "CR1", inicio: "2026-01-10", fim: null }],
+      // KM, motorista e CRLV ainda sem fonte: a tela mostra "Sem dados ainda".
+      semFonte: ["km", "motorista", "crlv"],
     });
   });
 

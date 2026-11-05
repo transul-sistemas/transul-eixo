@@ -41,6 +41,7 @@ export const DEFINICOES_DAS_COLUNAS_DE_PLACAS: readonly DefinicaoDeColuna[] = [
   { id: "situacao", padrao: "sempre" },
   { id: "alertas", padrao: "sempre" },
   { id: "motorista", padrao: "largura" },
+  { id: "garagem", padrao: "fora" },
   { id: "filial", padrao: "fora" },
   { id: "dias", padrao: "largura" },
   { id: "km", padrao: "fora" },
@@ -62,6 +63,7 @@ export const TITULOS_DAS_COLUNAS_DE_PLACAS: Record<string, string> = {
   situacao: "Situação",
   alertas: "Alertas",
   motorista: "Motorista",
+  garagem: "Garagem",
   filial: "Filial",
   dias: "Dias na situação",
   km: "KM",
@@ -89,11 +91,19 @@ export interface LinhaDePlaca {
   valorFipeCentavos: number | null;
   motorista: string | null;
   crlvVenceEm: string | null;
+  /** A filial do CR vigente (as 13 do Sankhya). */
   filial: string;
+  /** A garagem do CR vigente (as 3), ou nula sem garagem conhecida. */
+  garagem: string | null;
 }
+
+/** Campos sem fonte no modo banco (backlog: Documentos, KM pelo Sankhya ou leitura, Pessoas). */
+export type CampoSemFonte = "km" | "motorista" | "crlv";
 
 /** O detalhe de uma placa para o painel de espiar: a linha da lista mais o que só o painel mostra. */
 export interface DetalheDaPlaca extends LinhaDePlaca {
+  /** Os campos que ainda não têm fonte (a tela mostra "Sem dados ainda"). */
+  semFonte?: readonly CampoSemFonte[];
   ano: number | null;
   renavam: string;
   /** Desde quando está nesta situação, `aaaa-mm-ddThh:mm`. */
@@ -144,3 +154,17 @@ export const NOMES_DOS_TIPOS: Record<TipoDeAtivo, string> = {
 
 /** Padrões da lista de placas: 25 linhas por página, ordenada por placa. */
 export const PADRAO_DA_LISTA_DE_PLACAS = { tam: 25, ordem: "placa" } as const;
+
+/** As colunas da lista no modo dos dados: no banco, sem KM nem motorista (ainda sem fonte). */
+export function colunasDePlacas(modo: "exemplo" | "banco"): readonly DefinicaoDeColuna[] {
+  return modo === "banco"
+    ? DEFINICOES_DAS_COLUNAS_DE_PLACAS.filter((d) => d.id !== "km" && d.id !== "motorista")
+    : DEFINICOES_DAS_COLUNAS_DE_PLACAS;
+}
+
+/** Os campos de ordem da lista no modo dos dados: no banco, sem KM, motorista nem CRLV. */
+export function camposOrdenaveisDePlacas(modo: "exemplo" | "banco"): readonly string[] {
+  return modo === "banco"
+    ? CAMPOS_ORDENAVEIS_DE_PLACAS.filter((c) => c !== "km" && c !== "motorista" && c !== "crlv")
+    : CAMPOS_ORDENAVEIS_DE_PLACAS;
+}

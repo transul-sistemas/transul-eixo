@@ -196,6 +196,139 @@ async function principal() {
       }
       await cliente.query("rollback to savepoint como");
     }
+    // Equivalência de dados (a leitura mantida é igual ao calculado agora pelas funções) e de
+    // segurança (cada perfil vê na tabela exatamente o que config.ve_ativo deixa).
+    const amostra = Number(n) > 1000 ? 1000 : Number(n);
+    const divergentes = (
+      await cliente.query<{ n: string }>(
+        `select count(*) as n from (select id from nucleo.ativo where excluido_em is null order by md5(id::text) limit $1) a
+          where (select (to_jsonb(l) - 'recalculado_em') from nucleo.leitura_da_placa l where l.ativo_id = a.id)
+                is distinct from (to_jsonb(nucleo.linha_calculada_da_placa(a.id)) - 'recalculado_em')`,
+        [amostra],
+      )
+    ).rows[0]!.n;
+    escrever(
+      "",
+      `### Equivalência (${amostra} placas)`,
+      "",
+      `Linhas diferentes do calculado: ${divergentes}.`,
+    );
+    const falhas: string[] = Number(divergentes) > 0 ? [`${divergentes} linhas divergentes`] : [];
+    for (const [perfil, id] of [
+      ["Administrador", quem.adm],
+      ["Gestor de frota", quem.gestor],
+    ] as const) {
+      await cliente.query("savepoint seg");
+      await cliente.query(
+        `select set_config('request.jwt.claims', $1, true), set_config('request.jwt.claim.sub', $2, true),
+                set_config('request.jwt.claim.role', 'authenticated', true)`,
+        [JSON.stringify({ sub: id, role: "authenticated" }), id],
+      );
+      const ids = (
+        await cliente.query<{ id: string }>("select id from nucleo.ativo where excluido_em is null")
+      ).rows.map((r) => r.id);
+      await cliente.query("set local role authenticated");
+      const visibilidade = (
+        await cliente.query<{ n: string }>(
+          `select count(*) as n from unnest($1::uuid[]) t (id)
+            where config.ve_ativo(t.id, array['frota', 'operacional'], 'ver')
+                  is distinct from exists (select 1 from nucleo.leitura_da_placa l where l.ativo_id = t.id)`,
+          [ids],
+        )
+      ).rows[0]!.n;
+      escrever(`${perfil}: placas em que a tabela e ve_ativo discordam: ${visibilidade}.`);
+      if (Number(visibilidade) > 0)
+        falhas.push(`${perfil}: ${visibilidade} placas com visibilidade diferente`);
+      await cliente.query("rollback to savepoint seg");
+    }
+
+    // O tempo das escritas, com e sem os gatilhos da leitura mantida (o fim da transação incluído).
+    escrever(
+      "",
+      "### Escritas (ms, com o recálculo no fim da transação)",
+      "",
+      "| Escrita | com gatilhos | sem gatilhos |",
+      "|---|---:|---:|",
+    );
+    const alvo = (
+      await cliente.query<{ cavalo: string; implemento: string; solo: string }>(`
+        select
+          (select c.cavalo_id from nucleo.composicao c
+            where c.excluido_em is null and c.periodo @> now()
+              and nucleo.situacao_atual(c.cavalo_id) in ('PÁT', 'ETv')
+              and (select count(*) from nucleo.composicao x where x.cavalo_id = c.cavalo_id and x.excluido_em is null and x.periodo @> now()) = 1
+            order by c.cavalo_id limit 1) as cavalo,
+          (select c.implemento_id from nucleo.composicao c
+            where c.excluido_em is null and c.periodo @> now()
+              and nucleo.situacao_atual(c.cavalo_id) in ('PÁT', 'ETv')
+              and (select count(*) from nucleo.composicao x where x.cavalo_id = c.cavalo_id and x.excluido_em is null and x.periodo @> now()) = 1
+            order by c.cavalo_id limit 1) as implemento,
+          (select a.id from nucleo.ativo a
+            where a.tipo = 'cavalo' and a.excluido_em is null and nucleo.situacao_atual(a.id) = 'PÁT'
+              and not exists (select 1 from nucleo.composicao x where x.cavalo_id = a.id and x.excluido_em is null and x.periodo @> now())
+            order by a.id limit 1) as solo`)
+    ).rows[0]!;
+    const TABELAS = [
+      "ativo",
+      "placa_do_ativo",
+      "gestor_da_carteira",
+      "cr_do_ativo",
+      "placa_na_operacao",
+      "custodia",
+      "estado_de_status",
+      "composicao",
+      "cr",
+      "pessoa",
+      "operacao",
+    ];
+    const cronometrar = async (sql: string, parametros: unknown[]) => {
+      const inicio = performance.now();
+      await cliente.query(sql, parametros);
+      await cliente.query("set constraints all immediate");
+      await cliente.query("set constraints all deferred");
+      return Math.round(performance.now() - inicio);
+    };
+    const escritas: [string, string, unknown[]][] = [
+      [
+        "desatrelar e engatar de novo",
+        "select nucleo.desatrelar($1, clock_timestamp()), nucleo.engatar($1, $2, 1::smallint, clock_timestamp() + interval '1 second')",
+        [alvo.cavalo, alvo.implemento],
+      ],
+      [
+        "registrar evento (ETv)",
+        "select nucleo.registrar_evento($1, 'ETv', clock_timestamp() + interval '2 seconds')",
+        [alvo.solo],
+      ],
+    ];
+    for (const [nome, sql, parametros] of escritas) {
+      if (parametros.some((p) => p === null)) {
+        escrever(`| ${nome} | sem placa para medir | |`);
+        continue;
+      }
+      await cliente.query("savepoint escrita");
+      const com = await cronometrar(sql, parametros);
+      // Depois da escrita: a leitura das placas tocadas continua igual ao calculado.
+      const depois = (
+        await cliente.query<{ n: string }>(
+          `select count(*) as n from unnest($1::uuid[]) t (id)
+            where (select (to_jsonb(l) - 'recalculado_em') from nucleo.leitura_da_placa l where l.ativo_id = t.id)
+                  is distinct from (to_jsonb(nucleo.linha_calculada_da_placa(t.id)) - 'recalculado_em')`,
+          [parametros],
+        )
+      ).rows[0]!.n;
+      if (Number(depois) > 0)
+        falhas.push(`${nome}: ${depois} linhas divergentes depois da escrita`);
+      await cliente.query("rollback to savepoint escrita");
+      for (const tabela of TABELAS)
+        await cliente.query(`alter table nucleo.${tabela} disable trigger t99_leitura_da_placa`);
+      const sem = await cronometrar(sql, parametros);
+      await cliente.query("rollback to savepoint escrita");
+      escrever(`| ${nome} | ${com} | ${sem} |`);
+    }
+    if (falhas.length > 0) {
+      escrever("", `**FALHOU:** ${falhas.join("; ")}.`);
+      process.exitCode = 1;
+    }
     await cliente.query("rollback");
   } finally {
     await cliente.end();

@@ -269,7 +269,12 @@ select throws_ok(
 
 -- ---- nomes de alerta: lista fechada ----
 select set_eq(
-  $$select distinct (regexp_matches(pg_get_viewdef('nucleo.alerta_de_vinculo'::regclass) || pg_get_viewdef('nucleo.alerta_de_cr'::regclass), ',\s+''(\w+)''::text', 'g'))[1]$$,
+  -- Desde a 3.9a os alertas de vínculo vivem em funções (uma definição só, para a visão e a leitura).
+  $$select distinct (regexp_matches(
+      pg_get_functiondef('nucleo.alertas_vigentes_do_ativo(uuid,timestamptz)'::regprocedure)
+      || pg_get_functiondef('nucleo.alertas_com_prazos(text[],timestamptz,timestamptz,boolean,timestamptz)'::regprocedure)
+      || pg_get_viewdef('nucleo.alerta_de_cr'::regclass),
+      '''([a-z_]+)''::text', 'g'))[1]$$,
   array['sem_cr', 'cr_sem_operacao', 'buraco_em_cr', 'buraco_em_custodia', 'implemento_sem_eixos', 'conjunto_sem_nome', 'correcao_tardia_de_status', 'parado_em_patio', 'ativo_sem_operacao'],
   'as visões de alertas (vínculo e CR) só produzem os nomes registrados em docs/decisoes.md'
 );

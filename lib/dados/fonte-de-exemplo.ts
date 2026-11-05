@@ -93,6 +93,8 @@ function paraLinhas(placas: PlacaDeExemplo[], hoje: string): LinhaDePlaca[] {
       motorista: p.motorista,
       crlvVenceEm: p.crlvVenceEm,
       filial: p.filial,
+      // O exemplo não tem garagem (a coluna aparece vazia).
+      garagem: null,
     };
   });
 }

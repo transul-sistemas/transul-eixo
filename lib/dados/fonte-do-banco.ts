@@ -45,6 +45,7 @@ interface LinhaDoBanco {
   alertas: string[] | null;
   valor_fipe: number | null;
   filial: string | null;
+  garagem: string | null;
   ano: number | null;
   renavam: string | null;
 }
@@ -111,6 +112,7 @@ function paraLinha(l: LinhaDoBanco): LinhaDePlaca {
     motorista: null,
     crlvVenceEm: null,
     filial: l.filial ?? "Sem filial",
+    garagem: l.garagem,
   };
 }
 
@@ -122,6 +124,7 @@ function paraDetalhe(d: DetalheDoBanco): DetalheDaPlaca {
     desde: d.desde ?? "",
     crs: (d.crs ?? []).map((c) => ({ ...c })),
     crsVigentes: (d.crs_vigentes ?? []).map((c) => ({ ...c })),
+    semFonte: ["km", "motorista", "crlv"],
   };
 }
 

@@ -5,10 +5,26 @@
 import { execSync } from "node:child_process";
 import { appendFileSync, readFileSync, writeFileSync } from "node:fs";
 
-const MIGRATION = "supabase/migrations/20261104200000_leitura_das_placas.sql";
-const TESTE = "supabase/tests/80-leitura-das-placas.test.sql";
+const LEITURA = "supabase/migrations/20261104200000_leitura_das_placas.sql";
+const MANTIDA = "supabase/migrations/20261105100000_leitura_mantida_das_placas.sql";
+const TESTES =
+  "supabase/tests/80-leitura-das-placas.test.sql supabase/tests/81-leitura-mantida.test.sql";
+const FONTES = [
+  "ativo",
+  "placa_do_ativo",
+  "gestor_da_carteira",
+  "cr_do_ativo",
+  "placa_na_operacao",
+  "custodia",
 
-/** [nome, trecho original, trecho mutante, trocar todas as ocorrências?] */
+  "estado_de_status",
+  "composicao",
+  "cr",
+  "pessoa",
+  "operacao",
+];
+
+/** [nome, trecho original, trecho mutante, trocar todas as ocorrências?, arquivo (padrão: a leitura)] */
 const MUTACOES = [
   [
     "busca sem escapar o %",
@@ -28,9 +44,27 @@ const MUTACOES = [
   ["baixadas sempre na lista", "(coalesce(p_baixadas, false) or not v.baixada)", "true"],
   [
     "visão sem a RLS de quem consulta",
-    "create view nucleo.linha_de_placa with (security_invoker = true) as",
-    "create view nucleo.linha_de_placa as",
+    "create or replace view nucleo.linha_de_placa with (security_invoker = true) as",
+    "create or replace view nucleo.linha_de_placa as",
+    false,
+    MANTIDA,
   ],
+  [
+    "política da leitura mantida afrouxada (gestor vê qualquer carteira)",
+    "or gestor_id = (select config.minha_carteira_de_placas())",
+    "or true",
+    false,
+    MANTIDA,
+  ],
+  ...FONTES.map((tabela) => [
+    `sem o gatilho de ${tabela}`,
+    `create constraint trigger t99_leitura_da_placa after insert or update on nucleo.${tabela}
+  deferrable initially deferred for each row execute function nucleo.recalcular_pela_mudanca();
+`,
+    "",
+    false,
+    MANTIDA,
+  ]),
   [
     "chips de tipo sem ignorar o próprio grupo",
     "from nucleo.placas_filtradas(p_busca, p_grupos, '{}', p_siglas, p_baixadas) v",
@@ -54,31 +88,35 @@ const silencioso = (comando) => {
   }
 };
 
-const original = readFileSync(MIGRATION, "utf8");
-const linhas = ["## Mutações no SQL (pgTAP 80)", "", "| Mutação | Resultado |", "|---|---|"];
+const originais = new Map(
+  [LEITURA, MANTIDA].map((arquivo) => [arquivo, readFileSync(arquivo, "utf8")]),
+);
+const linhas = ["## Mutações no SQL (pgTAP 80 e 81)", "", "| Mutação | Resultado |", "|---|---|"];
 let sobreviventes = 0;
 try {
-  for (const [nome, de, para, todas] of MUTACOES) {
+  for (const [nome, de, para, todas, arquivo = LEITURA] of MUTACOES) {
+    const original = originais.get(arquivo);
     if (!original.includes(de)) {
       linhas.push(`| ${nome} | trecho não achado (mutação inválida) |`);
       sobreviventes += 1;
       continue;
     }
     writeFileSync(
-      MIGRATION,
+      arquivo,
       todas ? original.replaceAll(de, para) : original.replace(de, para),
       "utf8",
     );
     const reset = silencioso("pnpm exec supabase db reset");
-    const teste = reset === 0 ? silencioso(`pnpm exec supabase test db ${TESTE}`) : 0;
+    const teste = reset === 0 ? silencioso(`pnpm exec supabase test db ${TESTES}`) : 0;
     const pega = reset !== 0 || teste !== 0;
     if (!pega) sobreviventes += 1;
     linhas.push(
       `| ${nome} | ${pega ? (reset !== 0 ? "pega (a migration recusa)" : "pega") : "SOBREVIVEU"} |`,
     );
+    writeFileSync(arquivo, original, "utf8");
   }
 } finally {
-  writeFileSync(MIGRATION, original, "utf8");
+  for (const [arquivo, original] of originais) writeFileSync(arquivo, original, "utf8");
 }
 linhas.push("", `${MUTACOES.length - sobreviventes} de ${MUTACOES.length} pegas.`);
 const relatorio = linhas.join("\n");
