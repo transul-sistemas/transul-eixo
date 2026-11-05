@@ -188,7 +188,7 @@ select ok(
 update nucleo.ativo set eixos = 3 where id = pg_temp.id('i2');
 select pg_temp.disparar();
 select ok(
-  pg_temp.divergentes() = 0 and not ('implemento_sem_eixos' = any ((select alertas_vigentes from nucleo.leitura_da_placa where ativo_id = pg_temp.id('i2')))),
+  pg_temp.divergentes() = 0 and not (select 'implemento_sem_eixos' = any (alertas_vigentes) from nucleo.leitura_da_placa where ativo_id = pg_temp.id('i2')),
   'dado do ativo (eixos): o alerta some'
 );
 
