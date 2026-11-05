@@ -8,7 +8,7 @@
 
 **Tech Stack:** Postgres (Supabase local no CI), pgTAP, Next.js App Router, `@supabase/ssr`, Vitest, Playwright.
 
-**Spec:** o pedido de 03/11/2026 (PARTE 2) registrado em `docs/decisoes.md` e o `CLAUDE.md`.
+**Spec:** o pedido de 04/11/2026 (PARTE 2) registrado em `docs/decisoes.md` e o `CLAUDE.md`.
 
 ## Global Constraints
 
