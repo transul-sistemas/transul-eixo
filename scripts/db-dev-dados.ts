@@ -84,6 +84,9 @@ async function principal() {
     );
     if (argumentos.semGatilhos) {
       await cliente.query("select nucleo.reconstruir_leitura_das_placas()");
+      // Os gatilhos de negócio adiados (cobertura, evento inicial...) disparam agora: com evento
+      // pendente, o ALTER TABLE que religa os gatilhos da leitura é recusado.
+      await cliente.query("set constraints all immediate");
       for (const tabela of TABELAS_COM_GATILHO) {
         await cliente.query(`alter table nucleo.${tabela} enable trigger t99_leitura_da_placa`);
       }

@@ -82,7 +82,10 @@ describe("carga sem os gatilhos (só para medir; a regra fica para decisão)", (
     const commit = script.indexOf('cliente.query("commit")');
     expect(desliga).toBeGreaterThan(-1);
     expect(reconstroi).toBeGreaterThan(desliga);
-    expect(religa).toBeGreaterThan(reconstroi);
+    // Os gatilhos de negócio adiados disparam antes de religar (o ALTER TABLE recusa com evento pendente).
+    const dispara = script.indexOf('set constraints all immediate"', reconstroi);
+    expect(dispara).toBeGreaterThan(reconstroi);
+    expect(religa).toBeGreaterThan(dispara);
     expect(commit).toBeGreaterThan(religa);
   });
 });
