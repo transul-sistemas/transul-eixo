@@ -33,6 +33,10 @@ __pycache__/
 .venv/
 importacao/dados/
 importacao/resultados/
+# importacao/ é local (05/11/2026): nada dali vai para o Git, só os arquivos de apoio.
+importacao/*
+!importacao/.gitkeep
+!importacao/README.md
 
 # sistema
 .DS_Store
