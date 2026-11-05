@@ -4,7 +4,7 @@
 -- e liga o login a ela com o perfil administrador. Pode rodar de novo: não duplica.
 do $$
 declare
-  v_email text := lower('SEU-EMAIL');
+  v_email text := lower('alexandre@transultransporte.com.br');
   v_documento text;
   v_pessoa uuid;
 begin
@@ -27,4 +27,5 @@ end $$;
 select u.perfil, u.ativo
   from nucleo.usuario u
   join auth.users au on au.id = u.auth_user_id
- where lower(au.email) = lower('SEU-EMAIL');
+ where lower(au.email) = lower('alexandre@transultransporte.com.br
+');

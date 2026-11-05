@@ -1278,3 +1278,18 @@ Registro de direção, só em texto: nenhum código nem migration. Não muda a f
 - **Testes vistos falhando antes:** simples de 1, 4, 5 e 6 eixos com o nome da carroceria e sem alerta (pgTAP `36`); o seed esperado em `35`; o Vitest de `configuracaoDoConjunto`. O bi de 4 eixos cada continua "sem nome definido" com alerta.
 - **`plan` do arquivo 36:** escrito com `plan(15)`, corrigido para `plan(14)` antes da primeira execução (eram 14 asserções, incluindo o implemento de 7 eixos recusado); agora `plan(20)`, igual às executadas, sem `skip` nem `todo`.
 - **Quem decidiu:** Alexandre.
+
+## 05/11/2026 — Exceção pontual: leitura do projeto na nuvem com a `service_role` do `.env.local`
+
+- **Decisão (Alexandre, 05/11/2026):** autorizou, uma vez, usar a `service_role` do `.env.local` fora de `workers/` para **só ler** o projeto `kbyhojdrpzdylexmlsip` (configurado por ele no `.env.local`). O conector MCP do Supabase não tinha permissão nesse projeto.
+- **O que foi feito:** um script temporário no scratchpad (apagado logo depois) contou os usuários pela API de administração do Auth e as tabelas expostas pela API REST em cada schema. Nenhuma chave foi impressa e nada foi gravado.
+- **Resultado:** 1 usuário em `auth.users`; `public` sem tabelas; os schemas do Eixo (`nucleo`, `operacional`, `pessoas`, `rh_clinico`, `parceiros`, `financeiro`, `sync`, `config`, `auditoria`) não estão expostos na API (HTTP 406).
+- **Vale só para esta leitura.** A regra 5 continua: a chave mestra só existe nos workers.
+
+## 05/11/2026 — Regra 8 cancelada; banco do Eixo aplicado no projeto da nuvem; pasta `querys/`
+
+- **Decisão (Alexandre, 05/11/2026):** cancelou a proibição de `supabase link`, `db push` e MCP na nuvem. O `CLAUDE.md` foi ajustado; ficou só a proibição do projeto da v1.
+- **Aplicado em `kbyhojdrpzdylexmlsip` (região us-east-2, pelo pooler IPv4, senha lida do `.env.local` sem imprimir):** as 26 migrações e o `supabase/seed.sql` (só catálogos de `config`). Conferência: `nucleo` com 27 tabelas, `config` com 19, `auditoria` com 2.
+- **Login de Alexandre como Administrador:** rodado `querys/02-tornar-alexandre-administrador.sql`; a conferência devolveu `administrador | true`.
+- **Pasta `querys/`:** o SQL avulso saiu de `supabase/sql/` para `querys/`. Migrações, seed e testes ficam em `supabase/`, porque a CLI só os lê de lá.
+- **Pendente (painel, Alexandre):** expor `nucleo` e `config` em Settings → API → Exposed schemas (a API devolvia HTTP 406) e trocar a senha do banco, que passou pela conversa.

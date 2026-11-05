@@ -13,12 +13,8 @@ Projeto técnico completo: `docs/projeto-tecnico.md`. Em caso de dúvida, pergun
 5. **Permissão = módulo × ação × escopo**, aplicada no banco por RLS. A chave mestra (`service_role`) só existe nos workers.
 6. **O padrão visual é garantido pela ferramenta.** Nada de cor, tamanho de fonte ou formato de número escrito à mão.
 7. **Nada de tabela crua, de backup ou de cache sem necessidade.** O banco entrega totais prontos; nenhuma tela soma linhas no navegador.
-8. **O Supabase local roda só no Docker, e a nuvem só é tocada por Alexandre.**
-   - Proibido `supabase link`, `supabase login`, `supabase db push` e qualquer comando que fale com projeto na nuvem.
-   - Proibido usar as ferramentas MCP do Supabase (`list_projects`, `execute_sql`, `apply_migration` etc.) sem pedido explícito de Alexandre.
-   - O projeto da v1 (`oubrtcgtugeijbrxvblc`) nunca é usado, nem para leitura.
-   - Ler a cópia local da v1 em `importacao/` continua permitido. Conectar ao Supabase da v1 continua proibido.
-   - O link com o `eixo-prod` é feito por Alexandre, em outro momento.
+8. **Supabase na nuvem (revista por Alexandre em 05/11/2026).** A proibição de `supabase link`, `db push` e MCP foi cancelada: o projeto `kbyhojdrpzdylexmlsip` pode ser usado quando Alexandre pedir.
+   - O projeto da v1 (`oubrtcgtugeijbrxvblc`) nunca é usado, nem para leitura. Ler a cópia local em `importacao/` continua permitido.
 
 ## Como trabalhar
 
@@ -46,6 +42,7 @@ lib/navegacao/  catálogo único de módulos e telas (barra lateral, Ctrl+K, tri
 lib/dominio/    regras puras com testes (vigência, cascata, competência, nomenclatura de conjuntos, sorteio)
 lib/dados/      consultas tipadas ao banco
 supabase/       migrações, catálogos iniciais (seed) e testes pgTAP
+querys/         SQL avulso para rodar à mão (manutenção, vínculos, conferência), numerado
 workers/        sincronizações com o Sankhya (Python)
 importacao/     leitura da cópia da v1 e saneamento (nunca na nuvem)
 docs/           projeto técnico, glossário de métricas, registro de decisões
