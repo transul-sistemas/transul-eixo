@@ -1298,3 +1298,4 @@ Registro de direção, só em texto: nenhum código nem migration. Não muda a f
 
 - **Decisão (Alexandre, 05/11/2026):** todo commit vai direto na `main`, com push na hora. Não há mais branch por entrega, pull request nem espera do "aprovado" no checkpoint para integrar. Substitui a regra de 03/11/2026. Continuam valendo a etiqueta por fatia e o "nunca `--force`".
 - **Aplicado:** a branch `fase-3-9a-fonte-do-banco` entrou na `main` por fast-forward (typecheck, lint e 2170 testes do Vitest verdes antes).
+- **Ruleset `proteger-main` no GitHub (a pedido de Alexandre, 05/11/2026):** saíram as regras "pull request obrigatório" e "verificações `app` e `banco` obrigatórias". Ficaram "não apagar a `main`" e "sem `--force`". O CI continua rodando a cada push, mas não bloqueia mais.
