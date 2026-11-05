@@ -587,8 +587,8 @@ revoke all on function config.minhas_filiais_de_placas() from public;
 create policy leitura_da_placa_ler on nucleo.leitura_da_placa for select to authenticated using (
   (select config.ve_todas_as_placas())
   or gestor_id = (select config.minha_carteira_de_placas())
-  or operacao_id = any ((select config.minhas_operacoes_de_placas()))
-  or filial_da_custodia_id = any ((select config.minhas_filiais_de_placas()))
+  or operacao_id = any (coalesce((select config.minhas_operacoes_de_placas()), '{}'::uuid[]))
+  or filial_da_custodia_id = any (coalesce((select config.minhas_filiais_de_placas()), '{}'::uuid[]))
 );
 grant select on nucleo.leitura_da_placa to authenticated;
 
