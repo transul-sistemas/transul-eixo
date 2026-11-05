@@ -213,7 +213,7 @@ Todas em `nucleo`, todas com a `EXCLUDE` da convenção 2, origem da data e excl
 
 **Antes do login (fatias 3.0 a 3.7):** o app segue com `perfilAtual()`, `gestorAtual()` e `exigirPermissao()` provisórios em modo de exemplo. O banco é provado **por perfil, só no pgTAP**: um auxiliar `como_usuario(perfil)` cria usuários de teste no `auth.users` local e usa `set local role authenticated` com as claims desse usuário (nunca `service_role`).
 
-**Login real (fatia 3.8, perto do fim):** Auth local (e-mail e senha), login e logout, `lib/seguranca/sessao.ts` com `@supabase/ssr` e `getUser` no servidor (nunca `getSession`; decisão de 03/11/2026), sessão no `proxy.ts`. `perfilAtual()` e `gestorAtual()` saem; `exigirPermissao()` passa a ser assíncrona e consulta `config.pode(...)` (o app confere cedo para dar mensagem boa; **o banco decide**). Menu, Ctrl+K e ações passam a ler a tabela de permissão, e um teste compara o catálogo de navegação com o seed de permissões. **Segundo fator (TOTP) fica fora da Fase 3**, para depois do login.
+**Login real (fatia 3.8, perto do fim):** Auth local (e-mail e senha), login e logout, `lib/seguranca/sessao.ts` com `@supabase/ssr` e `getUser` no servidor (nunca `getSession`; decisão de 04/11/2026), sessão no `proxy.ts`. `perfilAtual()` e `gestorAtual()` saem; `exigirPermissao()` passa a ser assíncrona e consulta `config.pode(...)` (o app confere cedo para dar mensagem boa; **o banco decide**). Menu, Ctrl+K e ações passam a ler a tabela de permissão, e um teste compara o catálogo de navegação com o seed de permissões. **Segundo fator (TOTP) fica fora da Fase 3**, para depois do login.
 
 **Testes pgTAP, sempre com a chave do usuário:** para cada tabela e cada perfil, o que lê, o que escreve e o que **não** vê (matriz). `anon` não lê nada. Gestor de frota A não vê a placa do gestor B em `minha_carteira`; operação X não vê a operação Y; o Operacional da filial A não vê a placa que está com o Operacional da filial B; Administrador e Diretoria veem tudo; quem não tem `ver_documento` não lê o CPF completo. Política sem teste continua falhando (armadilha 9).
 
@@ -481,9 +481,9 @@ O texto completo está em `docs/decisoes.md` (entradas de 03/11/2026). Aqui fica
 - **Consulta de placa no "Cadastrar placa":** descartada por ora (depende de API paga ou canal oficial autorizado pela diretoria).
 - **"Receber placa" na opção B (ajuste da tela na 3.9):** a tela ainda faz tudo numa etapa e troca o gestor ao concluir. Mudam: `app/(sistema)/frota/placas/assistentes/receber-placa.tsx` (duas etapas e três respostas por pendência, com nota); `esquemaRecebimento` em `lib/dominio/esquemas/placa.ts` (pendências com `resolvida: boolean`); `lib/dominio/custodia.ts` (`SituacaoDoPedido` e `podeReceberPedido`); o `receber` do armazém de exemplo (`lib/exemplo/armazem.ts`, que troca o gestor no recebimento); `receberPlacaAcao` (`app/(sistema)/frota/placas/acoes.ts`) e `lib/dados/entradas-dos-assistentes.ts`; as ações da ficha (`lib/dominio/acoes-do-momento.ts` e `components/ficha/acoes-da-ficha.tsx`, que não têm "concluir" para pedido em conferência); e os e2e de custódia (`e2e/assistentes-frota-custodia.spec.ts`, além de `assistentes-frota.casca.spec.ts`, `assistentes-frota.visual.spec.ts` e `ficha.spec.ts`).
 
-## Login (03/11/2026): fatia 3.8
+## Login (04/11/2026): fatia 3.8
 
-Decisões de Alexandre sobre o plano (03/11/2026). A 3.8 começa só depois de a S0 (ponte de consulta do Sankhya) ser aprovada.
+Decisões de Alexandre sobre o plano (04/11/2026). A 3.8 começa só depois de a S0 (ponte de consulta do Sankhya) ser aprovada.
 
 - **Entrada:** e-mail e senha (Supabase Auth). Google e link por e-mail ficam para depois. **Cadastro fechado** (`enable_signup = false`). Senha com **no mínimo 12 caracteres**. Erro genérico: "e-mail ou senha incorretos" (nunca revela se o e-mail existe).
 - **Usuário:** nesta fatia continua criado no Studio e ligado à Pessoa por `vincular_usuario`. **Sem convite pelo app** (exigiria `service_role` fora de `workers/`); o assistente "Novo usuário" vem depois, por um worker. E-mails de produção (convite e recuperação) esperam o Resend e o domínio; no local, o Inbucket recebe.
@@ -494,7 +494,7 @@ Decisões de Alexandre sobre o plano (03/11/2026). A 3.8 começa só depois de a
 - **Depois:** segundo fator (TOTP; obrigatório primeiro para Administrador e Diretoria), Google, o assistente "Novo usuário" e os e-mails de produção.
 - **Backlog antes da produção (registrado no checkpoint da 3.8):** CSP com nonce; HSTS só em produção; segundo fator (TOTP); Google; convite pelo app (por worker); e-mails (Resend e domínio); proteção contra senha vazada (Supabase Pro). Conferir os limites de tentativas do Auth no `eixo-prod`.
 
-## Garagem e filial do CR (03/11/2026)
+## Garagem e filial do CR (04/11/2026)
 
 O texto completo está em `docs/decisoes.md`. **Garagem** (3: Matriz, Cordeirópolis, Parauapebas) é o lugar, a raiz da árvore de CRs; **filial do CR** (13 valores de `AD_GARAGEM`) é um rótulo. As duas são do CR e chegam ao ativo pelo CR vigente, calculadas. `config.filial` (3.1: custódia e escopo do Operacional) fica como está até a resposta de Alexandre. As telas mudam na 3.9 (a lista está na decisão).
 

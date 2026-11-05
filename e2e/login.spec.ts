@@ -128,7 +128,7 @@ test.describe("sem sessão", () => {
   });
 });
 
-// Aprovação da 3.8 (03/11/2026): cada perfil entra sem "proximo" e termina na sua primeira tela, que
+// Aprovação da 3.8 (04/11/2026): cada perfil entra sem "proximo" e termina na sua primeira tela, que
 // abre (sem 404); a raiz (/) leva ao mesmo lugar. Só no 1366 (cada entrada gasta uma tentativa do Auth).
 test.describe("a primeira tela de cada perfil", () => {
   test.use(SEM_SESSAO);

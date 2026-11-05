@@ -50,9 +50,9 @@ O usuário da API é somente leitura **por enquanto**. A garantia do Eixo é a t
 
 ## Centros de resultado, naturezas e TOPs (`TSICUS`, `TGFNAT`, `TGFTOP`)
 
-- **CR (`TSICUS`), vista em tela em 03/11/2026:** `CODCENCUS` é inteiro com máscara hierárquica (04.000.000 Frota COR/SP > 04.011.000 Frota implemento COR > 04.011.142, o CR do ativo); `DESCRCENCUS` é a placa nos CRs de frota (só confere, nunca decide: fica velha na conversão Mercosul). O vínculo ativo-CR é `TGFVEI.CODCENCUS`.
+- **CR (`TSICUS`), vista em tela em 04/11/2026:** `CODCENCUS` é inteiro com máscara hierárquica (04.000.000 Frota COR/SP > 04.011.000 Frota implemento COR > 04.011.142, o CR do ativo); `DESCRCENCUS` é a placa nos CRs de frota (só confere, nunca decide: fica velha na conversão Mercosul). O vínculo ativo-CR é `TGFVEI.CODCENCUS`.
 - **Campos permitidos (CR):** `CODCENCUS`, `DESCRCENCUS`, `ATIVO`, `ANALITICO`, `VEICULO` (veículo obrigatório), `CODCENCUSPAI`, `GRAU`, `AD_FROTA`, `AD_BLOQUEADO`, `AD_OPERACAO`, `AD_GARAGEM`, `AD_IDEXTERNO`, `DTINCLUSAO`. **Não ler** `CODUSURESP` nem `CODPARCRESP` (dado de pessoa).
-- **Tipo do CR no Eixo (regra de 03/11/2026, pela lista real; derivado, com origem):**
+- **Tipo do CR no Eixo (regra de 04/11/2026, pela lista real; derivado, com origem):**
   - **frota de ativo** (`AD_FROTA` = S e `VEICULO` = S): o CR é do ativo, seja placa ou equipamento (a chave do equipamento é a série);
   - **frota sem placa** (`AD_FROTA` = S e `VEICULO` diferente de S; o CR não é de um ativo): estoque, oficina, pneu, posto, manutenção;
   - **serviço** (`AD_FROTA` = N **ou vazio**: o vazio é serviço, nunca pendente).
@@ -60,7 +60,7 @@ O usuário da API é somente leitura **por enquanto**. A garantia do Eixo é a t
 - **Operação:** não vem do CR (`AD_OPERACAO` está vazio em todos): é montada no Eixo.
 - **Regra do vigente:** ao mudar de centro, o antigo é bloqueado; o vigente é o não bloqueado; **mais de um não bloqueado vira alerta**. O bloqueio **não guarda data**. As datas de início e fim do centro na vigência vêm da origem **derivada** (primeiro e último lançamento do ativo naquele centro, no financeiro), **observada** (quando a sincronização viu a mudança de bloqueio) ou **informada** (assistente), e a origem é registrada junto da data.
 
-### Garagem e filial: duas dimensões (Alexandre, 03/11/2026)
+### Garagem e filial: duas dimensões (Alexandre, 04/11/2026)
 
 - **Garagem (3: Matriz, Cordeirópolis, Parauapebas)** é o **lugar** e vive na **árvore** de CRs: é a raiz do CR. Pelo primeiro dígito do código de 7 dígitos de frota: 4 = FROTA - COR/SP (Cordeirópolis); 6 = FROTA - PAR/PA (Parauapebas); 2 = frota da Matriz (descrições "SLZ"). As 3 garagens são conferidas (informadas por Alexandre); o que fica **a confirmar** é a regra do primeiro dígito: com a ponte (S0), a raiz vem de `CODCENCUSPAI`; até lá o primeiro dígito, marcado em cada CR "derivada, a confirmar". CRs de 8 dígitos (acionistas) e dígito fora de 2, 4 e 6 ficam **sem garagem** e vão para a fila de exceções (há 3 CRs de frota com dígito 5).
 - **Filial do CR (13 valores de `AD_GARAGEM`:** Operação Matriz, Operação Sudeste, Parauapebas - OZ Minerais, Veículos Vendidos, Parceiros…) é um **rótulo**, diferente do lugar: a mesma "Operação Matriz" aparece em CRs dos códigos 2, 4 e 6.

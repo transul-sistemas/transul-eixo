@@ -185,7 +185,7 @@ describe("definirNovaSenha", () => {
   });
 });
 
-// Aprovação da 3.8 (03/11/2026): o destino depois do login é do perfil, nunca uma rota que dá 404 para
+// Aprovação da 3.8 (04/11/2026): o destino depois do login é do perfil, nunca uma rota que dá 404 para
 // ele: sem "proximo", com "proximo" de fora, com "/" ou com um módulo que o perfil não vê.
 describe("entrar: o destino é a primeira tela do perfil", () => {
   const casos = [

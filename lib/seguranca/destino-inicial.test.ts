@@ -6,7 +6,7 @@ import { decidirAcesso, moduloDoCaminho, rotaPublica } from "./acesso";
 import { PERMISSOES_DOS_PERFIS } from "./permissoes";
 import { destinoInicial } from "./redirecionamento";
 
-// O destino depois do login é do perfil (aprovação da 3.8, 03/11/2026): o primeiro módulo que o perfil
+// O destino depois do login é do perfil (aprovação da 3.8, 04/11/2026): o primeiro módulo que o perfil
 // pode ver, nunca uma rota que dá 404 para ele, sem laço de redirecionamento.
 
 describe("destinoInicial: a primeira tela de cada perfil", () => {

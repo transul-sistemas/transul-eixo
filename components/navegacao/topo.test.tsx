@@ -72,7 +72,7 @@ describe("<Topo>: trilha e tema", () => {
   });
 });
 
-// CI do PR #31 (03/11/2026): o Sair no topo fazia o topo quebrar linha no 1366 e no celular.
+// CI do PR #31 (04/11/2026): o Sair no topo fazia o topo quebrar linha no 1366 e no celular.
 describe("<Topo>: o Sair não mora no topo", () => {
   it("o topo não tem botão Sair (ele fica no rodapé da barra lateral)", () => {
     const html = topo();

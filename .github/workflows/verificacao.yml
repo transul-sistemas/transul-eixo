@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     # A suíte de tela (1002 testes, 1 worker no CI) passou de 20 min: ver docs/decisoes.md. Desde a 3.8
     # o job também sobe o Supabase local (o login dos e2e). O CI do PR #31 levou 52 min: o prazo subiu
-    # para 70 como rede de segurança (aprovação da 3.8, 03/11/2026).
+    # para 70 como rede de segurança (aprovação da 3.8, 04/11/2026).
     timeout-minutes: 70
     steps:
       - uses: actions/checkout@v4
@@ -112,7 +112,7 @@ jobs:
       - run: pnpm run db:tipos
       - run: git diff --exit-code -- lib/dados/tipos-do-banco.ts
       # Com a máquina sem memória livre, os tipos não se geram localmente: quando divergem, o arquivo
-      # gerado sobe como artefato para entrar no commit seguinte (ver docs/decisoes.md, 03/11/2026).
+      # gerado sobe como artefato para entrar no commit seguinte (ver docs/decisoes.md, 04/11/2026).
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
@@ -121,7 +121,7 @@ jobs:
           retention-days: 7
 
   # Os jobs abaixo rodam só no pull request e NÃO são verificação obrigatória (o ruleset exige só app e
-  # banco). Decisão de 03/11/2026 (aprovação da 3.8 e fatia 3.9a, ver docs/decisoes.md).
+  # banco). Decisão de 04/11/2026 (aprovação da 3.8 e fatia 3.9a, ver docs/decisoes.md).
   capturas:
     # As capturas das telas (acesso, tela inicial logada e a barra com o Sair), claro e escuro, em
     # 1366, 1920, tablet 820 e celular 390: o visual é conferido pelo artefato, sem rodar nada na
@@ -203,7 +203,7 @@ jobs:
   medicao:
     # O diagnóstico da lista de placas num job curto (sem build nem navegador): 201, 1.000 e 5.000
     # ativos, com o banco recriado entre eles; sem limite de tempo nas consultas medidas. O relatório
-    # sobe sempre, mesmo parcial (decisão de 03/11/2026, fatia 3.9a).
+    # sobe sempre, mesmo parcial (decisão de 05/11/2026, fatia 3.9a).
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 120

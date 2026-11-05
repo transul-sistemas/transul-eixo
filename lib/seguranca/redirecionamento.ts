@@ -5,7 +5,7 @@ import type { Perfil } from "@/lib/navegacao/perfis";
 // para a primeira tela do perfil: é a defesa contra o redirecionamento aberto.
 
 /**
- * A primeira tela de cada perfil (aprovação da 3.8, 03/11/2026): o primeiro módulo que o perfil pode
+ * A primeira tela de cada perfil (aprovação da 3.8, 04/11/2026): o primeiro módulo que o perfil pode
  * ver, sempre uma tela (nunca a página do módulo, que redireciona de novo) e nunca uma rota que dá 404
  * para ele. As telas do Operacional ainda estão "em breve": o Operacional cai no Pátio em breve.
  */

@@ -65,7 +65,7 @@ test("acesso não liberado e nova senha (sessão do sem vínculo)", async ({ pag
   await capturar(page, info, "nova-senha");
 });
 
-// Aprovação da 3.8 (03/11/2026): a tela inicial logada (1366 e celular com a gaveta aberta, claro e
+// Aprovação da 3.8 (04/11/2026): a tela inicial logada (1366 e celular com a gaveta aberta, claro e
 // escuro) e a barra lateral com o Sair no rodapé.
 test.describe("tela inicial logada", () => {
   test.use({ storageState: sessaoDe("administrador") });

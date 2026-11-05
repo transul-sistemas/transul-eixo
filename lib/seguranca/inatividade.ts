@@ -1,4 +1,4 @@
-// Sair por inatividade de 8 horas (decisão de Alexandre, 03/11/2026). O limite de inatividade da sessão
+// Sair por inatividade de 8 horas (decisão de Alexandre, 04/11/2026). O limite de inatividade da sessão
 // do Supabase só existe do plano Pro em diante (docs "User sessions"); no Free, o Eixo confere no proxy:
 // a cada pedido com sessão, a marca de atividade (cookie httpOnly) é lida e renovada.
 

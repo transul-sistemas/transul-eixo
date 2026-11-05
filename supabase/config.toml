@@ -281,7 +281,7 @@ max_frequency = "5s"
 [auth.sessions]
 # Force log out after the specified duration.
 # timebox = "24h"
-# Sair por inatividade de 8 horas (Alexandre, 03/11/2026). No plano Free da nuvem não existe; o app
+# Sair por inatividade de 8 horas (Alexandre, 04/11/2026). No plano Free da nuvem não existe; o app
 # confere sozinho no proxy.ts (lib/seguranca/inatividade.ts).
 inactivity_timeout = "8h"
 
