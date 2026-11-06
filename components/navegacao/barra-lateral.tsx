@@ -73,6 +73,11 @@ function estiloDaCor(cor: ModuloDoCatalogo["cor"]): CSSProperties {
   return { "--tom-forte": `var(${forte})`, "--tom-suave": `var(${suave})` } as CSSProperties;
 }
 
+/** O número para o leitor de tela: "1 item", "5 itens", "2 para receber". */
+function textoDoContador(quantidade: number, rotulo = "itens"): string {
+  return rotulo === "itens" && quantidade === 1 ? "1 item" : `${quantidade} ${rotulo}`;
+}
+
 function Contador({
   id,
   quantidade,
@@ -86,7 +91,7 @@ function Contador({
     <span
       data-contador={id}
       role="img"
-      aria-label={`${quantidade} ${rotulo}`}
+      aria-label={textoDoContador(quantidade, rotulo)}
       className={cn(
         "rounded-full px-1.5 text-xs leading-5 font-medium tabular-nums",
         // O contador que pede ação (como "para receber") é o selo na cor de ação, bem aparente.
@@ -470,7 +475,10 @@ export function BarraLateral({
                       >
                         <LinkComContexto
                           href={primeiraAberta ?? modulo.rota}
-                          aria-label={soma ? `${modulo.nome}, ${soma} itens` : modulo.nome}
+                          // O nome é o do módulo; o número vai na descrição (o nome não muda
+                          // quando o contador chega ou some).
+                          aria-label={modulo.nome}
+                          aria-describedby={soma ? `${prefixoDeId}-soma-${modulo.id}` : undefined}
                           aria-current={ativo ? "true" : undefined}
                           className={cn(
                             "hover:bg-sidebar-accent focus-visible:ring-ring relative grid size-11 place-items-center rounded-lg outline-none focus-visible:ring-2",
@@ -482,10 +490,15 @@ export function BarraLateral({
                             className="size-5 text-[var(--tom-forte)]"
                           />
                           {soma ? (
-                            <span
-                              aria-hidden
-                              className="absolute top-1.5 right-1.5 size-2 rounded-full bg-[var(--tom-forte)]"
-                            />
+                            <>
+                              <span
+                                aria-hidden
+                                className="absolute top-1.5 right-1.5 size-2 rounded-full bg-[var(--tom-forte)]"
+                              />
+                              <span id={`${prefixoDeId}-soma-${modulo.id}`} hidden>
+                                {textoDoContador(soma)}
+                              </span>
+                            </>
                           ) : null}
                         </LinkComContexto>
                         {painel === modulo.id ? (

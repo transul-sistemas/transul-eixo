@@ -79,6 +79,16 @@ describe("<BarraLateral>: contadores", () => {
     expect(html).toMatch(/data-contador="pessoas"[^>]*>99\+</);
     expect(html).toContain('aria-label="120 itens"');
   });
+  it("um só item fala no singular", () => {
+    expect(barra({ contadores: { "frota.carteira": 1 } })).toContain('aria-label="1 item"');
+  });
+  it("compacta, o nome do módulo continua só o nome; o número vai na descrição", () => {
+    const html = barra({ contadores, estadoInicial: { compacta: true } });
+    expect(html).toContain('aria-label="Frota"');
+    expect(html).not.toContain("Frota, ");
+    expect(html).toContain('aria-describedby="grupo-soma-frota"');
+    expect(html).toMatch(/id="grupo-soma-frota"[^>]*>5 itens</);
+  });
   it("sem contador não aparece nada, nem zero", () => {
     expect(barra()).not.toContain("data-contador");
     expect(barra({ contadores: { "frota.placas": 0 } })).not.toContain("data-contador");
