@@ -9,14 +9,23 @@ const arquivos = readdirSync(PASTA).filter((n) => n.endsWith(".sql"));
 const ler = (nome: string) => readFileSync(`${PASTA}/${nome}`, "utf8");
 
 describe("consultas versionadas", () => {
-  it("existem as quatro consultas da S0", () => {
+  it("existem as quatro consultas da S0 e as duas de cadastro da carga inicial (3.9c)", () => {
     expect([...arquivos].sort()).toEqual([
       "cr-por-pai-e-sinais.sql",
       "cr-repetidos-por-descricao.sql",
+      "crs-cadastro.sql",
+      "veiculos-ativos-cadastro.sql",
       "veiculos-ativos-sem-dado.sql",
       "veiculos-modelo-eixos-carroceria.sql",
     ]);
   });
+
+  it.each(["crs-cadastro.sql", "veiculos-ativos-cadastro.sql"])(
+    "%s passa pela guarda no modo linhas (sem proprietário, motorista nem responsável)",
+    (nome) => {
+      expect(() => conferirConsulta(ler(nome), { modo: "linhas" })).not.toThrow();
+    },
+  );
 
   it.each(arquivos)("%s passa pela guarda no modo resumo", (nome) => {
     expect(() => conferirConsulta(ler(nome), { modo: "resumo" })).not.toThrow();

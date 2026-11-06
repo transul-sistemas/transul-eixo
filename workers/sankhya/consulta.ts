@@ -1,15 +1,15 @@
 // Ponto de entrada de `pnpm sankhya:consulta consultas/<arquivo>.sql [--linhas N]` (fatia S0).
-// As credenciais vêm de .env.sankhya.local (fora do Git), carregado pelo Node (process.loadEnvFile, o
-// mesmo formato do dotenv); nada delas é impresso.
+// As credenciais vêm de .env.sankhya.local ou, sem ele, de .env.local (os dois fora do Git), carregados
+// pelo Node (process.loadEnvFile, o mesmo formato do dotenv); nada delas é impresso.
 
 import { existsSync } from "node:fs";
 import { criarClienteSankhya, mascarar } from "./cliente.ts";
 import { executarConsulta, lerArgumentos } from "./executar.ts";
 
-const ARQUIVO_DE_AMBIENTE = ".env.sankhya.local";
+const ARQUIVOS_DE_AMBIENTE = [".env.sankhya.local", ".env.local"];
 
 async function principal() {
-  if (existsSync(ARQUIVO_DE_AMBIENTE)) process.loadEnvFile(ARQUIVO_DE_AMBIENTE);
+  for (const arquivo of ARQUIVOS_DE_AMBIENTE) if (existsSync(arquivo)) process.loadEnvFile(arquivo);
   const { arquivo, linhas } = lerArgumentos(process.argv.slice(2));
   const saida = await executarConsulta({
     arquivo,
