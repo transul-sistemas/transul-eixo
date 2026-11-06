@@ -20,6 +20,7 @@ import { NOMES_DOS_TIPOS } from "@/lib/dados/placas-tipos";
 import {
   EIXOS_DO_SEMIRREBOQUE,
   esquemaCadastrarPlaca,
+  problemasDoImplemento,
   siglasIniciaisDoTipo,
   TIPOS_DE_ATIVO,
   type TipoDeItemDeCatalogo,
@@ -158,6 +159,17 @@ function criarResolver(anoAtual: number, hoje: string): Resolver<ValoresDoCadast
           );
     if (valores.tipo === "")
       problemas.push({ path: ["tipo"], message: "Escolha o tipo de ativo." });
+    // A regra do implemento confere já no passo Veículo (o esquema só a roda com o resto válido).
+    if (valores.tipo === "implemento") {
+      const vistos = new Set(problemas.map((p) => String(p.path[0])));
+      for (const p of problemasDoImplemento({
+        funcao: valores.funcao,
+        carroceriaId: valores.carroceriaId,
+        eixos: valores.eixos === "" ? null : Number(valores.eixos),
+      })) {
+        if (!vistos.has(p.path[0]!)) problemas.push(p);
+      }
+    }
     return problemas.length === 0
       ? { values: valores, errors: {} }
       : { values: {}, errors: errosDoResolvedor<ValoresDoCadastro>(problemas) };

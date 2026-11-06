@@ -121,6 +121,44 @@ function dataValida(texto: string): boolean {
 export const EIXOS_DO_SEMIRREBOQUE = [1, 2, 3, 4, 5, 6] as const;
 
 /**
+ * A regra da função, da carroceria e dos eixos do implemento, sozinha: o semirreboque precisa de
+ * carroceria e de 1 a 6 eixos; o dolly não tem carroceria e tem sempre 2 eixos. Fica fora do esquema
+ * para a tela conferir no passo Veículo (o Zod só roda o `transform` quando o resto do formulário
+ * já passou); o esquema chama a mesma função.
+ */
+export function problemasDoImplemento({
+  funcao,
+  carroceriaId,
+  eixos,
+}: {
+  funcao?: string | null;
+  carroceriaId?: string | null;
+  eixos?: number | null;
+}): { path: string[]; message: string }[] {
+  const temCarroceria = !!carroceriaId && carroceriaId.trim() !== "";
+  const problemas: { path: string[]; message: string }[] = [];
+  if (funcao === "dolly") {
+    if (temCarroceria)
+      problemas.push({ path: ["carroceriaId"], message: "O dolly não tem carroceria." });
+    if (eixos != null && eixos !== 2) {
+      problemas.push({ path: ["eixos"], message: "O dolly tem sempre 2 eixos." });
+    }
+    return problemas;
+  }
+  if (funcao !== "semirreboque") return problemas;
+  if (!temCarroceria) {
+    problemas.push({
+      path: ["carroceriaId"],
+      message: "O semirreboque precisa de carroceria. Escolha uma da lista.",
+    });
+  }
+  if (eixos == null || !(EIXOS_DO_SEMIRREBOQUE as readonly number[]).includes(eixos)) {
+    problemas.push({ path: ["eixos"], message: "Informe os eixos do semirreboque, de 1 a 6." });
+  }
+  return problemas;
+}
+
+/**
  * Cadastrar placa. `anoAtual` e `hoje` (`aaaa-mm-dd`) entram de fora para a regra ser pura e testável.
  * Cavalo e caminhão: código FIPE e valor FIPE digitados. Implemento, equipamento e apoio: valor
  * manual, fonte e data do valor. O implemento diz a função (semirreboque ou dolly), a carroceria e os
@@ -175,38 +213,12 @@ export function esquemaCadastrarPlaca({ anoAtual, hoje }: { anoAtual: number; ho
       eixos: z.number().nullish(),
     })
     .transform((dados, ctx) => {
-      const carroceriaId = dados.carroceriaId ? dados.carroceriaId : null;
-      if (dados.funcao === "dolly") {
-        if (carroceriaId !== null) {
-          ctx.addIssue({
-            code: "custom",
-            path: ["carroceriaId"],
-            message: "O dolly não tem carroceria.",
-          });
-        }
-        if (dados.eixos != null && dados.eixos !== 2) {
-          ctx.addIssue({ code: "custom", path: ["eixos"], message: "O dolly tem sempre 2 eixos." });
-        }
-        return { ...dados, carroceriaId: null, eixos: 2 };
+      for (const problema of problemasDoImplemento(dados)) {
+        ctx.addIssue({ code: "custom", path: problema.path, message: problema.message });
       }
-      if (carroceriaId === null) {
-        ctx.addIssue({
-          code: "custom",
-          path: ["carroceriaId"],
-          message: "O semirreboque precisa de carroceria. Escolha uma da lista.",
-        });
-      }
-      if (
-        dados.eixos == null ||
-        !(EIXOS_DO_SEMIRREBOQUE as readonly number[]).includes(dados.eixos)
-      ) {
-        ctx.addIssue({
-          code: "custom",
-          path: ["eixos"],
-          message: "Informe os eixos do semirreboque, de 1 a 6.",
-        });
-      }
-      return { ...dados, carroceriaId, eixos: dados.eixos ?? null };
+      return dados.funcao === "dolly"
+        ? { ...dados, carroceriaId: null, eixos: 2 }
+        : { ...dados, carroceriaId: dados.carroceriaId || null, eixos: dados.eixos ?? null };
     });
   return z
     .discriminatedUnion(

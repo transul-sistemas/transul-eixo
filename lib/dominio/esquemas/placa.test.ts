@@ -8,6 +8,7 @@ import {
   esquemaEntregaAoOperacionalDe,
   esquemaItemDeCatalogo,
   esquemaReceberPlaca,
+  problemasDoImplemento,
   siglasIniciaisDoTipo,
   validarRenavam,
 } from "./placa";
@@ -263,6 +264,27 @@ describe("esquemaCadastrarPlaca: função, carroceria e eixos do implemento", ()
     const r = esquema.safeParse({ ...cavalo, funcao: "dolly", carroceriaId: "x", eixos: 3 });
     expect(r.success).toBe(true);
     if (r.success) expect("funcao" in r.data).toBe(false);
+  });
+});
+
+describe("problemasDoImplemento: a regra da função, da carroceria e dos eixos, sozinha", () => {
+  it("vale mesmo com o resto do formulário vazio (a tela confere no passo Veículo)", () => {
+    expect(
+      problemasDoImplemento({ funcao: "semirreboque", carroceriaId: "", eixos: null }),
+    ).toEqual([
+      {
+        path: ["carroceriaId"],
+        message: "O semirreboque precisa de carroceria. Escolha uma da lista.",
+      },
+      { path: ["eixos"], message: "Informe os eixos do semirreboque, de 1 a 6." },
+    ]);
+    expect(problemasDoImplemento({ funcao: "semirreboque", carroceriaId: "c", eixos: 3 })).toEqual(
+      [],
+    );
+    expect(problemasDoImplemento({ funcao: "dolly", carroceriaId: null, eixos: null })).toEqual([]);
+    expect(
+      problemasDoImplemento({ funcao: "dolly", carroceriaId: "c", eixos: 3 }).map((p) => p.path[0]),
+    ).toEqual(["carroceriaId", "eixos"]);
   });
 });
 
