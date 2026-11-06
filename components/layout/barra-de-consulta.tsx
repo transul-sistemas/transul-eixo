@@ -46,6 +46,11 @@ export interface ApresentacaoDoGrupo {
   readonly forma: "pilula" | "retangulo";
   /** Seleção com fundo azul claro e borda azul (`acao`) ou com fundo escuro e texto claro (`escuro`). */
   readonly destaque: "acao" | "escuro";
+  /**
+   * O grupo fica na linha da busca, sem caixa (como "Para receber"): não gasta uma linha a mais, que
+   * sairia da altura da tabela. O título e o subtítulo viram o nome do grupo para o leitor de tela.
+   */
+  readonly naLinhaDaBusca?: boolean;
 }
 
 interface PropsVisuais {
@@ -67,6 +72,8 @@ interface PropsVisuais {
   maisFiltros?: ReactNode;
   /** Parâmetros da URL que são filtros da tela (Mais filtros): contam como consulta ativa e saem no Limpar filtros. */
   filtrosExtras?: readonly string[];
+  /** Um aviso curto na linha da busca (como "1 placa espera por você"), sem linha própria. */
+  aviso?: ReactNode;
 }
 
 /**
@@ -85,6 +92,7 @@ export function BarraDeConsulta({
   ocupada = false,
   maisFiltros,
   filtrosExtras = [],
+  aviso,
 }: PropsVisuais) {
   const consulta = lerConsulta(parametros);
   const ativa = consultaAtiva(consulta) || filtrosExtras.some((chave) => parametros.has(chave));
@@ -96,9 +104,13 @@ export function BarraDeConsulta({
     aoNavegar?.(texto ? `${rota}?${texto}` : rota, substituir);
   }
 
-  const temGrupos = chips.some((chip) => chip.grupo);
-  const temCaixas = chips.some((chip) => chip.grupo && apresentacaoDosGrupos[chip.grupo]);
-  const grupos = agruparChips(chips);
+  const naBusca = (chip: ChipDeConsulta) =>
+    !!chip.grupo && !!apresentacaoDosGrupos[chip.grupo]?.naLinhaDaBusca;
+  const chipsAbaixo = chips.filter((chip) => !naBusca(chip));
+  const temGrupos = chipsAbaixo.some((chip) => chip.grupo);
+  const temCaixas = chipsAbaixo.some((chip) => chip.grupo && apresentacaoDosGrupos[chip.grupo]);
+  const grupos = agruparChips(chipsAbaixo);
+  const gruposNaBusca = agruparChips(chips.filter(naBusca));
   const filtrosAtivos = contarFiltrosAtivos(parametros, filtrosExtras);
 
   function renderizarChip(chip: ChipDeConsulta, apresentacao?: ApresentacaoDoGrupo) {
@@ -118,7 +130,7 @@ export function BarraDeConsulta({
         }}
         className={cn(
           "focus-visible:ring-ring/50 flex items-center gap-1.5 border px-3 text-sm outline-none focus-visible:ring-3",
-          apresentacao ? "h-7 lg:h-6" : "h-8",
+          apresentacao && !apresentacao.naLinhaDaBusca ? "h-7 lg:h-6" : "h-8",
           apresentacao?.forma === "retangulo" ? "rounded-md" : "rounded-full",
           chip.contagem === 0 && !ligado && "opacity-50",
           "aria-disabled:cursor-wait aria-disabled:opacity-60",
@@ -192,6 +204,33 @@ export function BarraDeConsulta({
       ) : (
         <p role="status" className="sr-only" />
       )}
+
+      {gruposNaBusca.length > 0 || aviso ? (
+        // O que fica na linha da busca ocupa só o espaço que sobra (é um contêiner: o chip e o aviso
+        // aparecem só onde cabem; no celular, nenhum). Chegando depois do esqueleto, nunca empurra
+        // Mais filtros e Visões salvas para a linha de baixo nem a tabela para baixo.
+        <div
+          data-linha-da-busca=""
+          className="@container flex min-w-0 flex-1 items-center gap-2 overflow-hidden max-sm:hidden"
+        >
+          {gruposNaBusca.map((grupo) => {
+            const apresentacao = apresentacaoDosGrupos[grupo.rotulo ?? ""];
+            return (
+              <div
+                key={grupo.rotulo}
+                role="group"
+                aria-label={
+                  apresentacao ? `${apresentacao.titulo}, ${apresentacao.subtitulo}` : grupo.rotulo
+                }
+                className="hidden shrink-0 items-center gap-1.5 @min-[8rem]:flex"
+              >
+                {grupo.chips.map((chip) => renderizarChip(chip, apresentacao))}
+              </div>
+            );
+          })}
+          {aviso}
+        </div>
+      ) : null}
 
       <div className="ml-auto flex min-w-[14.5rem] flex-wrap items-center justify-start gap-2">
         {ativa ? (
@@ -305,7 +344,7 @@ const ESPERA_DA_BUSCA_MS = 250;
 function Ligada(
   props: Pick<
     PropsVisuais,
-    "rotulo" | "chips" | "apresentacaoDosGrupos" | "maisFiltros" | "filtrosExtras"
+    "rotulo" | "chips" | "apresentacaoDosGrupos" | "maisFiltros" | "filtrosExtras" | "aviso"
   >,
 ) {
   const rota = usePathname();
@@ -380,7 +419,7 @@ function Ligada(
 export function BarraDeConsultaDaPagina(
   props: Pick<
     PropsVisuais,
-    "rotulo" | "chips" | "apresentacaoDosGrupos" | "maisFiltros" | "filtrosExtras"
+    "rotulo" | "chips" | "apresentacaoDosGrupos" | "maisFiltros" | "filtrosExtras" | "aviso"
   >,
 ) {
   return (

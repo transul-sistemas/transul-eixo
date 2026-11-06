@@ -95,7 +95,7 @@ function enderecoSemFiltros(
 }
 
 /**
- * Como cada grupo aparece: Para receber (o que espera por quem usa, primeiro), Situação (como a placa
+ * Como cada grupo aparece: Para receber (o que espera por quem usa, na linha da busca), Situação (como a placa
  * está agora) e Tipo de ativo (o que é a placa).
  */
 const GRUPOS_DA_LISTA: Readonly<Record<string, ApresentacaoDoGrupo>> = {
@@ -104,6 +104,7 @@ const GRUPOS_DA_LISTA: Readonly<Record<string, ApresentacaoDoGrupo>> = {
     subtitulo: "placas que esperam por você",
     forma: "pilula",
     destaque: "acao",
+    naLinhaDaBusca: true,
   },
   situacao: {
     titulo: "Situação",
@@ -235,12 +236,14 @@ export async function PaginaDePlacas({ searchParams }: { searchParams: Parametro
             apresentacaoDosGrupos={GRUPOS_DA_LISTA}
             filtrosExtras={["sigla", "baixadas"]}
             maisFiltros={<MaisFiltrosDePlacas padrao={padrao} campos={campos} />}
+            aviso={
+              consulta.chips.includes(CHIP_PARA_RECEBER) ? null : (
+                <FaixaParaReceberNaLista quantidade={paraReceber} hrefDoFiltro={hrefParaReceber} />
+              )
+            }
           />
         }
       >
-        {consulta.chips.includes(CHIP_PARA_RECEBER) ? null : (
-          <FaixaParaReceberNaLista quantidade={paraReceber} hrefDoFiltro={hrefParaReceber} />
-        )}
         {pagina.total === 0 ? (
           filtrosAtivos ? (
             <ListaVazia

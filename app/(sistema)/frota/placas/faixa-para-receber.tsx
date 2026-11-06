@@ -9,6 +9,10 @@ import { formatarInteiro } from "@/components/formato/numero";
 const CLASSE =
   "border-primary bg-primary/10 text-foreground flex flex-wrap items-center gap-3 rounded-lg border px-4 py-3 text-sm";
 
+/**
+ * Na lista, o aviso é compacto e fica na linha da busca, ao lado do chip "Para receber": não gasta
+ * uma linha própria, que sairia da altura da tabela (no 1366, pelo menos 9 linhas inteiras).
+ */
 export function FaixaParaReceberNaLista({
   quantidade,
   hrefDoFiltro,
@@ -23,12 +27,16 @@ export function FaixaParaReceberNaLista({
       ? "1 placa espera por você."
       : `${formatarInteiro(quantidade)} placas esperam por você.`;
   return (
-    <div role="status" data-faixa-para-receber="" className={CLASSE}>
-      <IconInbox aria-hidden className="text-primary size-5 shrink-0" />
-      <p className="flex-1">
-        <b>Para receber:</b> {texto} Receba cada uma e conclua o recebimento respondendo as
-        pendências.
-      </p>
+    <div
+      role="status"
+      data-faixa-para-receber=""
+      title="Receba cada uma e conclua o recebimento respondendo as pendências."
+      // O aviso aparece só onde cabe inteiro na linha da busca (a largura do contêiner, não da
+      // janela); onde não cabe, o chip "Para receber (N)", ao lado, já diz quantas e leva ao filtro.
+      className="border-primary bg-primary/10 text-foreground hidden h-8 items-center gap-2 rounded-full border px-3 text-sm whitespace-nowrap @min-[31rem]:flex"
+    >
+      <IconInbox aria-hidden className="text-primary size-4 shrink-0" />
+      <p className="font-medium">{texto}</p>
       <Link href={hrefDoFiltro} className="text-primary font-medium underline underline-offset-4">
         Ver placas para receber
       </Link>

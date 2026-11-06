@@ -248,3 +248,41 @@ describe("contador de filtros ativos, ao lado da busca", () => {
     );
   });
 });
+
+describe("grupo na linha da busca (Para receber)", () => {
+  const html = renderToStaticMarkup(
+    <BarraDeConsulta
+      rotulo="Buscar placa"
+      chips={[
+        { id: "para_receber", nome: "Para receber", contagem: 1, grupo: "receber" },
+        ...CHIPS,
+      ]}
+      apresentacaoDosGrupos={{
+        ...APRESENTACAO,
+        receber: {
+          titulo: "Para receber",
+          subtitulo: "placas que esperam por você",
+          forma: "pilula",
+          destaque: "acao",
+          naLinhaDaBusca: true,
+        },
+      }}
+      aviso={<p data-aviso="">1 placa espera por você.</p>}
+    />,
+  );
+  const linhaDaBusca =
+    /data-linha-da-busca=""[\s\S]*?(?=<div class="ml-auto)/.exec(html)?.[0] ?? "";
+  const filtrosRapidos = /aria-label="Filtros rápidos"[\s\S]*$/.exec(html)?.[0] ?? "";
+
+  it("o chip e o aviso ficam na linha da busca, antes de Mais filtros, sem caixa própria", () => {
+    expect(linhaDaBusca).toContain('aria-label="Para receber, placas que esperam por você"');
+    expect(linhaDaBusca).toContain("data-aviso");
+    expect(filtrosRapidos).not.toContain("Para receber");
+  });
+  it("ocupa só o espaço que sobra (não empurra os botões para a linha de baixo)", () => {
+    expect(html).toMatch(/data-linha-da-busca="" class="[^"]*min-w-0[^"]*flex-1/);
+  });
+  it("sem o grupo nem o aviso, não há o contêiner", () => {
+    expect(com()).not.toContain("data-linha-da-busca");
+  });
+});
