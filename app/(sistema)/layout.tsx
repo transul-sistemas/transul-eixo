@@ -1,3 +1,4 @@
+import { unstable_rethrow } from "next/navigation";
 import { connection } from "next/server";
 import { type ReactNode, Suspense } from "react";
 import { AreaPrincipal } from "@/components/navegacao/area-principal";
@@ -10,12 +11,18 @@ import { sair } from "@/app/(acesso)/acoes";
 import { hojeEmSaoPaulo } from "@/components/formato/data";
 import { contarParaReceber } from "@/lib/dados/fonte";
 
-/** O selo "para receber" nunca derruba a barra: sem o número, a barra aparece sem o selo. */
+/**
+ * O selo "para receber" nunca derruba a barra: sem o número, a barra aparece sem o selo. A leitura é
+ * dinâmica (depois do `connection()`, dentro do Suspense da barra); a interrupção do pré-render e os
+ * desvios do Next não são erro e seguem para ele (`unstable_rethrow`), senão o pré-render da casca
+ * registraria uma falha falsa a cada rota.
+ */
 async function contarParaReceberSemCair(): Promise<number> {
+  await connection();
   try {
-    await connection();
     return await contarParaReceber(hojeEmSaoPaulo(new Date()));
   } catch (erro) {
+    unstable_rethrow(erro);
     console.error("contagem de placas para receber indisponível:", erro);
     return 0;
   }
