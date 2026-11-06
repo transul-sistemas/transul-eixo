@@ -150,7 +150,7 @@ test.describe("cadastrar placa: valor por tipo", () => {
   }) => {
     await abrirOCadastro(page);
     await passoIdentificacao(page, { placa: placaUnica(), tipo: "Implemento" });
-    await passoVeiculo(page, { marca: "Randon", modelo: "Sider 3 eixos" });
+    await passoVeiculo(page, { tipo: "Implemento", marca: "Randon", modelo: "Sider 3 eixos" });
     const c = cadastro(page);
     await expect(c.getByLabel("Valor", { exact: true })).toBeVisible();
     await expect(c.getByLabel("Fonte do valor")).toBeVisible();
@@ -171,7 +171,7 @@ test.describe("cadastrar placa: valor por tipo", () => {
   test("a data do valor no futuro é recusada", async ({ page }) => {
     await abrirOCadastro(page);
     await passoIdentificacao(page, { placa: placaUnica(), tipo: "Implemento" });
-    await passoVeiculo(page, { marca: "Randon", modelo: "Sider 3 eixos" });
+    await passoVeiculo(page, { tipo: "Implemento", marca: "Randon", modelo: "Sider 3 eixos" });
     const c = cadastro(page);
     await c.getByLabel("Valor", { exact: true }).click();
     await page.keyboard.type("2500000");
