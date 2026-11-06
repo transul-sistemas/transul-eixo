@@ -42,7 +42,8 @@ que Alexandre mostrar; não roda nada na nuvem e não acessa a Vercel.
    - `pnpm backup:banco` (banco local, com a carga) gera `C:\Backups\eixo\eixo-local-<data>.dump.enc`;
    - banco local zerado (`supabase db reset`, só local) e `pnpm backup:restaurar <arquivo>`;
    - `querys/04-conferir-carga-inicial.sql` no banco restaurado igual à tabela "Conferência" abaixo.
-   - **Resultado:** _pendente (roda quando o agente de correção dos e2e terminar)._
+   - **Resultado (06/11/2026): passou.** Backup local de 1.649 KB; banco local zerado (a `querys/04` deu zero em tudo); `pnpm backup:restaurar` sem erro; a `querys/04` voltou idêntica à tabela "Conferência" (1.331 e 90 CRs, 928 placas, 175 conjuntos com 294 implementos, 12 gestores pendentes, fila 928, 19 e 3).
+   - **Limite encontrado:** o backup não leva os logins (`auth.users`), mas leva o vínculo deles (`nucleo.usuario`). Restaurar num banco onde o login vinculado não existe falha inteiro e não muda nada (a restauração é uma transação só). Num projeto novo, crie antes os logins (o Administrador e os gestores) e só então restaure.
 6. **A cópia da v1 ligada** (origem da carga): `docker start transul_v1_local`.
 
 ### Passo 1: `db push --dry-run` (Alexandre, PowerShell, na raiz do projeto)

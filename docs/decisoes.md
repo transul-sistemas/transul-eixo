@@ -8,6 +8,12 @@ Modelo de entrada:
 
 ---
 
+## 06/11/2026 — Backup testado num banco local vazio
+
+- **Resultado:** `pnpm backup:banco` (banco local com a carga, 1.649 KB), `supabase db reset` local (a `querys/04` deu zero), `pnpm backup:restaurar` sem erro e a `querys/04` idêntica ao esperado (1.331 e 90 CRs, 928 placas, 175 conjuntos com 294 implementos, 12 gestores pendentes, fila 928, 19 e 3).
+- **Limite:** o backup não leva `auth.users`, mas leva `nucleo.usuario` (com chave estrangeira para o login). Restaurar onde o login vinculado não existe falha inteiro, sem mudar nada (uma transação só); a primeira tentativa do teste falhou assim (havia o vínculo de um login de captura, só local, apagado pelo reset). Num projeto novo, os logins nascem antes da restauração.
+- **Deslize de processo:** a senha temporária da primeira tentativa foi gerada dentro do processo e se perdeu; o arquivo ficou ilegível. O banco local foi recarregado pela carga (idempotente) e o teste refeito com a senha temporária guardada fora do repositório. Para a nuvem, a senha é a `EIXO_BACKUP_SENHA`, guardada também fora da máquina.
+
 ## 06/11/2026 — Correção dos e2e da 3.9b-1 (CI 42282384607)
 
 - **Causas e correções:** (1) Concluir recebimento não mostrava o erro da pendência: `errosDoResolvedor` montava objeto com chaves "0", "1" e o React Hook Form, que guarda campos de lista como array, perdia o erro na validação do blur do primeiro rádio; o índice virou posição de lista, e o rádio sem resposta (`null`) deixou de valer "não resolvida" (mesma causa da falha do modo banco). (2) O e2e do valor do implemento não preenchia Função, Carroceria e Eixos (teste errado). (3) No modo compacto, o módulo se chama só pelo nome; o número do selo vai na descrição ("1 item" no singular). (4) "Para receber" na lista: o chip sai da caixa própria e vai para a linha da busca, com o aviso compacto (pílula) ao lado, num contêiner que usa só o espaço que sobra; o aviso aparece só onde cabe inteiro, o chip a partir de cerca de 128 px. No 1366 voltaram as 9 linhas inteiras, e nada empurra Mais filtros nem a lista no celular. (5) Mais filtros e Visões salvas reservam 112 px cada (grupo de 232): no CI o texto de Visões salvas mediu 105 px, acima dos 103 reservados. (6) A contagem do selo lê depois do `connection()` e devolve a interrupção do pré-render ao Next (`unstable_rethrow`), sem registrar falha falsa. (7) Gaveta no tablet: não reproduzida (31/31 no dev, inclusive com a barra atrasada 2,5 s); só o teste da medida passou a esperar a gaveta visível.
