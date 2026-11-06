@@ -29,14 +29,14 @@ Estado da primeira publicação usável (06/11/2026). Decisões em `docs/decisoe
 O roteiro passo a passo (comandos que Alexandre roda, com a senha digitada) está na resposta de 06/11/2026 e
 será copiado para cá quando for executado, com o resultado de cada passo e as contagens de conferência.
 
-## Conferência depois da carga (contagens esperadas, do banco local)
+## Conferência depois da carga (`querys/04-conferir-carga-inicial.sql`; esperado, do banco local)
 
 | O quê | Esperado |
 | --- | --- |
 | CRs importados (analíticos) e agrupadores | 1.331 e 90 |
 | Placas na lista (`nucleo.leitura_da_placa`) | 928 (315 cavalos, 6 caminhões, 607 implementos) |
 | Placas com gestor / com CR / com operação | 928 / 845 / 475 |
-| Composições vigentes | 175 |
+| Conjuntos vigentes / implementos engatados | 175 / 294 |
 | Gestores (pessoas sem login, pendentes de CPF) | 12 |
 | Fila aberta: cadastro incompleto / dois CRs do mesmo tipo / situação recusada | 928 / 19 / 3 |
 
