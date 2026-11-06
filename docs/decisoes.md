@@ -8,6 +8,15 @@ Modelo de entrada:
 
 ---
 
+## 06/11/2026 — A nuvem fica em us-east-2 (projeto atual)
+
+- **Decisão (Alexandre, 06/11/2026):** a promoção vai para o projeto atual `kbyhojdrpzdylexmlsip` (região us-east-2). Não recriar em São Paulo.
+- **Motivo:** a LGPD permite o dado fora do país; a latência é aceitável para uso interno.
+- **Alternativa descartada:** recriar o projeto em sa-east-1 (São Paulo) e reaplicar tudo.
+- **Roteiro e estado da publicação:** `docs/publicacao-de-teste.md`.
+- **Achado do roteiro:** uma restauração "só de dados" do banco local para a nuvem não fecha: os catálogos que nascem por migração e pelo seed (garagens, operações, carrocerias, filiais) têm identificadores diferentes em cada banco, e os CRs e as placas apontam para os locais. O caminho seguro é rodar a mesma carga (idempotente, casada por código e nome) contra a nuvem, por quem tem a senha; a forma fica para a decisão de Alexandre.
+- **Quem decidiu:** Alexandre.
+
 ## 06/11/2026 — Ajustes da carga da v1 antes de aplicar (Alexandre)
 
 - **Situação inicial pela grade da v1 (`vehicle_statuses`):** o último lançamento de cada placa de tração até a data da cópia (28/10/2026), com as siglas da régua (sem diferença de maiúsculas: `Etv` é `ETv`); VAz vira PÁT; sigla fora da régua, ou recusada pelo banco, vira PÁT com a exceção `carga_inicial_situacao_recusada`. A composição entra antes da situação, na mesma etapa (a sigla de conjunto exige o engate no instante do evento, e o banco exige a situação inicial do cavalo engatado); a data do evento é a do lançamento, ou o início do conjunto se for depois. Implemento e placa sem lançamento: PÁT na hora da carga. **Simulação:** ETc 57, CAr 16, ACe 13, DEs 12, ADe 9, MAv 9, FOg 4, ETv 3, PÁT 3, MAc 1, MAt 1; sem lançamento na v1 190; recusadas 3 (PÁT e fila); implementos 607 em PÁT. Substitui a hipótese "PÁT para todas".
