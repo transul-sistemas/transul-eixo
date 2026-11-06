@@ -163,8 +163,9 @@ jobs:
 
   modo-banco:
     # Os ~200 ativos de desenvolvimento, o e2e pequeno do modo banco e as mutações do SQL (a medição
-    # tem job próprio, o medicao).
-    if: github.event_name == 'pull_request'
+    # tem job próprio, o medicao). Sem pull request (commits direto na main, 05/11/2026), roda também
+    # no push da main; não é verificação obrigatória (as obrigatórias continuam app e banco).
+    if: github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:

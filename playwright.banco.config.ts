@@ -3,7 +3,8 @@ import { sessaoDe, supabaseLocal } from "./e2e/apoio/usuarios-de-teste";
 
 // O e2e PEQUENO do modo banco (fatia 3.9a): lista, painel, ficha, perfil sem vínculo e o escopo por
 // carteira e por filial, lendo do Supabase local com os dados de desenvolvimento (`pnpm db:dev-dados`)
-// e a sessão de cada perfil. Roda só no CI do pull request (job modo-banco); o e2e de sempre continua
+// e a sessão de cada perfil, e as gravações (3.9b-1). Roda no CI do pull request e do push da main (job
+// modo-banco, fora das verificações obrigatórias); o e2e de sempre continua
 // no modo exemplo (playwright.config.ts).
 const PORTA = process.env.PORTA ?? "3000";
 const ENDERECO = `http://localhost:${PORTA}`;

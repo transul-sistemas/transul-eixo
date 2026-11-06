@@ -228,7 +228,11 @@ describe("workflow de verificação: jobs só do pull request (capturas e modo b
   });
 
   it("o modo banco gera os ~200 ativos e roda o e2e do modo banco (sem a carga, que tem job próprio)", () => {
-    ehDoPullRequest("modo-banco");
+    // Sem pull request (commits direto na main, 05/11/2026), roda também no push da main; não é
+    // verificação obrigatória (as obrigatórias continuam app e banco).
+    expect(job("modo-banco")).toMatch(
+      /\n    if: github\.event_name == 'pull_request' \|\| \(github\.event_name == 'push' && github\.ref == 'refs\/heads\/main'\)\n/,
+    );
     const passos = passosDe(texto, "modo-banco");
     const indice = (trecho: string) => passos.findIndex((p) => p.includes(trecho));
     for (const trecho of [

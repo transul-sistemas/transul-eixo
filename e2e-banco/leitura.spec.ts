@@ -2,7 +2,7 @@ import { expect, type Page, test } from "@playwright/test";
 import { emailDe, senhaDe, sessaoDe } from "../e2e/apoio/usuarios-de-teste";
 
 // O modo banco (fatia 3.9a): as telas de leitura completas, lendo do Supabase local com a sessão de
-// quem entrou (RLS); as gravações em breve. Dados: `pnpm db:dev-dados` (o gerador de desenvolvimento).
+// quem entrou (RLS); as gravações estão em gravacao.spec.ts (3.9b-1). Dados: `pnpm db:dev-dados` (o gerador de desenvolvimento).
 // DAA1A00 é o primeiro cavalo do gerador, da carteira de Ana Ribeiro (não do gestor do e2e).
 
 const ROTA = "/frota/placas";
@@ -16,15 +16,15 @@ async function total(page: Page): Promise<number> {
 }
 
 test.describe("Administrador", () => {
-  test("a lista lê do banco, com o total do servidor e as gravações em breve", async ({ page }) => {
+  test("a lista lê do banco, com o total do servidor, e Cadastrar placa já grava (sem em breve)", async ({
+    page,
+  }) => {
     await page.goto(ROTA);
     await expect(page.getByRole("heading", { level: 1, name: "Placas" })).toBeVisible();
     await expect(linhas(page).first()).toContainText(/D[A-Z]{2}\d[A-Z]\d{2}/);
     expect(await total(page)).toBeGreaterThan(150);
-    await expect(page.getByRole("button", { name: "Cadastrar placa" })).toBeDisabled();
-    await expect(
-      page.locator("[data-acoes-em-breve]").getByText("Em breve", { exact: true }),
-    ).toBeVisible();
+    await expect(page.getByRole("button", { name: "Cadastrar placa" })).toBeEnabled();
+    await expect(page.locator("[data-acoes-em-breve]")).toHaveCount(0);
   });
 
   test("a busca filtra no servidor", async ({ page }) => {
