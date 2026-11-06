@@ -10,16 +10,16 @@ import {
   LISTA,
   passoAtual,
   passoIdentificacao,
-  passoLocal,
   passoPosse,
+  passoSituacao,
   passoValor,
   passoVeiculo,
   placaUnica,
   sessaoIsolada,
 } from "./apoio-assistentes-frota";
 
-// Cadastrar placa (seis passos, com o "+" para marca, modelo, gestor, operação, CR, filial e garagem),
-// no 1366 e no 1920. Cada teste usa um armazém de exemplo só dele (cookie de sessão).
+// Cadastrar placa (seis passos, com o "+" para marca, modelo, gestor, operação e CR; operação e CR
+// obrigatórios; sem filial nem garagem, que vem do CR), no 1366 e no 1920. Cada teste usa um armazém de exemplo só dele (cookie de sessão).
 
 test.beforeEach(async ({ context, baseURL }) => {
   await sessaoIsolada(context, baseURL);
@@ -57,7 +57,7 @@ test.describe("cadastrar placa: abrir e fechar", () => {
       /Veículo/,
       /Valor/,
       /Posse/,
-      /Local e situação/,
+      /Situação inicial/,
       /Conferir/,
     ]);
   });
@@ -239,30 +239,33 @@ test.describe("cadastrar placa: dependências entre campos", () => {
     );
   });
 
-  test("a operação é opcional: sem operação o CR fica de fora e o cadastro segue", async ({
-    page,
-  }) => {
-    await abrirOCadastro(page);
-    await irAteConferirOCadastro(page, { placa: placaUnica() }); // sem operação nem CR
-    await expect(cadastro(page).getByRole("button", { name: "Cadastrar placa" })).toBeVisible();
-  });
-
-  test("a garagem é da filial escolhida", async ({ page }) => {
+  test("operação e CR são obrigatórios: sem eles o cadastro não avança", async ({ page }) => {
     await abrirOCadastro(page);
     await passoIdentificacao(page, { placa: placaUnica() });
     await passoVeiculo(page, {});
     await passoValor(page);
-    await passoPosse(page, {});
     const c = cadastro(page);
-    await expect(c.getByRole("button", { name: "Cadastrar garagem" })).toHaveAttribute(
-      "aria-disabled",
-      "true",
-    );
-    await c.getByLabel("Filial", { exact: true }).selectOption({ label: "Filial Exemplo B" });
-    await expect(c.getByLabel("Garagem", { exact: true }).locator("option")).toHaveText([
-      "Escolha…",
-      "Garagem B1",
-    ]);
+    await c.getByLabel("Gestor de frota").selectOption({ label: "Gestor Exemplo 1" });
+    await c.getByRole("button", { name: "Continuar" }).click();
+    await expect(c.getByText("Escolha a operação.")).toBeVisible();
+    await expect(c.getByText("Escolha o CR.")).toBeVisible();
+    await expect(passoAtual(c)).toContainText("Posse");
+  });
+
+  test("implemento pede função, carroceria e eixos; o dolly não tem carroceria", async ({
+    page,
+  }) => {
+    await abrirOCadastro(page);
+    await passoIdentificacao(page, { placa: placaUnica(), tipo: "Implemento" });
+    const c = cadastro(page);
+    await c.getByLabel("Marca", { exact: true }).selectOption({ label: "Randon" });
+    await c.getByLabel("Modelo", { exact: true }).selectOption({ label: "Sider 3 eixos" });
+    await c.getByLabel("Função", { exact: true }).selectOption({ label: "Semirreboque" });
+    await expect(c.getByLabel("Carroceria", { exact: true })).toBeVisible();
+    await expect(c.getByLabel("Eixos", { exact: true })).toBeVisible();
+    await c.getByLabel("Função", { exact: true }).selectOption({ label: "Dolly" });
+    await expect(c.getByLabel("Carroceria", { exact: true })).toHaveCount(0);
+    await expect(c.getByText("O dolly não tem carroceria e tem sempre 2 eixos.")).toBeVisible();
   });
 });
 
@@ -318,7 +321,7 @@ test.describe("cadastrar placa: o + cria o que falta, na hora", () => {
     await c.getByRole("button", { name: "Continuar" }).click();
     await passoValor(page);
     await passoPosse(page, {});
-    await passoLocal(page);
+    await passoSituacao(page);
     await c.getByRole("button", { name: "Cadastrar placa" }).click();
     await expect(c.getByTestId("assistente-concluido")).toBeVisible();
     await c.getByRole("button", { name: "Fechar", exact: true }).click();
@@ -326,7 +329,7 @@ test.describe("cadastrar placa: o + cria o que falta, na hora", () => {
     await expect(page.locator(`tr:has([data-espiar-placa="${placa}"])`)).toContainText("XF 530");
   });
 
-  test("gestor, operação, filial e garagem também se criam pelo +", async ({ page }) => {
+  test("gestor, operação e CR (com o CODCENCUS) também se criam pelo +", async ({ page }) => {
     await abrirOCadastro(page);
     await passoIdentificacao(page, { placa: placaUnica() });
     await passoVeiculo(page, {});
@@ -354,27 +357,11 @@ test.describe("cadastrar placa: o + cria o que falta, na hora", () => {
 
     await c.getByRole("button", { name: "Cadastrar CR" }).click();
     await dialogo(page, "Cadastrar CR").getByLabel("Código do CR").fill("CR-2001");
+    await dialogo(page, "Cadastrar CR").getByLabel("Código do Sankhya (CODCENCUS)").fill("2010101");
     await page.keyboard.press("Enter");
     await dialogo(page, "Cadastrar CR").getByRole("button", { name: "Cadastrar CR" }).click();
     await expect(c.getByLabel("CR", { exact: true }).locator("option:checked")).toHaveText(
       "CR-2001",
-    );
-    await c.getByRole("button", { name: "Continuar" }).click();
-
-    await c.getByRole("button", { name: "Cadastrar filial" }).click();
-    await dialogo(page, "Cadastrar filial").getByLabel("Nome da filial").fill("Filial Nova");
-    await page.keyboard.press("Enter");
-    await dialogo(page, "Cadastrar filial")
-      .getByRole("button", { name: "Cadastrar filial" })
-      .click();
-    await c.getByRole("button", { name: "Cadastrar garagem" }).click();
-    await dialogo(page, "Cadastrar garagem").getByLabel("Nome da garagem").fill("Garagem Nova");
-    await page.keyboard.press("Enter");
-    await dialogo(page, "Cadastrar garagem")
-      .getByRole("button", { name: "Cadastrar garagem" })
-      .click();
-    await expect(c.getByLabel("Garagem", { exact: true }).locator("option:checked")).toHaveText(
-      "Garagem Nova",
     );
   });
 

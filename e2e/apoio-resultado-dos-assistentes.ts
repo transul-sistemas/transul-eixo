@@ -3,7 +3,7 @@ import { abrirHidratada } from "./apoio";
 import {
   abrirOCadastro,
   cadastro,
-  disponibilizacao,
+  entrega,
   FICHA,
   irAteConferirOCadastro,
   LISTA,
@@ -45,15 +45,15 @@ async function conferirTela(painel: Locator, botoes: Locator[], emGrupo = false)
   else for (const botao of botoes) await centrado(painel, botao);
 }
 
-async function abrirDisponibilizar(page: Page) {
+async function abrirEntregar(page: Page) {
   await abrirHidratada(page, `${LISTA}?chip=patio&chip=cavalo`);
   const placa = (await page
     .locator("[data-espiar-placa]")
     .first()
     .getAttribute("data-espiar-placa"))!;
   await abrirHidratada(page, FICHA(placa));
-  await page.getByRole("button", { name: "Disponibilizar ao Operacional" }).click();
-  const d = disponibilizacao(page);
+  await page.getByRole("button", { name: "Entregar ao Operacional" }).click();
+  const d = entrega(page);
   await d.getByLabel("Filial", { exact: true }).selectOption({ label: "Filial Exemplo B" });
   await d.getByRole("button", { name: "Continuar" }).click();
   return d;
@@ -63,9 +63,8 @@ async function abrirReceber(page: Page) {
   await abrirHidratada(page, FICHA(PLACA_COM_PEDIDO));
   await page.getByRole("button", { name: "Receber placa" }).click();
   const r = recebimento(page);
-  for (const caixa of await r.getByLabel("Resolvida:", { exact: false }).all()) await caixa.check();
   await r.getByLabel("Conferi o que chegou").check();
-  for (let i = 0; i < 3; i++) await r.getByRole("button", { name: "Continuar" }).click();
+  await r.getByRole("button", { name: "Continuar" }).click();
   return r;
 }
 
@@ -113,13 +112,17 @@ export function definir() {
   test("concluído, ao receber a placa: mensagem e botão Fechar ao centro", async ({ page }) => {
     const r = await abrirReceber(page);
     await r.getByRole("button", { name: "Receber placa" }).click();
-    await expect(r.getByTestId("assistente-concluido")).toHaveText("Placa recebida.");
+    await expect(r.getByTestId("assistente-concluido")).toHaveText(
+      "Placa recebida. Agora conclua o recebimento, respondendo cada pendência.",
+    );
     await conferirTela(r, [r.getByRole("button", { name: "Fechar", exact: true })]);
   });
 
-  test("concluído, ao disponibilizar: mensagem e botão Fechar ao centro", async ({ page }) => {
-    const d = await abrirDisponibilizar(page);
-    await d.getByRole("button", { name: "Disponibilizar ao Operacional" }).click();
+  test("concluído, ao entregar ao Operacional: mensagem e botão Fechar ao centro", async ({
+    page,
+  }) => {
+    const d = await abrirEntregar(page);
+    await d.getByRole("button", { name: "Entregar ao Operacional" }).click();
     await expect(d.getByTestId("assistente-concluido")).toBeVisible();
     await conferirTela(d, [d.getByRole("button", { name: "Fechar", exact: true })]);
   });
@@ -128,16 +131,16 @@ export function definir() {
     page,
     context,
   }) => {
-    const d = await abrirDisponibilizar(page);
+    const d = await abrirEntregar(page);
     const outra = await context.newPage();
     await abrirHidratada(outra, page.url().split("?")[0] as string);
-    await outra.getByRole("button", { name: "Disponibilizar ao Operacional" }).click();
-    const d2 = disponibilizacao(outra);
+    await outra.getByRole("button", { name: "Entregar ao Operacional" }).click();
+    const d2 = entrega(outra);
     await d2.getByLabel("Filial", { exact: true }).selectOption({ label: "Filial Exemplo A" });
     await d2.getByRole("button", { name: "Continuar" }).click();
-    await d2.getByRole("button", { name: "Disponibilizar ao Operacional" }).click();
+    await d2.getByRole("button", { name: "Entregar ao Operacional" }).click();
     await expect(d2.getByTestId("assistente-concluido")).toBeVisible();
-    await d.getByRole("button", { name: "Disponibilizar ao Operacional" }).click();
+    await d.getByRole("button", { name: "Entregar ao Operacional" }).click();
     await expect(d.getByRole("alert")).toContainText("mudou");
     await conferirTela(d, [d.getByRole("button", { name: "Revisar com os dados atuais" })]);
   });

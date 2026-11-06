@@ -27,7 +27,8 @@ export const dialogo = (page: Page, nome: string) =>
   page.getByRole("dialog", { name: nome, exact: true });
 export const cadastro = (page: Page) => dialogo(page, "Cadastrar placa");
 export const recebimento = (page: Page) => dialogo(page, "Receber placa");
-export const disponibilizacao = (page: Page) => dialogo(page, "Disponibilizar ao Operacional");
+export const conclusao = (page: Page) => dialogo(page, "Concluir recebimento");
+export const entrega = (page: Page) => dialogo(page, "Entregar ao Operacional");
 export const passoAtual = (caixa: Locator) =>
   caixa
     .getByRole("navigation", { name: "Passos do assistente" })
@@ -66,11 +67,16 @@ export async function passoIdentificacao(page: Page, d: DadosDoCadastro) {
   await avancar(c);
 }
 
-/** Passo 2: marca e modelo; avança. */
+/** Passo 2: marca e modelo (no implemento, também função, carroceria e eixos); avança. */
 export async function passoVeiculo(page: Page, d: Partial<DadosDoCadastro>) {
   const c = cadastro(page);
   await c.getByLabel("Marca", { exact: true }).selectOption({ label: d.marca ?? "Volvo" });
   await c.getByLabel("Modelo", { exact: true }).selectOption({ label: d.modelo ?? "FH 540" });
+  if (d.tipo === "Implemento") {
+    await c.getByLabel("Função", { exact: true }).selectOption({ label: "Semirreboque" });
+    await c.getByLabel("Carroceria", { exact: true }).selectOption({ label: "Sider" });
+    await c.getByLabel("Eixos", { exact: true }).selectOption({ label: "3" });
+  }
   await avancar(c);
 }
 
@@ -90,23 +96,20 @@ export async function passoValor(page: Page, tipo = "Cavalo") {
   await avancar(c);
 }
 
-/** Passo 4: gestor, operação e CR; avança. */
+/** Passo 4: gestor, operação e CR (obrigatórios); avança. */
 export async function passoPosse(page: Page, d: Partial<DadosDoCadastro>) {
   const c = cadastro(page);
   await c.getByLabel("Gestor de frota").selectOption({ label: "Gestor Exemplo 1" });
-  if (d.operacao) {
-    await c.getByLabel("Operação", { exact: true }).selectOption({ label: d.operacao });
-    await c.getByLabel("CR", { exact: true }).selectOption({ label: d.cr ?? "CR-1001" });
-  }
+  await c
+    .getByLabel("Operação", { exact: true })
+    .selectOption({ label: d.operacao ?? "Operação Exemplo 1" });
+  await c.getByLabel("CR", { exact: true }).selectOption({ label: d.cr ?? "CR-1001" });
   await avancar(c);
 }
 
-/** Passo 5: filial, garagem e situação inicial; avança para conferir. */
-export async function passoLocal(page: Page) {
-  const c = cadastro(page);
-  await c.getByLabel("Filial", { exact: true }).selectOption({ label: "Filial Exemplo A" });
-  await c.getByLabel("Garagem", { exact: true }).selectOption({ label: "Garagem A1" });
-  await avancar(c);
+/** Passo 5: a situação inicial (PÁT, o padrão); avança para conferir. Sem filial nem garagem. */
+export async function passoSituacao(page: Page) {
+  await avancar(cadastro(page));
 }
 
 /** Do começo até o passo de conferir, com dados válidos. */
@@ -115,7 +118,7 @@ export async function irAteConferirOCadastro(page: Page, d: DadosDoCadastro) {
   await passoVeiculo(page, d);
   await passoValor(page, d.tipo);
   await passoPosse(page, d);
-  await passoLocal(page);
+  await passoSituacao(page);
   await expect(cadastro(page).getByRole("button", { name: "Cadastrar placa" })).toBeVisible();
 }
 

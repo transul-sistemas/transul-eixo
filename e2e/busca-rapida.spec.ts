@@ -149,14 +149,20 @@ test.describe("busca rápida: ações da Frota", () => {
     await expect(page.getByRole("dialog", { name: "Receber placa" })).toBeVisible();
   });
 
-  test("Disponibilizar ao Operacional também está ligada", async ({ page }) => {
+  test("Entregar ao Operacional, Disponibilizar placa e Concluir recebimento também estão ligadas", async ({
+    page,
+  }) => {
     await abrirHidratada(page, "/inicio/tarefas");
     await abrirBusca(page);
-    await campo(page).fill("disponibilizar");
-    await expect(opcao(page, /Frota › Disponibilizar ao Operacional/)).not.toHaveAttribute(
-      "aria-disabled",
-      "true",
-    );
+    for (const [termo, nome] of [
+      ["entregar", /Frota › Entregar ao Operacional/],
+      ["disponibilizar", /Frota › Disponibilizar placa/],
+      ["concluir recebimento", /Frota › Concluir recebimento/],
+    ] as const) {
+      await campo(page).fill(termo);
+      await expect(opcao(page, nome)).not.toHaveAttribute("aria-disabled", "true");
+      await expect(opcao(page, nome)).not.toContainText("Em breve");
+    }
   });
 });
 

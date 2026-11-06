@@ -8,7 +8,6 @@ import {
   passoIdentificacao,
   passoVeiculo,
   placaUnica,
-  recebimento,
   sessaoIsolada,
 } from "./apoio-assistentes-frota";
 
@@ -156,86 +155,16 @@ test.describe("stepper e rodapé", () => {
   });
 });
 
-test.describe("receber placa: o seletor de implementos", () => {
-  async function irAoConjunto(page: import("@playwright/test").Page) {
-    await abrirHidratada(page, FICHA("AAA0A00"));
-    await page.getByRole("button", { name: "Receber placa" }).click();
-    const r = recebimento(page);
-    for (const caixaDeSelecao of await r.getByLabel("Resolvida:", { exact: false }).all())
-      await caixaDeSelecao.check();
-    await r.getByLabel("Conferi o que chegou").check();
-    await r.getByRole("button", { name: "Continuar" }).click();
-    await r.getByRole("button", { name: "Continuar" }).click();
-    return r;
-  }
-
-  test("tem busca, lista com rolagem interna de altura fixa e o contador de escolhidos", async ({
-    page,
-  }) => {
-    const r = await irAoConjunto(page);
-    const busca = r.getByRole("searchbox", { name: "Buscar implemento" });
-    await expect(busca).toBeVisible();
-    const lista = r.getByTestId("lista-de-implementos");
-    const medidas = await lista.evaluate((el) => ({
-      rola: el.scrollHeight > el.clientHeight,
-      h: el.clientHeight,
-    }));
-    expect(medidas.rola).toBe(true);
-    expect(medidas.h).toBeGreaterThanOrEqual(150);
-    expect(medidas.h).toBeLessThanOrEqual(340);
-    await expect(r.getByTestId("contador-de-escolhidos")).toHaveText(/\d+ escolhidos?/);
-    const antes = await lista.getByRole("checkbox").count();
-    await busca.fill("graneleiro");
-    const depois = await lista.getByRole("checkbox").count();
-    expect(depois).toBeLessThan(antes);
-    expect(depois).toBeGreaterThan(0);
-  });
-
-  test("os escolhidos ficam fixados no topo e o contador acompanha", async ({ page }) => {
-    const r = await irAoConjunto(page);
-    const lista = r.getByTestId("lista-de-implementos");
-    for (const marcado of await lista.getByRole("checkbox").all())
-      if (await marcado.isChecked()) await marcado.uncheck();
-    await expect(r.getByTestId("contador-de-escolhidos")).toHaveText("0 escolhidos");
-    const ultimo = lista.getByRole("checkbox").last();
-    const nome = await ultimo.evaluate((el) => el.closest("label")?.textContent ?? "");
-    await ultimo.check();
-    await expect(r.getByTestId("contador-de-escolhidos")).toHaveText("1 escolhido");
-    const escolhidos = r.getByRole("list", { name: "Implementos escolhidos" });
-    await expect(escolhidos).toContainText(nome.trim());
-    const topo = await caixa(escolhidos);
-    const caixaDaLista = await caixa(lista);
-    expect(topo.y).toBeLessThan(caixaDaLista.y);
-  });
-
-  test("conjunto misto é bloqueado e a mensagem aparece no campo", async ({ page }) => {
-    const r = await irAoConjunto(page);
-    const lista = r.getByTestId("lista-de-implementos");
-    for (const marcado of await lista.getByRole("checkbox").all())
-      if (await marcado.isChecked()) await marcado.uncheck();
-    await lista.getByRole("checkbox", { name: /Sider/ }).first().check();
-    await lista
-      .getByRole("checkbox", { name: /Graneleiro/ })
-      .first()
-      .check();
-    await r.getByRole("button", { name: "Continuar" }).click();
-    await expect(r.getByText("Conjunto misto não pode.")).toBeVisible();
-    await expect(r.locator('li[aria-current="step"]')).toContainText("Conjunto e motorista");
-  });
-
-  test("o cavalo é o mestre: a meta do conjunto é dele, e só o implemento escolhe cavalo", async ({
-    page,
-  }) => {
-    const r = await irAoConjunto(page);
-    await expect(r.getByLabel("Meta do conjunto")).toBeVisible();
-    await expect(r.getByLabel("Cavalo do conjunto")).toHaveCount(0);
-  });
-});
-
 test.describe("ficha sem ações", () => {
   test("não deixa espaço vazio no cabeçalho", async ({ page }) => {
-    await abrirHidratada(page, FICHA("AAA0A04")); // DOp, sem pedido: nenhuma ação
-    await expect(page.getByRole("heading", { level: 1, name: "AAA0A04" })).toBeVisible();
+    // Placa baixada (VND): nenhuma ação (toda placa fora da baixa pode ser disponibilizada).
+    await abrirHidratada(page, "/frota/placas?baixadas=1&sigla=VND");
+    const baixada = (await page
+      .locator("[data-espiar-placa]")
+      .first()
+      .getAttribute("data-espiar-placa"))!;
+    await abrirHidratada(page, FICHA(baixada));
+    await expect(page.getByRole("heading", { level: 1, name: baixada })).toBeVisible();
     await expect(page.locator('header [role="group"][aria-label="Ações"]')).toBeHidden();
   });
 });
