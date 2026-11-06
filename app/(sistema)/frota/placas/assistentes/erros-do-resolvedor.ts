@@ -2,7 +2,9 @@ import type { FieldErrors, FieldValues } from "react-hook-form";
 
 /**
  * Os problemas do Zod no formato de erros do React Hook Form: o caminho `conjunto.cavaloId` vira
- * `{ conjunto: { cavaloId: { type, message } } }`. Vale a primeira mensagem de cada campo.
+ * `{ conjunto: { cavaloId: { type, message } } }`, e um índice vira posição de lista
+ * (`pendencias.1.resolvida` vira `{ pendencias: [, { resolvida }] }`), como o React Hook Form guarda
+ * os campos de lista. Vale a primeira mensagem de cada campo.
  */
 export function errosDoResolvedor<V extends FieldValues>(
   problemas: readonly { path: readonly PropertyKey[]; message: string }[],
@@ -15,7 +17,8 @@ export function errosDoResolvedor<V extends FieldValues>(
       if (i === path.length - 1) {
         if (!(chave in no)) no[chave] = { type: "validate", message };
       } else {
-        no = (no[chave] ??= {}) as Record<string, unknown>;
+        const proximaEhIndice = typeof path[i + 1] === "number";
+        no = (no[chave] ??= proximaEhIndice ? [] : {}) as Record<string, unknown>;
       }
     });
   }

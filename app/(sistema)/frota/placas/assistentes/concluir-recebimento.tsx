@@ -18,8 +18,11 @@ import { OQueChegou } from "./receber-placa";
 // (resolvida: sim ou não; quando não, a nota diz o que ficou) e a placa passa para a carteira dele.
 
 interface Valores {
-  /** Uma resposta por pendência, na ordem do pedido. "" ainda sem resposta. */
-  pendencias: { id: string; resolvida: "" | "sim" | "nao"; nota: string }[];
+  /**
+   * Uma resposta por pendência, na ordem do pedido. "" (ou `null`, que o React Hook Form devolve
+   * para o grupo de rádios sem nenhum marcado) ainda sem resposta.
+   */
+  pendencias: { id: string; resolvida: "" | "sim" | "nao" | null; nota: string }[];
 }
 
 const DEFINICAO: DefinicaoDeAssistente = {
@@ -52,7 +55,7 @@ export function ConcluirRecebimento({
     versaoDoPedido: pedido.versao,
     pendencias: (v.pendencias ?? []).map((p) => ({
       id: p.id,
-      resolvida: p.resolvida === "" ? undefined : p.resolvida === "sim",
+      resolvida: p.resolvida === "sim" ? true : p.resolvida === "nao" ? false : undefined,
       nota: p.nota,
     })),
   });
