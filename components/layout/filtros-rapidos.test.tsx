@@ -179,30 +179,30 @@ describe("grupos de filtro rápido: duas caixas, dois nomes, duas aparências", 
 });
 
 describe("botões fixos da barra: a largura do texto é reservada", () => {
-  it("Visões salvas reserva 103 px: o grupo alinhado à direita não empurra o Mais filtros quando o texto chega depois", () => {
+  it("Visões salvas reserva 112 px (com folga: no CI o texto mediu 105): o grupo alinhado à direita não empurra o Mais filtros quando o texto chega depois", () => {
     const html = com();
     const botao =
       /<button[^>]*>(?:(?!<\/button>)[\s\S])*Visões salvas(?:(?!<\/button>)[\s\S])*<\/button>/.exec(
         html,
       )?.[0] ?? "";
-    expect(botao).toContain("min-w-[6.4375rem]");
+    expect(botao).toContain("min-w-[7rem]");
   });
 
-  it("o grupo de ações reserva a largura dos dois botões (220 px) e alinha os botões à esquerda do espaço reservado: nada anda se o HTML parte antes do segundo botão", () => {
+  it("o grupo de ações reserva a largura dos dois botões (232 px) e alinha os botões à esquerda do espaço reservado: nada anda se o HTML parte antes do segundo botão", () => {
     const html = com();
     const grupo = /<div class="([^"]*ml-auto[^"]*)"/.exec(html)?.[1] ?? "";
-    expect(grupo).toContain("min-w-[13.75rem]");
+    expect(grupo).toContain("min-w-[14.5rem]");
     expect(grupo).toContain("justify-start");
     expect(grupo).not.toContain("justify-end");
   });
 
-  it("o Mais filtros provisório da barra (sem o botão de verdade) reserva os mesmos 109 px", () => {
+  it("o Mais filtros provisório da barra (sem o botão de verdade) reserva os mesmos 112 px", () => {
     const html = com();
     const botao =
       /<button[^>]*>(?:(?!<\/button>)[\s\S])*Mais filtros(?:(?!<\/button>)[\s\S])*<\/button>/.exec(
         html,
       )?.[0] ?? "";
-    expect(botao).toContain("min-w-[6.8125rem]");
+    expect(botao).toContain("min-w-[7rem]");
   });
 });
 

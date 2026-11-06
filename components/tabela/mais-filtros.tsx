@@ -27,7 +27,7 @@ const GRUPOS = gruposDeSiglas();
 // HTML chega em pedaços e o texto vem depois do botão.
 export const CLASSE_DO_BOTAO_MAIS_FILTROS = cn(
   buttonVariants({ variant: "outline" }),
-  "min-w-[6.8125rem]",
+  "min-w-[7rem]",
 );
 
 /**

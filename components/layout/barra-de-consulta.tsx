@@ -193,7 +193,7 @@ export function BarraDeConsulta({
         <p role="status" className="sr-only" />
       )}
 
-      <div className="ml-auto flex min-w-[13.75rem] flex-wrap items-center justify-start gap-2">
+      <div className="ml-auto flex min-w-[14.5rem] flex-wrap items-center justify-start gap-2">
         {ativa ? (
           <Button
             variant="ghost"
@@ -212,7 +212,7 @@ export function BarraDeConsulta({
             variant="outline"
             disabled
             title="Entra com a tabela (entrega 2C)"
-            className="min-w-[6.8125rem]"
+            className="min-w-[7rem]"
           >
             Mais filtros
           </Button>
@@ -223,7 +223,7 @@ export function BarraDeConsulta({
           variant="outline"
           disabled
           title="Entra na próxima entrega"
-          className="min-w-[6.4375rem]"
+          className="min-w-[7rem]"
         >
           Visões salvas
         </Button>
