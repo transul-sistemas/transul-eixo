@@ -8,6 +8,12 @@ Modelo de entrada:
 
 ---
 
+## 06/11/2026 — Ajustes da carga da v1 antes de aplicar (Alexandre)
+
+- **Situação inicial pela grade da v1 (`vehicle_statuses`):** o último lançamento de cada placa de tração até a data da cópia (28/10/2026), com as siglas da régua (sem diferença de maiúsculas: `Etv` é `ETv`); VAz vira PÁT; sigla fora da régua, ou recusada pelo banco, vira PÁT com a exceção `carga_inicial_situacao_recusada`. A composição entra antes da situação, na mesma etapa (a sigla de conjunto exige o engate no instante do evento, e o banco exige a situação inicial do cavalo engatado); a data do evento é a do lançamento, ou o início do conjunto se for depois. Implemento e placa sem lançamento: PÁT na hora da carga. **Simulação:** ETc 57, CAr 16, ACe 13, DEs 12, ADe 9, MAv 9, FOg 4, ETv 3, PÁT 3, MAc 1, MAt 1; sem lançamento na v1 190; recusadas 3 (PÁT e fila); implementos 607 em PÁT. Substitui a hipótese "PÁT para todas".
+- **Login dos gestores:** `querys/03-ligar-login-de-gestor.sql` (marcadores, sem nome nem e-mail) e o passo a passo nele; `importacao/gerar-logins-dos-gestores.ts` gera, fora do Git, `importacao/gestores-logins.csv` (nome e e-mail dos 12 gestores, todos com e-mail na v1) e `importacao/ligar-logins-dos-gestores.sql` (o 03 preenchido, um bloco por gestor).
+- **Reforço (Alexandre, 06/11/2026): na tela, só contagens e códigos.** A carga conta as recusas por código (SQLSTATE, nome da restrição, função do banco ou linha do script), nunca pela mensagem; o `importar:cr` e o backup mostram só o código do erro (a mensagem do banco ou do `pg_dump` pode citar valor real).
+
 ## 06/11/2026 — Carga inicial pela cópia da v1 (Parte 2, plano B)
 
 - **Origem e destino:** a cópia `C:\Backups\transul_v1_completo.dump` restaurada num Postgres local separado (contêiner `transul_v1_local`, porta 54330, só as tabelas usadas, sem dono nem permissões); destino, o banco local do Eixo. Script `importacao/carga-v1.ts` (fora do Git, como pedido), idempotente pela placa vigente, `--simular` (padrão, desfaz) ou `--aplicar`; mostra só contagens; o erro mostra só o código.

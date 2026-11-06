@@ -171,22 +171,14 @@ function rodar(comando: string, argumentos: string[], env?: NodeJS.ProcessEnv) {
 }
 
 function esperar(processo: ReturnType<typeof spawn>, nome: string): Promise<void> {
-  let erro = "";
-  processo.stderr?.on("data", (d: Buffer) => {
-    erro += d.toString();
-  });
+  // A saída de erro do pg_dump e do pg_restore pode citar valor real ou o endereço: na tela, só o código
+  // de saída (reforço de 06/11/2026).
+  processo.stderr?.resume();
   return new Promise((resolve, reject) => {
     processo.on("close", (codigo) => {
       if (codigo === 0) resolve();
-      else {
-        // Só a última linha do erro, sem endereço nem senha.
-        const linha = erro.trim().split(/\r?\n/).pop() ?? "";
-        reject(
-          new ErroDoBackup(
-            `${nome} falhou: ${linha.replace(/postgres(ql)?:\/\/\S+/g, "[endereço oculto]")}`,
-          ),
-        );
-      }
+      else
+        reject(new ErroDoBackup(`${nome} falhou (código de saída ${codigo ?? "desconhecido"}).`));
     });
   });
 }

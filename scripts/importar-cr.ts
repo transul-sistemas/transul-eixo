@@ -358,9 +358,13 @@ async function principal() {
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   principal().catch((erro: unknown) => {
-    // Só a mensagem do Eixo ou do Postgres; nunca o endereço do banco.
-    const mensagem = erro instanceof Error ? erro.message : String(erro);
-    console.error(mensagem.replace(/postgres(ql)?:\/\/\S+/g, "[endereço oculto]"));
+    // Só a mensagem do próprio importador (sem dado) ou o código do Postgres: a mensagem do banco pode
+    // citar valor real (reforço de 06/11/2026: na tela, só contagens e códigos).
+    if (erro instanceof ErroDaImportacao) console.error(erro.message);
+    else {
+      const codigo = (erro as { code?: string }).code;
+      console.error(`A importação falhou${codigo ? ` (código ${codigo})` : ""}.`);
+    }
     process.exit(1);
   });
 }
