@@ -8,6 +8,13 @@ Modelo de entrada:
 
 ---
 
+## 06/11/2026 — Correção dos e2e da 3.9b-1 (CI 42282384607)
+
+- **Causas e correções:** (1) Concluir recebimento não mostrava o erro da pendência: `errosDoResolvedor` montava objeto com chaves "0", "1" e o React Hook Form, que guarda campos de lista como array, perdia o erro na validação do blur do primeiro rádio; o índice virou posição de lista, e o rádio sem resposta (`null`) deixou de valer "não resolvida" (mesma causa da falha do modo banco). (2) O e2e do valor do implemento não preenchia Função, Carroceria e Eixos (teste errado). (3) No modo compacto, o módulo se chama só pelo nome; o número do selo vai na descrição ("1 item" no singular). (4) "Para receber" na lista: o chip sai da caixa própria e vai para a linha da busca, com o aviso compacto (pílula) ao lado, num contêiner que usa só o espaço que sobra; o aviso aparece só onde cabe inteiro, o chip a partir de cerca de 128 px. No 1366 voltaram as 9 linhas inteiras, e nada empurra Mais filtros nem a lista no celular. (5) Mais filtros e Visões salvas reservam 112 px cada (grupo de 232): no CI o texto de Visões salvas mediu 105 px, acima dos 103 reservados. (6) A contagem do selo lê depois do `connection()` e devolve a interrupção do pré-render ao Next (`unstable_rethrow`), sem registrar falha falsa. (7) Gaveta no tablet: não reproduzida (31/31 no dev, inclusive com a barra atrasada 2,5 s); só o teste da medida passou a esperar a gaveta visível.
+- **Hipótese (simples e reversível):** no celular nem o chip nem o aviso "Para receber" aparecem na lista; o selo do menu continua.
+- **Testes vistos falhando antes:** Vitest de `errosDoResolvedor` (1), da barra lateral (2) e da barra de consulta (5); os e2e, no dev local. **Não verificado localmente:** build de produção, modo banco e a gaveta do tablet sob carga (ficam com o CI).
+- **Processo (Alexandre, 06/11/2026):** um push por bloco de trabalho, só com a verificação leve passando; depois do push, esperar o CI terminar antes de empurrar de novo; agentes em git worktree separado, com no máximo 30 minutos por tentativa (se um processo não termina, o agente encerra os dele, commita o que passou e entrega a lista do que falta).
+
 ## 06/11/2026 — A nuvem fica em us-east-2 (projeto atual)
 
 - **Decisão (Alexandre, 06/11/2026):** a promoção vai para o projeto atual `kbyhojdrpzdylexmlsip` (região us-east-2). Não recriar em São Paulo.

@@ -35,7 +35,7 @@ que Alexandre mostrar; não roda nada na nuvem e não acessa a Vercel.
 1. **CI da `main` todo verde** (conferido pelo Claude com `gh run list`/`gh run view`).
 2. **Vercel** (Alexandre confere no painel; o Claude não acessa a Vercel):
    - Settings → Git → **Production Branch = `release`**. Se ainda for `main`, troque antes de tudo: hoje a produção publica da `main`, que já espera o banco novo.
-   - Settings → Environment Variables (Production, Preview e Development): **não pode existir** `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_SECRET_KEY` nem nada com `service_role` ou `sb_secret_`; **não pode existir `EIXO_DADOS`** (sem ela, o app usa o banco). Devem existir só `NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (e, se houver, as do Sentry).
+   - Settings → Environment Variables (Production, Preview e Development): **não pode existir** `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_SECRET_KEY` nem nada com `service_role` ou `sb_secret_`; **não pode existir a variável que liga os dados de exemplo** (o nome está em `.env.development`; sem ela, o app usa o banco). Devem existir só `NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (e, se houver, as do Sentry).
 3. **Supabase, cadastro aberto desligado:** Authentication → Sign In / Providers → "Allow new users to sign up" **desligado** (o Eixo não tem cadastro pelo app; os usuários nascem no painel).
 4. **Senha do backup:** Alexandre grava `EIXO_BACKUP_SENHA` (20 caracteres ou mais) no `.env.local` e guarda uma cópia fora desta máquina (gerenciador de senhas). Sem ela, nenhum backup abre.
 5. **Backup testado localmente** (feito pelo Claude, com o resultado registrado aqui antes do passo 1):
