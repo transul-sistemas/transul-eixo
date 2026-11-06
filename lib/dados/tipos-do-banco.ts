@@ -372,6 +372,9 @@ isOneToOne: false
 "minhas_operacoes_de_placas":
 { Args: Record<PropertyKey, never>; Returns: (string)[]
                            },
+"minhas_placas_para_receber":
+{ Args: Record<PropertyKey, never>; Returns: (string)[]
+                           },
 "nome_do_conjunto":
 { Args: { "p_carroceria_id": string,"p_com_dolly": boolean,"p_eixos_do_dolly": number,"p_eixos_dos_semirreboques": number,"p_unidades": number }; Returns: string
                            },
@@ -1645,6 +1648,12 @@ isOneToOne: false
 "cadastrar_ativo":
 { Args: { "p_carroceria_id"?: string,"p_chassi"?: string,"p_chave"?: string,"p_cr_id": string,"p_eixos"?: number,"p_em"?: string,"p_funcao"?: Database["nucleo"]['Enums']["funcao_do_implemento"],"p_gestor_id": string,"p_modelo_id"?: string,"p_numero_de_serie"?: string,"p_operacao_id": string,"p_pessoa_dona_id"?: string,"p_placa": string,"p_regime"?: Database["nucleo"]['Enums']["regime_de_posse"],"p_renavam": string,"p_situacao_inicial"?: string,"p_tipo": Database["nucleo"]['Enums']["tipo_de_ativo"] }; Returns: string
                            },
+"catalogos_dos_assistentes":
+{ Args: Record<PropertyKey, never>; Returns: Json
+                           },
+"concluir_recebimento":
+{ Args: { "p_chave"?: string,"p_em"?: string,"p_respostas": Json,"p_transferencia_id": string,"p_versao": number }; Returns: string
+                           },
 "concluir_transferencia":
 { Args: { "p_em": string,"p_transferencia_id": string }; Returns: string
                            },
@@ -1652,9 +1661,12 @@ isOneToOne: false
 { Args: { "p_cavalo_id": string }; Returns: undefined
                            },
 "contar_chips_de_placas":
-{ Args: { "p_baixadas": boolean,"p_busca": string,"p_grupos": (string)[],"p_siglas": (string)[],"p_tipos": (string)[] }; Returns: {
+{ Args: { "p_baixadas": boolean,"p_busca": string,"p_grupos": (string)[],"p_para_receber"?: boolean,"p_siglas": (string)[],"p_tipos": (string)[] }; Returns: {
               "chip": string,"quantidade": number
             }[]
+                           },
+"contar_para_receber":
+{ Args: Record<PropertyKey, never>; Returns: number
                            },
 "corrigir_campo":
 { Args: { "p_ativo_id": string,"p_campo": string,"p_chave"?: string,"p_motivo": string,"p_valor": Json,"p_versao"?: number }; Returns: string
@@ -1670,6 +1682,9 @@ isOneToOne: false
                            },
 "detalhe_da_placa":
 { Args: { "p_placa": string }; Returns: Json
+                           },
+"disponibilizar_placa":
+{ Args: { "p_ativo_id": string,"p_chave"?: string,"p_em"?: string,"p_motivo": string,"p_para_gestor_id": string,"p_pendencias": (string)[],"p_versao": number }; Returns: string
                            },
 "documento_valido":
 { Args: { "p_texto": string }; Returns: boolean
@@ -1747,7 +1762,7 @@ isOneToOne: false
             }[]
                            },
 "listar_placas":
-{ Args: { "p_baixadas": boolean,"p_busca": string,"p_decrescente": boolean,"p_grupos": (string)[],"p_ordem": string,"p_pagina": number,"p_siglas": (string)[],"p_tam": number,"p_tipos": (string)[] }; Returns: Json
+{ Args: { "p_baixadas": boolean,"p_busca": string,"p_decrescente": boolean,"p_grupos": (string)[],"p_ordem": string,"p_pagina": number,"p_para_receber"?: boolean,"p_siglas": (string)[],"p_tam": number,"p_tipos": (string)[] }; Returns: Json
                            },
 "mascarar_documento":
 { Args: { "p_texto": string }; Returns: string
@@ -1781,11 +1796,26 @@ isOneToOne: false
 "operacao_em":
 { Args: { "p_ativo_id": string,"p_em": string }; Returns: string
                            },
+"pedido_aberto_da_placa":
+{ Args: { "p_placa": string }; Returns: Json
+                           },
+"pedido_em_json":
+{ Args: { "p_transferencia_id": string }; Returns: Json
+                           },
+"pedido_para_agir":
+{ Args: { "p_mensagem": string,"p_transferencia_id": string }; Returns: Record<string, unknown>
+                           },
+"pedidos_para_receber":
+{ Args: Record<PropertyKey, never>; Returns: Json
+                           },
+"placa_para_assistente":
+{ Args: { "p_placa": string }; Returns: Json
+                           },
 "placa_valida":
 { Args: { "p_texto": string }; Returns: boolean
                            },
 "placas_filtradas":
-{ Args: { "p_baixadas": boolean,"p_busca": string,"p_grupos": (string)[],"p_siglas": (string)[],"p_tipos": (string)[] }; Returns: {
+{ Args: { "p_baixadas": boolean,"p_busca": string,"p_grupos": (string)[],"p_para_receber"?: boolean,"p_siglas": (string)[],"p_tipos": (string)[] }; Returns: {
               "alertas": (string)[] | null,
 "ano": number | null,
 "baixada": boolean | null,
@@ -1826,6 +1856,9 @@ isOneToOne: false
                            },
 "recalcular_so_a_linha":
 { Args: { "p_ativo_id": string,"p_em"?: string }; Returns: undefined
+                           },
+"receber_placa":
+{ Args: { "p_chave"?: string,"p_em"?: string,"p_transferencia_id": string,"p_versao": number }; Returns: string
                            },
 "receber_sinal_do_sankhya":
 { Args: { "p_ativo_id": string,"p_campo": string,"p_valor": Json,"p_valor_no_sankhya"?: string,"p_visto_em"?: string }; Returns: string

@@ -102,8 +102,8 @@ select ok(
 );
 select ok(
   (select count(*) = 5 from config.funcao_executavel where assinatura in (
-    'nucleo.listar_placas(text,text[],text[],text[],boolean,text,boolean,integer,integer)',
-    'nucleo.contar_chips_de_placas(text,text[],text[],text[],boolean)',
+    'nucleo.listar_placas(text,text[],text[],text[],boolean,text,boolean,integer,integer,boolean)',
+    'nucleo.contar_chips_de_placas(text,text[],text[],text[],boolean,boolean)',
     'nucleo.detalhe_da_placa(text)',
     'nucleo.historia_da_placa(text)',
     'nucleo.texto_simples(text)')),
@@ -144,7 +144,7 @@ select is(
 );
 select is(
   (select count(*)::int from regexp_matches(
-     pg_get_functiondef('nucleo.listar_placas(text,text[],text[],text[],boolean,text,boolean,integer,integer)'::regprocedure),
+     pg_get_functiondef('nucleo.listar_placas(text,text[],text[],text[],boolean,text,boolean,integer,integer,boolean)'::regprocedure),
      'nulls last, f\.id', 'g')),
   2, 'toda coluna de ordem desempata pelo id (na numeração e na ordem da página)'
 );

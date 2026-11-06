@@ -1,6 +1,7 @@
 -- Fatia 3.9a, parte 2: a leitura das placas mantida por gatilho (nucleo.leitura_da_placa).
 --  * Equivalência de SEGURANÇA: para cada perfil e cada ativo, ver a linha na tabela (política
---    leitura_da_placa_ler) é o mesmo que config.ve_ativo(ativo, {frota, operacional}, ver).
+--    leitura_da_placa_ler) é o mesmo que config.ve_ativo(ativo, {frota, operacional}, ver), quando não há
+--    pedido de transferência aberto (o destinatário de um pedido aberto vê a linha: pgTAP 82).
 --  * Equivalência de DADOS: depois do cadastro e de cada tipo de mudança (engatar, evento, desatrelar,
 --    baixa, troca de CR, transferência, entrega ao Operacional, dado do ativo, placa nova, operação,
 --    nomes de pessoa, operação e CR), cada linha é igual à calculada agora pelas funções
@@ -306,9 +307,9 @@ select set_eq(
                          'proximo_recalculo_do_ativo', 'recalcular_so_a_linha', 'recalcular_linha_da_placa',
                          'recalcular_pela_mudanca', 'reconstruir_leitura_das_placas', 'recalcular_linhas_vencidas', 'linhas_divergentes')
        and has_function_privilege('authenticated', p.oid, 'EXECUTE')$$,
-  array['nucleo.texto_simples(text)', 'nucleo.placas_filtradas(text,text[],text[],text[],boolean)',
-        'nucleo.listar_placas(text,text[],text[],text[],boolean,text,boolean,integer,integer)',
-        'nucleo.contar_chips_de_placas(text,text[],text[],text[],boolean)', 'nucleo.ativo_da_placa(text)',
+  array['nucleo.texto_simples(text)', 'nucleo.placas_filtradas(text,text[],text[],text[],boolean,boolean)',
+        'nucleo.listar_placas(text,text[],text[],text[],boolean,text,boolean,integer,integer,boolean)',
+        'nucleo.contar_chips_de_placas(text,text[],text[],text[],boolean,boolean)', 'nucleo.ativo_da_placa(text)',
         'nucleo.detalhe_da_placa(text)', 'nucleo.historia_da_placa(text)',
         'nucleo.alertas_vigentes_do_ativo(uuid,timestamp with time zone)', 'nucleo.inicio_do_pat(uuid)',
         'nucleo.ultima_correcao_tardia_em(uuid)', 'nucleo.alerta_parado_em_patio(timestamp with time zone,timestamp with time zone)',
