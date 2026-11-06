@@ -28,6 +28,8 @@ export const TEXTOS_DOS_ALERTAS_DO_BANCO = {
   correcao_tardia_de_status: "Situação corrigida fora do prazo",
   parado_em_patio: "Parada no pátio além do prazo",
   ativo_sem_operacao: "Sem operação",
+  placa_com_dois_cr_do_mesmo_tipo: "Dois CRs do mesmo tipo",
+  cadastro_incompleto: "Cadastro incompleto (falta RENAVAM ou carroceria)",
 } as const;
 export type CodigoDeAlertaDoBanco = keyof typeof TEXTOS_DOS_ALERTAS_DO_BANCO;
 

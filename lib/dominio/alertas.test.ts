@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { alertasDaPlaca, type DadosParaAlertas } from "./alertas";
+import { alertaDoBanco, alertasDaPlaca, type DadosParaAlertas } from "./alertas";
 
 const HOJE = "2026-10-29";
 
@@ -83,5 +83,26 @@ describe("alertasDaPlaca", () => {
     );
     expect(alertas.map((a) => a.codigo)).toEqual(["modelo-a-definir", "crlv-vencido"]);
     expect(alertas.every((a) => a.texto.length > 0)).toBe(true);
+  });
+});
+
+describe("alertas do banco: a tela conhece todos", () => {
+  // A mesma lista que o pgTAP 31 confere nas visões de alerta (sem cr_sem_operacao, que é do CR).
+  const DO_BANCO = [
+    "sem_cr",
+    "buraco_em_cr",
+    "buraco_em_custodia",
+    "implemento_sem_eixos",
+    "conjunto_sem_nome",
+    "correcao_tardia_de_status",
+    "parado_em_patio",
+    "ativo_sem_operacao",
+    "placa_com_dois_cr_do_mesmo_tipo",
+    "cadastro_incompleto",
+  ];
+
+  it.each(DO_BANCO)("%s tem texto (um código desconhecido derrubaria a lista)", (codigo) => {
+    expect(() => alertaDoBanco(codigo)).not.toThrow();
+    expect(alertaDoBanco(codigo).texto.length).toBeGreaterThan(0);
   });
 });

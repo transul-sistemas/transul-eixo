@@ -8,6 +8,15 @@ Modelo de entrada:
 
 ---
 
+## 06/11/2026 — Plano B da carga inicial: cadastro pendente
+
+- **Decisão (Alexandre, 06/11/2026):** a autenticação da ponte do Sankhya falhou (HTTP 400). A carga inicial das placas sai da cópia da v1 sem esperar o Sankhya; RENAVAM, eixos e carroceria entram como **pendentes**, com alerta e fila; a ponte os preenche quando voltar, casando pela placa.
+- **O que entrou (migration `cadastro_pendente`):** `nucleo.ativo.cadastro_pendente` (padrão falso; sem grant ao app). **Só com a marca** o banco aceita ativo (não equipamento) sem RENAVAM e semirreboque sem carroceria; sem ela, as recusas de sempre continuam. A marca gera o alerta `cadastro_incompleto` (na definição única dos alertas) e uma exceção aberta na fila (uma por ativo). Quando o cadastro fica completo, a marca cai sozinha (gatilho BEFORE) e a exceção é resolvida com a resolução escrita. A chave pendente pode ser **preenchida** (de vazio para valor) enquanto há a marca; depois de preenchida, trocar continua proibido. Eixos já eram opcionais (alerta `implemento_sem_eixos`).
+- **Tela:** `alertaDoBanco` lança diante de código desconhecido; os alertas novos `placa_com_dois_cr_do_mesmo_tipo` (3.9c) e `cadastro_incompleto` ganharam texto, e um teste confere que a tela conhece todos os alertas que o banco produz (a mesma lista do pgTAP 31).
+- **Testes vistos falhando antes:** pgTAP 68 (15 asserções; a coluna não existia, e depois o preenchimento da chave era recusado) e o Vitest dos textos (2).
+- **Banco local compartilhado:** o agente da Parte 3 aplicou a migration dele no mesmo Postgres local; a minha (horário anterior) entrou pelo `psql` numa transação, com a versão registrada. Os pgTAP 80 e 81 falham localmente só pela migration dele (assinatura nova de `listar_placas`); no CI, com o banco limpo, valem.
+- **Quem decidiu:** Alexandre (plano B); a forma (marca única, preenchimento da chave pendente), hipótese simples.
+
 ## 06/11/2026 — Parte 4: backup criptografado do banco
 
 - **O que entrou:** `pnpm backup:banco [--nuvem] [--pasta <pasta>]` e `pnpm backup:restaurar <arquivo>` (`scripts/backup.ts`). `pg_dump` em formato custom das áreas do Eixo e de `supabase_migrations`, com as permissões (sem elas a restauração perde os GRANTs), criptografado em AES-256-GCM com chave derivada por scrypt da senha `EIXO_BACKUP_SENHA` (no `.env.local`; o `.env.example` ganhou o nome). Arquivo em `C:/Backups/eixo` por padrão, nome com origem e hora. **Nuvem só com `--nuvem`**, pelo pooler, com a senha do banco passada ao contêiner por variável de ambiente (nunca na linha de comando). **Restaurar só no banco local**, e só depois de conferir o arquivo inteiro (senha e integridade) antes do primeiro byte ao `pg_restore` (`--clean --if-exists --single-transaction`). Os logins (`auth.users`) não entram: são do Supabase Auth.
