@@ -8,6 +8,17 @@ Modelo de entrada:
 
 ---
 
+## 06/11/2026 — Grades de proteção e modo AVANÇAR
+
+- **Decisão (Alexandre, 06/11/2026):** objetivo único, Frota › Placas em uso com dados reais o quanto antes. Modo AVANÇAR: as partes seguem sem aprovação entre elas; para só se o CI da `main` ficar vermelho, se algo for tocar a nuvem ou se surgir decisão de negócio nova (aí entra a hipótese mais simples, registrada aqui).
+- **Grades (também no `CLAUDE.md`):** produção é a branch `release`, promovida com `git push origin main:release` só com o CI do commit todo verde (conferido pelo `gh`); nuvem só a pedido, `db push` sempre com `--dry-run` mostrado antes; nunca `db reset`, `drop`, `truncate` nem dados de desenvolvimento na nuvem; nunca ler `.env*` nem imprimir senha, chave ou conexão; `service_role` fora do `.env.local` e da Vercel.
+- **Pendência de Alexandre:** o `.env.local` ainda guarda a `service_role` e a senha do banco (relatório de 05/11/2026). Retirar a `service_role` de lá e da Vercel, e trocar a senha do banco. Apontar a produção da Vercel para a branch `release` (Settings → Git → Production Branch).
+- **E2e noturno:** falhava desde a 3.8 porque rodava o `supabase status` sem subir o Supabase local; agora sobe antes do build, como o job `app` (prazo de 45 para 70 minutos, o mesmo do `app`).
+- **Passagem de bastão:** o `docs/passagem-de-bastao.md` citado no pedido não existe; o pedido de 06/11/2026 substitui as seções 11.1, 11.2 e 11.3.
+- **Memória da máquina:** em 06/11/2026 havia 3,4 GB livres (abaixo de 4 GB): pela regra de 04/11/2026, Supabase local, e2e e `pnpm dev` não rodam aqui; banco e e2e vão pelo CI.
+- **Quem decidiu:** Alexandre.
+
+
 ## 04 e 05/11/2026 — Fatia 3.9a (fonte do banco para leitura)
 
 - **O que entrou:** as funções de leitura INVOKER (`listar_placas`, `contar_chips_de_placas`, `detalhe_da_placa`, `historia_da_placa`, `placas_filtradas`, `ativo_da_placa`, `texto_simples`) e `lib/dados/fonte-do-banco.ts`; `EIXO_DADOS=exemplo` liga o exemplo, qualquer outro valor (ou nenhum) liga o banco; no modo banco as gravações ficam "em breve". Sessão real na tela (nome e e-mail no rodapé da barra; memória da barra, busca rápida e rascunhos pela chave do usuário; `gestorAtual()` da sessão). Gerador `supabase/dev/dados.sql` (`pnpm db:dev-dados`, `pnpm db:carga`, só banco local). CI só no pull request: `capturas`, `modo-banco` (e2e do modo banco e mutações do SQL) e `medicao` (diagnóstico, equivalência e carga em lote); os tipos do banco sobem como artefato quando divergem.

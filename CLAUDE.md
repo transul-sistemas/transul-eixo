@@ -16,6 +16,15 @@ Projeto técnico completo: `docs/projeto-tecnico.md`. Em caso de dúvida, pergun
 8. **Supabase na nuvem (revista por Alexandre em 05/11/2026).** A proibição de `supabase link`, `db push` e MCP foi cancelada: o projeto `kbyhojdrpzdylexmlsip` pode ser usado quando Alexandre pedir.
    - O projeto da v1 (`oubrtcgtugeijbrxvblc`) nunca é usado, nem para leitura. Ler a cópia local em `importacao/` continua permitido.
 
+## Grades de proteção (Alexandre, 06/11/2026)
+
+- **Produção = branch `release`.** Promover só com `git push origin main:release`, e só depois de conferir com `gh run list`/`gh run view` que o CI daquele commit está todo verde. A Vercel publica produção a partir da `release`.
+- **Nuvem só quando Alexandre pedir.** `supabase db push` sempre precedido de `--dry-run`, com a saída mostrada a ele antes do envio de verdade.
+- **Nunca na nuvem:** `db reset`, `drop`, `truncate` nem dados de desenvolvimento (`db:dev-dados`, CSV fictício, carga de teste).
+- **Nunca ler `.env*`** nem imprimir senha, chave ou texto de conexão.
+- **A `service_role` não fica no `.env.local` nem na Vercel:** só nos workers e nos segredos do CI que precisarem dela.
+- **Dado real** (CPF, nome, placa, CSV do Sankhya, cópia da v1) nunca entra no repositório, no chat, em log ou no CI: os scripts mostram só agregados.
+
 ## Como trabalhar
 
 - Use as skills: `brainstorming` antes de cada módulo; `writing-plans` e `executing-plans` para cada fase; `test-driven-development` em toda regra de negócio; `systematic-debugging` em todo erro; `verification-before-completion` antes de dizer "pronto"; `requesting-code-review` e `finishing-a-development-branch` em cada pull request; `frontend-design` em toda tela; `supabase` para o banco.
