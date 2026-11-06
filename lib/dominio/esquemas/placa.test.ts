@@ -2,11 +2,12 @@ import { describe, expect, it } from "vitest";
 import { SIGLAS, SIGLAS_DE_BAIXA } from "../status";
 import {
   esquemaCadastrarPlaca,
-  esquemaDisponibilizacao,
-  esquemaDisponibilizacaoDe,
-  esquemaEnvioDeTransferencia,
+  esquemaConcluirRecebimento,
+  esquemaDisponibilizarPlaca,
+  esquemaEntregaAoOperacional,
+  esquemaEntregaAoOperacionalDe,
   esquemaItemDeCatalogo,
-  esquemaRecebimento,
+  esquemaReceberPlaca,
   siglasIniciaisDoTipo,
   validarRenavam,
 } from "./placa";
@@ -21,10 +22,8 @@ const base = {
   modeloId: "modelo-fh-540",
   ano: 2022,
   gestorId: "gestor-1",
-  operacaoId: null,
-  crId: null,
-  filialId: "filial-a",
-  garagemId: "garagem-a1",
+  operacaoId: "op-1",
+  crId: "cr-1001",
   situacaoInicial: "PÁT",
 };
 const cavalo = {
@@ -37,6 +36,9 @@ const implemento = {
   ...base,
   tipo: "implemento",
   modeloId: "modelo-sider",
+  funcao: "semirreboque",
+  carroceriaId: "carroceria-sider",
+  eixos: 3,
   valorManualCentavos: 25_000_000,
   fonteDoValor: "Nota fiscal de compra",
   dataDoValor: "2026-09-10",
@@ -173,19 +175,22 @@ describe("esquemaCadastrarPlaca: valor por tipo", () => {
 });
 
 describe("esquemaCadastrarPlaca: posse e situação inicial", () => {
-  it("filial e garagem são obrigatórias (escolhas do cadastro)", () => {
-    expect(campos({ ...cavalo, filialId: "" })).toContain("filialId");
-    expect(campos({ ...cavalo, garagemId: "" })).toContain("garagemId");
-    expect(campos({ ...cavalo, filialId: undefined })).toContain("filialId");
-    expect(campos({ ...cavalo, garagemId: undefined })).toContain("garagemId");
-  });
   it("o gestor é obrigatório", () => {
     expect(campos({ ...cavalo, gestorId: "" })).toContain("gestorId");
   });
-  it("operação exige CR, e CR sem operação não existe", () => {
-    expect(esquema.safeParse({ ...cavalo, operacaoId: "op-1", crId: "cr-1" }).success).toBe(true);
-    expect(campos({ ...cavalo, operacaoId: "op-1", crId: null })).toContain("crId");
-    expect(campos({ ...cavalo, operacaoId: null, crId: "cr-1" })).toContain("operacaoId");
+  it("operação e CR são obrigatórios (toda placa tem operação e CR)", () => {
+    expect(esquema.safeParse(cavalo).success).toBe(true);
+    expect(campos({ ...cavalo, operacaoId: null })).toContain("operacaoId");
+    expect(campos({ ...cavalo, operacaoId: "" })).toContain("operacaoId");
+    expect(campos({ ...cavalo, crId: null })).toContain("crId");
+  });
+  it("o cadastro não pede mais filial nem garagem (a garagem vem do CR): os campos são ignorados", () => {
+    const r = esquema.safeParse({ ...cavalo, filialId: "filial-a", garagemId: "garagem-a1" });
+    expect(r.success).toBe(true);
+    if (r.success) {
+      expect("filialId" in r.data).toBe(false);
+      expect("garagemId" in r.data).toBe(false);
+    }
   });
   it("a situação inicial padrão é PÁT", () => {
     const semSituacao: Partial<typeof cavalo> = { ...cavalo };
@@ -212,14 +217,52 @@ describe("esquemaCadastrarPlaca: posse e situação inicial", () => {
       "situacaoInicial",
     );
     expect(campos({ ...implemento, situacaoInicial: "SMo" })).toContain("situacaoInicial");
-    expect(campos({ ...implemento, tipo: "equipamento", situacaoInicial: "SMo" })).toContain(
-      "situacaoInicial",
-    );
   });
   it("não há conjunto no cadastro: o campo é ignorado", () => {
     const r = esquema.safeParse({ ...cavalo, conjunto: { implementoIds: ["x"] } });
     expect(r.success).toBe(true);
     if (r.success) expect("conjunto" in r.data).toBe(false);
+  });
+});
+
+describe("esquemaCadastrarPlaca: função, carroceria e eixos do implemento", () => {
+  it("semirreboque com carroceria e eixos de 1 a 6 passa", () => {
+    for (const eixos of [1, 2, 3, 6]) {
+      expect(esquema.safeParse({ ...implemento, eixos }).success, String(eixos)).toBe(true);
+    }
+  });
+  it("implemento sem função não passa", () => {
+    expect(campos({ ...implemento, funcao: undefined })).toContain("funcao");
+    expect(campos({ ...implemento, funcao: "carreta" })).toContain("funcao");
+  });
+  it("semirreboque sem carroceria ou sem eixos fica recusado (nunca presumido)", () => {
+    expect(campos({ ...implemento, carroceriaId: null })).toContain("carroceriaId");
+    expect(campos({ ...implemento, eixos: null })).toContain("eixos");
+    expect(campos({ ...implemento, eixos: 0 })).toContain("eixos");
+    expect(campos({ ...implemento, eixos: 7 })).toContain("eixos");
+    expect(campos({ ...implemento, eixos: 2.5 })).toContain("eixos");
+  });
+  it("dolly não tem carroceria e tem sempre 2 eixos", () => {
+    const r = esquema.safeParse({
+      ...implemento,
+      funcao: "dolly",
+      carroceriaId: null,
+      eixos: null,
+    });
+    expect(r.success).toBe(true);
+    if (r.success && r.data.tipo === "implemento") {
+      expect(r.data.eixos).toBe(2);
+      expect(r.data.carroceriaId).toBeNull();
+    }
+    expect(campos({ ...implemento, funcao: "dolly" })).toContain("carroceriaId");
+    expect(campos({ ...implemento, funcao: "dolly", carroceriaId: null, eixos: 3 })).toContain(
+      "eixos",
+    );
+  });
+  it("os outros tipos não têm função, carroceria nem eixos no cadastro (ignorados)", () => {
+    const r = esquema.safeParse({ ...cavalo, funcao: "dolly", carroceriaId: "x", eixos: 3 });
+    expect(r.success).toBe(true);
+    if (r.success) expect("funcao" in r.data).toBe(false);
   });
 });
 
@@ -236,161 +279,126 @@ describe("siglasIniciaisDoTipo", () => {
       for (const s of lista) expect(SIGLAS, s).toContain(s);
     }
   });
+  it("o apoio não tem SMo; cavalo e caminhão têm", () => {
+    expect(siglasIniciaisDoTipo("apoio")).not.toContain("SMo");
+    expect(siglasIniciaisDoTipo("cavalo")).toContain("SMo");
+    expect(siglasIniciaisDoTipo("caminhao")).toContain("SMo");
+  });
 });
 
-describe("esquemaDisponibilizacao: placa, filial e a versão que a pessoa viu", () => {
+describe("esquemaEntregaAoOperacional: placa, filial e a versão que a pessoa viu", () => {
   const ok = { placa: "aaa-0a00", filialId: "filial-a", versaoDaPlaca: 3 };
   it("aceita e normaliza a placa", () => {
-    const r = esquemaDisponibilizacao.safeParse(ok);
+    const r = esquemaEntregaAoOperacional.safeParse(ok);
     expect(r.success && r.data.placa).toBe("AAA0A00");
   });
   it("a filial é obrigatória e a versão é um inteiro de 1 em diante", () => {
-    expect(esquemaDisponibilizacao.safeParse({ ...ok, filialId: "" }).success).toBe(false);
-    expect(esquemaDisponibilizacao.safeParse({ ...ok, versaoDaPlaca: 0 }).success).toBe(false);
-    expect(esquemaDisponibilizacao.safeParse({ ...ok, versaoDaPlaca: 1.5 }).success).toBe(false);
-    expect(esquemaDisponibilizacao.safeParse({ ...ok, versaoDaPlaca: undefined }).success).toBe(
+    expect(esquemaEntregaAoOperacional.safeParse({ ...ok, filialId: "" }).success).toBe(false);
+    expect(esquemaEntregaAoOperacional.safeParse({ ...ok, versaoDaPlaca: 0 }).success).toBe(false);
+    expect(esquemaEntregaAoOperacional.safeParse({ ...ok, versaoDaPlaca: 1.5 }).success).toBe(
       false,
     );
   });
+  it("carreta é recusada com a mensagem do tipo; cavalo fora de PÁT e ETv também", () => {
+    const carreta = esquemaEntregaAoOperacionalDe({ tipo: "implemento", sigla: "PÁT" }).safeParse(
+      ok,
+    );
+    expect(carreta.success).toBe(false);
+    if (!carreta.success) {
+      expect(carreta.error.issues[0]?.message).toBe(
+        "Só cavalo ou caminhão podem ser entregues ao Operacional.",
+      );
+    }
+    expect(
+      esquemaEntregaAoOperacionalDe({ tipo: "cavalo", sigla: "MAN" }).safeParse(ok).success,
+    ).toBe(false);
+    for (const tipo of ["cavalo", "caminhao"] as const) {
+      for (const sigla of ["PÁT", "ETv"] as const) {
+        expect(esquemaEntregaAoOperacionalDe({ tipo, sigla }).safeParse(ok).success).toBe(true);
+      }
+    }
+  });
 });
 
-describe("esquemaRecebimento: quem recebe confere e conclui", () => {
+describe("esquemaDisponibilizarPlaca: quem envia deixa o destino, o motivo e as pendências", () => {
+  const ok = {
+    placa: "AAA0A00",
+    paraGestorId: "gestor-2",
+    motivo: "Troca de carteira",
+    pendenciasConhecidas: ["CRLV vence em breve"],
+    versaoDaPlaca: 2,
+  };
+  it("aceita, com ou sem pendências", () => {
+    expect(esquemaDisponibilizarPlaca.safeParse(ok).success).toBe(true);
+    expect(esquemaDisponibilizarPlaca.safeParse({ ...ok, pendenciasConhecidas: [] }).success).toBe(
+      true,
+    );
+  });
+  it("o motivo, o destino e a versão são obrigatórios", () => {
+    expect(esquemaDisponibilizarPlaca.safeParse({ ...ok, motivo: " " }).success).toBe(false);
+    expect(esquemaDisponibilizarPlaca.safeParse({ ...ok, paraGestorId: "" }).success).toBe(false);
+    expect(esquemaDisponibilizarPlaca.safeParse({ ...ok, versaoDaPlaca: 0 }).success).toBe(false);
+  });
+  it("pendência vazia não vale; no máximo 20", () => {
+    expect(
+      esquemaDisponibilizarPlaca.safeParse({ ...ok, pendenciasConhecidas: [" "] }).success,
+    ).toBe(false);
+    expect(
+      esquemaDisponibilizarPlaca.safeParse({
+        ...ok,
+        pendenciasConhecidas: Array.from({ length: 21 }, (_, i) => `P${i}`),
+      }).success,
+    ).toBe(false);
+  });
+});
+
+describe("esquemaReceberPlaca: a primeira etapa registra a chegada", () => {
+  const ok = { placa: "AAA0A00", pedidoId: "ped-1", versaoDoPedido: 1, conferido: true };
+  it("aceita com a chegada conferida", () => {
+    expect(esquemaReceberPlaca.safeParse(ok).success).toBe(true);
+  });
+  it("sem conferir o que chegou, ou sem a versão do pedido, não", () => {
+    expect(esquemaReceberPlaca.safeParse({ ...ok, conferido: false }).success).toBe(false);
+    expect(esquemaReceberPlaca.safeParse({ ...ok, versaoDoPedido: undefined }).success).toBe(false);
+    expect(esquemaReceberPlaca.safeParse({ ...ok, pedidoId: "" }).success).toBe(false);
+  });
+});
+
+describe("esquemaConcluirRecebimento: a segunda etapa responde cada pendência", () => {
   const ok = {
     placa: "AAA0A00",
     pedidoId: "ped-1",
     versaoDoPedido: 2,
-    versaoDaPlaca: 3,
-    conferido: true,
-    situacao: "PÁT",
-    operacaoId: null,
-    crId: null,
-    motoristaId: null,
-    metaDoConjuntoCentavos: null,
-    conjunto: { cavaloId: null, implementoIds: [] },
-    pendencias: [{ id: "p1", resolvida: true }],
+    pendencias: [
+      { id: "p1", resolvida: true, nota: "" },
+      { id: "p2", resolvida: false, nota: "Revisão marcada para dezembro" },
+    ],
   };
-  const esquemaDoCavalo = esquemaRecebimento("cavalo");
-  it("aceita o recebimento completo", () => {
-    expect(esquemaDoCavalo.safeParse(ok).success).toBe(true);
+  it("aceita: resolvida sem nota, não resolvida com nota; a nota vazia vira nula", () => {
+    const r = esquemaConcluirRecebimento.safeParse(ok);
+    expect(r.success).toBe(true);
+    if (r.success) expect(r.data.pendencias[0]?.nota).toBeNull();
   });
-  it("só conclui depois de conferir o que chegou", () => {
-    expect(esquemaDoCavalo.safeParse({ ...ok, conferido: false }).success).toBe(false);
-  });
-  it("não conclui com pendência aberta", () => {
-    const r = esquemaDoCavalo.safeParse({
+  it("não resolvida exige a nota, no campo da pendência", () => {
+    const r = esquemaConcluirRecebimento.safeParse({
       ...ok,
-      pendencias: [
-        { id: "p1", resolvida: true },
-        { id: "p2", resolvida: false },
-      ],
+      pendencias: [{ id: "p1", resolvida: false, nota: " " }],
     });
     expect(r.success).toBe(false);
-    if (!r.success) expect(r.error.issues.map((i) => i.path.join("."))).toContain("pendencias");
-  });
-  it("a situação é a do tipo e nunca uma baixa", () => {
-    expect(esquemaDoCavalo.safeParse({ ...ok, situacao: "DOC" }).success).toBe(true);
-    expect(esquemaDoCavalo.safeParse({ ...ok, situacao: "VND" }).success).toBe(false);
-    expect(esquemaRecebimento("implemento").safeParse({ ...ok, situacao: "SMo" }).success).toBe(
-      false,
-    );
-  });
-  it("operação exige CR", () => {
-    expect(esquemaDoCavalo.safeParse({ ...ok, operacaoId: "op-1", crId: "cr-1" }).success).toBe(
-      true,
-    );
-    expect(esquemaDoCavalo.safeParse({ ...ok, operacaoId: "op-1", crId: null }).success).toBe(
-      false,
-    );
-  });
-  it("a meta do conjunto é dinheiro em centavos, positiva, ou vazia", () => {
-    expect(esquemaDoCavalo.safeParse({ ...ok, metaDoConjuntoCentavos: 1_500_000 }).success).toBe(
-      true,
-    );
-    expect(esquemaDoCavalo.safeParse({ ...ok, metaDoConjuntoCentavos: -1 }).success).toBe(false);
-    expect(esquemaDoCavalo.safeParse({ ...ok, metaDoConjuntoCentavos: 10.5 }).success).toBe(false);
-  });
-  it("confere a versão do pedido E a da placa: falta de qualquer uma recusa", () => {
-    const semPedido: Partial<typeof ok> = { ...ok };
-    delete semPedido.versaoDoPedido;
-    const semPlaca: Partial<typeof ok> = { ...ok };
-    delete semPlaca.versaoDaPlaca;
-    const r1 = esquemaDoCavalo.safeParse(semPedido);
-    const r2 = esquemaDoCavalo.safeParse(semPlaca);
-    expect(r1.success).toBe(false);
-    expect(r2.success).toBe(false);
-    if (!r1.success)
-      expect(r1.error.issues.map((i) => i.path.join("."))).toContain("versaoDoPedido");
-    if (!r2.success)
-      expect(r2.error.issues.map((i) => i.path.join("."))).toContain("versaoDaPlaca");
-    expect(esquemaDoCavalo.safeParse({ ...ok, versaoDoPedido: 0 }).success).toBe(false);
-    expect(esquemaDoCavalo.safeParse({ ...ok, versaoDaPlaca: 1.5 }).success).toBe(false);
-  });
-  it("a meta do conjunto é do cavalo, o mestre: só o cavalo a recebe", () => {
-    expect(esquemaDoCavalo.safeParse({ ...ok, metaDoConjuntoCentavos: 1_500_000 }).success).toBe(
-      true,
-    );
-    for (const tipo of ["implemento", "equipamento", "caminhao", "apoio"] as const) {
-      const r = esquemaRecebimento(tipo).safeParse({ ...ok, metaDoConjuntoCentavos: 1_500_000 });
-      expect(r.success, tipo).toBe(false);
-      if (!r.success) {
-        expect(
-          r.error.issues.map((i) => i.path.join(".")),
-          tipo,
-        ).toContain("metaDoConjuntoCentavos");
-      }
-      expect(
-        esquemaRecebimento(tipo).safeParse({ ...ok, metaDoConjuntoCentavos: null }).success,
-        tipo,
-      ).toBe(true);
+    if (!r.success) {
+      expect(r.error.issues.map((i) => i.path.join("."))).toContain("pendencias.0.nota");
     }
   });
-  it("conjunto: só cavalo tem implementos, só implemento tem cavalo, sem repetir", () => {
+  it("sem pendências também conclui; pendência repetida não", () => {
+    expect(esquemaConcluirRecebimento.safeParse({ ...ok, pendencias: [] }).success).toBe(true);
     expect(
-      esquemaDoCavalo.safeParse({
+      esquemaConcluirRecebimento.safeParse({
         ...ok,
-        conjunto: { cavaloId: null, implementoIds: ["i1", "i2"] },
+        pendencias: [
+          { id: "p1", resolvida: true, nota: null },
+          { id: "p1", resolvida: true, nota: null },
+        ],
       }).success,
-    ).toBe(true);
-    expect(
-      esquemaDoCavalo.safeParse({ ...ok, conjunto: { cavaloId: "c1", implementoIds: [] } }).success,
-    ).toBe(false);
-    expect(
-      esquemaDoCavalo.safeParse({
-        ...ok,
-        conjunto: { cavaloId: null, implementoIds: ["i1", "i1"] },
-      }).success,
-    ).toBe(false);
-    const doImplemento = esquemaRecebimento("implemento");
-    expect(
-      doImplemento.safeParse({ ...ok, conjunto: { cavaloId: "c1", implementoIds: [] } }).success,
-    ).toBe(true);
-    expect(
-      doImplemento.safeParse({ ...ok, conjunto: { cavaloId: null, implementoIds: ["i1"] } })
-        .success,
-    ).toBe(false);
-  });
-});
-
-describe("esquemaEnvioDeTransferencia: quem envia deixa o motivo e as pendências conhecidas", () => {
-  const ok = {
-    placa: "AAA0A00",
-    paraGestorId: "gestor-2",
-    motivo: "Troca de carteira entre filiais",
-    pendenciasConhecidas: ["CRLV vence em 15 dias"],
-  };
-  it("aceita, com ou sem pendências", () => {
-    expect(esquemaEnvioDeTransferencia.safeParse(ok).success).toBe(true);
-    expect(esquemaEnvioDeTransferencia.safeParse({ ...ok, pendenciasConhecidas: [] }).success).toBe(
-      true,
-    );
-  });
-  it("o motivo é obrigatório e o destino também", () => {
-    expect(esquemaEnvioDeTransferencia.safeParse({ ...ok, motivo: "  " }).success).toBe(false);
-    expect(esquemaEnvioDeTransferencia.safeParse({ ...ok, paraGestorId: "" }).success).toBe(false);
-  });
-  it("pendência vazia não vale", () => {
-    expect(
-      esquemaEnvioDeTransferencia.safeParse({ ...ok, pendenciasConhecidas: [" "] }).success,
     ).toBe(false);
   });
 });
@@ -404,42 +412,45 @@ describe("esquemaItemDeCatalogo: o que o mini-wizard do + cria", () => {
       );
     }
   });
-  it("modelo precisa da marca; garagem, da filial; CR, da operação", () => {
+  it("garagem não se cadastra mais pelo + (garagem é a filial, as 3)", () => {
+    expect(
+      esquemaItemDeCatalogo.safeParse({ tipo: "garagem", nome: "Garagem 3", paiId: "filial-a" })
+        .success,
+    ).toBe(false);
+  });
+  it("modelo precisa da marca", () => {
     expect(esquemaItemDeCatalogo.safeParse({ tipo: "modelo", nome: "FH 540" }).success).toBe(false);
     expect(
       esquemaItemDeCatalogo.safeParse({ tipo: "modelo", nome: "FH 540", paiId: "marca-volvo" })
         .success,
     ).toBe(true);
-    expect(esquemaItemDeCatalogo.safeParse({ tipo: "garagem", nome: "Garagem 3" }).success).toBe(
-      false,
-    );
-    expect(
-      esquemaItemDeCatalogo.safeParse({ tipo: "garagem", nome: "Garagem 3", paiId: "filial-a" })
-        .success,
-    ).toBe(true);
-    expect(esquemaItemDeCatalogo.safeParse({ tipo: "cr", nome: "CR-1006" }).success).toBe(false);
-    expect(
-      esquemaItemDeCatalogo.safeParse({ tipo: "cr", nome: "CR-1006", paiId: "op-1" }).success,
-    ).toBe(true);
   });
-  it("o código do CR é texto livre: nenhum formato é imposto (fim do CR-0000)", () => {
-    for (const nome of ["1006", "CR1006", "CR-100", "CR-10066", "cr-1006", "CC 300-A"]) {
-      const r = esquemaItemDeCatalogo.safeParse({ tipo: "cr", nome, paiId: "op-1" });
-      expect(r.success, nome).toBe(true);
+  it("o CR pede o código do Sankhya (CODCENCUS, inteiro positivo); a operação é opcional", () => {
+    const cr = (extra: object) =>
+      esquemaItemDeCatalogo.safeParse({ tipo: "cr", nome: "CR-1006", ...extra });
+    expect(cr({}).success).toBe(false);
+    expect(cr({ codcencus: 0 }).success).toBe(false);
+    expect(cr({ codcencus: 1.5 }).success).toBe(false);
+    expect(cr({ codcencus: 2010101 }).success).toBe(true);
+    expect(cr({ codcencus: 2010101, paiId: "op-1" }).success).toBe(true);
+  });
+  it("o código do CR é texto livre, de 2 a 60 caracteres, sem espaços sobrando", () => {
+    for (const nome of ["1006", "CR1006", "cr-1006", "CC 300-A"]) {
+      expect(
+        esquemaItemDeCatalogo.safeParse({ tipo: "cr", nome, codcencus: 1 }).success,
+        nome,
+      ).toBe(true);
     }
-  });
-  it("o código do CR continua com 2 a 60 caracteres, sem espaços sobrando", () => {
     for (const nome of ["", " ", "A", "x".repeat(61)]) {
-      const r = esquemaItemDeCatalogo.safeParse({ tipo: "cr", nome, paiId: "op-1" });
-      expect(r.success, JSON.stringify(nome)).toBe(false);
+      expect(
+        esquemaItemDeCatalogo.safeParse({ tipo: "cr", nome, codcencus: 1 }).success,
+        JSON.stringify(nome),
+      ).toBe(false);
     }
-    const r = esquemaItemDeCatalogo.safeParse({ tipo: "cr", nome: "  1006  ", paiId: "op-1" });
-    expect(r.success && r.data.nome).toBe("1006");
   });
   it("o nome é obrigatório, sem espaços sobrando, de 2 a 60 caracteres", () => {
     expect(esquemaItemDeCatalogo.safeParse({ ...ok, nome: " " }).success).toBe(false);
     expect(esquemaItemDeCatalogo.safeParse({ ...ok, nome: "A" }).success).toBe(false);
-    expect(esquemaItemDeCatalogo.safeParse({ ...ok, nome: "x".repeat(61) }).success).toBe(false);
     const r = esquemaItemDeCatalogo.safeParse({ ...ok, nome: "  Scania  " });
     expect(r.success && r.data.nome).toBe("Scania");
   });
@@ -448,136 +459,5 @@ describe("esquemaItemDeCatalogo: o que o mini-wizard do + cria", () => {
     const r = esquemaItemDeCatalogo.safeParse({ ...ok, paiId: "qualquer" });
     expect(r.success).toBe(true);
     if (r.success) expect("paiId" in r.data).toBe(false);
-  });
-});
-
-describe("esquemaRecebimento: conjunto misto de carrocerias é bloqueado e o cavalo é o mestre", () => {
-  const carrocerias = { "imp-1": "Sider", "imp-2": "Graneleiro", "imp-3": "Sider" };
-  const ok = {
-    placa: "AAA0A00",
-    pedidoId: "ped-1",
-    versaoDoPedido: 2,
-    versaoDaPlaca: 3,
-    conferido: true,
-    situacao: "PÁT",
-    operacaoId: null,
-    crId: null,
-    motoristaId: null,
-    metaDoConjuntoCentavos: null,
-    conjunto: { cavaloId: null, implementoIds: ["imp-1", "imp-3"] },
-    pendencias: [],
-  };
-  const doCavalo = esquemaRecebimento("cavalo", carrocerias);
-  it("implementos da mesma carroceria passam", () => {
-    expect(doCavalo.safeParse(ok).success).toBe(true);
-  });
-  it("Sider com Graneleiro no mesmo cavalo é recusado, com o aviso no campo dos implementos", () => {
-    const r = doCavalo.safeParse({
-      ...ok,
-      conjunto: { cavaloId: null, implementoIds: ["imp-1", "imp-2"] },
-    });
-    expect(r.success).toBe(false);
-    if (!r.success) {
-      const achado = r.error.issues.find((i) => i.path.join(".") === "conjunto.implementoIds");
-      expect(achado?.message).toContain("mesma carroceria");
-    }
-  });
-  it("só o cavalo é mestre: implemento não leva implementos nem recebe meta, e cavalo não tem cavalo", () => {
-    const doImplemento = esquemaRecebimento("implemento", carrocerias);
-    expect(doImplemento.safeParse(ok).success).toBe(false);
-    expect(
-      doImplemento.safeParse({
-        ...ok,
-        conjunto: { cavaloId: "cav-1", implementoIds: [] },
-        metaDoConjuntoCentavos: 1_000_00,
-      }).success,
-    ).toBe(false);
-    expect(
-      doCavalo.safeParse({ ...ok, conjunto: { cavaloId: "cav-1", implementoIds: [] } }).success,
-    ).toBe(false);
-  });
-  it("sem a tabela de carrocerias, a regra do misto não roda (o resto do esquema vale)", () => {
-    expect(
-      esquemaRecebimento("cavalo").safeParse({
-        ...ok,
-        conjunto: { cavaloId: null, implementoIds: ["imp-1", "imp-2"] },
-      }).success,
-    ).toBe(true);
-  });
-});
-
-describe("siglasIniciaisDoTipo: sai do catálogo da régua", () => {
-  it("o apoio não tem SMo; cavalo e caminhão têm", () => {
-    expect(siglasIniciaisDoTipo("apoio")).not.toContain("SMo");
-    expect(siglasIniciaisDoTipo("cavalo")).toContain("SMo");
-    expect(siglasIniciaisDoTipo("caminhao")).toContain("SMo");
-    expect(siglasIniciaisDoTipo("implemento")).not.toContain("SMo");
-    expect(siglasIniciaisDoTipo("equipamento")).not.toContain("SMo");
-  });
-  it("nenhuma sigla de operação, folga ou férias entra na situação inicial", () => {
-    for (const tipo of ["cavalo", "implemento", "equipamento", "caminhao", "apoio"] as const) {
-      const lista = siglasIniciaisDoTipo(tipo);
-      for (const s of [
-        "DOp",
-        "ACe",
-        "CAr",
-        "CAn",
-        "ETc",
-        "ADe",
-        "DEs",
-        "ETv",
-        "FOg",
-        "FEr",
-        "MAc",
-        "MAt",
-        "MAv",
-      ]) {
-        expect(lista, `${tipo} ${s}`).not.toContain(s);
-      }
-    }
-  });
-});
-
-describe("esquemaDisponibilizacaoDe: o tipo e a situação da placa decidem", () => {
-  const entrada = { placa: "AAA0A00", filialId: "filial-a", versaoDaPlaca: 1 };
-  it("cavalo e caminhão em PÁT ou ETv passam", () => {
-    for (const tipo of ["cavalo", "caminhao"] as const) {
-      for (const sigla of ["PÁT", "ETv"] as const) {
-        expect(
-          esquemaDisponibilizacaoDe({ tipo, sigla }).safeParse(entrada).success,
-          `${tipo} ${sigla}`,
-        ).toBe(true);
-      }
-    }
-  });
-  it("carreta em PÁT é recusada, com a mensagem do tipo no campo da placa", () => {
-    const r = esquemaDisponibilizacaoDe({ tipo: "implemento", sigla: "PÁT" }).safeParse(entrada);
-    expect(r.success).toBe(false);
-    if (!r.success) {
-      const achado = r.error.issues.find((i) => i.path.join(".") === "placa");
-      expect(achado?.message).toContain(
-        "Só cavalo ou caminhão podem ser disponibilizados ao Operacional",
-      );
-    }
-  });
-  it("apoio e equipamento também; cavalo fora de PÁT e ETv recebe a mensagem da situação", () => {
-    for (const tipo of ["apoio", "equipamento"] as const) {
-      expect(
-        esquemaDisponibilizacaoDe({ tipo, sigla: "PÁT" }).safeParse(entrada).success,
-        tipo,
-      ).toBe(false);
-    }
-    const r = esquemaDisponibilizacaoDe({ tipo: "cavalo", sigla: "MAN" }).safeParse(entrada);
-    expect(r.success).toBe(false);
-    if (!r.success) expect(r.error.issues.map((i) => i.message).join(" ")).toMatch(/PÁT ou ETv/);
-  });
-  it("o esquema base continua conferindo placa, filial e versão", () => {
-    expect(esquemaDisponibilizacao.safeParse({ ...entrada, filialId: "" }).success).toBe(false);
-    expect(
-      esquemaDisponibilizacaoDe({ tipo: "cavalo", sigla: "PÁT" }).safeParse({
-        ...entrada,
-        versaoDaPlaca: 0,
-      }).success,
-    ).toBe(false);
   });
 });

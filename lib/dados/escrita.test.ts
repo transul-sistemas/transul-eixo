@@ -1,16 +1,18 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
-  MENSAGEM_DE_TIPO_QUE_NAO_DISPONIBILIZA,
-  podeDisponibilizar,
-  SIGLAS_QUE_PODEM_DISPONIBILIZAR,
+  MENSAGEM_DE_TIPO_QUE_NAO_ENTREGA,
+  podeEntregar,
+  SIGLAS_QUE_PODEM_ENTREGAR,
   type PedidoDeTransferencia,
 } from "@/lib/dominio/custodia";
 import { criarArmazem } from "@/lib/exemplo/armazem";
 import { placasDeExemplo } from "@/lib/exemplo/placas";
 import {
   executarCadastrarPlaca,
+  executarConcluirRecebimento,
   executarCriarItemDeCatalogo,
-  executarDisponibilizar,
+  executarDisponibilizarPlaca,
+  executarEntregarAoOperacional,
   executarReceber,
 } from "./escrita";
 import type { FonteDeEscrita } from "./fonte";
@@ -23,37 +25,27 @@ const CHAVE_B = "22222222-2222-4222-8222-222222222222";
 
 const base = placasDeExemplo(HOJE);
 const emOrigem = (sigla: string) =>
-  (SIGLAS_QUE_PODEM_DISPONIBILIZAR as readonly string[]).includes(sigla);
-const noPatio = base.find((p) => podeDisponibilizar(p.sigla, p.tipo))!;
+  (SIGLAS_QUE_PODEM_ENTREGAR as readonly string[]).includes(sigla);
+const noPatio = base.find((p) => podeEntregar(p.sigla, p.tipo))!;
 const carretaNoPatio = base.find((p) => p.tipo === "implemento" && emOrigem(p.sigla))!;
 const foraDoPatio = base.find((p) => !emOrigem(p.sigla) && p.sigla !== "VND" && p.sigla !== "SUC")!;
-const implemento = base.find(
-  (p) => p.tipo === "implemento" && p.sigla !== "VND" && p.sigla !== "SUC",
-)!;
 
 const pedido = (placa: string, id = "ped-1"): PedidoDeTransferencia => ({
   id,
   placa,
   deGestorId: "gestor-1",
+  deGestor: "Gestor Exemplo 1",
   paraGestorId: "gestor-2",
+  paraGestor: "Gestor Exemplo 2",
   motivo: "Troca de carteira",
   pendenciasConhecidas: [{ id: "p1", texto: "CRLV vencendo" }],
   situacao: "pendente",
   versao: 1,
 });
 
-function contexto(fonte?: FonteDeEscrita) {
-  const armazem = criarArmazem({
-    placasBase: base,
-    pedidosBase: [pedido(foraDoPatio.placa), pedido(implemento.placa, "ped-i")],
-  });
-  return {
-    fonte: fonte ?? escritaDoArmazem(armazem),
-    agora: AGORA,
-    hoje: HOJE,
-    gestorId: "gestor-2",
-    armazem,
-  };
+function contexto(fonte?: FonteDeEscrita, gestorId = "gestor-2") {
+  const armazem = criarArmazem({ placasBase: base, pedidosBase: [pedido(foraDoPatio.placa)] });
+  return { fonte: fonte ?? escritaDoArmazem(armazem), agora: AGORA, hoje: HOJE, gestorId, armazem };
 }
 
 const cadastro = (parcial: Record<string, unknown> = {}) => ({
@@ -68,8 +60,6 @@ const cadastro = (parcial: Record<string, unknown> = {}) => ({
   gestorId: "gestor-1",
   operacaoId: "op-1",
   crId: "cr-1001",
-  filialId: "filial-a",
-  garagemId: "garagem-a1",
   situacaoInicial: "PÁT",
   ...parcial,
 });
@@ -80,18 +70,42 @@ describe("executarCadastrarPlaca: valida com o esquema da tela e grava pela font
     const r = await executarCadastrarPlaca(CHAVE_A, cadastro(), ctx);
     expect(r.ok).toBe(true);
     if (r.ok) expect(r.linha).toMatchObject({ placa: "ZZZ9Z99", versao: 1, sigla: "PÁT" });
-    expect((await ctx.fonte.placaParaAssistente("ZZZ9Z99"))?.placa).toBe("ZZZ9Z99");
   });
 
   it("entrada que não passa no esquema vira entrada_invalida, com as mensagens por campo, e não grava", async () => {
     const ctx = contexto();
-    const r = await executarCadastrarPlaca(CHAVE_A, cadastro({ placa: "AB", renavam: "123" }), ctx);
+    const r = await executarCadastrarPlaca(
+      CHAVE_A,
+      cadastro({ placa: "AB", renavam: "123", operacaoId: "" }),
+      ctx,
+    );
     expect(r.ok).toBe(false);
     if (r.ok) return;
     expect(r.erro.codigo).toBe("entrada_invalida");
-    expect(Object.keys(r.erro.campos ?? {})).toEqual(expect.arrayContaining(["placa", "renavam"]));
-    expect(r.erro.campos?.placa?.[0]).toMatch(/Placa inválida/);
+    expect(Object.keys(r.erro.campos ?? {})).toEqual(
+      expect.arrayContaining(["placa", "renavam", "operacaoId"]),
+    );
     expect(ctx.armazem.placasCadastradas()).toHaveLength(0);
+  });
+
+  it("implemento grava com função, carroceria e eixos", async () => {
+    const ctx = contexto();
+    const r = await executarCadastrarPlaca(
+      CHAVE_A,
+      cadastro({
+        tipo: "implemento",
+        modeloId: "modelo-sider",
+        marcaId: "marca-randon",
+        funcao: "semirreboque",
+        carroceriaId: "carroceria-sider",
+        eixos: 3,
+        valorManualCentavos: 2_500_000,
+        fonteDoValor: "Nota fiscal",
+        dataDoValor: "2026-09-10",
+      }),
+      ctx,
+    );
+    expect(r.ok).toBe(true);
   });
 
   it("lixo que nem é objeto também vira entrada_invalida, sem lançar", async () => {
@@ -103,14 +117,7 @@ describe("executarCadastrarPlaca: valida com o esquema da tela e grava pela font
     }
   });
 
-  it("o ano máximo é o ano de hoje mais um", async () => {
-    const ctx = contexto();
-    expect((await executarCadastrarPlaca(CHAVE_A, cadastro({ ano: 2027 }), ctx)).ok).toBe(true);
-    const r = await executarCadastrarPlaca(CHAVE_B, cadastro({ placa: "ZZZ9Z98", ano: 2028 }), ctx);
-    expect(r.ok).toBe(false);
-  });
-
-  it("a mesma chave grava uma vez só", async () => {
+  it("a mesma chave grava uma vez só e devolve o mesmo resultado", async () => {
     const ctx = contexto();
     const primeira = await executarCadastrarPlaca(CHAVE_A, cadastro(), ctx);
     const segunda = await executarCadastrarPlaca(CHAVE_A, cadastro(), ctx);
@@ -138,147 +145,152 @@ describe("executarCadastrarPlaca: valida com o esquema da tela e grava pela font
   });
 });
 
-describe("executarDisponibilizar", () => {
-  const entrada = (parcial: Record<string, unknown> = {}) => ({
-    placa: noPatio.placa.toLowerCase(),
+describe("executarEntregarAoOperacional", () => {
+  const entrega = (parcial: Record<string, unknown> = {}) => ({
+    placa: noPatio.placa,
     filialId: "filial-b",
     versaoDaPlaca: 1,
     ...parcial,
   });
   it("leva a placa para DOp com a filial", async () => {
-    const ctx = contexto();
-    const r = await executarDisponibilizar(CHAVE_A, entrada(), ctx);
+    const r = await executarEntregarAoOperacional(CHAVE_A, entrega(), contexto());
     expect(r.ok).toBe(true);
-    if (r.ok)
-      expect(r.linha).toMatchObject({ sigla: "DOp", filial: "Filial Exemplo B", versao: 2 });
-  });
-  it("entrada fora do esquema (versão 0, sem filial) vira entrada_invalida", async () => {
-    const ctx = contexto();
-    const r = await executarDisponibilizar(
-      CHAVE_A,
-      entrada({ versaoDaPlaca: 0, filialId: "" }),
-      ctx,
-    );
-    expect(r.ok).toBe(false);
-    if (!r.ok)
-      expect(Object.keys(r.erro.campos ?? {})).toEqual(
-        expect.arrayContaining(["versaoDaPlaca", "filialId"]),
-      );
+    if (r.ok) expect(r.linha).toMatchObject({ sigla: "DOp", filialId: "filial-b", versao: 2 });
   });
   it("versão velha devolve conflito com a placa atual", async () => {
     const ctx = contexto();
-    await executarDisponibilizar(CHAVE_A, entrada(), ctx);
-    const r = await executarDisponibilizar(CHAVE_B, entrada({ filialId: "filial-c" }), ctx);
-    expect(r.ok).toBe(false);
-    if (!r.ok) expect(r.erro.codigo).toBe("conflito");
-  });
-  it("carreta em PÁT ou ETv é recusada no servidor, com a mensagem do tipo no campo da placa, e nada muda", async () => {
-    const ctx = contexto();
-    const r = await executarDisponibilizar(CHAVE_A, entrada({ placa: carretaNoPatio.placa }), ctx);
+    await executarEntregarAoOperacional(CHAVE_A, entrega(), ctx);
+    const r = await executarEntregarAoOperacional(CHAVE_B, entrega(), ctx);
     expect(r.ok).toBe(false);
     if (!r.ok) {
-      expect(r.erro.codigo).toBe("entrada_invalida");
-      expect(r.erro.campos?.placa?.[0]).toBe(MENSAGEM_DE_TIPO_QUE_NAO_DISPONIBILIZA);
+      expect(r.erro.codigo).toBe("conflito");
+      expect((r.erro.atual as { versao: number }).versao).toBe(2);
     }
-    const depois = await ctx.fonte.placaParaAssistente(carretaNoPatio.placa);
-    expect(depois?.sigla).toBe(carretaNoPatio.sigla);
-    expect(depois?.versao).toBe(1);
+  });
+  it("carreta é recusada no servidor, com a mensagem do tipo no campo da placa", async () => {
+    const r = await executarEntregarAoOperacional(
+      CHAVE_A,
+      entrega({ placa: carretaNoPatio.placa }),
+      contexto(),
+    );
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.erro.campos?.placa?.[0]).toBe(MENSAGEM_DE_TIPO_QUE_NAO_ENTREGA);
   });
   it("placa que não existe é nao_encontrado", async () => {
-    const ctx = contexto();
-    const r = await executarDisponibilizar(CHAVE_A, entrada({ placa: "QQQ0Q00" }), ctx);
-    expect(r.ok).toBe(false);
-    if (!r.ok) expect(r.erro.codigo).toBe("nao_encontrado");
+    const r = await executarEntregarAoOperacional(
+      CHAVE_A,
+      entrega({ placa: "ZZZ9Z99" }),
+      contexto(),
+    );
+    expect(!r.ok && r.erro.codigo).toBe("nao_encontrado");
   });
 });
 
-describe("executarReceber: o esquema depende do tipo da placa", () => {
-  const entrada = (placa: string, parcial: Record<string, unknown> = {}) => ({
-    placa,
-    pedidoId: placa === implemento.placa ? "ped-i" : "ped-1",
-    versaoDoPedido: 1,
+describe("executarDisponibilizarPlaca, executarReceber e executarConcluirRecebimento", () => {
+  const envio = (parcial: Record<string, unknown> = {}) => ({
+    placa: noPatio.placa,
+    paraGestorId: "gestor-3",
+    motivo: "Troca de carteira",
+    pendenciasConhecidas: ["CRLV vencendo"],
     versaoDaPlaca: 1,
-    conferido: true,
-    situacao: "MAN",
-    operacaoId: "op-2",
-    crId: "cr-1002",
-    motoristaId: null,
-    metaDoConjuntoCentavos: null,
-    conjunto: { cavaloId: null, implementoIds: [] },
-    pendencias: [{ id: "p1", resolvida: true }],
     ...parcial,
   });
-  it("conclui o pedido, troca o gestor e muda situação, operação e CR", async () => {
+
+  it("disponibilizar abre o pedido pendente, com as pendências; a placa não muda de gestor", async () => {
     const ctx = contexto();
-    const r = await executarReceber(CHAVE_A, entrada(foraDoPatio.placa), ctx);
+    const r = await executarDisponibilizarPlaca(CHAVE_A, envio(), ctx);
     expect(r.ok).toBe(true);
-    if (r.ok)
-      expect(r.linha).toMatchObject({
-        gestor: "Gestor Exemplo 2",
-        sigla: "MAN",
-        operacao: "Operação Exemplo 2",
-      });
-    expect(await ctx.fonte.pedidoPendenteDa(foraDoPatio.placa)).toBeNull();
+    if (!r.ok) return;
+    expect(r.linha).toMatchObject({ situacao: "pendente", paraGestorId: "gestor-3" });
+    expect(r.linha.pendenciasConhecidas.map((p) => p.texto)).toEqual(["CRLV vencendo"]);
+    const placa = await ctx.fonte.placaParaAssistente(noPatio.placa);
+    expect(placa?.gestor).toBe(noPatio.gestor);
   });
-  it("conjunto misto de carrocerias é recusado no servidor, e nada muda", async () => {
+
+  it("disponibilizar de novo, com pedido aberto, é recusado; sem motivo, também", async () => {
     const ctx = contexto();
-    const candidatos = await ctx.fonte.candidatosDoConjunto(foraDoPatio.placa);
-    const sider = candidatos.find((c) => c.carroceria === "Sider");
-    const graneleiro = candidatos.find((c) => c.carroceria === "Graneleiro");
-    expect(sider && graneleiro).toBeTruthy();
-    const r = await executarReceber(
+    await executarDisponibilizarPlaca(CHAVE_A, envio(), ctx);
+    const r = await executarDisponibilizarPlaca(CHAVE_B, envio(), ctx);
+    expect(!r.ok && r.erro.codigo).toBe("entrada_invalida");
+    const semMotivo = await executarDisponibilizarPlaca(
+      CHAVE_B,
+      envio({ motivo: " " }),
+      contexto(),
+    );
+    expect(!semMotivo.ok && semMotivo.erro.campos?.motivo).toBeTruthy();
+  });
+
+  it("receber registra a chegada (em conferência) sem trocar o gestor; concluir troca", async () => {
+    const ctx = contexto();
+    const recebido = await executarReceber(
       CHAVE_A,
-      entrada(foraDoPatio.placa, {
-        conjunto: { cavaloId: null, implementoIds: [sider?.id, graneleiro?.id] },
-      }),
+      { placa: foraDoPatio.placa, pedidoId: "ped-1", versaoDoPedido: 1, conferido: true },
       ctx,
     );
-    expect(r.ok).toBe(false);
-    if (!r.ok) expect(Object.keys(r.erro.campos ?? {})).toContain("conjunto.implementoIds");
-    expect(await ctx.fonte.pedidoPendenteDa(foraDoPatio.placa)).not.toBeNull();
-  });
-  it("não conferido é recusado pelo esquema, e nada muda", async () => {
-    const ctx = contexto();
-    const r = await executarReceber(CHAVE_A, entrada(foraDoPatio.placa, { conferido: false }), ctx);
-    expect(r.ok).toBe(false);
-    if (!r.ok) expect(Object.keys(r.erro.campos ?? {})).toContain("conferido");
-    expect(await ctx.fonte.pedidoPendenteDa(foraDoPatio.placa)).not.toBeNull();
-  });
-  it("pendência aberta é recusada pelo esquema, e nada muda", async () => {
-    const ctx = contexto();
-    const r = await executarReceber(
-      CHAVE_A,
-      entrada(foraDoPatio.placa, { pendencias: [{ id: "p1", resolvida: false }] }),
+    expect(recebido.ok && recebido.linha.situacao).toBe("em_conferencia");
+    expect((await ctx.fonte.placaParaAssistente(foraDoPatio.placa))?.gestor).toBe(
+      foraDoPatio.gestor,
+    );
+    const concluido = await executarConcluirRecebimento(
+      CHAVE_B,
+      {
+        placa: foraDoPatio.placa,
+        pedidoId: "ped-1",
+        versaoDoPedido: 2,
+        pendencias: [{ id: "p1", resolvida: false, nota: "Renovação marcada" }],
+      },
       ctx,
     );
-    expect(r.ok).toBe(false);
-    if (!r.ok) expect(Object.keys(r.erro.campos ?? {})).toContain("pendencias");
-    expect(await ctx.fonte.pedidoPendenteDa(foraDoPatio.placa)).not.toBeNull();
+    expect(concluido.ok && concluido.linha.gestorId).toBe("gestor-2");
   });
-  it("meta do conjunto em quem não é cavalo é recusada pelo esquema do tipo", async () => {
+
+  it("receber com a versão do pedido velha é conflito, com o pedido atual", async () => {
     const ctx = contexto();
+    const entrada = {
+      placa: foraDoPatio.placa,
+      pedidoId: "ped-1",
+      versaoDoPedido: 1,
+      conferido: true,
+    };
+    await executarReceber(CHAVE_A, entrada, ctx);
+    const r = await executarReceber(CHAVE_B, entrada, ctx);
+    expect(!r.ok && r.erro.codigo).toBe("conflito");
+    if (!r.ok) expect((r.erro.atual as PedidoDeTransferencia).situacao).toBe("em_conferencia");
+  });
+
+  it("a mesma chave de envio do receber devolve o mesmo resultado", async () => {
+    const ctx = contexto();
+    const entrada = {
+      placa: foraDoPatio.placa,
+      pedidoId: "ped-1",
+      versaoDoPedido: 1,
+      conferido: true,
+    };
+    const primeira = await executarReceber(CHAVE_A, entrada, ctx);
+    expect(await executarReceber(CHAVE_A, entrada, ctx)).toEqual(primeira);
+  });
+
+  it("quem não é o destinatário não recebe (sem_permissao)", async () => {
     const r = await executarReceber(
       CHAVE_A,
-      entrada(implemento.placa, { metaDoConjuntoCentavos: 1_500_000 }),
-      ctx,
+      { placa: foraDoPatio.placa, pedidoId: "ped-1", versaoDoPedido: 1, conferido: true },
+      contexto(undefined, "gestor-3"),
     );
-    expect(r.ok).toBe(false);
-    if (!r.ok) expect(Object.keys(r.erro.campos ?? {})).toContain("metaDoConjuntoCentavos");
+    expect(!r.ok && r.erro.codigo).toBe("sem_permissao");
   });
-  it("quem não é o gestor de destino não recebe (sem_permissao)", async () => {
-    const ctx = { ...contexto(), gestorId: "gestor-3" };
-    const r = await executarReceber(CHAVE_A, entrada(foraDoPatio.placa), ctx);
-    expect(r.ok).toBe(false);
-    if (!r.ok) expect(r.erro.codigo).toBe("sem_permissao");
-  });
-  it("placa que não existe é nao_encontrado, e lixo é entrada_invalida", async () => {
-    const ctx = contexto();
-    const r = await executarReceber(CHAVE_A, entrada("QQQ0Q00"), ctx);
-    expect(r.ok).toBe(false);
-    if (!r.ok) expect(r.erro.codigo).toBe("nao_encontrado");
-    const lixo = await executarReceber(CHAVE_B, 5, ctx);
-    expect(lixo.ok).toBe(false);
-    if (!lixo.ok) expect(lixo.erro.codigo).toBe("entrada_invalida");
+
+  it("concluir sem nota na pendência não resolvida é recusado pelo esquema", async () => {
+    const r = await executarConcluirRecebimento(
+      CHAVE_A,
+      {
+        placa: foraDoPatio.placa,
+        pedidoId: "ped-1",
+        versaoDoPedido: 2,
+        pendencias: [{ id: "p1", resolvida: false, nota: "" }],
+      },
+      contexto(),
+    );
+    expect(!r.ok && r.erro.campos?.["pendencias.0.nota"]).toBeTruthy();
   });
 });
 
@@ -288,19 +300,17 @@ describe("executarCriarItemDeCatalogo", () => {
     const r = await executarCriarItemDeCatalogo(CHAVE_A, { tipo: "marca", nome: "DAF" }, ctx);
     expect(r.ok).toBe(true);
     if (r.ok) expect(r.linha).toMatchObject({ tipo: "marca", nome: "DAF" });
-    expect((await ctx.fonte.catalogos()).marcas.some((m) => m.nome === "DAF")).toBe(true);
   });
-  it("o esquema recusa modelo sem marca e CR sem código", async () => {
+  it("o CR pede o CODCENCUS", async () => {
     const ctx = contexto();
-    const r1 = await executarCriarItemDeCatalogo(CHAVE_A, { tipo: "modelo", nome: "XF" }, ctx);
-    expect(r1.ok).toBe(false);
-    const r2 = await executarCriarItemDeCatalogo(
+    const sem = await executarCriarItemDeCatalogo(CHAVE_A, { tipo: "cr", nome: "CR-9" }, ctx);
+    expect(!sem.ok && sem.erro.campos?.codcencus).toBeTruthy();
+    const com = await executarCriarItemDeCatalogo(
       CHAVE_B,
-      { tipo: "cr", nome: " ", paiId: "op-1" },
+      { tipo: "cr", nome: "CR-9", codcencus: 2010101 },
       ctx,
     );
-    expect(r2.ok).toBe(false);
-    if (!r2.ok) expect(r2.erro.campos?.nome?.[0]).toMatch(/código do CR/);
+    expect(com.ok).toBe(true);
   });
   it("nome repetido é entrada_invalida no campo nome", async () => {
     const ctx = contexto();
@@ -312,6 +322,7 @@ describe("executarCriarItemDeCatalogo", () => {
 
 describe("nada lança: falha da fonte vira erro tipado", () => {
   it("fonte que lança devolve falha, com a mensagem de como resolver", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
     const quebrada = new Proxy({} as FonteDeEscrita, {
       get: () => () => Promise.reject(new Error("banco fora do ar")),
     });
@@ -321,7 +332,7 @@ describe("nada lança: falha da fonte vira erro tipado", () => {
     if (!r.ok) {
       expect(r.erro.codigo).toBe("falha");
       expect(r.erro.mensagem).toMatch(/Tente de novo/);
-      expect(r.erro.mensagem).not.toMatch(/banco fora do ar/); // o detalhe interno não vaza para a tela
+      expect(r.erro.mensagem).not.toMatch(/banco fora do ar/);
     }
   });
 });

@@ -171,3 +171,6 @@ const CAMPOS_NO_BANCO: readonly string[] = CAMPOS_ORDENAVEIS_DE_PLACAS.filter(
 export function camposOrdenaveisDePlacas(modo: "exemplo" | "banco"): readonly string[] {
   return modo === "banco" ? CAMPOS_NO_BANCO : CAMPOS_ORDENAVEIS_DE_PLACAS;
 }
+
+/** O chip "Para receber": as placas com pedido de transferência aberto para quem usa. */
+export const CHIP_PARA_RECEBER = "para_receber";

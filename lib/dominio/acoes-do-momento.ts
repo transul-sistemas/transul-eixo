@@ -1,30 +1,35 @@
 import type { TipoDeAtivo } from "@/lib/dados/placas-tipos";
-import { podeDisponibilizar } from "./custodia";
+import { podeDisponibilizarPlaca, podeEntregar } from "./custodia";
 import { SIGLAS_DE_BAIXA, type Sigla } from "./status";
 
-// Quais ações do catálogo (`ACOES` em lib/navegacao/acoes.ts) combinam com a placa. Regra provisória,
-// até os assistentes (2D) e o banco existirem. Devolve só ids; quem mostra cruza com `ACOES` e com o
-// perfil.
+// Quais ações do catálogo (`ACOES` em lib/navegacao/acoes.ts) combinam com a placa. Devolve só ids;
+// quem mostra cruza com `ACOES` e com o perfil.
 //
-// - "Disponibilizar ao Operacional" (módulo Frota): leva a placa de PÁT ou ETv para DOp, com a
-//   filial escolhida. DOp para ACe (alocar a um lote) é do módulo Operacional e não entra aqui.
-// - "Receber placa" (módulo Frota): é a transferência entre gestores de frota; não depende da
-//   situação, e sim de haver um pedido de transferência pendente para a placa.
+// - "Receber placa" e "Concluir recebimento": as duas etapas do pedido de transferência, só para o
+//   gestor de destino (quem chama passa a etapa só se o pedido é para quem usa).
+// - "Entregar ao Operacional": leva a placa de PÁT ou ETv para DOp, só cavalo ou caminhão.
+// - "Disponibilizar placa": envia a outro gestor de frota, sem pedido aberto.
 // - Placa baixada (VND e SUC): nenhuma ação.
 export function idsDasAcoesDoMomento({
   sigla,
   tipo,
-  pedidoPendente = false,
+  etapa = null,
+  pedidoAberto = false,
 }: {
   sigla: Sigla;
-  /** O tipo do ativo: só cavalo e caminhão são disponibilizados ao Operacional. */
   tipo: TipoDeAtivo;
-  /** Há um pedido de transferência pendente para esta placa (Receber placa). */
-  pedidoPendente?: boolean;
+  /** A etapa do pedido que espera por quem usa (só o destinatário recebe e conclui). */
+  etapa?: "receber" | "concluir" | null;
+  /** A placa já tem um pedido de transferência aberto (para qualquer pessoa). */
+  pedidoAberto?: boolean;
 }): string[] {
   if (SIGLAS_DE_BAIXA.includes(sigla)) return [];
   const ids: string[] = [];
-  if (pedidoPendente) ids.push("frota.receber-placa");
-  if (podeDisponibilizar(sigla, tipo)) ids.push("frota.disponibilizar-ao-operacional");
+  if (etapa === "receber") ids.push("frota.receber-placa");
+  if (etapa === "concluir") ids.push("frota.concluir-recebimento");
+  if (podeEntregar(sigla, tipo)) ids.push("frota.entregar-ao-operacional");
+  if (podeDisponibilizarPlaca({ sigla, pedidoAberto: pedidoAberto || etapa !== null })) {
+    ids.push("frota.disponibilizar-placa");
+  }
   return ids;
 }

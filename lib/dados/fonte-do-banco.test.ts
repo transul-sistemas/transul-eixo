@@ -74,6 +74,7 @@ describe("consultar", () => {
       p_tipos: ["cavalo"],
       p_siglas: ["PÁT"],
       p_baixadas: true,
+      p_para_receber: false,
       p_ordem: "gestor",
       p_decrescente: true,
       p_pagina: 3,
@@ -85,6 +86,7 @@ describe("consultar", () => {
       p_tipos: ["cavalo"],
       p_siglas: ["PÁT"],
       p_baixadas: true,
+      p_para_receber: false,
     });
   });
 

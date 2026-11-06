@@ -1,17 +1,20 @@
 import type { PedidoDeTransferencia } from "@/lib/dominio/custodia";
 import type {
   EntradaCadastrarPlaca,
-  EntradaDisponibilizacao,
+  EntradaConcluirRecebimento,
+  EntradaDisponibilizarPlaca,
+  EntradaEntregaAoOperacional,
   EntradaItemDeCatalogo,
-  EntradaRecebimento,
+  EntradaReceberPlaca,
+  TipoDeItemDeCatalogo,
 } from "@/lib/dominio/esquemas/placa";
 import type { ConsultaDeTabela } from "@/lib/navegacao/tabela";
 import type { ResultadoDaAcao } from "@/lib/wizard/resultado";
 import type {
   AtualDaAcao,
-  CandidatoDoConjunto,
   Catalogos,
   ItemCriado,
+  PlacaAEscolher,
   PlacaGravada,
 } from "./escrita-tipos";
 import type {
@@ -22,17 +25,6 @@ import type {
 } from "./placas-tipos";
 
 export const MENSAGEM_SO_COM_EXEMPLO = "A fonte de exemplo só roda com EIXO_DADOS=exemplo";
-
-/** As gravações no modo banco entram na 3.9b; até lá, a tela mostra o aviso e não grava. */
-export const MENSAGEM_GRAVACAO_EM_BREVE =
-  "Gravar pelo banco entra em breve. Por enquanto, as telas mostram os dados sem alterar.";
-
-export class ErroDeGravacaoEmBreve extends Error {
-  constructor() {
-    super(MENSAGEM_GRAVACAO_EM_BREVE);
-    this.name = "ErroDeGravacaoEmBreve";
-  }
-}
 
 /**
  * De onde vêm os dados: o exemplo só com `EIXO_DADOS=exemplo` (desenvolvimento rápido e os e2e
@@ -67,45 +59,78 @@ export async function fonteDePlacas(): Promise<FonteDePlacas> {
   return fonteDeExemplo;
 }
 
+type Gravacao<T> = Promise<ResultadoDaAcao<T, AtualDaAcao>>;
+
 /**
  * A escrita das placas: o que os assistentes gravam e o que eles leem para se montar. Cada gravação
  * recebe a chave de envio (a mesma chave grava uma vez só) e devolve sempre a linha ou um erro tipado.
- * `agora` é `aaaa-mm-ddThh:mm` em São Paulo.
+ * `agora` é `aaaa-mm-ddThh:mm` em São Paulo (o banco usa o relógio dele). `gestorId` é a pessoa de
+ * quem usa (só o destinatário recebe e conclui).
  */
 export interface FonteDeEscrita {
   cadastrarPlaca(
     entrada: EntradaCadastrarPlaca,
     chave: string,
     agora: string,
-  ): Promise<ResultadoDaAcao<PlacaGravada, AtualDaAcao>>;
-  disponibilizarPlaca(
-    entrada: EntradaDisponibilizacao,
+  ): Gravacao<PlacaGravada>;
+  entregarAoOperacional(
+    entrada: EntradaEntregaAoOperacional,
     chave: string,
     agora: string,
-  ): Promise<ResultadoDaAcao<PlacaGravada, AtualDaAcao>>;
+  ): Gravacao<PlacaGravada>;
+  disponibilizarPlaca(
+    entrada: EntradaDisponibilizarPlaca,
+    chave: string,
+    agora: string,
+  ): Gravacao<PedidoDeTransferencia>;
   receberPlaca(
-    entrada: EntradaRecebimento,
+    entrada: EntradaReceberPlaca,
     chave: string,
     agora: string,
     gestorId: string,
-  ): Promise<ResultadoDaAcao<PlacaGravada, AtualDaAcao>>;
-  criarItemDeCatalogo(
-    entrada: EntradaItemDeCatalogo,
+  ): Gravacao<PedidoDeTransferencia>;
+  concluirRecebimento(
+    entrada: EntradaConcluirRecebimento,
     chave: string,
-  ): Promise<ResultadoDaAcao<ItemCriado, AtualDaAcao>>;
+    agora: string,
+    gestorId: string,
+  ): Gravacao<PlacaGravada>;
+  criarItemDeCatalogo(entrada: EntradaItemDeCatalogo, chave: string): Gravacao<ItemCriado>;
+  /** Os tipos que o "+" cria nesta fonte. */
+  readonly criaveis: readonly TipoDeItemDeCatalogo[];
   catalogos(): Promise<Catalogos>;
   /** A placa com a versão que a pessoa vê (edição concorrente), ou `null` se não existe. */
   placaParaAssistente(placa: string): Promise<PlacaGravada | null>;
-  pedidoPendenteDa(placa: string): Promise<PedidoDeTransferencia | null>;
-  pedidosPendentes(): Promise<PedidoDeTransferencia[]>;
-  candidatosDoConjunto(placa: string): Promise<CandidatoDoConjunto[]>;
-  /** As placas em PÁT ou ETv (o assistente aberto sem placa escolhida oferece estas). */
-  placasQuePodemSerDisponibilizadas(): Promise<{ placa: string; nome: string }[]>;
+  /** O pedido aberto (pendente ou em conferência) da placa, ou `null`. */
+  pedidoAbertoDa(placa: string): Promise<PedidoDeTransferencia | null>;
+  /** Os pedidos abertos para o gestor (as duas etapas). */
+  pedidosParaReceber(gestorId: string): Promise<PedidoDeTransferencia[]>;
+  /** As placas em PÁT ou ETv que podem ir ao Operacional. */
+  placasQuePodemSerEntregues(): Promise<PlacaAEscolher[]>;
 }
 
-/** Escolhe onde se grava: o exemplo; no modo banco, as gravações entram na 3.9b ("em breve"). */
+/** Escolhe onde se grava: o exemplo, ou o banco com a sessão de quem usa (RLS e funções atômicas). */
 export async function fonteDeEscrita(hoje: string): Promise<FonteDeEscrita> {
-  if (modoDosDados() === "banco") throw new ErroDeGravacaoEmBreve();
+  if (modoDosDados() === "banco") {
+    const [{ escritaDoBanco }, { criarClienteDoServidor }] = await Promise.all([
+      import("./escrita-do-banco"),
+      import("@/lib/supabase/servidor"),
+    ]);
+    return escritaDoBanco(criarClienteDoServidor);
+  }
   const { escritaDeExemplo } = await import("./fonte-de-exemplo");
   return await escritaDeExemplo(hoje);
+}
+
+/** Quantas placas esperam por quem usa (as duas etapas do recebimento): o selo, a faixa e o chip. */
+export async function contarParaReceber(hoje: string): Promise<number> {
+  if (modoDosDados() === "banco") {
+    const [{ contarParaReceberNoBanco }, { criarClienteDoServidor }] = await Promise.all([
+      import("./escrita-do-banco"),
+      import("@/lib/supabase/servidor"),
+    ]);
+    return contarParaReceberNoBanco(await criarClienteDoServidor());
+  }
+  const { contarParaReceberNoExemplo } = await import("./fonte-de-exemplo");
+  return contarParaReceberNoExemplo(hoje);
 }

@@ -42,18 +42,39 @@ export const ACOES: readonly AcaoDoCatalogo[] = [
     permissao: { modulo: "frota", acao: "criar" },
     estado: "pronto",
     descricao:
-      "Recebe a placa transferida por outro gestor de frota e conclui a conferência do que chegou.",
+      "Registra a chegada da placa disponibilizada por outro gestor de frota; a carteira ainda não muda.",
     rota: "/frota/placas?assistente=receber-placa",
   },
   {
-    id: "frota.disponibilizar-ao-operacional",
-    nome: "Disponibilizar ao Operacional",
+    id: "frota.concluir-recebimento",
+    nome: "Concluir recebimento",
+    icone: "IconChecklist",
+    modulo: "frota",
+    permissao: { modulo: "frota", acao: "criar" },
+    estado: "pronto",
+    descricao:
+      "Responde cada pendência da placa recebida de outro gestor e passa a placa para a sua carteira.",
+    rota: "/frota/placas?assistente=concluir-recebimento",
+  },
+  {
+    id: "frota.entregar-ao-operacional",
+    nome: "Entregar ao Operacional",
     icone: "IconSend",
     modulo: "frota",
     permissao: { modulo: "frota", acao: "criar" },
     estado: "pronto",
     descricao: "Passa a placa do gestor de frota para o Operacional da filial.",
-    rota: "/frota/placas?assistente=disponibilizar",
+    rota: "/frota/placas?assistente=entregar-ao-operacional",
+  },
+  {
+    id: "frota.disponibilizar-placa",
+    nome: "Disponibilizar placa",
+    icone: "IconArrowsExchange",
+    modulo: "frota",
+    permissao: { modulo: "frota", acao: "criar" },
+    estado: "pronto",
+    descricao: "Envia a placa a outro gestor de frota, com o motivo e as pendências conhecidas.",
+    rota: "/frota/placas?assistente=disponibilizar-placa",
   },
 ];
 

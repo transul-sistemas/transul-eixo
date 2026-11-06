@@ -1,44 +1,57 @@
 import type { TipoDeAtivo } from "@/lib/dados/placas-tipos";
-import { type Sigla, siglaAceitaOTipo } from "./status";
+import { SIGLAS_DE_BAIXA, type Sigla, siglaAceitaOTipo } from "./status";
 
 // Custódia da placa entre gestores de frota e a passagem ao Operacional (regras puras).
 //
-// - Disponibilizar ao Operacional (módulo Frota): a placa de PÁT ou ETv vai para DOp, com a
-//   filial escolhida. DOp para ACe (alocar a um lote) é do módulo Operacional e fica fora daqui.
-// - Receber placa (módulo Frota): transferência entre gestores de frota. Quem envia deixa o motivo
-//   e as pendências conhecidas (um pedido); quem recebe confere, define o que muda e conclui.
+// Terminologia (opção 1, 03/11/2026): "Entregar ao Operacional" leva a placa à custódia do
+// Operacional da filial; "Disponibilizar placa" envia a placa a outro gestor de frota (a
+// transferência). Receber tem duas etapas (opção B): "Receber placa" registra a chegada (o gestor
+// não muda) e "Concluir recebimento" responde cada pendência e troca o gestor.
 
-export const SIGLAS_QUE_PODEM_DISPONIBILIZAR = ["PÁT", "ETv"] as const satisfies readonly Sigla[];
+export const SIGLAS_QUE_PODEM_ENTREGAR = ["PÁT", "ETv"] as const satisfies readonly Sigla[];
 
-export const MENSAGEM_DE_TIPO_QUE_NAO_DISPONIBILIZA =
-  "Só cavalo ou caminhão podem ser disponibilizados ao Operacional.";
-export const MENSAGEM_DE_SIGLA_QUE_NAO_DISPONIBILIZA =
-  "Só dá para disponibilizar placa em PÁT ou ETv.";
+/** As mesmas mensagens de `nucleo.entregar_ao_operacional` (a tela e o banco dizem o mesmo). */
+export const MENSAGEM_DE_TIPO_QUE_NAO_ENTREGA =
+  "Só cavalo ou caminhão podem ser entregues ao Operacional.";
+export const MENSAGEM_DE_SIGLA_QUE_NAO_ENTREGA =
+  "Só dá para entregar ao Operacional a placa em PÁT ou ETv.";
 
 /**
  * Por que a placa não pode ir ao Operacional, ou `null` se pode. Duas condições: o tipo tem de aceitar
  * DOp (o catálogo da régua: hoje, cavalo e caminhão; carreta, apoio e equipamento nunca) e a
  * situação de origem tem de ser PÁT ou ETv. O tipo vem primeiro: não adianta mudar de situação.
  */
-export function motivoDeNaoDisponibilizar({
+export function motivoDeNaoEntregar({
   sigla,
   tipo,
 }: {
   sigla: Sigla;
   tipo: TipoDeAtivo;
 }): string | null {
-  if (!siglaAceitaOTipo("DOp", tipo)) return MENSAGEM_DE_TIPO_QUE_NAO_DISPONIBILIZA;
-  if (!(SIGLAS_QUE_PODEM_DISPONIBILIZAR as readonly Sigla[]).includes(sigla)) {
-    return MENSAGEM_DE_SIGLA_QUE_NAO_DISPONIBILIZA;
+  if (!siglaAceitaOTipo("DOp", tipo)) return MENSAGEM_DE_TIPO_QUE_NAO_ENTREGA;
+  if (!(SIGLAS_QUE_PODEM_ENTREGAR as readonly Sigla[]).includes(sigla)) {
+    return MENSAGEM_DE_SIGLA_QUE_NAO_ENTREGA;
   }
   return null;
 }
 
-export function podeDisponibilizar(sigla: Sigla, tipo: TipoDeAtivo): boolean {
-  return motivoDeNaoDisponibilizar({ sigla, tipo }) === null;
+export function podeEntregar(sigla: Sigla, tipo: TipoDeAtivo): boolean {
+  return motivoDeNaoEntregar({ sigla, tipo }) === null;
 }
 
-export type SituacaoDoPedido = "pendente" | "concluido" | "cancelado";
+/** Disponibilizar placa (enviar a outro gestor): qualquer tipo, fora da baixa e sem pedido aberto. */
+export function podeDisponibilizarPlaca({
+  sigla,
+  pedidoAberto,
+}: {
+  sigla: Sigla;
+  pedidoAberto: boolean;
+}): boolean {
+  return !SIGLAS_DE_BAIXA.includes(sigla) && !pedidoAberto;
+}
+
+export type SituacaoDoPedido =
+  "pendente" | "em_conferencia" | "concluido" | "devolvido" | "cancelado";
 
 /** Pedido de transferência de uma placa de um gestor de frota para outro. */
 export interface PedidoDeTransferencia {
@@ -46,10 +59,12 @@ export interface PedidoDeTransferencia {
   /** Placa normalizada. */
   placa: string;
   deGestorId: string;
+  deGestor: string;
   paraGestorId: string;
-  /** Por que o gestor que envia está transferindo. */
+  paraGestor: string;
+  /** Por que o gestor que envia está disponibilizando. */
   motivo: string;
-  /** O que o gestor que envia já sabe estar pendente; quem recebe resolve cada uma. */
+  /** O que o gestor que envia já sabe estar pendente; quem recebe responde cada uma ao concluir. */
   pendenciasConhecidas: readonly { id: string; texto: string }[];
   situacao: SituacaoDoPedido;
   /** Sobe a cada mudança do pedido (edição concorrente). */
@@ -58,7 +73,7 @@ export interface PedidoDeTransferencia {
 
 export type RecusaDoRecebimento = "pedido_encerrado" | "nao_e_o_destinatario";
 
-/** Só o gestor de destino recebe, e só um pedido ainda pendente (se alguém já resolveu, avisa). */
+/** Receber placa: só o gestor de destino, e só um pedido ainda pendente. */
 export function podeReceberPedido(
   pedido: PedidoDeTransferencia,
   gestorId: string,
@@ -66,4 +81,29 @@ export function podeReceberPedido(
   if (pedido.situacao !== "pendente") return { ok: false, motivo: "pedido_encerrado" };
   if (pedido.paraGestorId !== gestorId) return { ok: false, motivo: "nao_e_o_destinatario" };
   return { ok: true };
+}
+
+/** Concluir recebimento: só o gestor de destino, e só um pedido já recebido (em conferência). */
+export function podeConcluirRecebimento(
+  pedido: PedidoDeTransferencia,
+  gestorId: string,
+): { ok: true } | { ok: false; motivo: RecusaDoRecebimento | "pedido_nao_recebido" } {
+  if (pedido.situacao === "pendente") return { ok: false, motivo: "pedido_nao_recebido" };
+  if (pedido.situacao !== "em_conferencia") return { ok: false, motivo: "pedido_encerrado" };
+  if (pedido.paraGestorId !== gestorId) return { ok: false, motivo: "nao_e_o_destinatario" };
+  return { ok: true };
+}
+
+/** Qual das duas etapas o pedido espera: receber (pendente), concluir (em conferência) ou nenhuma. */
+export function etapaDoRecebimento(
+  pedido: PedidoDeTransferencia | null,
+): "receber" | "concluir" | null {
+  if (pedido?.situacao === "pendente") return "receber";
+  if (pedido?.situacao === "em_conferencia") return "concluir";
+  return null;
+}
+
+/** Pedido aberto: ainda espera uma das duas etapas. */
+export function pedidoAberto(pedido: PedidoDeTransferencia | null): boolean {
+  return etapaDoRecebimento(pedido) !== null;
 }

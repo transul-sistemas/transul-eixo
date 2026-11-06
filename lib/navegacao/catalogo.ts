@@ -26,6 +26,8 @@ export interface Tela {
   readonly modos?: readonly ModoDaTela[];
   /** A lista abre a ficha de cada item em `<rota>/<identificador>` (placa, pessoa, operação, parceiro). */
   readonly ficha?: true;
+  /** O que o selo de contagem do item conta, para o leitor de tela ("3 para receber"). */
+  readonly contador?: string;
 }
 
 export interface ModuloDoCatalogo {
@@ -53,6 +55,7 @@ interface DadosDaTela {
   estado?: EstadoDaTela;
   modos?: readonly ModoDaTela[];
   ficha?: true;
+  contador?: string;
 }
 
 function modulo(
@@ -122,6 +125,7 @@ export const CATALOGO: readonly ModuloDoCatalogo[] = [
       icone: "IconLicense",
       dispositivos: DESKTOP_E_TABLET,
       descricao: "Lista todas as placas e abre a ficha de cada uma.",
+      contador: "para receber",
       ficha: true,
       estado: "pronto",
     },
@@ -137,7 +141,7 @@ export const CATALOGO: readonly ModuloDoCatalogo[] = [
       nome: "Carteira",
       icone: "IconWallet",
       dispositivos: TODOS,
-      descricao: "Confirma a carteira mensal e disponibiliza placas ao Operacional.",
+      descricao: "Confirma a carteira mensal e entrega placas ao Operacional.",
     },
     {
       slug: "analise",

@@ -1,9 +1,12 @@
 import { z } from "zod";
+import type { PedidoDeTransferencia } from "@/lib/dominio/custodia";
 import {
   esquemaCadastrarPlaca,
-  esquemaDisponibilizacaoDe,
+  esquemaConcluirRecebimento,
+  esquemaDisponibilizarPlaca,
+  esquemaEntregaAoOperacionalDe,
   esquemaItemDeCatalogo,
-  esquemaRecebimento,
+  esquemaReceberPlaca,
 } from "@/lib/dominio/esquemas/placa";
 import { normalizarPlaca } from "@/lib/dominio/placa";
 import { chaveDeEnvioValida } from "@/lib/wizard/chave-de-envio";
@@ -21,7 +24,7 @@ export interface ContextoDaEscrita {
   agora: string;
   /** `aaaa-mm-dd` em São Paulo. */
   hoje: string;
-  /** O gestor de frota de quem grava (só o gestor de destino recebe um pedido). */
+  /** O gestor de frota de quem grava (só o gestor de destino recebe e conclui um pedido). */
   gestorId: string;
 }
 
@@ -77,10 +80,10 @@ export async function executarCadastrarPlaca(
 }
 
 /**
- * O esquema da disponibilização depende do tipo da placa (só cavalo e caminhão vão ao Operacional),
- * então a placa é lida antes. A situação de origem fica com a fonte, que confere a versão primeiro.
+ * O esquema da entrega ao Operacional depende do tipo da placa (só cavalo e caminhão), então a placa é
+ * lida antes. A situação de origem fica com a fonte, que confere a versão primeiro.
  */
-export async function executarDisponibilizar(
+export async function executarEntregarAoOperacional(
   chave: string,
   dados: unknown,
   { fonte, agora }: ContextoDaEscrita,
@@ -92,31 +95,49 @@ export async function executarDisponibilizar(
   return gravando(async () => {
     const atual = await fonte.placaParaAssistente(normalizarPlaca(aPlaca.dados.placa));
     if (!atual) return erroDaAcao("nao_encontrado");
-    const v = validar(esquemaDisponibilizacaoDe({ tipo: atual.tipo }), dados);
+    const v = validar(esquemaEntregaAoOperacionalDe({ tipo: atual.tipo }), dados);
     if (!v.ok) return v.erro;
-    return fonte.disponibilizarPlaca(v.dados, chave, agora);
+    return fonte.entregarAoOperacional(v.dados, chave, agora);
   });
 }
 
-/** O esquema do recebimento depende do tipo da placa (meta e conjunto), então a placa é lida antes. */
+/** Disponibilizar placa: o envio a outro gestor de frota, com motivo e pendências. */
+export async function executarDisponibilizarPlaca(
+  chave: string,
+  dados: unknown,
+  { fonte, agora }: ContextoDaEscrita,
+): Promise<Resultado<PedidoDeTransferencia>> {
+  const semChave = conferirChave(chave);
+  if (semChave) return semChave;
+  const v = validar(esquemaDisponibilizarPlaca, dados);
+  if (!v.ok) return v.erro;
+  return gravando(() => fonte.disponibilizarPlaca(v.dados, chave, agora));
+}
+
+/** Receber placa: a primeira etapa, que registra a chegada (o gestor não muda). */
 export async function executarReceber(
+  chave: string,
+  dados: unknown,
+  { fonte, agora, gestorId }: ContextoDaEscrita,
+): Promise<Resultado<PedidoDeTransferencia>> {
+  const semChave = conferirChave(chave);
+  if (semChave) return semChave;
+  const v = validar(esquemaReceberPlaca, dados);
+  if (!v.ok) return v.erro;
+  return gravando(() => fonte.receberPlaca(v.dados, chave, agora, gestorId));
+}
+
+/** Concluir recebimento: responde cada pendência e troca o gestor. */
+export async function executarConcluirRecebimento(
   chave: string,
   dados: unknown,
   { fonte, agora, gestorId }: ContextoDaEscrita,
 ): Promise<Resultado<PlacaGravada>> {
   const semChave = conferirChave(chave);
   if (semChave) return semChave;
-  const aPlaca = validar(SO_A_PLACA, dados);
-  if (!aPlaca.ok) return aPlaca.erro;
-  return gravando(async () => {
-    const atual = await fonte.placaParaAssistente(normalizarPlaca(aPlaca.dados.placa));
-    if (!atual) return erroDaAcao("nao_encontrado");
-    const candidatos = await fonte.candidatosDoConjunto(atual.placa);
-    const carrocerias = Object.fromEntries(candidatos.map((c) => [c.id, c.carroceria]));
-    const v = validar(esquemaRecebimento(atual.tipo, carrocerias), dados);
-    if (!v.ok) return v.erro;
-    return fonte.receberPlaca(v.dados, chave, agora, gestorId);
-  });
+  const v = validar(esquemaConcluirRecebimento, dados);
+  if (!v.ok) return v.erro;
+  return gravando(() => fonte.concluirRecebimento(v.dados, chave, agora, gestorId));
 }
 
 export async function executarCriarItemDeCatalogo(

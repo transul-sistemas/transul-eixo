@@ -16,10 +16,8 @@ export interface ModeloDoCatalogo extends OpcaoDoCatalogo {
 export interface CrDoCatalogo {
   id: string;
   codigo: string;
-  operacaoId: string;
-}
-export interface GaragemDoCatalogo extends OpcaoDoCatalogo {
-  filialId: string;
+  /** A operação do CR, quando o Sankhya diz; sem ela o CR serve a qualquer operação. */
+  operacaoId: string | null;
 }
 
 export interface VigenciaDeGestor {
@@ -46,7 +44,7 @@ export interface ValorDaPlaca {
   dataDoValor: string | null;
 }
 
-/** A placa como o armazém a guarda: o que a tela mostra mais a versão e o histórico de gestores. */
+/** A placa como os assistentes a veem: o que a tela mostra mais a versão e o histórico de gestores. */
 export interface PlacaGravada {
   placa: string;
   tipo: TipoDeAtivo;
@@ -65,15 +63,13 @@ export interface PlacaGravada {
   operacao: string | null;
   crId: string | null;
   crs: VigenciaDeCr[];
+  /** A filial da custódia do Operacional (a garagem, uma das 3), se a placa está com ele. */
   filialId: string | null;
   filial: string;
-  garagemId: string | null;
+  /** A garagem, que vem do CR (calculada). */
   garagem: string;
-  motoristaId: string | null;
-  metaDoConjuntoCentavos: number | null;
   valor: ValorDaPlaca;
-  conjunto: { cavaloId: string | null; implementoIds: string[] };
-  /** Sobe a cada mudança (edição concorrente). */
+  /** Sobe a cada mudança (edição concorrente). 0 quando quem vê não alcança o ativo (o destinatário). */
   versao: number;
   gestores: VigenciaDeGestor[];
 }
@@ -81,12 +77,12 @@ export interface PlacaGravada {
 export interface Catalogos {
   marcas: OpcaoDoCatalogo[];
   modelos: ModeloDoCatalogo[];
+  carrocerias: OpcaoDoCatalogo[];
   gestores: OpcaoDoCatalogo[];
   operacoes: OpcaoDoCatalogo[];
   crs: CrDoCatalogo[];
+  /** As filiais (garagem = filial, as 3). */
   filiais: OpcaoDoCatalogo[];
-  garagens: GaragemDoCatalogo[];
-  motoristas: OpcaoDoCatalogo[];
 }
 
 export interface ItemCriado {
@@ -97,30 +93,34 @@ export interface ItemCriado {
   paiId?: string;
 }
 
-export interface CandidatoDoConjunto {
-  id: string;
-  nome: string;
-  /** A carroceria (Sider, Graneleiro…), para o conjunto misto ser recusado. */
-  carroceria: string;
-}
-
 /** O que as Server Actions de escrita devolvem como "registro atual" num conflito. */
 export type AtualDaAcao = PlacaGravada | PedidoDeTransferencia;
+
+/** Uma placa a escolher num assistente aberto sem placa. */
+export interface PlacaAEscolher {
+  placa: string;
+  nome: string;
+}
 
 export interface DadosDosAssistentes {
   /** Quem usa (o id do usuário da sessão): a chave dos rascunhos. */
   usuario: string;
+  /** O gestor de frota (a pessoa) de quem usa: só o destinatário recebe e conclui. */
+  gestorId: string | null;
   /** `aaaa-mm-dd` em São Paulo. */
   hoje: string;
   anoAtual: number;
   catalogos: Catalogos;
+  /** Os tipos que o "+" cria nesta fonte (no banco, só marca, modelo e CR). */
+  criaveis: readonly TipoDeItemDeCatalogo[];
   /** A placa do assistente (a da URL, ou a da ficha), com a versão. `null` se não há ou não existe. */
   placaAlvo: PlacaGravada | null;
-  /** O pedido de transferência pendente da placa alvo (Receber placa). */
+  /** O pedido de transferência aberto da placa alvo (pendente ou em conferência). */
   pedido: PedidoDeTransferencia | null;
-  candidatosDoConjunto: CandidatoDoConjunto[];
-  /** Receber placa aberto sem placa escolhida: as placas que têm pedido pendente. */
-  placasComPedido: { placa: string; nome: string }[];
-  /** Disponibilizar aberto sem placa escolhida: as placas em PÁT ou ETv. */
-  placasParaDisponibilizar: { placa: string; nome: string }[];
+  /** Receber placa aberto sem placa: as placas com pedido pendente para quem usa. */
+  placasParaReceber: PlacaAEscolher[];
+  /** Concluir recebimento aberto sem placa: as placas recebidas, em conferência, de quem usa. */
+  placasParaConcluir: PlacaAEscolher[];
+  /** Entregar ao Operacional aberto sem placa: cavalos e caminhões em PÁT ou ETv. */
+  placasParaEntregar: PlacaAEscolher[];
 }

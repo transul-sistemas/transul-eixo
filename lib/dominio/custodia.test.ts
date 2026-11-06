@@ -1,11 +1,15 @@
 import { describe, expect, it } from "vitest";
 import { SIGLAS, SIGLAS_DE_BAIXA } from "./status";
 import {
-  MENSAGEM_DE_TIPO_QUE_NAO_DISPONIBILIZA,
-  motivoDeNaoDisponibilizar,
-  podeDisponibilizar,
+  etapaDoRecebimento,
+  MENSAGEM_DE_SIGLA_QUE_NAO_ENTREGA,
+  MENSAGEM_DE_TIPO_QUE_NAO_ENTREGA,
+  motivoDeNaoEntregar,
+  podeConcluirRecebimento,
+  podeDisponibilizarPlaca,
+  podeEntregar,
   podeReceberPedido,
-  SIGLAS_QUE_PODEM_DISPONIBILIZAR,
+  SIGLAS_QUE_PODEM_ENTREGAR,
   type PedidoDeTransferencia,
 } from "./custodia";
 
@@ -13,7 +17,9 @@ const pedido = (parcial: Partial<PedidoDeTransferencia> = {}): PedidoDeTransfere
   id: "ped-1",
   placa: "AAA0A00",
   deGestorId: "gestor-1",
+  deGestor: "Gestor 1",
   paraGestorId: "gestor-2",
+  paraGestor: "Gestor 2",
   motivo: "Troca de carteira",
   pendenciasConhecidas: [{ id: "p1", texto: "CRLV vencendo" }],
   situacao: "pendente",
@@ -21,56 +27,71 @@ const pedido = (parcial: Partial<PedidoDeTransferencia> = {}): PedidoDeTransfere
   ...parcial,
 });
 
-describe("podeDisponibilizar: PÁT e ETv levam ao Operacional (DOp), e só cavalo ou caminhão", () => {
+describe("podeEntregar: PÁT e ETv levam ao Operacional (DOp), e só cavalo ou caminhão", () => {
   it("para cavalo e para caminhão, só essas duas situações", () => {
     for (const tipo of ["cavalo", "caminhao"] as const) {
-      const sim = SIGLAS.filter((s) => podeDisponibilizar(s, tipo));
+      const sim = SIGLAS.filter((s) => podeEntregar(s, tipo));
       expect([...sim].sort(), tipo).toEqual(["ETv", "PÁT"].sort());
     }
-    expect([...SIGLAS_QUE_PODEM_DISPONIBILIZAR].sort()).toEqual(["ETv", "PÁT"].sort());
+    expect([...SIGLAS_QUE_PODEM_ENTREGAR].sort()).toEqual(["ETv", "PÁT"].sort());
   });
   it("carreta (implemento), apoio e equipamento nunca, em nenhuma situação", () => {
     for (const tipo of ["implemento", "apoio", "equipamento"] as const) {
       for (const sigla of SIGLAS) {
-        expect(podeDisponibilizar(sigla, tipo), `${tipo} ${sigla}`).toBe(false);
+        expect(podeEntregar(sigla, tipo), `${tipo} ${sigla}`).toBe(false);
       }
     }
   });
   it("DOp (já no Operacional) e as baixas não", () => {
-    expect(podeDisponibilizar("DOp", "cavalo")).toBe(false);
-    for (const s of SIGLAS_DE_BAIXA) expect(podeDisponibilizar(s, "cavalo"), s).toBe(false);
+    expect(podeEntregar("DOp", "cavalo")).toBe(false);
+    for (const s of SIGLAS_DE_BAIXA) expect(podeEntregar(s, "cavalo"), s).toBe(false);
   });
 });
 
-describe("motivoDeNaoDisponibilizar: diz por que a placa não vai ao Operacional", () => {
-  it("carreta solta em PÁT: a mensagem do tipo", () => {
-    expect(motivoDeNaoDisponibilizar({ sigla: "PÁT", tipo: "implemento" })).toBe(
-      MENSAGEM_DE_TIPO_QUE_NAO_DISPONIBILIZA,
+describe("motivoDeNaoEntregar: diz por que a placa não vai ao Operacional (o mesmo texto do banco)", () => {
+  it("carreta solta em PÁT: a mensagem do tipo, igual à de nucleo.entregar_ao_operacional", () => {
+    expect(motivoDeNaoEntregar({ sigla: "PÁT", tipo: "implemento" })).toBe(
+      MENSAGEM_DE_TIPO_QUE_NAO_ENTREGA,
     );
-    expect(MENSAGEM_DE_TIPO_QUE_NAO_DISPONIBILIZA).toContain(
-      "Só cavalo ou caminhão podem ser disponibilizados ao Operacional",
+    expect(MENSAGEM_DE_TIPO_QUE_NAO_ENTREGA).toBe(
+      "Só cavalo ou caminhão podem ser entregues ao Operacional.",
     );
   });
   it("apoio e equipamento também recebem a mensagem do tipo", () => {
     for (const tipo of ["apoio", "equipamento"] as const) {
-      expect(motivoDeNaoDisponibilizar({ sigla: "ETv", tipo }), tipo).toBe(
-        MENSAGEM_DE_TIPO_QUE_NAO_DISPONIBILIZA,
+      expect(motivoDeNaoEntregar({ sigla: "ETv", tipo }), tipo).toBe(
+        MENSAGEM_DE_TIPO_QUE_NAO_ENTREGA,
       );
     }
   });
-  it("cavalo ou caminhão fora de PÁT e ETv: a mensagem da situação", () => {
-    const motivo = motivoDeNaoDisponibilizar({ sigla: "MAN", tipo: "cavalo" });
-    expect(motivo).toMatch(/PÁT ou ETv/);
-    expect(motivo).not.toMatch(/VAz/);
-    expect(motivo).not.toBe(MENSAGEM_DE_TIPO_QUE_NAO_DISPONIBILIZA);
+  it("cavalo ou caminhão fora de PÁT e ETv: a mensagem da situação, igual à do banco", () => {
+    expect(motivoDeNaoEntregar({ sigla: "MAN", tipo: "cavalo" })).toBe(
+      MENSAGEM_DE_SIGLA_QUE_NAO_ENTREGA,
+    );
+    expect(MENSAGEM_DE_SIGLA_QUE_NAO_ENTREGA).toBe(
+      "Só dá para entregar ao Operacional a placa em PÁT ou ETv.",
+    );
   });
   it("cavalo ou caminhão em PÁT ou ETv: sem motivo (pode)", () => {
-    expect(motivoDeNaoDisponibilizar({ sigla: "PÁT", tipo: "cavalo" })).toBeNull();
-    expect(motivoDeNaoDisponibilizar({ sigla: "ETv", tipo: "caminhao" })).toBeNull();
+    expect(motivoDeNaoEntregar({ sigla: "PÁT", tipo: "cavalo" })).toBeNull();
+    expect(motivoDeNaoEntregar({ sigla: "ETv", tipo: "caminhao" })).toBeNull();
   });
 });
 
-describe("podeReceberPedido: só o gestor de destino recebe um pedido pendente", () => {
+describe("podeDisponibilizarPlaca: enviar a outro gestor de frota", () => {
+  it("qualquer tipo, em qualquer situação fora da baixa, sem pedido aberto", () => {
+    expect(podeDisponibilizarPlaca({ sigla: "PÁT", pedidoAberto: false })).toBe(true);
+    expect(podeDisponibilizarPlaca({ sigla: "MAN", pedidoAberto: false })).toBe(true);
+  });
+  it("placa baixada, ou já com pedido aberto, não", () => {
+    for (const s of SIGLAS_DE_BAIXA) {
+      expect(podeDisponibilizarPlaca({ sigla: s, pedidoAberto: false }), s).toBe(false);
+    }
+    expect(podeDisponibilizarPlaca({ sigla: "PÁT", pedidoAberto: true })).toBe(false);
+  });
+});
+
+describe("podeReceberPedido: só o gestor de destino registra a chegada de um pedido pendente", () => {
   it("o destinatário, com o pedido pendente: pode", () => {
     expect(podeReceberPedido(pedido(), "gestor-2")).toEqual({ ok: true });
   });
@@ -84,14 +105,45 @@ describe("podeReceberPedido: só o gestor de destino recebe um pedido pendente",
       motivo: "nao_e_o_destinatario",
     });
   });
-  it("pedido já concluído ou cancelado: não (alguém já resolveu)", () => {
-    expect(podeReceberPedido(pedido({ situacao: "concluido" }), "gestor-2")).toEqual({
+  it("pedido já recebido, concluído ou cancelado: não (alguém já agiu)", () => {
+    for (const situacao of ["em_conferencia", "concluido", "cancelado", "devolvido"] as const) {
+      expect(podeReceberPedido(pedido({ situacao }), "gestor-2"), situacao).toEqual({
+        ok: false,
+        motivo: "pedido_encerrado",
+      });
+    }
+  });
+});
+
+describe("podeConcluirRecebimento: a segunda etapa, depois de receber", () => {
+  it("o destinatário, com o pedido em conferência: pode", () => {
+    expect(podeConcluirRecebimento(pedido({ situacao: "em_conferencia" }), "gestor-2")).toEqual({
+      ok: true,
+    });
+  });
+  it("pedido ainda pendente: receba antes", () => {
+    expect(podeConcluirRecebimento(pedido(), "gestor-2")).toEqual({
+      ok: false,
+      motivo: "pedido_nao_recebido",
+    });
+  });
+  it("outro gestor não conclui; pedido encerrado também não", () => {
+    expect(podeConcluirRecebimento(pedido({ situacao: "em_conferencia" }), "gestor-3")).toEqual({
+      ok: false,
+      motivo: "nao_e_o_destinatario",
+    });
+    expect(podeConcluirRecebimento(pedido({ situacao: "concluido" }), "gestor-2")).toEqual({
       ok: false,
       motivo: "pedido_encerrado",
     });
-    expect(podeReceberPedido(pedido({ situacao: "cancelado" }), "gestor-2")).toEqual({
-      ok: false,
-      motivo: "pedido_encerrado",
-    });
+  });
+});
+
+describe("etapaDoRecebimento: qual das duas etapas o pedido espera", () => {
+  it("pendente: receber; em conferência: concluir; encerrado: nenhuma", () => {
+    expect(etapaDoRecebimento(pedido())).toBe("receber");
+    expect(etapaDoRecebimento(pedido({ situacao: "em_conferencia" }))).toBe("concluir");
+    expect(etapaDoRecebimento(pedido({ situacao: "concluido" }))).toBeNull();
+    expect(etapaDoRecebimento(null)).toBeNull();
   });
 });

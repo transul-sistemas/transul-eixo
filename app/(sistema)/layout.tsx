@@ -1,3 +1,4 @@
+import { connection } from "next/server";
 import { type ReactNode, Suspense } from "react";
 import { AreaPrincipal } from "@/components/navegacao/area-principal";
 import { AvisoDeDispositivo } from "@/components/navegacao/aviso-de-dispositivo";
@@ -6,20 +7,36 @@ import { TopoDoSistema, TopoReservado } from "@/components/navegacao/topo-do-sis
 import { ArmadorDaVolta } from "@/components/tabela/retorno-da-lista-no-navegador";
 import { exigirSessao, obterPessoaDaSessao } from "@/lib/seguranca/sessao-do-servidor";
 import { sair } from "@/app/(acesso)/acoes";
+import { hojeEmSaoPaulo } from "@/components/formato/data";
+import { contarParaReceber } from "@/lib/dados/fonte";
+
+/** O selo "para receber" nunca derruba a barra: sem o número, a barra aparece sem o selo. */
+async function contarParaReceberSemCair(): Promise<number> {
+  try {
+    await connection();
+    return await contarParaReceber(hojeEmSaoPaulo(new Date()));
+  } catch (erro) {
+    console.error("contagem de placas para receber indisponível:", erro);
+    return 0;
+  }
+}
 
 // A barra lateral mostra só os módulos do perfil da sessão (lido do banco a cada pedido). Ler a sessão
 // é dinâmico, então ela fica num Suspense, com o lugar reservado (a largura padrão, aberta).
 async function BarraLateralDaSessao() {
   // A sessão e a pessoa em paralelo: a barra chega mais cedo.
-  const [{ perfil, usuarioId, email }, pessoa] = await Promise.all([
+  const [{ perfil, usuarioId, email }, pessoa, paraReceber] = await Promise.all([
     exigirSessao(),
     obterPessoaDaSessao(),
+    contarParaReceberSemCair(),
   ]);
-  // A memória da barra é de quem entrou (fatia 3.9a); nome e e-mail no rodapé, acima do Sair.
+  // A memória da barra é de quem entrou (fatia 3.9a); nome e e-mail no rodapé, acima do Sair. O selo
+  // de Placas conta o que espera por quem usa (o total vem do banco).
   return (
     <BarraLateral
       perfil={perfil}
       usuario={usuarioId}
+      contadores={paraReceber > 0 ? { "frota.placas": paraReceber } : {}}
       aoSair={sair}
       quem={{ nome: pessoa?.nome ?? email ?? "Sem nome", email }}
     />

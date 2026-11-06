@@ -3,16 +3,20 @@ import { ACOES, type AcaoDoCatalogo, buscarAcoes } from "./acoes";
 import { CATALOGO } from "./catalogo";
 
 describe("ações dos assistentes da Frota", () => {
-  it("são Cadastrar placa, Receber placa e Disponibilizar ao Operacional, todas prontas", () => {
+  it("são Cadastrar placa, Receber placa, Concluir recebimento, Entregar ao Operacional e Disponibilizar placa, todas prontas", () => {
     expect(ACOES.map((a) => a.id)).toEqual([
       "frota.cadastrar-placa",
       "frota.receber-placa",
-      "frota.disponibilizar-ao-operacional",
+      "frota.concluir-recebimento",
+      "frota.entregar-ao-operacional",
+      "frota.disponibilizar-placa",
     ]);
     expect(ACOES.map((a) => a.nome)).toEqual([
       "Cadastrar placa",
       "Receber placa",
-      "Disponibilizar ao Operacional",
+      "Concluir recebimento",
+      "Entregar ao Operacional",
+      "Disponibilizar placa",
     ]);
     expect(ACOES.every((a) => a.estado === "pronto")).toBe(true);
   });
@@ -21,7 +25,9 @@ describe("ações dos assistentes da Frota", () => {
     expect(rotas).toEqual({
       "frota.cadastrar-placa": "/frota/placas?assistente=cadastrar-placa",
       "frota.receber-placa": "/frota/placas?assistente=receber-placa",
-      "frota.disponibilizar-ao-operacional": "/frota/placas?assistente=disponibilizar",
+      "frota.concluir-recebimento": "/frota/placas?assistente=concluir-recebimento",
+      "frota.entregar-ao-operacional": "/frota/placas?assistente=entregar-ao-operacional",
+      "frota.disponibilizar-placa": "/frota/placas?assistente=disponibilizar-placa",
     });
   });
   it("cada ação pertence a um módulo do catálogo, e a permissão é a desse módulo", () => {
@@ -63,19 +69,18 @@ describe("buscarAcoes", () => {
       "frota.receber-placa",
     ]);
     expect(buscarAcoes("RECEBER", "Administrador")).toHaveLength(1);
-    expect(buscarAcoes("disponibilizar", "Diretoria")[0]?.nome).toBe(
-      "Disponibilizar ao Operacional",
-    );
+    expect(buscarAcoes("entregar", "Diretoria")[0]?.nome).toBe("Entregar ao Operacional");
+    expect(buscarAcoes("disponibilizar", "Diretoria")[0]?.nome).toBe("Disponibilizar placa");
   });
   it("acha por uma palavra só, com o nome que contém o termo antes do que só combina pelo módulo", () => {
     expect(
       buscarAcoes("placa", "Administrador")
         .map((a) => a.nome)
         .sort(),
-    ).toEqual(["Cadastrar placa", "Receber placa"]);
-    // "Receber placa" saiu do módulo Operacional: só o nome de "Disponibilizar ao Operacional" combina.
+    ).toEqual(["Cadastrar placa", "Disponibilizar placa", "Receber placa"]);
+    // "Receber placa" saiu do módulo Operacional: só o nome de "Entregar ao Operacional" combina.
     expect(buscarAcoes("operacional", "Administrador").map((a) => a.nome)).toEqual([
-      "Disponibilizar ao Operacional",
+      "Entregar ao Operacional",
     ]);
   });
   it("termo vazio ou sem resultado devolve lista vazia", () => {

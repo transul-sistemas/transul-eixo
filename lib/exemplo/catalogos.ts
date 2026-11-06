@@ -52,15 +52,6 @@ export interface ModeloDeExemplo {
   nome: string;
   marcaId: string;
 }
-export interface GaragemDeExemplo {
-  id: string;
-  nome: string;
-  filialId: string;
-}
-export interface MotoristaDeExemplo {
-  id: string;
-  nome: string;
-}
 
 export const MARCAS: readonly MarcaDeExemplo[] = [
   { id: "marca-volvo", nome: "Volvo" },
@@ -81,15 +72,16 @@ export const MODELOS: readonly ModeloDeExemplo[] = [
   { id: "modelo-hilux", nome: "Hilux", marcaId: "marca-toyota" },
 ];
 
-export const GARAGENS: readonly GaragemDeExemplo[] = [
-  { id: "garagem-a1", nome: "Garagem A1", filialId: "filial-a" },
-  { id: "garagem-a2", nome: "Garagem A2", filialId: "filial-a" },
-  { id: "garagem-b1", nome: "Garagem B1", filialId: "filial-b" },
-  { id: "garagem-c1", nome: "Garagem C1", filialId: "filial-c" },
-  { id: "garagem-d1", nome: "Garagem D1", filialId: "filial-d" },
-];
+export interface CarroceriaDeExemplo {
+  id: string;
+  nome: string;
+}
 
-export const MOTORISTAS: readonly MotoristaDeExemplo[] = [1, 2, 3, 4, 5, 6].map((n) => ({
-  id: `motorista-${n}`,
-  nome: `Motorista Exemplo ${String(n).padStart(3, "0")}`,
-}));
+/** As carrocerias do catálogo de exemplo. */
+export const CARROCERIAS: readonly CarroceriaDeExemplo[] = [
+  { id: "carroceria-basculante", nome: "Basculante" },
+  { id: "carroceria-graneleira", nome: "Graneleira" },
+  { id: "carroceria-prancha", nome: "Prancha" },
+  { id: "carroceria-sider", nome: "Sider" },
+  { id: "carroceria-tanque", nome: "Tanque" },
+];

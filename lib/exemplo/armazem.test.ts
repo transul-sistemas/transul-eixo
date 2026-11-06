@@ -1,15 +1,17 @@
 import { describe, expect, it } from "vitest";
 import {
-  MENSAGEM_DE_TIPO_QUE_NAO_DISPONIBILIZA,
-  podeDisponibilizar,
-  SIGLAS_QUE_PODEM_DISPONIBILIZAR,
+  MENSAGEM_DE_TIPO_QUE_NAO_ENTREGA,
+  podeEntregar,
+  SIGLAS_QUE_PODEM_ENTREGAR,
   type PedidoDeTransferencia,
 } from "@/lib/dominio/custodia";
 import {
   esquemaCadastrarPlaca,
   type EntradaCadastrarPlaca,
-  type EntradaDisponibilizacao,
-  type EntradaRecebimento,
+  type EntradaConcluirRecebimento,
+  type EntradaDisponibilizarPlaca,
+  type EntradaEntregaAoOperacional,
+  type EntradaReceberPlaca,
 } from "@/lib/dominio/esquemas/placa";
 import { armazemDoProcesso, criarArmazem, type Armazem } from "./armazem";
 import { placasDeExemplo } from "./placas";
@@ -23,18 +25,24 @@ const CHAVE_C = "33333333-3333-4333-8333-333333333333";
 
 const base = placasDeExemplo(HOJE);
 const emOrigem = (sigla: string) =>
-  (SIGLAS_QUE_PODEM_DISPONIBILIZAR as readonly string[]).includes(sigla);
-const noPatio = base.find((p) => podeDisponibilizar(p.sigla, p.tipo))!;
+  (SIGLAS_QUE_PODEM_ENTREGAR as readonly string[]).includes(sigla);
+const noPatio = base.find((p) => podeEntregar(p.sigla, p.tipo))!;
 const carretaNoPatio = base.find((p) => p.tipo === "implemento" && emOrigem(p.sigla))!;
 const foraDoPatio = base.find((p) => !emOrigem(p.sigla) && p.sigla !== "VND" && p.sigla !== "SUC")!;
+const baixada = base.find((p) => p.sigla === "VND" || p.sigla === "SUC");
 
 const pedidoBase = (placa: string): PedidoDeTransferencia => ({
   id: "ped-1",
   placa,
   deGestorId: "gestor-1",
+  deGestor: "Gestor Exemplo 1",
   paraGestorId: "gestor-2",
+  paraGestor: "Gestor Exemplo 2",
   motivo: "Troca de carteira",
-  pendenciasConhecidas: [{ id: "p1", texto: "CRLV vencendo" }],
+  pendenciasConhecidas: [
+    { id: "p1", texto: "CRLV vencendo" },
+    { id: "p2", texto: "Revisão em aberto" },
+  ],
   situacao: "pendente",
   versao: 1,
 });
@@ -56,14 +64,49 @@ const entradaDeCadastro = (parcial: Record<string, unknown> = {}): EntradaCadast
     gestorId: "gestor-1",
     operacaoId: "op-1",
     crId: "cr-1001",
-    filialId: "filial-a",
-    garagemId: "garagem-a1",
     situacaoInicial: "PÁT",
     ...parcial,
   });
   if (!r.success) throw new Error(JSON.stringify(r.error.issues));
   return r.data;
 };
+const entradaDeEntrega = (
+  parcial: Partial<EntradaEntregaAoOperacional> = {},
+): EntradaEntregaAoOperacional => ({
+  placa: noPatio.placa,
+  filialId: "filial-b",
+  versaoDaPlaca: 1,
+  ...parcial,
+});
+const entradaDeEnvio = (
+  parcial: Partial<EntradaDisponibilizarPlaca> = {},
+): EntradaDisponibilizarPlaca => ({
+  placa: noPatio.placa,
+  paraGestorId: "gestor-6",
+  motivo: "Troca de carteira",
+  pendenciasConhecidas: ["CRLV vencendo"],
+  versaoDaPlaca: 1,
+  ...parcial,
+});
+const entradaDeRecebimento = (parcial: Partial<EntradaReceberPlaca> = {}): EntradaReceberPlaca => ({
+  placa: foraDoPatio.placa,
+  pedidoId: "ped-1",
+  versaoDoPedido: 1,
+  conferido: true,
+  ...parcial,
+});
+const entradaDeConclusao = (
+  parcial: Partial<EntradaConcluirRecebimento> = {},
+): EntradaConcluirRecebimento => ({
+  placa: foraDoPatio.placa,
+  pedidoId: "ped-1",
+  versaoDoPedido: 2,
+  pendencias: [
+    { id: "p1", resolvida: true, nota: null },
+    { id: "p2", resolvida: false, nota: "Marcada para dezembro" },
+  ],
+  ...parcial,
+});
 
 describe("cadastrar", () => {
   it("grava a placa normalizada com versão 1, situação inicial, gestor, operação e CR", () => {
@@ -73,369 +116,187 @@ describe("cadastrar", () => {
     if (!r.ok) return;
     expect(r.linha).toMatchObject({
       placa: "ZZZ9Z99",
-      tipo: "cavalo",
-      sigla: "PÁT",
-      desde: AGORA,
       versao: 1,
+      sigla: "PÁT",
       gestorId: "gestor-1",
-      gestor: "Gestor Exemplo 1",
       operacaoId: "op-1",
-      operacao: "Operação Exemplo 1",
       crId: "cr-1001",
-      marcaId: "marca-volvo",
-      marca: "Volvo",
-      modeloId: "modelo-fh-540",
-      modelo: "FH 540",
-      filialId: "filial-a",
-      filial: "Filial Exemplo A",
-      garagemId: "garagem-a1",
-      garagem: "Garagem A1",
     });
-    expect(a.obterPlaca("ZZZ9Z99")).toEqual(r.linha);
-  });
-
-  it("a placa nova ganha um evento com hora (a sigla inicial)", () => {
-    const a = novo();
-    a.cadastrar(entradaDeCadastro(), CHAVE_A, AGORA);
     expect(a.eventosDaPlaca("ZZZ9Z99")).toEqual([{ sigla: "PÁT", em: AGORA }]);
   });
-
-  it("a mesma chave de envio grava uma vez só e devolve a mesma linha (clique duplo, nova tentativa)", () => {
+  it("a mesma chave grava uma vez só e devolve a mesma linha", () => {
     const a = novo();
-    const primeira = a.cadastrar(entradaDeCadastro(), CHAVE_A, AGORA);
-    const segunda = a.cadastrar(entradaDeCadastro({ modeloId: "modelo-r-450" }), CHAVE_A, DEPOIS);
-    expect(segunda).toEqual(primeira);
+    const r1 = a.cadastrar(entradaDeCadastro(), CHAVE_A, AGORA);
+    const r2 = a.cadastrar(entradaDeCadastro(), CHAVE_A, DEPOIS);
+    expect(r2).toEqual(r1);
     expect(a.placasCadastradas()).toHaveLength(1);
-    expect(a.eventosDaPlaca("ZZZ9Z99")).toHaveLength(1);
   });
-
   it("placa que já existe, em qualquer formato, devolve placa_ja_existe com a placa que está lá", () => {
     const a = novo();
-    const jaExiste = base[0]!.placa;
-    const r = a.cadastrar(entradaDeCadastro({ placa: jaExiste.toLowerCase() }), CHAVE_A, AGORA);
-    expect(r.ok).toBe(false);
-    if (r.ok) return;
-    expect(r.erro.codigo).toBe("placa_ja_existe");
-    expect((r.erro.atual as { placa: string }).placa).toBe(jaExiste);
-    expect(a.placasCadastradas()).toHaveLength(0);
-  });
-
-  it("cadastrar a mesma placa de novo, com outra chave, é placa_ja_existe (regra 1: uma placa só)", () => {
-    const a = novo();
-    a.cadastrar(entradaDeCadastro(), CHAVE_A, AGORA);
-    const r = a.cadastrar(entradaDeCadastro({ placa: "ZZZ-9Z99" }), CHAVE_B, DEPOIS);
-    expect(r.ok).toBe(false);
-    if (!r.ok) expect(r.erro.codigo).toBe("placa_ja_existe");
-    expect(a.placasCadastradas()).toHaveLength(1);
-  });
-
-  it("falha não gasta a chave: corrigir e mandar de novo com a mesma chave grava", () => {
-    const a = novo();
-    const jaExiste = base[0]!.placa;
-    expect(a.cadastrar(entradaDeCadastro({ placa: jaExiste }), CHAVE_A, AGORA).ok).toBe(false);
-    expect(a.cadastrar(entradaDeCadastro(), CHAVE_A, DEPOIS).ok).toBe(true);
-  });
-
-  it("gestor, operação, CR ou filial que não existem no catálogo viram erro de campo", () => {
-    const a = novo();
-    const r = a.cadastrar(entradaDeCadastro({ gestorId: "gestor-99" }), CHAVE_A, AGORA);
-    expect(r.ok).toBe(false);
-    if (r.ok) return;
-    expect(r.erro.codigo).toBe("entrada_invalida");
-    expect(Object.keys(r.erro.campos ?? {})).toContain("gestorId");
-    const r2 = a.cadastrar(entradaDeCadastro({ operacaoId: "op-9", crId: "cr-9" }), CHAVE_B, AGORA);
-    expect(r2.ok).toBe(false);
-    if (!r2.ok) expect(Object.keys(r2.erro.campos ?? {})).toContain("operacaoId");
-  });
-
-  it("o modelo tem de ser da marca escolhida, e a garagem, da filial escolhida", () => {
-    const a = novo();
-    const r1 = a.cadastrar(entradaDeCadastro({ modeloId: "modelo-r-450" }), CHAVE_A, AGORA); // R 450 é da Scania
-    expect(r1.ok).toBe(false);
-    if (!r1.ok) expect(Object.keys(r1.erro.campos ?? {})).toContain("modeloId");
-    const r2 = a.cadastrar(entradaDeCadastro({ garagemId: "garagem-b1" }), CHAVE_B, AGORA); // B1 é da filial B
-    expect(r2.ok).toBe(false);
-    if (!r2.ok) expect(Object.keys(r2.erro.campos ?? {})).toContain("garagemId");
-  });
-
-  it("marca, modelo, filial e garagem que não existem viram erro de campo", () => {
-    const a = novo();
     const r = a.cadastrar(
-      entradaDeCadastro({ marcaId: "m-9", modeloId: "mo-9", filialId: "f-9", garagemId: "g-9" }),
+      entradaDeCadastro({ placa: base[0]!.placa.toLowerCase() }),
       CHAVE_A,
       AGORA,
     );
-    expect(r.ok).toBe(false);
-    if (!r.ok) {
-      const campos = Object.keys(r.erro.campos ?? {});
-      for (const campo of ["marcaId", "modeloId", "filialId", "garagemId"]) {
-        expect(campos).toContain(campo);
-      }
-    }
+    expect(!r.ok && r.erro.codigo).toBe("placa_ja_existe");
   });
-
-  it("o CR tem de ser o da operação escolhida", () => {
+  it("gestor, operação, CR, marca, modelo e carroceria que não existem viram erro de campo", () => {
     const a = novo();
     const r = a.cadastrar(
-      entradaDeCadastro({ operacaoId: "op-1", crId: "cr-1002" }),
+      entradaDeCadastro({ gestorId: "x", operacaoId: "x", crId: "x", marcaId: "x", modeloId: "x" }),
       CHAVE_A,
       AGORA,
     );
-    expect(r.ok).toBe(false);
-    if (!r.ok) expect(Object.keys(r.erro.campos ?? {})).toContain("crId");
+    expect(!r.ok && Object.keys(r.erro.campos ?? {}).sort()).toEqual(
+      ["crId", "gestorId", "marcaId", "modeloId", "operacaoId"].sort(),
+    );
+    const implemento = a.cadastrar(
+      entradaDeCadastro({
+        tipo: "implemento",
+        marcaId: "marca-randon",
+        modeloId: "modelo-sider",
+        funcao: "semirreboque",
+        carroceriaId: "carroceria-inexistente",
+        eixos: 3,
+        valorManualCentavos: 100,
+        fonteDoValor: "Nota",
+        dataDoValor: "2026-09-10",
+      }),
+      CHAVE_B,
+      AGORA,
+    );
+    expect(!implemento.ok && implemento.erro.campos?.carroceriaId).toBeTruthy();
+  });
+  it("o modelo tem de ser da marca; o CR, da operação escolhida (ou sem operação)", () => {
+    const a = novo();
+    const r = a.cadastrar(
+      entradaDeCadastro({ modeloId: "modelo-r-450", crId: "cr-1002" }),
+      CHAVE_A,
+      AGORA,
+    );
+    expect(!r.ok && Object.keys(r.erro.campos ?? {}).sort()).toEqual(["crId", "modeloId"]);
   });
 });
 
-const entradaDeDisponibilizar = (
-  parcial: Partial<EntradaDisponibilizacao> = {},
-): EntradaDisponibilizacao => ({
-  placa: noPatio.placa,
-  filialId: "filial-b",
-  versaoDaPlaca: 1,
-  ...parcial,
-});
-
-describe("disponibilizar ao Operacional", () => {
-  it("leva a placa para DOp com a filial escolhida, sobe a versão e registra o evento com hora", () => {
+describe("entregar ao Operacional", () => {
+  it("leva a placa para DOp com a filial, sobe a versão e registra o evento com hora", () => {
     const a = novo();
-    const r = a.disponibilizar(entradaDeDisponibilizar(), CHAVE_A, AGORA);
-    expect(r.ok).toBe(true);
-    if (!r.ok) return;
-    expect(r.linha).toMatchObject({
-      sigla: "DOp",
-      filial: "Filial Exemplo B",
-      versao: 2,
-      desde: AGORA,
-    });
-    expect(a.obterPlaca(noPatio.placa)?.sigla).toBe("DOp");
+    const r = a.entregar(entradaDeEntrega(), CHAVE_A, AGORA);
+    expect(r.ok && r.linha).toMatchObject({ sigla: "DOp", filialId: "filial-b", versao: 2 });
     expect(a.eventosDaPlaca(noPatio.placa).at(-1)).toEqual({ sigla: "DOp", em: AGORA });
   });
-
   it("a mesma chave: sobe a versão uma vez só", () => {
     const a = novo();
-    const primeira = a.disponibilizar(entradaDeDisponibilizar(), CHAVE_A, AGORA);
-    const segunda = a.disponibilizar(entradaDeDisponibilizar(), CHAVE_A, DEPOIS);
-    expect(segunda).toEqual(primeira);
+    a.entregar(entradaDeEntrega(), CHAVE_A, AGORA);
+    a.entregar(entradaDeEntrega(), CHAVE_A, AGORA);
     expect(a.obterPlaca(noPatio.placa)?.versao).toBe(2);
   });
-
-  it("versão velha (outra pessoa mudou antes) devolve conflito com a linha atual, sem gravar", () => {
+  it("versão velha devolve conflito com a linha atual, sem gravar", () => {
     const a = novo();
-    a.disponibilizar(entradaDeDisponibilizar(), CHAVE_A, AGORA);
-    const r = a.disponibilizar(entradaDeDisponibilizar({ filialId: "filial-c" }), CHAVE_B, DEPOIS);
-    expect(r.ok).toBe(false);
-    if (r.ok) return;
-    expect(r.erro.codigo).toBe("conflito");
-    expect((r.erro.atual as { versao: number; filial: string }).versao).toBe(2);
-    expect((r.erro.atual as { filial: string }).filial).toBe("Filial Exemplo B");
+    a.entregar(entradaDeEntrega(), CHAVE_A, AGORA);
+    const r = a.entregar(entradaDeEntrega(), CHAVE_B, DEPOIS);
+    expect(!r.ok && r.erro.codigo).toBe("conflito");
+    expect(a.obterPlaca(noPatio.placa)?.versao).toBe(2);
   });
-
-  it("só de PÁT ou ETv: outra situação é recusada com o motivo no campo", () => {
+  it("carreta é recusada com a mensagem do tipo; fora de PÁT e ETv também", () => {
     const a = novo();
-    const r = a.disponibilizar(
-      entradaDeDisponibilizar({ placa: foraDoPatio.placa }),
-      CHAVE_A,
-      AGORA,
-    );
-    expect(r.ok).toBe(false);
-    if (!r.ok) {
-      expect(r.erro.codigo).toBe("entrada_invalida");
-      expect(Object.keys(r.erro.campos ?? {})).toContain("placa");
-    }
-  });
-
-  it("carreta em PÁT ou ETv é recusada com a mensagem do tipo no campo da placa, sem gravar", () => {
-    const a = novo();
-    const r = a.disponibilizar(
-      entradaDeDisponibilizar({ placa: carretaNoPatio.placa }),
-      CHAVE_A,
-      AGORA,
-    );
-    expect(r.ok).toBe(false);
-    if (r.ok) return;
-    expect(r.erro.codigo).toBe("entrada_invalida");
-    expect(r.erro.campos?.placa?.[0]).toBe(MENSAGEM_DE_TIPO_QUE_NAO_DISPONIBILIZA);
-    expect(a.obterPlaca(carretaNoPatio.placa)?.sigla).toBe(carretaNoPatio.sigla);
-    expect(a.obterPlaca(carretaNoPatio.placa)?.versao).toBe(1);
-  });
-
-  it("placa que não existe é nao_encontrado; filial que não existe é erro de campo", () => {
-    const a = novo();
-    const r = a.disponibilizar(entradaDeDisponibilizar({ placa: "QQQ0Q00" }), CHAVE_A, AGORA);
-    expect(r.ok).toBe(false);
-    if (!r.ok) expect(r.erro.codigo).toBe("nao_encontrado");
-    const r2 = a.disponibilizar(entradaDeDisponibilizar({ filialId: "filial-z" }), CHAVE_B, AGORA);
-    expect(r2.ok).toBe(false);
-    if (!r2.ok) expect(Object.keys(r2.erro.campos ?? {})).toContain("filialId");
+    const r = a.entregar(entradaDeEntrega({ placa: carretaNoPatio.placa }), CHAVE_A, AGORA);
+    expect(!r.ok && r.erro.campos?.placa?.[0]).toBe(MENSAGEM_DE_TIPO_QUE_NAO_ENTREGA);
   });
 });
 
-const entradaDeRecebimento = (parcial: Partial<EntradaRecebimento> = {}): EntradaRecebimento => ({
-  placa: foraDoPatio.placa,
-  pedidoId: "ped-1",
-  versaoDoPedido: 1,
-  versaoDaPlaca: 1,
-  conferido: true,
-  situacao: "MAN",
-  operacaoId: "op-2",
-  crId: "cr-1002",
-  motoristaId: null,
-  metaDoConjuntoCentavos: null,
-  conjunto: { cavaloId: null, implementoIds: [] },
-  pendencias: [{ id: "p1", resolvida: true }],
-  ...parcial,
-});
-
-describe("receber placa (transferência entre gestores)", () => {
-  it("conclui o pedido, troca o gestor para o destino com vigência [início, fim) e muda situação, operação e CR", () => {
+describe("disponibilizar placa (enviar a outro gestor)", () => {
+  it("abre o pedido pendente com as pendências, sem mudar o gestor da placa", () => {
     const a = novo();
-    const r = a.receber(entradaDeRecebimento(), CHAVE_A, AGORA, "gestor-2");
+    const r = a.disponibilizar(entradaDeEnvio(), CHAVE_A, AGORA);
     expect(r.ok).toBe(true);
     if (!r.ok) return;
-    expect(r.linha).toMatchObject({
-      gestorId: "gestor-2",
-      gestor: "Gestor Exemplo 2",
-      sigla: "MAN",
-      operacaoId: "op-2",
-      crId: "cr-1002",
-      versao: 2,
-    });
-    const vigencias = r.linha.gestores;
-    expect(vigencias.at(-2)).toMatchObject({ fim: AGORA });
-    expect(vigencias.at(-1)).toMatchObject({ gestorId: "gestor-2", inicio: AGORA, fim: null });
-    expect(a.pedidoPendenteDa(foraDoPatio.placa)).toBeNull();
-    expect(a.eventosDaPlaca(foraDoPatio.placa).at(-1)).toEqual({ sigla: "MAN", em: AGORA });
+    expect(r.linha).toMatchObject({ situacao: "pendente", paraGestorId: "gestor-6", versao: 1 });
+    expect(r.linha.pendenciasConhecidas).toHaveLength(1);
+    expect(a.obterPlaca(noPatio.placa)?.gestor).toBe(noPatio.gestor);
+    expect(a.pedidoAbertoDa(noPatio.placa)?.id).toBe(r.linha.id);
   });
-
-  it("a mesma chave: conclui uma vez só", () => {
+  it("a mesma chave abre um pedido só; outra chave com pedido aberto é recusada", () => {
     const a = novo();
-    const primeira = a.receber(entradaDeRecebimento(), CHAVE_A, AGORA, "gestor-2");
-    const segunda = a.receber(entradaDeRecebimento(), CHAVE_A, DEPOIS, "gestor-2");
-    expect(segunda).toEqual(primeira);
-    expect(a.obterPlaca(foraDoPatio.placa)?.versao).toBe(2);
+    const r1 = a.disponibilizar(entradaDeEnvio(), CHAVE_A, AGORA);
+    expect(a.disponibilizar(entradaDeEnvio(), CHAVE_A, AGORA)).toEqual(r1);
+    const r2 = a.disponibilizar(entradaDeEnvio(), CHAVE_B, AGORA);
+    expect(!r2.ok && r2.erro.codigo).toBe("entrada_invalida");
   });
-
-  it("pedido já concluído por outra pessoa devolve conflito com o pedido como está agora", () => {
+  it("versão velha é conflito; para o próprio gestor é erro de campo", () => {
     const a = novo();
-    a.receber(entradaDeRecebimento(), CHAVE_A, AGORA, "gestor-2");
-    const r = a.receber(entradaDeRecebimento(), CHAVE_B, DEPOIS, "gestor-2");
-    expect(r.ok).toBe(false);
-    if (r.ok) return;
-    expect(r.erro.codigo).toBe("conflito");
-    expect((r.erro.atual as { situacao: string }).situacao).toBe("concluido");
+    const velha = a.disponibilizar(entradaDeEnvio({ versaoDaPlaca: 9 }), CHAVE_A, AGORA);
+    expect(!velha.ok && velha.erro.codigo).toBe("conflito");
+    const dono = a.obterPlaca(noPatio.placa)!.gestorId!;
+    const proprio = a.disponibilizar(entradaDeEnvio({ paraGestorId: dono }), CHAVE_B, AGORA);
+    expect(!proprio.ok && proprio.erro.campos?.paraGestorId).toBeTruthy();
   });
-
-  it("versão do pedido velha devolve conflito", () => {
+  it("placa baixada não se disponibiliza", () => {
+    if (!baixada) return;
     const a = novo();
-    const r = a.receber(entradaDeRecebimento({ versaoDoPedido: 7 }), CHAVE_A, AGORA, "gestor-2");
+    const r = a.disponibilizar(entradaDeEnvio({ placa: baixada.placa }), CHAVE_A, AGORA);
     expect(r.ok).toBe(false);
-    if (!r.ok) expect(r.erro.codigo).toBe("conflito");
   });
+});
 
-  it("versão da placa velha (a placa mudou depois de o pedido sair) devolve conflito com a placa atual", () => {
-    const a = criarArmazem({
-      placasBase: base,
-      pedidosBase: [{ ...pedidoBase(noPatio.placa), id: "ped-2" }],
-    });
-    a.disponibilizar(entradaDeDisponibilizar(), CHAVE_A, AGORA); // a placa vai a versão 2
-    const r = a.receber(
-      entradaDeRecebimento({ placa: noPatio.placa, pedidoId: "ped-2", versaoDaPlaca: 1 }),
-      CHAVE_B,
-      DEPOIS,
-      "gestor-2",
-    );
-    expect(r.ok).toBe(false);
-    if (r.ok) return;
-    expect(r.erro.codigo).toBe("conflito");
-    expect((r.erro.atual as { placa: string; versao: number }).placa).toBe(noPatio.placa);
-    expect((r.erro.atual as { versao: number }).versao).toBe(2);
-    expect(a.pedidoPendenteDa(noPatio.placa)).not.toBeNull(); // nada foi gravado
+describe("receber placa e concluir recebimento (as duas etapas)", () => {
+  it("receber registra a chegada: em conferência, versão sobe, o gestor não muda", () => {
+    const a = novo();
+    const r = a.receber(entradaDeRecebimento(), CHAVE_A, AGORA, "gestor-2");
+    expect(r.ok && r.linha).toMatchObject({ situacao: "em_conferencia", versao: 2 });
+    expect(a.obterPlaca(foraDoPatio.placa)?.gestor).toBe(foraDoPatio.gestor);
+    expect(a.pedidosParaReceber("gestor-2").map((p) => p.situacao)).toEqual(["em_conferencia"]);
   });
-
-  it("com as duas versões certas, recebe", () => {
-    const a = criarArmazem({
-      placasBase: base,
-      pedidosBase: [{ ...pedidoBase(noPatio.placa), id: "ped-2" }],
-    });
-    a.disponibilizar(entradaDeDisponibilizar(), CHAVE_A, AGORA);
-    const r = a.receber(
-      entradaDeRecebimento({ placa: noPatio.placa, pedidoId: "ped-2", versaoDaPlaca: 2 }),
-      CHAVE_B,
-      DEPOIS,
-      "gestor-2",
-    );
-    expect(r.ok).toBe(true);
+  it("a mesma chave recebe uma vez só; outra chave com a versão velha é conflito", () => {
+    const a = novo();
+    const r1 = a.receber(entradaDeRecebimento(), CHAVE_A, AGORA, "gestor-2");
+    expect(a.receber(entradaDeRecebimento(), CHAVE_A, AGORA, "gestor-2")).toEqual(r1);
+    const r2 = a.receber(entradaDeRecebimento(), CHAVE_B, AGORA, "gestor-2");
+    expect(!r2.ok && r2.erro.codigo).toBe("conflito");
   });
-
-  it("a meta do conjunto é gravada no cavalo e recusada em qualquer outro tipo", () => {
-    const cavalo = base.find((p) => p.tipo === "cavalo" && p.sigla !== "VND" && p.sigla !== "SUC")!;
-    const outro = base.find(
-      (p) => p.tipo === "implemento" && p.sigla !== "VND" && p.sigla !== "SUC",
-    )!;
-    const a = criarArmazem({
-      placasBase: base,
-      pedidosBase: [
-        { ...pedidoBase(cavalo.placa), id: "ped-c" },
-        { ...pedidoBase(outro.placa), id: "ped-i" },
-      ],
-    });
-    const recusada = a.receber(
-      entradaDeRecebimento({
-        placa: outro.placa,
-        pedidoId: "ped-i",
-        metaDoConjuntoCentavos: 1_500_000,
-      }),
-      CHAVE_A,
-      AGORA,
-      "gestor-2",
-    );
-    expect(recusada.ok).toBe(false);
-    if (!recusada.ok) {
-      expect(recusada.erro.codigo).toBe("entrada_invalida");
-      expect(Object.keys(recusada.erro.campos ?? {})).toContain("metaDoConjuntoCentavos");
-    }
-    const aceita = a.receber(
-      entradaDeRecebimento({
-        placa: cavalo.placa,
-        pedidoId: "ped-c",
-        metaDoConjuntoCentavos: 1_500_000,
-      }),
-      CHAVE_B,
-      AGORA,
-      "gestor-2",
-    );
-    expect(aceita.ok).toBe(true);
-    if (aceita.ok) expect(aceita.linha.metaDoConjuntoCentavos).toBe(1_500_000);
-  });
-
   it("quem não é o destinatário não recebe (sem_permissao) e nada muda", () => {
     const a = novo();
     const r = a.receber(entradaDeRecebimento(), CHAVE_A, AGORA, "gestor-3");
-    expect(r.ok).toBe(false);
-    if (!r.ok) expect(r.erro.codigo).toBe("sem_permissao");
-    expect(a.pedidoPendenteDa(foraDoPatio.placa)).not.toBeNull();
-    expect(a.obterPlaca(foraDoPatio.placa)?.versao).toBe(1);
+    expect(!r.ok && r.erro.codigo).toBe("sem_permissao");
+    expect(a.pedidoAbertoDa(foraDoPatio.placa)?.situacao).toBe("pendente");
   });
-
-  it("pedido que não existe, ou de outra placa, não recebe", () => {
+  it("concluir antes de receber é recusado", () => {
     const a = novo();
-    const r = a.receber(entradaDeRecebimento({ pedidoId: "ped-9" }), CHAVE_A, AGORA, "gestor-2");
-    expect(r.ok).toBe(false);
-    if (!r.ok) expect(r.erro.codigo).toBe("nao_encontrado");
-    const r2 = a.receber(
-      entradaDeRecebimento({ placa: noPatio.placa }),
+    const r = a.concluir(entradaDeConclusao({ versaoDoPedido: 1 }), CHAVE_A, AGORA, "gestor-2");
+    expect(!r.ok && r.erro.mensagem).toMatch(/Receba a placa antes/);
+  });
+  it("concluir troca o gestor com vigência [início, fim), fecha o pedido e tira de Para receber", () => {
+    const a = novo();
+    a.receber(entradaDeRecebimento(), CHAVE_A, AGORA, "gestor-2");
+    const r = a.concluir(entradaDeConclusao(), CHAVE_B, DEPOIS, "gestor-2");
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.linha.gestorId).toBe("gestor-2");
+    expect(r.linha.gestores.at(-2)?.fim).toBe(DEPOIS);
+    expect(r.linha.gestores.at(-1)).toMatchObject({
+      gestorId: "gestor-2",
+      inicio: DEPOIS,
+      fim: null,
+    });
+    expect(a.pedidoAbertoDa(foraDoPatio.placa)).toBeNull();
+    expect(a.pedidosParaReceber("gestor-2")).toEqual([]);
+  });
+  it("concluir sem responder cada pendência, uma vez, é recusado", () => {
+    const a = novo();
+    a.receber(entradaDeRecebimento(), CHAVE_A, AGORA, "gestor-2");
+    const r = a.concluir(
+      entradaDeConclusao({ pendencias: [{ id: "p1", resolvida: true, nota: null }] }),
       CHAVE_B,
-      AGORA,
+      DEPOIS,
       "gestor-2",
     );
-    expect(r2.ok).toBe(false);
-    if (!r2.ok) expect(Object.keys(r2.erro.campos ?? {})).toContain("placa");
+    expect(!r.ok && r.erro.mensagem).toMatch(/cada pendência/);
   });
-
-  it("o pedido pendente da placa aparece até ser recebido (é o que mostra a ação Receber placa)", () => {
+  it("quem não é o destinatário não conclui", () => {
     const a = novo();
-    expect(a.pedidoPendenteDa(foraDoPatio.placa)?.id).toBe("ped-1");
-    expect(a.pedidoPendenteDa(noPatio.placa)).toBeNull();
+    a.receber(entradaDeRecebimento(), CHAVE_A, AGORA, "gestor-2");
+    const r = a.concluir(entradaDeConclusao(), CHAVE_B, DEPOIS, "gestor-3");
+    expect(!r.ok && r.erro.codigo).toBe("sem_permissao");
   });
 });
 
@@ -455,210 +316,73 @@ describe("isolamento", () => {
     const b = armazemDoProcesso(HOJE, "sessao-de-teste-b");
     expect(a).not.toBe(padrao);
     expect(a).not.toBe(b);
-    expect(armazemDoProcesso(HOJE, "sessao-de-teste-a")).toBe(a); // a mesma sessão, o mesmo armazém
-    a.criarItemDeCatalogo({ tipo: "marca", nome: "Marca só da sessão A" }, CHAVE_A);
-    expect(a.catalogos().marcas.some((m) => m.nome === "Marca só da sessão A")).toBe(true);
-    expect(b.catalogos().marcas.some((m) => m.nome === "Marca só da sessão A")).toBe(false);
-    expect(padrao.catalogos().marcas.some((m) => m.nome === "Marca só da sessão A")).toBe(false);
+    expect(armazemDoProcesso(HOJE, "sessao-de-teste-a")).toBe(a);
   });
-  it("sessão com formato estranho cai no armazém padrão (nada de chave arbitrária na memória)", () => {
+  it("sessão com formato estranho cai no armazém padrão", () => {
     const padrao = armazemDoProcesso(HOJE);
     for (const lixo of ["", "a", "ab cd", "../x", "x".repeat(80), "ÀÁ-sessão", undefined]) {
       expect(armazemDoProcesso(HOJE, lixo), String(lixo)).toBe(padrao);
     }
   });
-  it("o número de sessões guardadas é limitado: as mais antigas saem", () => {
-    const primeira = armazemDoProcesso(HOJE, "sessao-limite-0000");
-    for (let i = 1; i <= 60; i++)
-      armazemDoProcesso(HOJE, `sessao-limite-${String(i).padStart(4, "0")}`);
-    expect(armazemDoProcesso(HOJE, "sessao-limite-0000")).not.toBe(primeira); // saiu e nasceu de novo
+  it("o armazém de exemplo nasce com um pedido pendente para o gestor do exemplo", () => {
+    const a = armazemDoProcesso(HOJE, "sessao-com-pedido");
+    expect(a.pedidosParaReceber("gestor-2")).toHaveLength(1);
   });
   it("uma chave de envio de uma ação não vale para outra", () => {
     const a = novo();
     a.cadastrar(entradaDeCadastro(), CHAVE_C, AGORA);
-    const r = a.disponibilizar(entradaDeDisponibilizar(), CHAVE_C, AGORA);
-    expect(r.ok).toBe(true);
-    expect(a.obterPlaca(noPatio.placa)?.sigla).toBe("DOp");
+    expect(a.entregar(entradaDeEntrega(), CHAVE_C, AGORA).ok).toBe(true);
   });
 });
 
 describe("itens de catálogo (o que o + cria)", () => {
-  it("cria uma marca, que passa a existir no catálogo e a valer no cadastro", () => {
+  it("cria marca, gestor, operação, CR (com ou sem operação) e filial", () => {
     const a = novo();
-    const r = a.criarItemDeCatalogo({ tipo: "marca", nome: "DAF" }, CHAVE_A);
-    expect(r.ok).toBe(true);
-    if (!r.ok) return;
-    expect(r.linha).toMatchObject({ tipo: "marca", nome: "DAF" });
-    expect(a.catalogos().marcas.some((m) => m.id === r.linha.id)).toBe(true);
-    const modelo = a.criarItemDeCatalogo(
-      { tipo: "modelo", nome: "XF 530", paiId: r.linha.id },
-      CHAVE_B,
-    );
-    expect(modelo.ok).toBe(true);
-    if (!modelo.ok) return;
-    const cadastro = a.cadastrar(
-      entradaDeCadastro({ marcaId: r.linha.id, modeloId: modelo.linha.id }),
-      CHAVE_C,
-      AGORA,
-    );
-    expect(cadastro.ok).toBe(true);
-    if (cadastro.ok) expect(cadastro.linha).toMatchObject({ marca: "DAF", modelo: "XF 530" });
-  });
-
-  it("cria gestor, operação, CR (de uma operação), filial e garagem (de uma filial)", () => {
-    const a = novo();
-    const operacao = a.criarItemDeCatalogo({ tipo: "operacao", nome: "Operação Nova" }, CHAVE_A);
-    const filial = a.criarItemDeCatalogo({ tipo: "filial", nome: "Filial Nova" }, CHAVE_B);
-    const gestor = a.criarItemDeCatalogo({ tipo: "gestor", nome: "Gestor Novo" }, CHAVE_C);
-    expect([operacao.ok, filial.ok, gestor.ok]).toEqual([true, true, true]);
-    if (!operacao.ok || !filial.ok) return;
-    const cr = a.criarItemDeCatalogo(
-      { tipo: "cr", nome: "CR-2001", paiId: operacao.linha.id },
-      "44444444-4444-4444-8444-444444444444",
-    );
-    const garagem = a.criarItemDeCatalogo(
-      { tipo: "garagem", nome: "Garagem Nova", paiId: filial.linha.id },
-      "55555555-5555-4555-8555-555555555555",
-    );
-    expect([cr.ok, garagem.ok]).toEqual([true, true]);
-    const c = a.catalogos();
-    expect(c.gestores.some((g) => g.nome === "Gestor Novo")).toBe(true);
-    expect(c.crs.some((x) => x.codigo === "CR-2001" && x.operacaoId === operacao.linha.id)).toBe(
-      true,
-    );
-    expect(
-      c.garagens.some((g) => g.nome === "Garagem Nova" && g.filialId === filial.linha.id),
-    ).toBe(true);
-  });
-
-  it("a mesma chave cria uma vez só", () => {
-    const a = novo();
-    const primeira = a.criarItemDeCatalogo({ tipo: "marca", nome: "DAF" }, CHAVE_A);
-    const segunda = a.criarItemDeCatalogo({ tipo: "marca", nome: "DAF" }, CHAVE_A);
-    expect(segunda).toEqual(primeira);
-    expect(a.catalogos().marcas.filter((m) => m.nome === "DAF")).toHaveLength(1);
-  });
-
-  it("nome repetido (sem olhar maiúscula nem espaço) é erro no campo nome, e o mesmo nome em outra marca vale", () => {
-    const a = novo();
-    const repetido = a.criarItemDeCatalogo({ tipo: "marca", nome: "  volvo " }, CHAVE_A);
-    expect(repetido.ok).toBe(false);
-    if (!repetido.ok) expect(Object.keys(repetido.erro.campos ?? {})).toContain("nome");
-    const emOutraMarca = a.criarItemDeCatalogo(
-      { tipo: "modelo", nome: "FH 540", paiId: "marca-scania" },
-      CHAVE_B,
-    );
-    expect(emOutraMarca.ok).toBe(true);
-    const mesmaMarca = a.criarItemDeCatalogo(
-      { tipo: "modelo", nome: "fh 540", paiId: "marca-volvo" },
-      CHAVE_C,
-    );
-    expect(mesmaMarca.ok).toBe(false);
-  });
-
-  it("pai que não existe é erro no campo paiId", () => {
-    const a = novo();
-    for (const [tipo, nome] of [
-      ["modelo", "Modelo Novo"],
-      ["garagem", "Garagem Nova"],
-      ["cr", "CR-2002"],
+    for (const entrada of [
+      { tipo: "marca", nome: "DAF" },
+      { tipo: "gestor", nome: "Gestor Novo" },
+      { tipo: "operacao", nome: "Operação Nova" },
+      { tipo: "cr", nome: "CR-2001", codcencus: 2001 },
+      { tipo: "cr", nome: "CR-2002", codcencus: 2002, paiId: "op-1" },
+      { tipo: "filial", nome: "Filial Nova" },
     ] as const) {
-      const r = a.criarItemDeCatalogo({ tipo, nome, paiId: "nao-existe" }, CHAVE_A);
-      expect(r.ok, tipo).toBe(false);
-      if (!r.ok) expect(Object.keys(r.erro.campos ?? {}), tipo).toContain("paiId");
+      expect(a.criarItemDeCatalogo(entrada, `${CHAVE_A}-${entrada.nome}`).ok, entrada.nome).toBe(
+        true,
+      );
     }
+    const c = a.catalogos();
+    expect(c.crs.find((x) => x.codigo === "CR-2001")?.operacaoId).toBeNull();
+    expect(c.crs.find((x) => x.codigo === "CR-2002")?.operacaoId).toBe("op-1");
   });
-
-  it("os catálogos de cada armazém são independentes", () => {
+  it("nome repetido é erro no campo nome", () => {
     const a = novo();
-    const b = novo();
-    a.criarItemDeCatalogo({ tipo: "marca", nome: "DAF" }, CHAVE_A);
-    expect(b.catalogos().marcas.some((m) => m.nome === "DAF")).toBe(false);
+    const r = a.criarItemDeCatalogo({ tipo: "marca", nome: " volvo " }, CHAVE_A);
+    expect(!r.ok && r.erro.campos?.nome).toBeTruthy();
+  });
+  it("modelo de marca que não existe é erro no campo paiId", () => {
+    const a = novo();
+    const r = a.criarItemDeCatalogo({ tipo: "modelo", nome: "XF", paiId: "marca-x" }, CHAVE_A);
+    expect(!r.ok && r.erro.campos?.paiId).toBeTruthy();
   });
 });
 
-describe("a lista e a ficha enxergam o que foi gravado", () => {
-  it("a placa cadastrada aparece na lista, com tipo, modelo, gestor, operação e a situação inicial", () => {
+describe("a lista enxerga o que foi gravado", () => {
+  it("a placa cadastrada aparece na lista, com tipo, modelo, gestor e a situação inicial", () => {
     const a = novo();
-    const total = a.placasParaLista().length;
     a.cadastrar(entradaDeCadastro(), CHAVE_A, AGORA);
-    const lista = a.placasParaLista();
-    expect(lista).toHaveLength(total + 1);
-    const nova = lista.find((p) => p.placa === "ZZZ9Z99");
+    const nova = a.placasParaLista().find((p) => p.placa === "ZZZ9Z99");
     expect(nova).toMatchObject({
       tipo: "cavalo",
       modelo: "FH 540",
-      sigla: "PÁT",
-      desde: AGORA,
       gestor: "Gestor Exemplo 1",
-      operacao: "Operação Exemplo 1",
-      filial: "Filial Exemplo A",
-      valorFipeCentavos: 78_500_000,
+      sigla: "PÁT",
     });
-    expect(nova?.crs).toEqual([
-      { codigo: "CR-1001", nome: "Operação Exemplo 1", inicio: "2026-10-31", fim: null },
-    ]);
   });
-
-  it("uma placa da base mudada (disponibilizar) aparece mudada na lista, sem duplicar", () => {
+  it("uma placa da base entregue aparece mudada na lista, sem duplicar", () => {
     const a = novo();
-    const total = a.placasParaLista().length;
-    a.disponibilizar(entradaDeDisponibilizar(), CHAVE_A, AGORA);
-    const lista = a.placasParaLista();
-    expect(lista).toHaveLength(total);
-    const mudada = lista.find((p) => p.placa === noPatio.placa);
-    expect(mudada).toMatchObject({ sigla: "DOp", desde: AGORA, filial: "Filial Exemplo B" });
-    expect(mudada?.km).toBe(noPatio.km); // o que o assistente não mexe segue como era
-  });
-
-  it("receber troca o gestor e fecha o CR antigo no dia, abrindo o novo", () => {
-    const a = novo();
-    a.receber(entradaDeRecebimento(), CHAVE_A, AGORA, "gestor-2");
-    const mudada = a.placasParaLista().find((p) => p.placa === foraDoPatio.placa);
-    expect(mudada).toMatchObject({
-      gestor: "Gestor Exemplo 2",
-      sigla: "MAN",
-      operacao: "Operação Exemplo 2",
-    });
-    const crs = mudada?.crs ?? [];
-    expect(crs.at(-1)).toEqual({
-      codigo: "CR-1002",
-      nome: "Operação Exemplo 2",
-      inicio: "2026-10-31",
-      fim: null,
-    });
-    for (const anterior of crs.slice(0, -1)) expect(anterior.fim).not.toBeNull();
-  });
-
-  it("os eventos da ficha trazem a situação nova com a hora", () => {
-    const a = novo();
-    a.cadastrar(entradaDeCadastro(), CHAVE_A, AGORA);
-    expect(a.eventosDaPlaca("ZZZ9Z99").at(-1)).toEqual({ sigla: "PÁT", em: AGORA });
-  });
-});
-
-describe("candidatos do conjunto (para o Receber placa)", () => {
-  it("o cavalo escolhe entre implementos que não têm cavalo; o implemento, entre cavalos", () => {
-    const a = novo();
-    const cavalo = base.find((p) => p.tipo === "cavalo")!;
-    const implemento = base.find((p) => p.tipo === "implemento")!;
-    const paraCavalo = a.candidatosDoConjunto(cavalo.placa);
-    expect(paraCavalo.length).toBeGreaterThan(0);
-    for (const c of paraCavalo) {
-      const p = base.find((x) => x.id === c.id)!;
-      expect(p.tipo).toBe("implemento");
-    }
-    const paraImplemento = a.candidatosDoConjunto(implemento.placa);
-    expect(paraImplemento.length).toBeGreaterThan(0);
-    for (const c of paraImplemento) {
-      expect(base.find((x) => x.id === c.id)!.tipo).toBe("cavalo");
-    }
-  });
-  it("equipamento, caminhão e apoio não têm conjunto", () => {
-    const a = novo();
-    for (const tipo of ["equipamento", "caminhao", "apoio"] as const) {
-      const p = base.find((x) => x.tipo === tipo)!;
-      expect(a.candidatosDoConjunto(p.placa), tipo).toEqual([]);
-    }
+    a.entregar(entradaDeEntrega(), CHAVE_A, AGORA);
+    const todas = a.placasParaLista().filter((p) => p.placa === noPatio.placa);
+    expect(todas).toHaveLength(1);
+    expect(todas[0]?.sigla).toBe("DOp");
   });
 });

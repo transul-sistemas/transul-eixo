@@ -3,6 +3,7 @@ import { SIGLAS, type Sigla } from "@/lib/dominio/status";
 import type { ConsultaDeTabela } from "@/lib/navegacao/tabela";
 import { STATUS, type Status } from "@/lib/visual/tons";
 import type { FonteDePlacas } from "./fonte";
+import { CHIP_PARA_RECEBER } from "./placas-tipos";
 import {
   type DetalheDaPlaca,
   type FichaDaPlaca,
@@ -137,7 +138,7 @@ function paraDetalhe(d: DetalheDoBanco): DetalheDaPlaca {
   };
 }
 
-/** Os chips da consulta separados em grupos de situação e tipos de ativo. */
+/** Os chips da consulta separados em grupos de situação e tipos de ativo, mais o "Para receber". */
 function filtros(consulta: ConsultaDeTabela) {
   return {
     p_busca: consulta.busca,
@@ -145,6 +146,7 @@ function filtros(consulta: ConsultaDeTabela) {
     p_tipos: consulta.chips.filter((c) => (TIPOS_DE_ATIVO as readonly string[]).includes(c)),
     p_siglas: consulta.siglas,
     p_baixadas: consulta.baixadas,
+    p_para_receber: consulta.chips.includes(CHIP_PARA_RECEBER),
   };
 }
 
@@ -171,7 +173,7 @@ export function fonteDoBanco(cliente: () => Promise<ClienteDeLeitura>): FonteDeP
         chamar<{ chip: string; quantidade: number }[]>(c, "contar_chips_de_placas", base),
       ]);
       const contagens: Record<string, number> = {};
-      for (const id of [...STATUS, ...TIPOS_DE_ATIVO]) contagens[id] = 0;
+      for (const id of [...STATUS, ...TIPOS_DE_ATIVO, CHIP_PARA_RECEBER]) contagens[id] = 0;
       for (const { chip, quantidade } of chips ?? []) contagens[chip] = Number(quantidade);
       return {
         linhas: pagina.linhas.map(paraLinha),

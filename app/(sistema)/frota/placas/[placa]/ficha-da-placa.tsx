@@ -23,8 +23,9 @@ import { type ParametrosDaBusca, paraParametros, simulacaoDe } from "../pagina-d
 import { PlacaNaoEncontradaNaFicha } from "./placa-nao-encontrada";
 import { VoltarALista } from "./voltar-a-lista";
 import { AssistentesDaFrota } from "../assistentes/assistentes-da-frota";
-import { AcoesEmBreve } from "../assistentes/acoes-em-breve";
 import { carregarDadosDosAssistentes } from "../assistentes/carregar-dados";
+import { FaixaParaReceberNaFicha } from "../faixa-para-receber";
+import { etapaDoRecebimento } from "@/lib/dominio/custodia";
 
 /** A janela da faixa colorida: os últimos 30 dias, até agora. */
 const DIAS_DA_JANELA = 30;
@@ -73,10 +74,18 @@ export async function FichaDaPlaca({
     hoje,
     carregarDaPlaca: true,
   });
+  // O pedido aberto da placa: só o destinatário vê a etapa (receber ou concluir) e a faixa.
+  const pedido = dadosDosAssistentes?.pedido ?? null;
+  const paraMim =
+    pedido !== null &&
+    dadosDosAssistentes?.gestorId != null &&
+    pedido.paraGestorId === dadosDosAssistentes.gestorId;
+  const etapa = paraMim ? etapaDoRecebimento(pedido) : null;
   const acoes = idsDasAcoesDoMomento({
     sigla: ficha.sigla,
     tipo: ficha.tipo,
-    pedidoPendente: dadosDosAssistentes !== "em-breve" && dadosDosAssistentes?.pedido != null,
+    etapa,
+    pedidoAberto: pedido !== null,
   })
     .map((id) => ACOES.find((acao) => acao.id === id))
     .filter((acao) => acao !== undefined)
@@ -151,9 +160,7 @@ export async function FichaDaPlaca({
           acoes={
             // Sempre montado: depois de gravar, as ações do momento mudam (ou somem) e o assistente
             // aberto não pode desmontar junto com elas.
-            dadosDosAssistentes === "em-breve" ? (
-              <AcoesEmBreve acoesDaFicha={acoes} />
-            ) : dadosDosAssistentes ? (
+            dadosDosAssistentes ? (
               <AssistentesDaFrota
                 dados={dadosDosAssistentes}
                 placaDaFicha={ficha.placa}
@@ -167,6 +174,15 @@ export async function FichaDaPlaca({
         <LinhaDoTempo segmentos={faixas} de={janela.de} ate={janela.ate} nome={ficha.placa} />
       }
     >
+      {etapa !== null && pedido !== null && !baixada ? (
+        <FaixaParaReceberNaFicha
+          etapa={etapa}
+          deGestor={pedido.deGestor}
+          hrefDoAssistente={`${hrefDaFicha(ficha.placa)}?assistente=${
+            etapa === "receber" ? "receber-placa" : "concluir-recebimento"
+          }`}
+        />
+      ) : null}
       <AbasDaFichaNaUrl abaInicial={lerAba(parametros)} conteudos={conteudos} />
     </FichaDaRaiz>
   );

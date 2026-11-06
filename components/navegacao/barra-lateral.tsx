@@ -73,13 +73,27 @@ function estiloDaCor(cor: ModuloDoCatalogo["cor"]): CSSProperties {
   return { "--tom-forte": `var(${forte})`, "--tom-suave": `var(${suave})` } as CSSProperties;
 }
 
-function Contador({ id, quantidade }: { id: string; quantidade: number }) {
+function Contador({
+  id,
+  quantidade,
+  rotulo = "itens",
+}: {
+  id: string;
+  quantidade: number;
+  rotulo?: string;
+}) {
   return (
     <span
       data-contador={id}
       role="img"
-      aria-label={`${quantidade} itens`}
-      className="bg-muted text-muted-foreground rounded-full px-1.5 text-xs leading-5 font-medium tabular-nums"
+      aria-label={`${quantidade} ${rotulo}`}
+      className={cn(
+        "rounded-full px-1.5 text-xs leading-5 font-medium tabular-nums",
+        // O contador que pede ação (como "para receber") é o selo na cor de ação, bem aparente.
+        rotulo === "itens"
+          ? "bg-muted text-muted-foreground"
+          : "bg-primary text-primary-foreground",
+      )}
     >
       {quantidade > 99 ? "99+" : quantidade}
     </span>
@@ -115,7 +129,7 @@ function ItemDaTela({
       {tela.estado === "em-breve" ? (
         <span className="text-muted-foreground text-xs">Em breve</span>
       ) : null}
-      {quantidade ? <Contador id={tela.id} quantidade={quantidade} /> : null}
+      {quantidade ? <Contador id={tela.id} quantidade={quantidade} rotulo={tela.contador} /> : null}
     </>
   );
   const classes = cn(

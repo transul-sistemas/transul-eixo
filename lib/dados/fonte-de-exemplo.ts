@@ -7,10 +7,11 @@ import { type Armazem, armazemDoProcesso } from "@/lib/exemplo/armazem";
 import type { PlacaDeExemplo } from "@/lib/exemplo/placas";
 import type { ConsultaDeTabela } from "@/lib/navegacao/tabela";
 import { STATUS } from "@/lib/visual/tons";
-import { podeDisponibilizar } from "@/lib/dominio/custodia";
+import { podeEntregar } from "@/lib/dominio/custodia";
 import { type FonteDeEscrita, type FonteDePlacas, MENSAGEM_SO_COM_EXEMPLO } from "./fonte";
 import {
   CAMPOS_ORDENAVEIS_DE_PLACAS,
+  CHIP_PARA_RECEBER,
   type DetalheDaPlaca,
   type FichaDaPlaca,
   type LinhaDePlaca,
@@ -23,6 +24,9 @@ import {
 // em memória, mas com as mesmas regras que a consulta ao banco terá: filtros, ordem estável com
 // desempate pelo id, página limitada e contagens por grupo de chips. Só funciona com
 // EIXO_DADOS=exemplo, que nunca é definida na Vercel.
+
+/** O gestor de quem usa no modo exemplo (o destino do pedido de exemplo; ver gestorAtual()). */
+const GESTOR_DO_EXEMPLO = "gestor-2";
 
 /** O cookie que separa o armazém de uma sessão (os testes de tela usam um por teste). */
 export const COOKIE_DA_SESSAO_DE_EXEMPLO = "eixo-sessao-exemplo";
@@ -170,9 +174,12 @@ function consultar(consulta: ConsultaDeTabela, hoje: string, armazem: Armazem): 
   const selecionados = GRUPOS_DE_CHIPS.map((grupo) =>
     consulta.chips.filter((chip) => grupo.ids.includes(chip)),
   );
+  const paraReceber = new Set(armazem.pedidosParaReceber(GESTOR_DO_EXEMPLO).map((p) => p.placa));
+  const soParaReceber = consulta.chips.includes(CHIP_PARA_RECEBER);
 
   /** Passa pelos filtros; `ignorar` deixa de fora a seleção de um grupo de chips (para a contagem). */
-  const passa = (linha: LinhaDePlaca, ignorar?: number): boolean => {
+  const passa = (linha: LinhaDePlaca, ignorar?: number, ignorarReceber = false): boolean => {
+    if (!ignorarReceber && soParaReceber && !paraReceber.has(linha.placa)) return false;
     if (!consulta.baixadas && SIGLAS_DE_BAIXA.includes(linha.sigla)) return false;
     if (siglas.size > 0 && !siglas.has(linha.sigla)) return false;
     if (busca !== "") {
@@ -192,6 +199,9 @@ function consultar(consulta: ConsultaDeTabela, hoje: string, armazem: Armazem): 
     for (const id of grupo.ids) contagens[id] = 0;
     for (const linha of linhas) if (passa(linha, i)) contagens[grupo.de(linha)]! += 1;
   });
+  contagens[CHIP_PARA_RECEBER] = linhas.filter(
+    (linha) => paraReceber.has(linha.placa) && passa(linha, undefined, true),
+  ).length;
 
   const campo = (CAMPOS_ORDENAVEIS_DE_PLACAS as readonly string[]).includes(consulta.ordem.campo)
     ? consulta.ordem.campo
@@ -276,21 +286,24 @@ export const fonteDeExemplo: FonteDePlacas = {
 /** A escrita sobre um armazém qualquer (a de verdade usa o do processo; os testes passam o seu). */
 export function escritaDoArmazem(armazem: Armazem): FonteDeEscrita {
   return {
+    criaveis: ["marca", "modelo", "gestor", "operacao", "cr", "filial"],
     cadastrarPlaca: async (entrada, chave, agora) => armazem.cadastrar(entrada, chave, agora),
+    entregarAoOperacional: async (entrada, chave, agora) => armazem.entregar(entrada, chave, agora),
     disponibilizarPlaca: async (entrada, chave, agora) =>
       armazem.disponibilizar(entrada, chave, agora),
     receberPlaca: async (entrada, chave, agora, gestorId) =>
       armazem.receber(entrada, chave, agora, gestorId),
+    concluirRecebimento: async (entrada, chave, agora, gestorId) =>
+      armazem.concluir(entrada, chave, agora, gestorId),
     criarItemDeCatalogo: async (entrada, chave) => armazem.criarItemDeCatalogo(entrada, chave),
     catalogos: async () => armazem.catalogos(),
     placaParaAssistente: async (placa) => armazem.obterPlaca(placa),
-    pedidoPendenteDa: async (placa) => armazem.pedidoPendenteDa(placa),
-    pedidosPendentes: async () => armazem.pedidosPendentes(),
-    candidatosDoConjunto: async (placa) => armazem.candidatosDoConjunto(placa),
-    placasQuePodemSerDisponibilizadas: async () =>
+    pedidoAbertoDa: async (placa) => armazem.pedidoAbertoDa(placa),
+    pedidosParaReceber: async (gestorId) => armazem.pedidosParaReceber(gestorId),
+    placasQuePodemSerEntregues: async () =>
       armazem
         .placasParaLista()
-        .filter((p) => podeDisponibilizar(p.sigla, p.tipo))
+        .filter((p) => podeEntregar(p.sigla, p.tipo))
         .map((p) => ({ placa: p.placa, nome: `${p.placa} · ${p.modelo}` }))
         .sort((a, b) => (a.placa < b.placa ? -1 : 1)),
   };
@@ -299,4 +312,11 @@ export function escritaDoArmazem(armazem: Armazem): FonteDeEscrita {
 export async function escritaDeExemplo(hoje: string): Promise<FonteDeEscrita> {
   if (process.env.EIXO_DADOS !== "exemplo") throw new Error(MENSAGEM_SO_COM_EXEMPLO);
   return escritaDoArmazem(armazemDoProcesso(hoje, await sessaoDeExemplo()));
+}
+
+/** Quantas placas esperam pelo gestor do exemplo (o selo, a faixa e o chip). */
+export async function contarParaReceberNoExemplo(hoje: string): Promise<number> {
+  if (process.env.EIXO_DADOS !== "exemplo") throw new Error(MENSAGEM_SO_COM_EXEMPLO);
+  return armazemDoProcesso(hoje, await sessaoDeExemplo()).pedidosParaReceber(GESTOR_DO_EXEMPLO)
+    .length;
 }

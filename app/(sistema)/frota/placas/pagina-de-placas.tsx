@@ -17,6 +17,7 @@ import { SeletorDeColunas } from "@/components/tabela/seletor-de-colunas";
 import { ProvedorDaLista } from "@/components/tabela/pendencia-da-lista";
 import { TabelaDePlacas } from "@/components/tabela/tabela-de-placas";
 import {
+  CHIP_PARA_RECEBER,
   camposOrdenaveisDePlacas,
   colunasDePlacas,
   dadosDoPainel,
@@ -40,9 +41,9 @@ import {
 } from "@/lib/navegacao/tabela";
 import { STATUS } from "@/lib/visual/tons";
 import { AssistentesDaFrota } from "./assistentes/assistentes-da-frota";
-import { AcoesEmBreve } from "./assistentes/acoes-em-breve";
 import { carregarDadosDosAssistentes } from "./assistentes/carregar-dados";
-import { modoDosDados } from "@/lib/dados/fonte";
+import { contarParaReceber, modoDosDados } from "@/lib/dados/fonte";
+import { FaixaParaReceberNaLista } from "./faixa-para-receber";
 
 export type ParametrosDaBusca = Promise<Record<string, string | string[] | undefined>>;
 
@@ -93,8 +94,17 @@ function enderecoSemFiltros(
   return limpa ? `${ROTA}?${limpa}` : ROTA;
 }
 
-/** Como cada grupo aparece: Situação (como a placa está agora) e Tipo de ativo (o que é a placa). */
+/**
+ * Como cada grupo aparece: Para receber (o que espera por quem usa, primeiro), Situação (como a placa
+ * está agora) e Tipo de ativo (o que é a placa).
+ */
 const GRUPOS_DA_LISTA: Readonly<Record<string, ApresentacaoDoGrupo>> = {
+  receber: {
+    titulo: "Para receber",
+    subtitulo: "placas que esperam por você",
+    forma: "pilula",
+    destaque: "acao",
+  },
   situacao: {
     titulo: "Situação",
     subtitulo: "como a placa está agora",
@@ -109,9 +119,23 @@ const GRUPOS_DA_LISTA: Readonly<Record<string, ApresentacaoDoGrupo>> = {
   },
 };
 
-/** Os dois grupos de chips: situação (cinco chips) e tipo de ativo (cinco). */
-function chipsDaLista(contagens?: Record<string, number>) {
+/**
+ * Os grupos de chips: "Para receber" (só quando há placa esperando ou o chip está escolhido),
+ * situação (cinco chips) e tipo de ativo (cinco).
+ */
+function chipsDaLista(contagens?: Record<string, number>, comParaReceber = false) {
   return [
+    ...(comParaReceber
+      ? [
+          {
+            id: CHIP_PARA_RECEBER,
+            nome: "Para receber",
+            grupo: "receber",
+            dica: "As placas que outro gestor disponibilizou para você: receba e conclua o recebimento.",
+            ...(contagens ? { contagem: contagens[CHIP_PARA_RECEBER] ?? 0 } : {}),
+          },
+        ]
+      : []),
     ...STATUS.map((id) => ({
       id,
       nome: NOMES_DOS_CHIPS[id],
@@ -169,7 +193,7 @@ export async function PaginaDePlacas({ searchParams }: { searchParams: Parametro
   const hoje = hojeEmSaoPaulo(new Date());
   const opcoes = { simulacao: simulacaoDe(parametros) };
   // O painel busca em paralelo com a lista e nunca a derruba: se falha, o erro fica no painel.
-  const [pagina, dadosDoPainelDaUrl, dadosDosAssistentes] = await Promise.all([
+  const [pagina, dadosDoPainelDaUrl, dadosDosAssistentes, paraReceber] = await Promise.all([
     listarPlacas(consulta, hoje, opcoes),
     dadosDoPainel(lerEspiar(parametros), hoje, opcoes),
     carregarDadosDosAssistentes({
@@ -177,7 +201,17 @@ export async function PaginaDePlacas({ searchParams }: { searchParams: Parametro
       placa: parametros.get("placa"),
       hoje,
     }),
+    contarParaReceber(hoje),
   ]);
+  const comParaReceber = paraReceber > 0 || consulta.chips.includes(CHIP_PARA_RECEBER);
+  const hrefParaReceber = (() => {
+    const filtrada = escreverTabela(
+      parametros,
+      { ...consulta, chips: [CHIP_PARA_RECEBER], pagina: 1 },
+      padrao,
+    ).toString();
+    return `${ROTA}?${filtrada}`;
+  })();
   const { titulo, descricao } = cabecalho();
   const filtrosAtivos = comFiltros(consulta);
   const emFoco = parametros.get("foco") === "1";
@@ -190,22 +224,23 @@ export async function PaginaDePlacas({ searchParams }: { searchParams: Parametro
         titulo={titulo}
         descricao={descricao}
         acoes={
-          dadosDosAssistentes === "em-breve" ? (
-            <AcoesEmBreve comBotaoDeCadastrar />
-          ) : dadosDosAssistentes ? (
+          dadosDosAssistentes ? (
             <AssistentesDaFrota dados={dadosDosAssistentes} comBotaoDeCadastrar />
           ) : undefined
         }
         consulta={
           <BarraDeConsultaDaPagina
             rotulo="Buscar placa"
-            chips={chipsDaLista(pagina.contagens)}
+            chips={chipsDaLista(pagina.contagens, comParaReceber)}
             apresentacaoDosGrupos={GRUPOS_DA_LISTA}
             filtrosExtras={["sigla", "baixadas"]}
             maisFiltros={<MaisFiltrosDePlacas padrao={padrao} campos={campos} />}
           />
         }
       >
+        {consulta.chips.includes(CHIP_PARA_RECEBER) ? null : (
+          <FaixaParaReceberNaLista quantidade={paraReceber} hrefDoFiltro={hrefParaReceber} />
+        )}
         {pagina.total === 0 ? (
           filtrosAtivos ? (
             <ListaVazia

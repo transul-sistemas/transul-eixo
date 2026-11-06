@@ -1,0 +1,507 @@
+import {
+  podeEntregar,
+  type PedidoDeTransferencia,
+  type SituacaoDoPedido,
+} from "@/lib/dominio/custodia";
+import type { TipoDeItemDeCatalogo } from "@/lib/dominio/esquemas/placa";
+import { normalizarPlaca } from "@/lib/dominio/placa";
+import { SIGLAS, type Sigla } from "@/lib/dominio/status";
+import { erroDaAcao, type ResultadoDaAcao, sucesso } from "@/lib/wizard/resultado";
+import type {
+  AtualDaAcao,
+  Catalogos,
+  ItemCriado,
+  PlacaAEscolher,
+  PlacaGravada,
+} from "./escrita-tipos";
+import type { FonteDeEscrita } from "./fonte";
+import { TIPOS_DE_ATIVO, type TipoDeAtivo } from "./placas-tipos";
+
+// A escrita pelo banco (fatia 3.9b-1): cada gravação chama uma função atômica do Supabase com a
+// sessão de quem usa (a RLS e a permissão ficam no banco), passa a chave de envio (a mesma chave
+// devolve o mesmo resultado) e a versão que a pessoa viu (conflito vira "este registro mudou"). O
+// erro do banco vira um resultado tipado pelo código do Postgres; nada lança para a tela.
+
+/** O erro como o PostgREST devolve: `code` é o SQLSTATE do Postgres. */
+export interface ErroDoBanco {
+  message: string;
+  code?: string;
+}
+type Resposta = PromiseLike<{ data: unknown; error: ErroDoBanco | null }>;
+
+/** O pedaço do cliente do Supabase que a escrita usa (nos testes, um simulado com esta forma). */
+export interface ClienteDeEscrita {
+  schema(esquema: "nucleo" | "config"): {
+    rpc(funcao: string, argumentos?: Record<string, unknown>): Resposta;
+    from(tabela: string): {
+      insert(linha: Record<string, unknown>): { select(colunas: string): { single(): Resposta } };
+      update(valores: Record<string, unknown>): {
+        eq(coluna: string, valor: string): { select(colunas: string): { single(): Resposta } };
+      };
+    };
+  };
+}
+
+type Resultado<T> = ResultadoDaAcao<T, AtualDaAcao>;
+
+/** O "+" no banco: só o que tem caminho seguro (marca e modelo pelas políticas, CR por criar_cr). */
+export const CRIAVEIS_NO_BANCO: readonly TipoDeItemDeCatalogo[] = ["marca", "modelo", "cr"];
+
+class FalhaDoBanco extends Error {
+  constructor(
+    readonly funcao: string,
+    readonly erro: ErroDoBanco,
+  ) {
+    super(`${funcao}: ${erro.message}`);
+    this.name = "FalhaDoBanco";
+  }
+}
+
+/**
+ * O erro do banco como resultado tipado: 42501 sem permissão, 40001 conflito de versão, 23505 chave
+ * repetida (o cadastro decide se é a placa), e os de regra (23514, 23503, 22xxx, P0001), que já
+ * trazem a mensagem em português, viram entrada inválida. O resto é falha.
+ */
+export function resultadoDoErro<T>(erro: ErroDoBanco): Resultado<T> {
+  const codigo = erro.code ?? "";
+  if (codigo === "42501")
+    return erroDaAcao<AtualDaAcao>("sem_permissao", { mensagem: erro.message });
+  if (codigo === "40001") return erroDaAcao<AtualDaAcao>("conflito");
+  if (codigo === "23514" || codigo === "23503" || codigo === "P0001" || codigo.startsWith("22")) {
+    return erroDaAcao<AtualDaAcao>("entrada_invalida", { mensagem: erro.message });
+  }
+  if (codigo === "23505")
+    return erroDaAcao<AtualDaAcao>("entrada_invalida", { mensagem: erro.message });
+  console.error("gravação no banco falhou:", codigo, erro.message);
+  return erroDaAcao<AtualDaAcao>("falha");
+}
+
+async function chamar<T>(
+  c: ClienteDeEscrita,
+  funcao: string,
+  argumentos: Record<string, unknown> = {},
+): Promise<{ ok: true; dados: T } | { ok: false; erro: ErroDoBanco }> {
+  const { data, error } = await c.schema("nucleo").rpc(funcao, argumentos);
+  return error ? { ok: false, erro: error } : { ok: true, dados: data as T };
+}
+
+/** Leitura que não pode falhar calada: erro vira exceção (a ação devolve `falha`). */
+async function ler<T>(
+  c: ClienteDeEscrita,
+  funcao: string,
+  argumentos: Record<string, unknown> = {},
+) {
+  const r = await chamar<T>(c, funcao, argumentos);
+  if (!r.ok) throw new FalhaDoBanco(funcao, r.erro);
+  return r.dados;
+}
+
+// ---------- conversões ----------
+
+interface PlacaDoBanco {
+  ativo_id: string;
+  placa: string;
+  tipo: string;
+  renavam: string | null;
+  modelo: string;
+  modelo_id: string | null;
+  marca_id: string | null;
+  marca: string | null;
+  ano: number | null;
+  sigla: string;
+  desde: string | null;
+  gestor_id: string | null;
+  gestor: string | null;
+  operacao_id: string | null;
+  operacao: string | null;
+  cr: string | null;
+  filial_id: string | null;
+  filial: string | null;
+  garagem: string | null;
+  versao: number | null;
+}
+
+interface PedidoDoBanco {
+  id: string;
+  placa: string;
+  de_gestor_id: string;
+  de_gestor: string | null;
+  para_gestor_id: string;
+  para_gestor: string | null;
+  motivo: string;
+  situacao: string;
+  versao: number;
+  pendencias: { id: string; texto: string }[] | null;
+}
+
+const SITUACOES: Record<string, SituacaoDoPedido> = {
+  pendente: "pendente",
+  em_conferencia: "em_conferencia",
+  concluida: "concluido",
+  devolvida: "devolvido",
+  cancelada: "cancelado",
+};
+
+export function paraPlacaGravada(p: PlacaDoBanco): PlacaGravada {
+  if (!(TIPOS_DE_ATIVO as readonly string[]).includes(p.tipo)) {
+    throw new Error(`Tipo de ativo que a tela não conhece: ${p.tipo}`);
+  }
+  if (!(SIGLAS as readonly string[]).includes(p.sigla)) {
+    throw new Error(`Situação que a tela não conhece: ${p.sigla}`);
+  }
+  return {
+    placa: p.placa,
+    tipo: p.tipo as TipoDeAtivo,
+    renavam: p.renavam ?? "",
+    marcaId: p.marca_id,
+    marca: p.marca,
+    modeloId: p.modelo_id,
+    modelo: p.modelo,
+    ano: p.ano,
+    sigla: p.sigla as Sigla,
+    desde: p.desde ?? "",
+    gestorId: p.gestor_id,
+    gestor: p.gestor ?? "Sem gestor",
+    operacaoId: p.operacao_id,
+    operacao: p.operacao,
+    crId: null,
+    crs: [],
+    filialId: p.filial_id,
+    filial: p.filial ?? "Sem filial",
+    garagem: p.garagem ?? "Sem garagem",
+    valor: {
+      codigoFipe: null,
+      valorFipeCentavos: null,
+      valorManualCentavos: null,
+      fonteDoValor: null,
+      dataDoValor: null,
+    },
+    versao: p.versao ?? 0,
+    gestores: [],
+  };
+}
+
+export function paraPedido(p: PedidoDoBanco): PedidoDeTransferencia {
+  const situacao = SITUACOES[p.situacao];
+  if (!situacao) throw new Error(`Situação de pedido que a tela não conhece: ${p.situacao}`);
+  return {
+    id: p.id,
+    placa: p.placa,
+    deGestorId: p.de_gestor_id,
+    deGestor: p.de_gestor ?? "Gestor de origem",
+    paraGestorId: p.para_gestor_id,
+    paraGestor: p.para_gestor ?? "Gestor de destino",
+    motivo: p.motivo,
+    pendenciasConhecidas: (p.pendencias ?? []).map(({ id, texto }) => ({ id, texto })),
+    situacao,
+    versao: p.versao,
+  };
+}
+
+/** Centavos inteiros para reais (o JSON leva o número mais curto, que o numeric(15,2) lê exato). */
+const reaisDeCentavos = (centavos: number) => centavos / 100;
+
+// ---------- a fonte ----------
+
+export function escritaDoBanco(cliente: () => Promise<ClienteDeEscrita>): FonteDeEscrita {
+  async function placaDoBanco(c: ClienteDeEscrita, placa: string) {
+    return ler<PlacaDoBanco | null>(c, "placa_para_assistente", {
+      p_placa: normalizarPlaca(placa),
+    });
+  }
+  async function pedidoDaPlaca(c: ClienteDeEscrita, placa: string) {
+    const p = await ler<PedidoDoBanco | null>(c, "pedido_aberto_da_placa", {
+      p_placa: normalizarPlaca(placa),
+    });
+    return p ? paraPedido(p) : null;
+  }
+  /** O conflito traz o registro como está agora (a placa, ou o pedido). */
+  async function comAtual<T>(r: Resultado<T>, atual: () => Promise<AtualDaAcao | null>) {
+    if (r.ok || r.erro.codigo !== "conflito") return r;
+    const agora = await atual();
+    return agora ? erroDaAcao<AtualDaAcao>("conflito", { atual: agora }) : r;
+  }
+
+  return {
+    criaveis: CRIAVEIS_NO_BANCO,
+
+    async cadastrarPlaca(entrada, chave): Promise<Resultado<PlacaGravada>> {
+      const c = await cliente();
+      const implemento = entrada.tipo === "implemento" ? entrada : null;
+      const r = await chamar<string>(c, "cadastrar_ativo", {
+        p_tipo: entrada.tipo,
+        p_renavam: entrada.renavam,
+        p_placa: entrada.placa,
+        p_gestor_id: entrada.gestorId,
+        p_cr_id: entrada.crId,
+        p_operacao_id: entrada.operacaoId,
+        p_situacao_inicial: entrada.situacaoInicial,
+        p_funcao: implemento?.funcao ?? null,
+        p_carroceria_id: implemento?.carroceriaId ?? null,
+        p_eixos: implemento?.eixos ?? null,
+        p_modelo_id: entrada.modeloId,
+        p_chave: chave,
+      });
+      if (!r.ok) {
+        if (r.erro.code === "23505" && !/chave de envio/i.test(r.erro.message)) {
+          if (/renavam/i.test(r.erro.message)) {
+            return erroDaAcao("entrada_invalida", {
+              campos: { renavam: ["Este RENAVAM já está cadastrado em outra placa."] },
+            });
+          }
+          const existente = await placaDoBanco(c, entrada.placa);
+          return erroDaAcao<AtualDaAcao>(
+            "placa_ja_existe",
+            existente ? { atual: paraPlacaGravada(existente) } : {},
+          );
+        }
+        return resultadoDoErro(r.erro);
+      }
+      // O ano e o valor moram no ativo (com origem "informada", posta pelo gatilho); o cadastro
+      // atômico não os recebe, então seguem logo depois, na mesma ação. Se esta parte falhar, a placa
+      // já existe e o campo fica pendente (visão campo_pendente), com a mensagem de como resolver.
+      const valores: Record<string, unknown> = { ano_fabricacao: entrada.ano };
+      if ("codigoFipe" in entrada) {
+        valores.codigo_fipe = entrada.codigoFipe;
+        valores.valor_fipe = reaisDeCentavos(entrada.valorFipeCentavos);
+        valores.valor_fipe_referencia = `${new Date().toISOString().slice(0, 7)}-01`;
+      } else if ("valorManualCentavos" in entrada) {
+        valores.valor_manual = reaisDeCentavos(entrada.valorManualCentavos);
+        valores.valor_manual_fonte = entrada.fonteDoValor;
+        valores.valor_manual_em = entrada.dataDoValor;
+      }
+      const { error } = await c
+        .schema("nucleo")
+        .from("ativo")
+        .update(valores)
+        .eq("id", r.dados)
+        .select("id")
+        .single();
+      if (error) {
+        console.error("cadastro: o valor não foi gravado:", error.code, error.message);
+        return erroDaAcao("falha", {
+          mensagem:
+            "A placa foi cadastrada, mas o ano e o valor não foram gravados. Abra a ficha e informe-os de novo.",
+        });
+      }
+      const nova = await placaDoBanco(c, entrada.placa);
+      if (!nova) throw new Error("A placa cadastrada não voltou na leitura.");
+      return sucesso(paraPlacaGravada(nova));
+    },
+
+    async entregarAoOperacional(entrada, chave): Promise<Resultado<PlacaGravada>> {
+      const c = await cliente();
+      const atual = await placaDoBanco(c, entrada.placa);
+      if (!atual) return erroDaAcao("nao_encontrado");
+      const r = await chamar<string>(c, "entregar_ao_operacional", {
+        p_ativo_id: atual.ativo_id,
+        p_filial_id: entrada.filialId,
+        p_em: new Date().toISOString(),
+        p_versao: entrada.versaoDaPlaca,
+        p_chave: chave,
+      });
+      if (!r.ok) {
+        return comAtual(resultadoDoErro<PlacaGravada>(r.erro), async () => {
+          const agora = await placaDoBanco(c, entrada.placa);
+          return agora ? paraPlacaGravada(agora) : null;
+        });
+      }
+      const nova = await placaDoBanco(c, entrada.placa);
+      if (!nova) throw new Error("A placa entregue não voltou na leitura.");
+      return sucesso(paraPlacaGravada(nova));
+    },
+
+    async disponibilizarPlaca(entrada, chave): Promise<Resultado<PedidoDeTransferencia>> {
+      const c = await cliente();
+      const atual = await placaDoBanco(c, entrada.placa);
+      if (!atual) return erroDaAcao("nao_encontrado");
+      const r = await chamar<string>(c, "disponibilizar_placa", {
+        p_ativo_id: atual.ativo_id,
+        p_para_gestor_id: entrada.paraGestorId,
+        p_motivo: entrada.motivo,
+        p_pendencias: entrada.pendenciasConhecidas,
+        p_versao: entrada.versaoDaPlaca,
+        p_chave: chave,
+      });
+      if (!r.ok) {
+        return comAtual(resultadoDoErro<PedidoDeTransferencia>(r.erro), async () => {
+          const agora = await placaDoBanco(c, entrada.placa);
+          return agora ? paraPlacaGravada(agora) : null;
+        });
+      }
+      const pedido = await pedidoDaPlaca(c, entrada.placa);
+      if (!pedido) throw new Error("O pedido gravado não voltou na leitura.");
+      return sucesso(pedido);
+    },
+
+    async receberPlaca(entrada, chave): Promise<Resultado<PedidoDeTransferencia>> {
+      const c = await cliente();
+      const r = await chamar<string>(c, "receber_placa", {
+        p_transferencia_id: entrada.pedidoId,
+        p_versao: entrada.versaoDoPedido,
+        p_chave: chave,
+      });
+      if (!r.ok) {
+        return comAtual(resultadoDoErro<PedidoDeTransferencia>(r.erro), () =>
+          pedidoDaPlaca(c, entrada.placa),
+        );
+      }
+      const pedido = await pedidoDaPlaca(c, entrada.placa);
+      if (!pedido) throw new Error("O pedido recebido não voltou na leitura.");
+      return sucesso(pedido);
+    },
+
+    async concluirRecebimento(entrada, chave): Promise<Resultado<PlacaGravada>> {
+      const c = await cliente();
+      const r = await chamar<string>(c, "concluir_recebimento", {
+        p_transferencia_id: entrada.pedidoId,
+        p_versao: entrada.versaoDoPedido,
+        p_respostas: entrada.pendencias.map((p) => ({
+          id: p.id,
+          resolvida: p.resolvida,
+          nota: p.nota,
+        })),
+        p_chave: chave,
+      });
+      if (!r.ok) {
+        return comAtual(resultadoDoErro<PlacaGravada>(r.erro), () =>
+          pedidoDaPlaca(c, entrada.placa),
+        );
+      }
+      const nova = await placaDoBanco(c, entrada.placa);
+      if (!nova) throw new Error("A placa recebida não voltou na leitura.");
+      return sucesso(paraPlacaGravada(nova));
+    },
+
+    async criarItemDeCatalogo(entrada, chave): Promise<Resultado<ItemCriado>> {
+      const c = await cliente();
+      if (entrada.tipo === "cr") {
+        const r = await chamar<string>(c, "criar_cr", {
+          p_codcencus: entrada.codcencus,
+          p_codigo: entrada.nome,
+          p_nome: entrada.nome,
+          p_chave: chave,
+        });
+        if (!r.ok) {
+          if (r.erro.code === "23505" && !/chave de envio/i.test(r.erro.message)) {
+            return erroDaAcao("entrada_invalida", {
+              campos: {
+                nome: ["Já existe um CR com este código ou CODCENCUS. Escolha o que já existe."],
+              },
+            });
+          }
+          return resultadoDoErro(r.erro);
+        }
+        return sucesso({
+          tipo: "cr",
+          id: r.dados,
+          nome: entrada.nome,
+          ...(entrada.paiId ? { paiId: entrada.paiId } : {}),
+        });
+      }
+      if (entrada.tipo === "marca" || entrada.tipo === "modelo") {
+        // Marca e modelo pelas políticas de Cadastros; o nome único no banco impede a duplicata.
+        const linha =
+          entrada.tipo === "marca"
+            ? { nome: entrada.nome }
+            : { nome: entrada.nome, marca_id: entrada.paiId };
+        const { data, error } = await c
+          .schema("config")
+          .from(entrada.tipo)
+          .insert(linha)
+          .select("id, nome")
+          .single();
+        if (error) {
+          if (error.code === "23505") {
+            return erroDaAcao("entrada_invalida", {
+              campos: { nome: ["Já existe um cadastro com este nome. Escolha o que já existe."] },
+            });
+          }
+          return resultadoDoErro(error);
+        }
+        const criado = data as { id: string; nome: string };
+        return sucesso({
+          tipo: entrada.tipo,
+          id: criado.id,
+          nome: criado.nome,
+          ...(entrada.tipo === "modelo" ? { paiId: entrada.paiId } : {}),
+        });
+      }
+      return erroDaAcao("entrada_invalida", {
+        mensagem:
+          entrada.tipo === "operacao"
+            ? "Operação nova se cria no módulo Operações. Escolha uma da lista."
+            : entrada.tipo === "gestor"
+              ? "Gestor de frota novo é uma pessoa com o papel de gestor: peça a quem administra o acesso."
+              : "As filiais são as 3 garagens. Escolha uma da lista.",
+      });
+    },
+
+    async catalogos(): Promise<Catalogos> {
+      const c = await cliente();
+      const d = await ler<{
+        marcas: { id: string; nome: string }[];
+        modelos: { id: string; nome: string; marca_id: string }[];
+        carrocerias: { id: string; nome: string }[];
+        gestores: { id: string; nome: string }[];
+        operacoes: { id: string; nome: string }[];
+        crs: { id: string; codigo: string; operacao_id: string | null }[];
+        filiais: { id: string; nome: string }[];
+      }>(c, "catalogos_dos_assistentes");
+      return {
+        marcas: d.marcas.map(({ id, nome }) => ({ id, nome })),
+        modelos: d.modelos.map(({ id, nome, marca_id }) => ({ id, nome, marcaId: marca_id })),
+        carrocerias: d.carrocerias.map(({ id, nome }) => ({ id, nome })),
+        gestores: d.gestores.map(({ id, nome }) => ({ id, nome })),
+        operacoes: d.operacoes.map(({ id, nome }) => ({ id, nome })),
+        crs: d.crs.map(({ id, codigo, operacao_id }) => ({ id, codigo, operacaoId: operacao_id })),
+        filiais: d.filiais.map(({ id, nome }) => ({ id, nome })),
+      };
+    },
+
+    async placaParaAssistente(placa) {
+      const p = await placaDoBanco(await cliente(), placa);
+      return p ? paraPlacaGravada(p) : null;
+    },
+
+    async pedidoAbertoDa(placa) {
+      return pedidoDaPlaca(await cliente(), placa);
+    },
+
+    async pedidosParaReceber() {
+      const lista = await ler<PedidoDoBanco[]>(await cliente(), "pedidos_para_receber");
+      return (lista ?? []).map(paraPedido);
+    },
+
+    async placasQuePodemSerEntregues(): Promise<PlacaAEscolher[]> {
+      const c = await cliente();
+      const pagina = await ler<{
+        linhas: { placa: string; modelo: string; tipo: string; sigla: string }[];
+      }>(c, "listar_placas", {
+        p_busca: "",
+        p_grupos: [],
+        p_tipos: ["cavalo", "caminhao"],
+        p_siglas: ["PÁT", "ETv"],
+        p_baixadas: false,
+        p_ordem: "placa",
+        p_decrescente: false,
+        p_pagina: 1,
+        p_tam: 100,
+        p_para_receber: false,
+      });
+      return pagina.linhas
+        .filter((l) => podeEntregar(l.sigla as Sigla, l.tipo as TipoDeAtivo))
+        .map((l) => ({ placa: l.placa, nome: `${l.placa} · ${l.modelo}` }));
+    },
+  };
+}
+
+/** Quantos pedidos esperam por quem usa (o selo do menu, a faixa e o chip). Falha conta zero. */
+export async function contarParaReceberNoBanco(c: ClienteDeEscrita): Promise<number> {
+  const r = await chamar<number>(c, "contar_para_receber");
+  if (!r.ok) {
+    console.error("contar_para_receber falhou:", r.erro.message);
+    return 0;
+  }
+  return Number(r.dados) || 0;
+}

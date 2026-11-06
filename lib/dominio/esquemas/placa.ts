@@ -1,8 +1,8 @@
 import { z } from "zod";
 import { TIPOS_DE_ATIVO, type TipoDeAtivo } from "@/lib/dados/placas-tipos";
-import { conjuntoMisto } from "../conjunto";
+import { FUNCOES_DO_IMPLEMENTO } from "../carroceria";
 import { normalizarPlaca, placaNormalizadaValida } from "../placa";
-import { motivoDeNaoDisponibilizar } from "../custodia";
+import { motivoDeNaoEntregar } from "../custodia";
 import { SIGLAS, siglaAceitaOTipo, type Sigla } from "../status";
 
 // Esquemas Zod dos assistentes de placa: o MESMO arquivo valida na tela (React Hook Form) e no
@@ -95,27 +95,6 @@ export function siglasIniciaisDoTipo(tipo: TipoDeAtivo): Sigla[] {
 
 const siglaConhecida = z.enum(SIGLAS, { error: "Escolha uma situação da lista." });
 
-// ---------- posse (operação e CR) ----------
-
-type ComPosse = { operacaoId: string | null; crId: string | null };
-
-function conferirPosse(dados: ComPosse, ctx: z.RefinementCtx) {
-  if (dados.operacaoId !== null && dados.crId === null) {
-    ctx.addIssue({
-      code: "custom",
-      path: ["crId"],
-      message: "Escolha o CR da operação. Toda placa em operação tem um CR.",
-    });
-  }
-  if (dados.operacaoId === null && dados.crId !== null) {
-    ctx.addIssue({
-      code: "custom",
-      path: ["operacaoId"],
-      message: "Escolha a operação do CR, ou tire o CR.",
-    });
-  }
-}
-
 function conferirSituacao(tipo: TipoDeAtivo, situacao: Sigla, ctx: z.RefinementCtx, campo: string) {
   if (!siglasIniciaisDoTipo(tipo).includes(situacao)) {
     ctx.addIssue({
@@ -138,10 +117,15 @@ function dataValida(texto: string): boolean {
   return d.getUTCFullYear() === ano && d.getUTCMonth() === mes - 1 && d.getUTCDate() === dia;
 }
 
+/** Eixos do semirreboque: de 1 a 6 (o simples vai de 1 a 6; o dolly tem sempre 2). */
+export const EIXOS_DO_SEMIRREBOQUE = [1, 2, 3, 4, 5, 6] as const;
+
 /**
  * Cadastrar placa. `anoAtual` e `hoje` (`aaaa-mm-dd`) entram de fora para a regra ser pura e testável.
  * Cavalo e caminhão: código FIPE e valor FIPE digitados. Implemento, equipamento e apoio: valor
- * manual, fonte e data do valor. Sem conjunto no cadastro.
+ * manual, fonte e data do valor. O implemento diz a função (semirreboque ou dolly), a carroceria e os
+ * eixos (o dolly não tem carroceria e tem sempre 2 eixos). Operação e CR obrigatórios (3.7). Sem
+ * filial nem garagem: a garagem é a do CR (calculada no banco). Sem conjunto no cadastro.
  */
 export function esquemaCadastrarPlaca({ anoAtual, hoje }: { anoAtual: number; hoje: string }) {
   const identificacao = {
@@ -155,10 +139,8 @@ export function esquemaCadastrarPlaca({ anoAtual, hoje }: { anoAtual: number; ho
       .min(1980, { error: "O ano mínimo é 1980." })
       .max(anoAtual + 1, { error: `O ano máximo é ${anoAtual + 1}.` }),
     gestorId: id("o gestor de frota"),
-    operacaoId: id("a operação").nullable(),
-    crId: id("o CR").nullable(),
-    filialId: id("a filial"),
-    garagemId: id("a garagem"),
+    operacaoId: id("a operação"),
+    crId: id("o CR"),
     situacaoInicial: siglaConhecida.default("PÁT"),
   };
   const comFipe = (tipo: "cavalo" | "caminhao") =>
@@ -171,16 +153,60 @@ export function esquemaCadastrarPlaca({ anoAtual, hoje }: { anoAtual: number; ho
         .regex(FIPE, { error: "Código FIPE inválido. Use o formato 000000-0." }),
       valorFipeCentavos: centavos("o valor FIPE"),
     });
-  const comValorManual = (tipo: "implemento" | "equipamento" | "apoio") =>
-    z.object({
+  const valorManual = {
+    valorManualCentavos: centavos("o valor"),
+    fonteDoValor: texto("a fonte do valor", 120),
+    dataDoValor: z
+      .string({ error: "Informe a data do valor." })
+      .refine(dataValida, { error: "Data inválida. Use uma data real, como 10/09/2026." })
+      .refine((d) => d <= hoje, { error: "A data do valor não pode ser no futuro." }),
+  };
+  const comValorManual = (tipo: "equipamento" | "apoio") =>
+    z.object({ ...identificacao, tipo: z.literal(tipo), ...valorManual });
+  const doImplemento = z
+    .object({
       ...identificacao,
-      tipo: z.literal(tipo),
-      valorManualCentavos: centavos("o valor"),
-      fonteDoValor: texto("a fonte do valor", 120),
-      dataDoValor: z
-        .string({ error: "Informe a data do valor." })
-        .refine(dataValida, { error: "Data inválida. Use uma data real, como 10/09/2026." })
-        .refine((d) => d <= hoje, { error: "A data do valor não pode ser no futuro." }),
+      tipo: z.literal("implemento"),
+      ...valorManual,
+      funcao: z.enum(FUNCOES_DO_IMPLEMENTO, {
+        error: "Escolha a função do implemento: semirreboque ou dolly.",
+      }),
+      carroceriaId: z.string().trim().nullish(),
+      eixos: z.number().nullish(),
+    })
+    .transform((dados, ctx) => {
+      const carroceriaId = dados.carroceriaId ? dados.carroceriaId : null;
+      if (dados.funcao === "dolly") {
+        if (carroceriaId !== null) {
+          ctx.addIssue({
+            code: "custom",
+            path: ["carroceriaId"],
+            message: "O dolly não tem carroceria.",
+          });
+        }
+        if (dados.eixos != null && dados.eixos !== 2) {
+          ctx.addIssue({ code: "custom", path: ["eixos"], message: "O dolly tem sempre 2 eixos." });
+        }
+        return { ...dados, carroceriaId: null, eixos: 2 };
+      }
+      if (carroceriaId === null) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["carroceriaId"],
+          message: "O semirreboque precisa de carroceria. Escolha uma da lista.",
+        });
+      }
+      if (
+        dados.eixos == null ||
+        !(EIXOS_DO_SEMIRREBOQUE as readonly number[]).includes(dados.eixos)
+      ) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["eixos"],
+          message: "Informe os eixos do semirreboque, de 1 a 6.",
+        });
+      }
+      return { ...dados, carroceriaId, eixos: dados.eixos ?? null };
     });
   return z
     .discriminatedUnion(
@@ -188,136 +214,110 @@ export function esquemaCadastrarPlaca({ anoAtual, hoje }: { anoAtual: number; ho
       [
         comFipe("cavalo"),
         comFipe("caminhao"),
-        comValorManual("implemento"),
+        doImplemento,
         comValorManual("equipamento"),
         comValorManual("apoio"),
       ],
       { error: "Escolha o tipo de ativo." },
     )
     .superRefine((dados, ctx) => {
-      conferirPosse(dados, ctx);
       conferirSituacao(dados.tipo, dados.situacaoInicial, ctx, "situacaoInicial");
     });
 }
 
 export type EntradaCadastrarPlaca = z.infer<ReturnType<typeof esquemaCadastrarPlaca>>;
 
-// ---------- disponibilizar ao Operacional ----------
+// ---------- entregar ao Operacional ----------
 
-export const esquemaDisponibilizacao = z.object({
+export const esquemaEntregaAoOperacional = z.object({
   placa,
   filialId: id("a filial"),
   /** A versão da placa que a pessoa viu (edição concorrente). */
   versaoDaPlaca: versao,
 });
-export type EntradaDisponibilizacao = z.infer<typeof esquemaDisponibilizacao>;
+export type EntradaEntregaAoOperacional = z.infer<typeof esquemaEntregaAoOperacional>;
 
 /**
  * O mesmo esquema, mais a regra do tipo (e, se vier a sigla, da situação de origem): só cavalo ou
  * caminhão vão ao Operacional, vindos de PÁT ou ETv. O servidor passa só o tipo (a situação, que
- * muda, é conferida pelo armazém depois da versão, para o conflito vir primeiro); a tela passa os dois.
+ * muda, é conferida depois da versão, para o conflito vir primeiro); a tela passa os dois.
  */
-export function esquemaDisponibilizacaoDe({ tipo, sigla }: { tipo: TipoDeAtivo; sigla?: Sigla }) {
-  return esquemaDisponibilizacao.superRefine((_dados, ctx) => {
-    const motivo = motivoDeNaoDisponibilizar({ sigla: sigla ?? "PÁT", tipo });
+export function esquemaEntregaAoOperacionalDe({
+  tipo,
+  sigla,
+}: {
+  tipo: TipoDeAtivo;
+  sigla?: Sigla;
+}) {
+  return esquemaEntregaAoOperacional.superRefine((_dados, ctx) => {
+    const motivo = motivoDeNaoEntregar({ sigla: sigla ?? "PÁT", tipo });
     if (motivo !== null) ctx.addIssue({ code: "custom", path: ["placa"], message: motivo });
   });
 }
 
-// ---------- transferência entre gestores ----------
+// ---------- disponibilizar placa (enviar a outro gestor de frota) ----------
 
-/** Quem envia deixa o motivo e as pendências conhecidas. */
-export const esquemaEnvioDeTransferencia = z.object({
+/** Quem envia deixa o destino, o motivo e as pendências conhecidas, com a versão da placa que viu. */
+export const esquemaDisponibilizarPlaca = z.object({
   placa,
   paraGestorId: id("o gestor que vai receber"),
-  motivo: texto("o motivo da transferência", 300),
+  motivo: texto("o motivo", 300),
   pendenciasConhecidas: z.array(texto("a pendência", 200)).max(20, {
     error: "Use até 20 pendências. Agrupe as parecidas.",
   }),
+  versaoDaPlaca: versao,
 });
-export type EntradaEnvioDeTransferencia = z.infer<typeof esquemaEnvioDeTransferencia>;
+export type EntradaDisponibilizarPlaca = z.infer<typeof esquemaDisponibilizarPlaca>;
 
-/** Quem recebe confere o que chega, define o que muda, resolve as pendências e conclui. */
-export function esquemaRecebimento(
-  tipo: TipoDeAtivo,
-  /** A carroceria de cada implemento candidato, por id: com ela, conjunto misto é recusado. */
-  carroceriaDoImplemento?: Readonly<Record<string, string>>,
-) {
-  const situacoes = siglasIniciaisDoTipo(tipo) as [Sigla, ...Sigla[]];
-  return z
-    .object({
-      placa,
-      pedidoId: id("o pedido de transferência"),
-      /** A versão do pedido e a da placa que a pessoa viu: se qualquer uma mudou, avisa. */
-      versaoDoPedido: versao,
-      versaoDaPlaca: versao,
-      conferido: z.literal(true, { error: "Confira o que chegou antes de concluir." }),
-      situacao: z.enum(situacoes, { error: "Escolha uma situação que se aplique a este tipo." }),
-      operacaoId: id("a operação").nullable(),
-      crId: id("o CR").nullable(),
-      motoristaId: id("o motorista").nullable(),
-      /** Meta do conjunto (ver docs/glossario.md): é do cavalo, o mestre; só ele a recebe. */
-      metaDoConjuntoCentavos: centavos("a meta do conjunto").nullable(),
-      conjunto: z.object({
-        cavaloId: id("o cavalo").nullable(),
-        implementoIds: z.array(id("o implemento")),
+// ---------- receber placa (duas etapas) ----------
+
+/** Receber placa: registra a chegada (o gestor ainda não muda). */
+export const esquemaReceberPlaca = z.object({
+  placa,
+  pedidoId: id("o pedido de transferência"),
+  /** A versão do pedido que a pessoa viu: se mudou, avisa. */
+  versaoDoPedido: versao,
+  conferido: z.literal(true, { error: "Confira o que chegou antes de receber." }),
+});
+export type EntradaReceberPlaca = z.infer<typeof esquemaReceberPlaca>;
+
+/** Concluir recebimento: cada pendência resolvida (sim ou não, com nota quando não) e a troca do gestor. */
+export const esquemaConcluirRecebimento = z
+  .object({
+    placa,
+    pedidoId: id("o pedido de transferência"),
+    versaoDoPedido: versao,
+    pendencias: z.array(
+      z.object({
+        id: z.string().min(1),
+        resolvida: z.boolean({ error: "Diga se a pendência foi resolvida." }),
+        nota: z
+          .string()
+          .max(300, { error: "Use até 300 caracteres na nota." })
+          .nullish()
+          .transform((n) => (n == null || n.trim() === "" ? null : n.trim())),
       }),
-      pendencias: z.array(z.object({ id: z.string().min(1), resolvida: z.boolean() })),
-    })
-    .superRefine((dados, ctx) => {
-      conferirPosse(dados, ctx);
-      if (dados.pendencias.some((p) => !p.resolvida)) {
+    ),
+  })
+  .superRefine((dados, ctx) => {
+    dados.pendencias.forEach((p, i) => {
+      if (!p.resolvida && p.nota === null) {
         ctx.addIssue({
           code: "custom",
-          path: ["pendencias"],
-          message: "Resolva todas as pendências antes de concluir.",
-        });
-      }
-      const { cavaloId, implementoIds } = dados.conjunto;
-      if (new Set(implementoIds).size !== implementoIds.length) {
-        ctx.addIssue({
-          code: "custom",
-          path: ["conjunto", "implementoIds"],
-          message: "Há implemento repetido no conjunto. Tire a repetição.",
-        });
-      }
-      if (
-        carroceriaDoImplemento &&
-        conjuntoMisto(
-          implementoIds.map((id) => carroceriaDoImplemento[id]).filter((c) => c !== undefined),
-        )
-      ) {
-        ctx.addIssue({
-          code: "custom",
-          path: ["conjunto", "implementoIds"],
-          message:
-            "Conjunto misto não pode. Escolha implementos da mesma carroceria, como só Sider ou só Graneleiro.",
-        });
-      }
-      if (tipo !== "cavalo" && implementoIds.length > 0) {
-        ctx.addIssue({
-          code: "custom",
-          path: ["conjunto", "implementoIds"],
-          message: "Só o cavalo leva implementos. Tire os implementos deste conjunto.",
-        });
-      }
-      if (tipo !== "cavalo" && dados.metaDoConjuntoCentavos !== null) {
-        ctx.addIssue({
-          code: "custom",
-          path: ["metaDoConjuntoCentavos"],
-          message: "A meta do conjunto é do cavalo. Deixe-a vazia neste tipo de ativo.",
-        });
-      }
-      if (tipo !== "implemento" && cavaloId !== null) {
-        ctx.addIssue({
-          code: "custom",
-          path: ["conjunto", "cavaloId"],
-          message: "Só o implemento tem cavalo. Tire o cavalo deste conjunto.",
+          path: ["pendencias", i, "nota"],
+          message: "Diga na nota o que ficou pendente.",
         });
       }
     });
-}
-export type EntradaRecebimento = z.infer<ReturnType<typeof esquemaRecebimento>>;
+    if (new Set(dados.pendencias.map((p) => p.id)).size !== dados.pendencias.length) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["pendencias"],
+        message: "Responda cada pendência do pedido, uma vez.",
+      });
+    }
+  });
+export type EntradaConcluirRecebimento = z.infer<typeof esquemaConcluirRecebimento>;
 
 export { TIPOS_DE_ATIVO };
 
@@ -329,7 +329,11 @@ const nomeDoItem = z
   .min(2, { error: "Informe o nome com pelo menos 2 letras." })
   .max(60, { error: "Use até 60 caracteres no nome." });
 
-/** O que o "+" cria: marca, modelo (de uma marca), gestor, operação, CR (de uma operação), filial e garagem (de uma filial). */
+/**
+ * O que o "+" cria: marca, modelo (de uma marca), gestor, operação, CR e filial. O CR pede o código
+ * do Sankhya (CODCENCUS, obrigatório: todo CR vem do Sankhya); a operação dele é opcional. A garagem
+ * saiu: garagem é a filial (as 3).
+ */
 export const esquemaItemDeCatalogo = z.discriminatedUnion(
   "tipo",
   [
@@ -344,10 +348,14 @@ export const esquemaItemDeCatalogo = z.discriminatedUnion(
         .trim()
         .min(2, { error: "Informe o código do CR com pelo menos 2 caracteres." })
         .max(60, { error: "Use até 60 caracteres no código do CR." }),
-      paiId: id("a operação"),
+      codcencus: z
+        .number({ error: "Informe o código do Sankhya (CODCENCUS)." })
+        .int({ error: "O código do Sankhya é um número inteiro." })
+        .positive({ error: "O código do Sankhya é um número inteiro maior que zero." })
+        .max(Number.MAX_SAFE_INTEGER, { error: "O código do Sankhya é grande demais." }),
+      paiId: id("a operação").optional(),
     }),
     z.object({ tipo: z.literal("filial"), nome: nomeDoItem }),
-    z.object({ tipo: z.literal("garagem"), nome: nomeDoItem, paiId: id("a filial") }),
   ],
   { error: "Escolha o que cadastrar." },
 );

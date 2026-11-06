@@ -6,20 +6,31 @@ import { agoraEmSaoPaulo, hojeEmSaoPaulo } from "@/components/formato/data";
 import {
   type ContextoDaEscrita,
   executarCadastrarPlaca,
+  executarConcluirRecebimento,
   executarCriarItemDeCatalogo,
-  executarDisponibilizar,
+  executarDisponibilizarPlaca,
+  executarEntregarAoOperacional,
   executarReceber,
 } from "@/lib/dados/escrita";
 import type { AtualDaAcao, ItemCriado, PlacaGravada } from "@/lib/dados/escrita-tipos";
-import { ErroDeGravacaoEmBreve, fonteDeEscrita } from "@/lib/dados/fonte";
-import { ErroDePermissao, ErroDeSessao, exigirPermissao } from "@/lib/seguranca/exigir-permissao";
+import { fonteDeEscrita } from "@/lib/dados/fonte";
+import type { PedidoDeTransferencia } from "@/lib/dominio/custodia";
+import {
+  ErroDePermissao,
+  ErroDeSessao,
+  exigirPermissao,
+  type Permissao,
+} from "@/lib/seguranca/exigir-permissao";
 import { gestorAtual } from "@/lib/seguranca/gestor-atual";
 import { erroDaAcao, type ResultadoDaAcao } from "@/lib/wizard/resultado";
 
 // As Server Actions de escrita da Frota. São finas: conferem a permissão (`exigirPermissao`), conferem
 // o envelope (`chaveDeEnvio` e `dados`) com Zod, deixam o miolo (`lib/dados/escrita.ts`) validar os
 // dados com o MESMO esquema da tela e gravar pela fonte, e, só se gravou, invalidam o cache das telas
-// afetadas (a lista e a ficha da placa). Devolvem sempre a linha ou um erro tipado; nunca lançam.
+// afetadas (a lista, a ficha da placa e, nas transferências, o selo "Para receber" do menu). Devolvem
+// sempre a linha ou um erro tipado; nunca lançam. Cadastrar e o "+" pedem frota.criar; entregar,
+// disponibilizar, receber e concluir mexem numa placa que já existe e pedem frota.editar. O banco
+// confere de novo, com o escopo (RLS e as funções atômicas).
 
 const ENVELOPE = z.object({ chaveDeEnvio: z.string(), dados: z.unknown() });
 
@@ -33,9 +44,11 @@ async function executar<T>(
   bruto: unknown,
   miolo: Miolo<T>,
   caminhosAfetados: (linha: T) => string[],
+  permissao: Permissao = { modulo: "frota", acao: "criar" },
+  menu = false,
 ): Promise<ResultadoDaAcao<T, AtualDaAcao>> {
   try {
-    await exigirPermissao({ modulo: "frota", acao: "criar" });
+    await exigirPermissao(permissao);
   } catch (erro) {
     if (erro instanceof ErroDePermissao || erro instanceof ErroDeSessao)
       return erroDaAcao("sem_permissao", { mensagem: erro.message });
@@ -57,9 +70,6 @@ async function executar<T>(
       gestorId: await gestorAtual(),
     });
   } catch (erro) {
-    // Modo banco: as gravações entram na 3.9b; a tela mostra o aviso, sem gravar.
-    if (erro instanceof ErroDeGravacaoEmBreve)
-      return erroDaAcao("falha", { mensagem: erro.message });
     console.error("ação de escrita falhou:", erro);
     return erroDaAcao("falha");
   }
@@ -67,25 +77,36 @@ async function executar<T>(
     for (const caminho of new Set(["/frota/placas", ...caminhosAfetados(resultado.linha)])) {
       revalidatePath(caminho);
     }
+    // O selo do menu (quantas placas esperam por quem usa) mora no layout do sistema.
+    if (menu) revalidatePath("/", "layout");
   }
   return resultado;
 }
 
-const daPlaca = (linha: PlacaGravada) => [`/frota/placas/${linha.placa}`];
+const daPlaca = (linha: { placa: string }) => [`/frota/placas/${linha.placa}`];
+const EDITAR: Permissao = { modulo: "frota", acao: "editar" };
 
 export async function cadastrarPlacaAcao(bruto: unknown) {
-  return executar(bruto, executarCadastrarPlaca, daPlaca);
+  return executar<PlacaGravada>(bruto, executarCadastrarPlaca, daPlaca);
+}
+
+export async function entregarAoOperacionalAcao(bruto: unknown) {
+  return executar<PlacaGravada>(bruto, executarEntregarAoOperacional, daPlaca, EDITAR);
 }
 
 export async function disponibilizarPlacaAcao(bruto: unknown) {
-  return executar(bruto, executarDisponibilizar, daPlaca);
+  return executar<PedidoDeTransferencia>(bruto, executarDisponibilizarPlaca, daPlaca, EDITAR, true);
 }
 
 export async function receberPlacaAcao(bruto: unknown) {
-  return executar(bruto, executarReceber, daPlaca);
+  return executar<PedidoDeTransferencia>(bruto, executarReceber, daPlaca, EDITAR, true);
 }
 
-/** O que o "+" cria (marca, modelo, gestor, operação, CR, filial e garagem). */
+export async function concluirRecebimentoAcao(bruto: unknown) {
+  return executar<PlacaGravada>(bruto, executarConcluirRecebimento, daPlaca, EDITAR, true);
+}
+
+/** O que o "+" cria (marca, modelo, gestor, operação, CR e filial). */
 export async function criarItemDeCatalogoAcao(bruto: unknown) {
   return executar<ItemCriado>(bruto, executarCriarItemDeCatalogo, () => []);
 }

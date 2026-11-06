@@ -1,0 +1,267 @@
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  type ClienteDeEscrita,
+  contarParaReceberNoBanco,
+  type ErroDoBanco,
+  escritaDoBanco,
+  resultadoDoErro,
+} from "./escrita-do-banco";
+
+// A escrita pelo banco (3.9b-1): as funções atômicas com a chave de envio e a versão, e o erro do
+// Postgres virando resultado tipado. O cliente é um simulado com a forma do Supabase.
+
+const CHAVE = "11111111-1111-4111-8111-111111111111";
+
+const placaDoBanco = {
+  ativo_id: "a-1",
+  placa: "AAA1A11",
+  tipo: "cavalo",
+  renavam: "00639884962",
+  modelo: "FH 540",
+  modelo_id: "m-1",
+  marca_id: "ma-1",
+  marca: "Volvo",
+  ano: 2022,
+  sigla: "PÁT",
+  desde: "2026-11-01T08:00",
+  gestor_id: "g-1",
+  gestor: "Gestor 1",
+  operacao_id: "o-1",
+  operacao: "Operação Matriz",
+  cr: "2010101",
+  filial_id: null,
+  filial: null,
+  garagem: "Matriz",
+  versao: 3,
+};
+const pedidoDoBanco = {
+  id: "t-1",
+  placa: "AAA1A11",
+  de_gestor_id: "g-1",
+  de_gestor: "Gestor 1",
+  para_gestor_id: "g-2",
+  para_gestor: "Gestor 2",
+  motivo: "Troca",
+  situacao: "em_conferencia",
+  versao: 2,
+  criado_em: "2026-11-06T09:00",
+  recebida_em: "2026-11-06T10:00",
+  pendencias: [{ id: "p-1", texto: "CRLV", resposta: null, nota: null }],
+};
+
+type Respostas = Record<string, { data: unknown; error: ErroDoBanco | null }>;
+let respostas: Respostas;
+const rpc = vi.fn(async (funcao: string, argumentos?: Record<string, unknown>) => {
+  void argumentos;
+  return respostas[funcao] ?? { data: null, error: null };
+});
+const update = vi.fn((valores: Record<string, unknown>) => ({
+  valores,
+  eq: () => ({
+    select: () => ({ single: async () => respostas.update ?? { data: {}, error: null } }),
+  }),
+}));
+const insert = vi.fn((linha: Record<string, unknown>) => ({
+  linha,
+  select: () => ({ single: async () => respostas.insert ?? { data: null, error: null } }),
+}));
+const cliente: ClienteDeEscrita = {
+  schema: () => ({ rpc, from: () => ({ insert, update }) }),
+};
+const fonte = escritaDoBanco(async () => cliente);
+
+beforeEach(() => {
+  respostas = {};
+  rpc.mockClear();
+  update.mockClear();
+  insert.mockClear();
+  vi.spyOn(console, "error").mockImplementation(() => undefined);
+});
+
+describe("resultadoDoErro: o código do Postgres decide o resultado tipado", () => {
+  it("42501 sem permissão, 40001 conflito, regra (23514, 23503, 22xxx, P0001) entrada inválida, o resto falha", () => {
+    const codigo = (code: string) => {
+      const r = resultadoDoErro({ code, message: "mensagem do banco" });
+      return r.ok ? "ok" : r.erro.codigo;
+    };
+    expect(codigo("42501")).toBe("sem_permissao");
+    expect(codigo("40001")).toBe("conflito");
+    for (const c of ["23514", "23503", "22023", "P0001", "23505"])
+      expect(codigo(c), c).toBe("entrada_invalida");
+    expect(codigo("XX000")).toBe("falha");
+  });
+  it("a mensagem de regra do banco (em português) chega à tela; a de falha, não", () => {
+    const regra = resultadoDoErro({ code: "23514", message: "Diga na nota o que ficou pendente." });
+    expect(!regra.ok && regra.erro.mensagem).toBe("Diga na nota o que ficou pendente.");
+    const falha = resultadoDoErro({ code: "XX000", message: "detalhe interno" });
+    expect(!falha.ok && falha.erro.mensagem).not.toMatch(/detalhe interno/);
+  });
+});
+
+describe("cadastrarPlaca pelo banco", () => {
+  const entrada = {
+    placa: "AAA1A11",
+    renavam: "00639884962",
+    tipo: "implemento" as const,
+    marcaId: "ma-1",
+    modeloId: "m-1",
+    ano: 2022,
+    gestorId: "g-1",
+    operacaoId: "o-1",
+    crId: "c-1",
+    situacaoInicial: "PÁT" as const,
+    funcao: "semirreboque" as const,
+    carroceriaId: "car-1",
+    eixos: 3,
+    valorManualCentavos: 12_345,
+    fonteDoValor: "Nota",
+    dataDoValor: "2026-09-10",
+  };
+  it("chama cadastrar_ativo com a chave, a função, a carroceria e os eixos, grava ano e valor e devolve a linha", async () => {
+    respostas.cadastrar_ativo = { data: "a-1", error: null };
+    respostas.placa_para_assistente = {
+      data: { ...placaDoBanco, tipo: "implemento" },
+      error: null,
+    };
+    const r = await fonte.cadastrarPlaca(entrada, CHAVE, "2026-11-06T09:00");
+    expect(rpc).toHaveBeenCalledWith(
+      "cadastrar_ativo",
+      expect.objectContaining({
+        p_tipo: "implemento",
+        p_funcao: "semirreboque",
+        p_carroceria_id: "car-1",
+        p_eixos: 3,
+        p_cr_id: "c-1",
+        p_operacao_id: "o-1",
+        p_chave: CHAVE,
+      }),
+    );
+    expect(update).toHaveBeenCalledWith({
+      ano_fabricacao: 2022,
+      valor_manual: 123.45,
+      valor_manual_fonte: "Nota",
+      valor_manual_em: "2026-09-10",
+    });
+    expect(r.ok && r.linha).toMatchObject({ placa: "AAA1A11", versao: 3 });
+  });
+  it("placa repetida (23505) vira placa_ja_existe, com a placa que está lá", async () => {
+    respostas.cadastrar_ativo = {
+      data: null,
+      error: { code: "23505", message: "duplicate key placa" },
+    };
+    respostas.placa_para_assistente = { data: placaDoBanco, error: null };
+    const r = await fonte.cadastrarPlaca(entrada, CHAVE, "");
+    expect(!r.ok && r.erro.codigo).toBe("placa_ja_existe");
+    expect(!r.ok && (r.erro.atual as { placa: string }).placa).toBe("AAA1A11");
+    expect(update).not.toHaveBeenCalled();
+  });
+  it("sem permissão (42501) não grava o valor", async () => {
+    respostas.cadastrar_ativo = {
+      data: null,
+      error: { code: "42501", message: "Você não tem permissão para cadastrar placas." },
+    };
+    const r = await fonte.cadastrarPlaca(entrada, CHAVE, "");
+    expect(!r.ok && r.erro.codigo).toBe("sem_permissao");
+    expect(update).not.toHaveBeenCalled();
+  });
+});
+
+describe("as transferências pelo banco", () => {
+  it("receber: conflito de versão (40001) traz o pedido como está agora", async () => {
+    respostas.receber_placa = { data: null, error: { code: "40001", message: "mudou" } };
+    respostas.pedido_aberto_da_placa = { data: pedidoDoBanco, error: null };
+    const r = await fonte.receberPlaca(
+      { placa: "AAA1A11", pedidoId: "t-1", versaoDoPedido: 1, conferido: true },
+      CHAVE,
+      "",
+      "g-2",
+    );
+    expect(rpc).toHaveBeenCalledWith("receber_placa", {
+      p_transferencia_id: "t-1",
+      p_versao: 1,
+      p_chave: CHAVE,
+    });
+    expect(!r.ok && r.erro.codigo).toBe("conflito");
+    expect(!r.ok && r.erro.atual).toMatchObject({
+      situacao: "em_conferencia",
+      versao: 2,
+      deGestor: "Gestor 1",
+    });
+  });
+  it("concluir manda cada resposta (resolvida e nota) e devolve a placa", async () => {
+    respostas.concluir_recebimento = { data: "t-1", error: null };
+    respostas.placa_para_assistente = { data: { ...placaDoBanco, gestor_id: "g-2" }, error: null };
+    const r = await fonte.concluirRecebimento(
+      {
+        placa: "AAA1A11",
+        pedidoId: "t-1",
+        versaoDoPedido: 2,
+        pendencias: [{ id: "p-1", resolvida: false, nota: "Em dezembro" }],
+      },
+      CHAVE,
+      "",
+      "g-2",
+    );
+    expect(rpc).toHaveBeenCalledWith("concluir_recebimento", {
+      p_transferencia_id: "t-1",
+      p_versao: 2,
+      p_respostas: [{ id: "p-1", resolvida: false, nota: "Em dezembro" }],
+      p_chave: CHAVE,
+    });
+    expect(r.ok && r.linha.gestorId).toBe("g-2");
+  });
+  it("disponibilizar passa o ativo, o destino, o motivo, as pendências e a versão", async () => {
+    respostas.placa_para_assistente = { data: placaDoBanco, error: null };
+    respostas.disponibilizar_placa = { data: "t-9", error: null };
+    respostas.pedido_aberto_da_placa = {
+      data: { ...pedidoDoBanco, situacao: "pendente", versao: 1 },
+      error: null,
+    };
+    const r = await fonte.disponibilizarPlaca(
+      {
+        placa: "AAA1A11",
+        paraGestorId: "g-2",
+        motivo: "Troca",
+        pendenciasConhecidas: ["CRLV"],
+        versaoDaPlaca: 3,
+      },
+      CHAVE,
+      "",
+    );
+    expect(rpc).toHaveBeenCalledWith("disponibilizar_placa", {
+      p_ativo_id: "a-1",
+      p_para_gestor_id: "g-2",
+      p_motivo: "Troca",
+      p_pendencias: ["CRLV"],
+      p_versao: 3,
+      p_chave: CHAVE,
+    });
+    expect(r.ok && r.linha.situacao).toBe("pendente");
+  });
+});
+
+describe("o + e a contagem pelo banco", () => {
+  it("o CR vai por criar_cr com o CODCENCUS; operação nova é recusada (é do módulo Operações)", async () => {
+    respostas.criar_cr = { data: "cr-9", error: null };
+    const r = await fonte.criarItemDeCatalogo(
+      { tipo: "cr", nome: "2010101", codcencus: 2010101 },
+      CHAVE,
+    );
+    expect(rpc).toHaveBeenCalledWith("criar_cr", {
+      p_codcencus: 2010101,
+      p_codigo: "2010101",
+      p_nome: "2010101",
+      p_chave: CHAVE,
+    });
+    expect(r.ok && r.linha.id).toBe("cr-9");
+    const op = await fonte.criarItemDeCatalogo({ tipo: "operacao", nome: "Nova" }, CHAVE);
+    expect(!op.ok && op.erro.mensagem).toMatch(/módulo Operações/);
+    expect(fonte.criaveis).toEqual(["marca", "modelo", "cr"]);
+  });
+  it("a contagem do que espera por quem usa vem pronta do banco; erro conta zero", async () => {
+    respostas.contar_para_receber = { data: 2, error: null };
+    expect(await contarParaReceberNoBanco(cliente)).toBe(2);
+    respostas.contar_para_receber = { data: null, error: { message: "fora" } };
+    expect(await contarParaReceberNoBanco(cliente)).toBe(0);
+  });
+});

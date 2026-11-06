@@ -9,7 +9,6 @@ import { CampoMoeda, Moeda } from "@/components/formato/moeda";
 import { Assistente } from "@/components/wizard/assistente";
 import {
   Campo,
-  CampoComMais,
   CLASSE_DO_CAMPO,
   GradeDeCampos,
   type OpcaoDeSelecao,
@@ -19,19 +18,22 @@ import { paraEntradaDoCadastro } from "@/lib/dados/entradas-dos-assistentes";
 import type { Catalogos, ItemCriado, PlacaGravada } from "@/lib/dados/escrita-tipos";
 import { NOMES_DOS_TIPOS } from "@/lib/dados/placas-tipos";
 import {
+  EIXOS_DO_SEMIRREBOQUE,
   esquemaCadastrarPlaca,
   siglasIniciaisDoTipo,
   TIPOS_DE_ATIVO,
+  type TipoDeItemDeCatalogo,
 } from "@/lib/dominio/esquemas/placa";
 import { NOMES_DAS_SIGLAS, type Sigla } from "@/lib/dominio/status";
 import { useUsuarioDaSessao } from "@/components/navegacao/usuario-da-sessao";
 import type { DefinicaoDeAssistente } from "@/lib/wizard/passos";
 import { cadastrarPlacaAcao } from "../acoes";
 import { errosDoResolvedor } from "./erros-do-resolvedor";
-import { ACAO_DO_MAIS, renderizarMini } from "./mini-cadastro-de-catalogo";
+import { CampoDoCatalogo } from "./mini-cadastro-de-catalogo";
 
 // Cadastrar placa: seis passos. O mesmo esquema Zod do servidor valida aqui; o "+" cria, na hora,
-// o que falta (marca, modelo, gestor, operação, CR, filial e garagem).
+// o que falta (no banco, marca, modelo e CR). O implemento diz a função, a carroceria e os eixos.
+// Operação e CR são obrigatórios. Sem filial nem garagem: a garagem vem do CR (garagem = filial).
 
 export interface ValoresDoCadastro {
   placa: string;
@@ -41,6 +43,11 @@ export interface ValoresDoCadastro {
   modeloId: string;
   /** Texto do campo; vira número só na conferência. */
   ano: string;
+  /** Só do implemento: semirreboque ou dolly. */
+  funcao: string;
+  carroceriaId: string;
+  /** Texto do campo; vira número na conferência. */
+  eixos: string;
   codigoFipe: string;
   valorFipeCentavos: number;
   valorManualCentavos: number;
@@ -49,8 +56,6 @@ export interface ValoresDoCadastro {
   gestorId: string;
   operacaoId: string;
   crId: string;
-  filialId: string;
-  garagemId: string;
   situacaoInicial: string;
 }
 
@@ -61,6 +66,9 @@ const VALORES_INICIAIS: ValoresDoCadastro = {
   marcaId: "",
   modeloId: "",
   ano: "",
+  funcao: "",
+  carroceriaId: "",
+  eixos: "",
   codigoFipe: "",
   valorFipeCentavos: 0,
   valorManualCentavos: 0,
@@ -69,22 +77,24 @@ const VALORES_INICIAIS: ValoresDoCadastro = {
   gestorId: "",
   operacaoId: "",
   crId: "",
-  filialId: "",
-  garagemId: "",
   situacaoInicial: "PÁT",
 };
 
 export const DEFINICAO_DO_CADASTRO: DefinicaoDeAssistente = {
   id: "cadastrar-placa",
   titulo: "Cadastrar placa",
-  versaoDoEsquema: 2,
+  versaoDoEsquema: 3,
   passos: [
     {
       id: "identificacao",
       titulo: "Identificação",
       campos: ["placa", "renavam", "tipo", "ano"],
     },
-    { id: "veiculo", titulo: "Veículo", campos: ["marcaId", "modeloId"] },
+    {
+      id: "veiculo",
+      titulo: "Veículo",
+      campos: ["marcaId", "modeloId", "funcao", "carroceriaId", "eixos"],
+    },
     {
       id: "valor",
       titulo: "Valor",
@@ -97,11 +107,7 @@ export const DEFINICAO_DO_CADASTRO: DefinicaoDeAssistente = {
       ],
     },
     { id: "posse", titulo: "Posse", campos: ["gestorId", "operacaoId", "crId"] },
-    {
-      id: "local",
-      titulo: "Local e situação",
-      campos: ["filialId", "garagemId", "situacaoInicial"],
-    },
+    { id: "situacao", titulo: "Situação inicial", campos: ["situacaoInicial"] },
     { id: "conferir", titulo: "Conferir", campos: [] },
   ],
 };
@@ -114,6 +120,9 @@ const esquemaDoRascunho = z
     marcaId: z.string().max(100),
     modeloId: z.string().max(100),
     ano: z.string().max(10),
+    funcao: z.string().max(20),
+    carroceriaId: z.string().max(100),
+    eixos: z.string().max(2),
     codigoFipe: z.string().max(20),
     valorFipeCentavos: z.number().int(),
     valorManualCentavos: z.number().int(),
@@ -122,8 +131,6 @@ const esquemaDoRascunho = z
     gestorId: z.string().max(100),
     operacaoId: z.string().max(100),
     crId: z.string().max(100),
-    filialId: z.string().max(100),
-    garagemId: z.string().max(100),
     situacaoInicial: z.string().max(10),
   })
   .partial();
@@ -136,7 +143,6 @@ function criarResolver(anoAtual: number, hoje: string): Resolver<ValoresDoCadast
     // Sem o tipo, a união do Zod só acusaria o tipo; confere o resto como um tipo qualquer.
     const entrada = paraEntradaDoCadastro({
       ...valores,
-      ano: valores.ano === "" ? undefined : Number(valores.ano),
       tipo: valores.tipo === "" ? "apoio" : valores.tipo,
     });
     const resultado = esquema.safeParse(entrada);
@@ -199,10 +205,7 @@ export function CadastrarPlaca({
       aoConcluir={(valores, chaveDeEnvio) =>
         cadastrarPlacaAcao({
           chaveDeEnvio,
-          dados: paraEntradaDoCadastro({
-            ...valores,
-            ano: valores.ano === "" ? undefined : Number(valores.ano),
-          }),
+          dados: paraEntradaDoCadastro({ ...valores }),
         })
       }
       descreverAtual={(atual) => {
@@ -238,6 +241,22 @@ export function CadastrarPlaca({
             { rotulo: "Marca", valor: nome(catalogos.marcas, v.marcaId) },
             { rotulo: "Modelo", valor: modeloNome(v.modeloId) },
             { rotulo: "Ano", valor: v.ano },
+            ...(v.tipo === "implemento"
+              ? [
+                  {
+                    rotulo: "Função",
+                    valor: v.funcao === "dolly" ? "Dolly" : v.funcao ? "Semirreboque" : "",
+                  },
+                  {
+                    rotulo: "Carroceria",
+                    valor:
+                      v.funcao === "dolly"
+                        ? "Sem carroceria"
+                        : nome(catalogos.carrocerias, v.carroceriaId),
+                  },
+                  { rotulo: "Eixos", valor: v.funcao === "dolly" ? "2" : v.eixos },
+                ]
+              : []),
           ],
         },
         {
@@ -268,10 +287,8 @@ export function CadastrarPlaca({
           ],
         },
         {
-          titulo: "Local e situação",
+          titulo: "Situação inicial",
           linhas: [
-            { rotulo: "Filial", valor: nome(catalogos.filiais, v.filialId) },
-            { rotulo: "Garagem", valor: nome(catalogos.garagens, v.garagemId) },
             {
               rotulo: "Situação inicial",
               valor: v.situacaoInicial
@@ -300,13 +317,10 @@ export function CadastrarPlaca({
             ) : null}
             .
           </>,
-          operacao ? (
-            <>
-              Os custos passam a cair no CR <b>{cr || "a escolher"}</b>, na <b>{operacao}</b>.
-            </>
-          ) : (
-            "A placa fica sem operação e sem CR por enquanto."
-          ),
+          <>
+            Os custos passam a cair no CR <b>{cr || "a escolher"}</b>, na{" "}
+            <b>{operacao || "operação a escolher"}</b>. A garagem da placa é a do CR.
+          </>,
           <>
             Um evento é registrado na linha do tempo da placa, em{" "}
             <b>{formatarDataEHora(agoraEmSaoPaulo(new Date()))}</b>.
@@ -319,6 +333,7 @@ export function CadastrarPlaca({
           passo={passo.id}
           form={form}
           catalogos={catalogos}
+          criaveis={dados.criaveis}
           aoItemCriado={aoItemCriado}
         />
       )}
@@ -330,18 +345,20 @@ function PassoDoCadastro({
   passo,
   form,
   catalogos,
+  criaveis,
   aoItemCriado,
 }: {
   passo: string;
   form: UseFormReturn<ValoresDoCadastro>;
   catalogos: Catalogos;
+  criaveis: readonly TipoDeItemDeCatalogo[];
   aoItemCriado: (item: ItemCriado) => void;
 }) {
   const erros = form.formState.errors;
   const tipo = form.watch("tipo");
   const marcaId = form.watch("marcaId");
   const operacaoId = form.watch("operacaoId");
-  const filialId = form.watch("filialId");
+  const funcao = form.watch("funcao");
   if (passo === "identificacao") {
     return (
       <>
@@ -401,44 +418,94 @@ function PassoDoCadastro({
   if (passo === "veiculo") {
     const modelos = catalogos.modelos.filter((m) => m.marcaId === marcaId);
     return (
-      <GradeDeCampos>
-        <Controller
-          control={form.control}
-          name="marcaId"
-          render={({ field }) => (
-            <CampoComMais
-              rotulo="Marca"
-              rotuloDoMais={ACAO_DO_MAIS("marca")}
-              opcoes={catalogos.marcas}
-              valor={field.value}
-              aoMudar={(id) => {
-                if (id !== field.value) form.setValue("modeloId", "");
-                field.onChange(id);
-              }}
-              erro={erros.marcaId?.message}
-              semOpcao="Nenhuma marca ainda. Use o + para cadastrar a primeira."
-              renderMini={(m) => renderizarMini(m, "marca", undefined, aoItemCriado)}
-            />
-          )}
-        />
-        <Controller
-          control={form.control}
-          name="modeloId"
-          render={({ field }) => (
-            <CampoComMais
-              rotulo="Modelo"
-              rotuloDoMais={ACAO_DO_MAIS("modelo")}
-              opcoes={modelos}
-              valor={field.value}
-              aoMudar={field.onChange}
-              erro={erros.modeloId?.message}
-              desligadoPorque={marcaId ? undefined : "Escolha a marca primeiro."}
-              semOpcao="Esta marca ainda não tem modelo. Use o + para cadastrar."
-              renderMini={(m) => renderizarMini(m, "modelo", marcaId, aoItemCriado)}
-            />
-          )}
-        />
-      </GradeDeCampos>
+      <>
+        <GradeDeCampos>
+          <Controller
+            control={form.control}
+            name="marcaId"
+            render={({ field }) => (
+              <CampoDoCatalogo
+                rotulo="Marca"
+                tipo="marca"
+                criaveis={criaveis}
+                opcoes={catalogos.marcas}
+                valor={field.value}
+                aoMudar={(id) => {
+                  if (id !== field.value) form.setValue("modeloId", "");
+                  field.onChange(id);
+                }}
+                erro={erros.marcaId?.message}
+                semOpcao="Nenhuma marca ainda."
+                aoItemCriado={aoItemCriado}
+              />
+            )}
+          />
+          <Controller
+            control={form.control}
+            name="modeloId"
+            render={({ field }) => (
+              <CampoDoCatalogo
+                rotulo="Modelo"
+                tipo="modelo"
+                criaveis={criaveis}
+                opcoes={modelos}
+                valor={field.value}
+                aoMudar={field.onChange}
+                erro={erros.modeloId?.message}
+                desligadoPorque={marcaId ? undefined : "Escolha a marca primeiro."}
+                semOpcao="Esta marca ainda não tem modelo."
+                paiId={marcaId}
+                aoItemCriado={aoItemCriado}
+              />
+            )}
+          />
+        </GradeDeCampos>
+        {tipo === "implemento" ? (
+          <GradeDeCampos>
+            <Campo rotulo="Função" erro={erros.funcao?.message}>
+              {(p) => (
+                <select {...p} {...form.register("funcao")} className={CLASSE_DO_CAMPO}>
+                  <option value="">Escolha…</option>
+                  <option value="semirreboque">Semirreboque</option>
+                  <option value="dolly">Dolly</option>
+                </select>
+              )}
+            </Campo>
+            {funcao === "dolly" ? (
+              <p className="text-muted-foreground self-end text-sm">
+                O dolly não tem carroceria e tem sempre 2 eixos.
+              </p>
+            ) : (
+              <>
+                <Campo rotulo="Carroceria" erro={erros.carroceriaId?.message}>
+                  {(p) => (
+                    <select {...p} {...form.register("carroceriaId")} className={CLASSE_DO_CAMPO}>
+                      <option value="">Escolha…</option>
+                      {catalogos.carrocerias.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.nome}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                </Campo>
+                <Campo rotulo="Eixos" erro={erros.eixos?.message}>
+                  {(p) => (
+                    <select {...p} {...form.register("eixos")} className={CLASSE_DO_CAMPO}>
+                      <option value="">Escolha…</option>
+                      {EIXOS_DO_SEMIRREBOQUE.map((n) => (
+                        <option key={n} value={String(n)}>
+                          {n}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                </Campo>
+              </>
+            )}
+          </GradeDeCampos>
+        ) : null}
+      </>
     );
   }
 
@@ -487,8 +554,9 @@ function PassoDoCadastro({
   }
 
   if (passo === "posse") {
+    // Os CRs da operação escolhida, mais os que ainda não têm operação (o Sankhya nem sempre diz).
     const crs = catalogos.crs
-      .filter((c) => c.operacaoId === operacaoId)
+      .filter((c) => c.operacaoId === null || c.operacaoId === operacaoId)
       .map((c) => ({ id: c.id, nome: c.codigo }));
     return (
       <>
@@ -496,15 +564,16 @@ function PassoDoCadastro({
           control={form.control}
           name="gestorId"
           render={({ field }) => (
-            <CampoComMais
+            <CampoDoCatalogo
               rotulo="Gestor de frota"
-              rotuloDoMais={ACAO_DO_MAIS("gestor")}
+              tipo="gestor"
+              criaveis={criaveis}
               opcoes={catalogos.gestores}
               valor={field.value}
               aoMudar={field.onChange}
               erro={erros.gestorId?.message}
-              semOpcao="Nenhum gestor ainda. Use o + para cadastrar o primeiro."
-              renderMini={(m) => renderizarMini(m, "gestor", undefined, aoItemCriado)}
+              semOpcao="Nenhum gestor de frota ainda."
+              aoItemCriado={aoItemCriado}
             />
           )}
         />
@@ -513,9 +582,10 @@ function PassoDoCadastro({
             control={form.control}
             name="operacaoId"
             render={({ field }) => (
-              <CampoComMais
+              <CampoDoCatalogo
                 rotulo="Operação"
-                rotuloDoMais={ACAO_DO_MAIS("operacao")}
+                tipo="operacao"
+                criaveis={criaveis}
                 opcoes={catalogos.operacoes}
                 valor={field.value}
                 aoMudar={(id) => {
@@ -523,7 +593,8 @@ function PassoDoCadastro({
                   field.onChange(id);
                 }}
                 erro={erros.operacaoId?.message}
-                renderMini={(m) => renderizarMini(m, "operacao", undefined, aoItemCriado)}
+                semOpcao="Nenhuma operação ainda."
+                aoItemCriado={aoItemCriado}
               />
             )}
           />
@@ -531,16 +602,18 @@ function PassoDoCadastro({
             control={form.control}
             name="crId"
             render={({ field }) => (
-              <CampoComMais
+              <CampoDoCatalogo
                 rotulo="CR"
-                rotuloDoMais={ACAO_DO_MAIS("cr")}
+                tipo="cr"
+                criaveis={criaveis}
                 opcoes={crs}
                 valor={field.value}
                 aoMudar={field.onChange}
                 erro={erros.crId?.message}
                 desligadoPorque={operacaoId ? undefined : "Escolha a operação primeiro."}
-                semOpcao="Esta operação ainda não tem CR. Use o + para cadastrar."
-                renderMini={(m) => renderizarMini(m, "cr", operacaoId, aoItemCriado)}
+                semOpcao="Nenhum CR livre para esta operação."
+                paiId={operacaoId || undefined}
+                aoItemCriado={aoItemCriado}
               />
             )}
           />
@@ -549,49 +622,10 @@ function PassoDoCadastro({
     );
   }
 
-  // local
-  const garagens = catalogos.garagens.filter((g) => g.filialId === filialId);
+  // situação inicial
   const situacoes = siglasIniciaisDoTipo((tipo || "apoio") as never);
   return (
     <>
-      <GradeDeCampos>
-        <Controller
-          control={form.control}
-          name="filialId"
-          render={({ field }) => (
-            <CampoComMais
-              rotulo="Filial"
-              rotuloDoMais={ACAO_DO_MAIS("filial")}
-              opcoes={catalogos.filiais}
-              valor={field.value}
-              aoMudar={(id) => {
-                if (id !== field.value) form.setValue("garagemId", "");
-                field.onChange(id);
-              }}
-              erro={erros.filialId?.message}
-              semOpcao="Nenhuma filial ainda. Use o + para cadastrar a primeira."
-              renderMini={(m) => renderizarMini(m, "filial", undefined, aoItemCriado)}
-            />
-          )}
-        />
-        <Controller
-          control={form.control}
-          name="garagemId"
-          render={({ field }) => (
-            <CampoComMais
-              rotulo="Garagem"
-              rotuloDoMais={ACAO_DO_MAIS("garagem")}
-              opcoes={garagens}
-              valor={field.value}
-              aoMudar={field.onChange}
-              erro={erros.garagemId?.message}
-              desligadoPorque={filialId ? undefined : "Escolha a filial primeiro."}
-              semOpcao="Esta filial ainda não tem garagem. Use o + para cadastrar."
-              renderMini={(m) => renderizarMini(m, "garagem", filialId, aoItemCriado)}
-            />
-          )}
-        />
-      </GradeDeCampos>
       <Campo rotulo="Situação inicial" erro={erros.situacaoInicial?.message}>
         {(p) => (
           <select {...p} {...form.register("situacaoInicial")} className={CLASSE_DO_CAMPO}>
@@ -603,6 +637,9 @@ function PassoDoCadastro({
           </select>
         )}
       </Campo>
+      <p className="text-muted-foreground text-sm">
+        A garagem da placa (uma das 3 filiais) vem do CR escolhido.
+      </p>
     </>
   );
 }

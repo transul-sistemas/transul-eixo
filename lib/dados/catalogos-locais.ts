@@ -8,12 +8,11 @@ export function mesclarCatalogos(base: Catalogos, criados: readonly ItemCriado[]
   const c: Catalogos = {
     marcas: [...base.marcas],
     modelos: [...base.modelos],
+    carrocerias: [...base.carrocerias],
     gestores: [...base.gestores],
     operacoes: [...base.operacoes],
     crs: [...base.crs],
     filiais: [...base.filiais],
-    garagens: [...base.garagens],
-    motoristas: [...base.motoristas],
   };
   const tem = (lista: readonly { id: string }[], id: string) => lista.some((i) => i.id === id);
   for (const item of criados) {
@@ -32,13 +31,10 @@ export function mesclarCatalogos(base: Catalogos, criados: readonly ItemCriado[]
         if (!tem(c.operacoes, id)) c.operacoes.push({ id, nome });
         break;
       case "cr":
-        if (paiId && !tem(c.crs, id)) c.crs.push({ id, codigo: nome, operacaoId: paiId });
+        if (!tem(c.crs, id)) c.crs.push({ id, codigo: nome, operacaoId: paiId ?? null });
         break;
       case "filial":
         if (!tem(c.filiais, id)) c.filiais.push({ id, nome });
-        break;
-      case "garagem":
-        if (paiId && !tem(c.garagens, id)) c.garagens.push({ id, nome, filialId: paiId });
         break;
     }
   }

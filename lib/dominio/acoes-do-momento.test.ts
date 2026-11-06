@@ -3,99 +3,89 @@ import { ACOES } from "@/lib/navegacao/acoes";
 import { SIGLAS, SIGLAS_DE_BAIXA } from "./status";
 import { idsDasAcoesDoMomento } from "./acoes-do-momento";
 
-const DISPONIBILIZAR = "frota.disponibilizar-ao-operacional";
+const ENTREGAR = "frota.entregar-ao-operacional";
+const DISPONIBILIZAR = "frota.disponibilizar-placa";
 const RECEBER = "frota.receber-placa";
+const CONCLUIR = "frota.concluir-recebimento";
 
-describe("idsDasAcoesDoMomento: quais ações de ACOES combinam com a placa (regra provisória)", () => {
-  it("carreta (implemento) em PÁT ou ETv não tem o botão Disponibilizar ao Operacional", () => {
+describe("idsDasAcoesDoMomento: quais ações de ACOES combinam com a placa", () => {
+  it("carreta (implemento) em PÁT ou ETv não tem o botão Entregar ao Operacional", () => {
     for (const sigla of ["PÁT", "ETv"] as const) {
-      expect(idsDasAcoesDoMomento({ sigla, tipo: "implemento" }), sigla).not.toContain(
-        DISPONIBILIZAR,
-      );
+      expect(idsDasAcoesDoMomento({ sigla, tipo: "implemento" }), sigla).not.toContain(ENTREGAR);
     }
   });
 
   it("apoio e equipamento também não; cavalo e caminhão têm", () => {
     for (const tipo of ["apoio", "equipamento"] as const) {
-      expect(idsDasAcoesDoMomento({ sigla: "PÁT", tipo }), tipo).not.toContain(DISPONIBILIZAR);
+      expect(idsDasAcoesDoMomento({ sigla: "PÁT", tipo }), tipo).not.toContain(ENTREGAR);
     }
     for (const tipo of ["cavalo", "caminhao"] as const) {
-      expect(idsDasAcoesDoMomento({ sigla: "PÁT", tipo }), tipo).toContain(DISPONIBILIZAR);
+      expect(idsDasAcoesDoMomento({ sigla: "PÁT", tipo }), tipo).toContain(ENTREGAR);
     }
   });
 
-  it("a carreta com pedido pendente ainda recebe a ação Receber placa", () => {
+  it("Entregar ao Operacional só em PÁT e ETv", () => {
+    const com = SIGLAS.filter((sigla) =>
+      idsDasAcoesDoMomento({ sigla, tipo: "cavalo" }).includes(ENTREGAR),
+    );
+    expect([...com].sort()).toEqual(["ETv", "PÁT"].sort());
+  });
+
+  it("Disponibilizar placa vale para qualquer tipo fora da baixa, sem pedido aberto", () => {
+    for (const tipo of ["cavalo", "implemento", "apoio", "equipamento", "caminhao"] as const) {
+      expect(idsDasAcoesDoMomento({ sigla: "MAN", tipo }), tipo).toContain(DISPONIBILIZAR);
+    }
     expect(
-      idsDasAcoesDoMomento({ sigla: "PÁT", tipo: "implemento", pedidoPendente: true }),
+      idsDasAcoesDoMomento({ sigla: "PÁT", tipo: "cavalo", pedidoAberto: true }),
+    ).not.toContain(DISPONIBILIZAR);
+  });
+
+  it("Receber placa só na etapa receber; Concluir recebimento só na etapa concluir", () => {
+    expect(
+      idsDasAcoesDoMomento({
+        sigla: "PÁT",
+        tipo: "implemento",
+        etapa: "receber",
+        pedidoAberto: true,
+      }),
     ).toEqual([RECEBER]);
-  });
-
-  it("Disponibilizar ao Operacional só em PÁT e ETv", () => {
-    const comDisponibilizar = SIGLAS.filter((sigla) =>
-      idsDasAcoesDoMomento({ sigla, tipo: "cavalo" }).includes(DISPONIBILIZAR),
-    );
-    expect([...comDisponibilizar].sort()).toEqual(["ETv", "PÁT"].sort());
-  });
-
-  it("DOp (já disponível no Operacional) não tem ação: DOp para ACe é do módulo Operacional", () => {
-    expect(idsDasAcoesDoMomento({ sigla: "DOp", tipo: "cavalo" })).toEqual([]);
-    expect(idsDasAcoesDoMomento({ sigla: "DOp", tipo: "cavalo", pedidoPendente: false })).toEqual(
-      [],
-    );
-  });
-
-  it("sem pedido de transferência pendente, Receber placa nunca aparece, em nenhuma situação", () => {
+    expect(
+      idsDasAcoesDoMomento({ sigla: "MAN", tipo: "cavalo", etapa: "concluir", pedidoAberto: true }),
+    ).toEqual([CONCLUIR]);
     for (const sigla of SIGLAS) {
-      expect(idsDasAcoesDoMomento({ sigla, tipo: "cavalo" }), sigla).not.toContain(RECEBER);
-      expect(
-        idsDasAcoesDoMomento({ sigla, tipo: "cavalo", pedidoPendente: false }),
-        sigla,
-      ).not.toContain(RECEBER);
+      const ids = idsDasAcoesDoMomento({ sigla, tipo: "cavalo" });
+      expect(ids, sigla).not.toContain(RECEBER);
+      expect(ids, sigla).not.toContain(CONCLUIR);
     }
   });
 
-  it("com pedido pendente, Receber placa aparece em qualquer situação que não seja baixa, qualquer que seja ela", () => {
-    for (const sigla of SIGLAS.filter((s) => !SIGLAS_DE_BAIXA.includes(s))) {
-      expect(
-        idsDasAcoesDoMomento({ sigla, tipo: "cavalo", pedidoPendente: true }),
-        sigla,
-      ).toContain(RECEBER);
-    }
-  });
-
-  it("PÁT com pedido pendente: as duas ações, Receber primeiro (a pendência vem antes)", () => {
-    expect(idsDasAcoesDoMomento({ sigla: "PÁT", tipo: "cavalo", pedidoPendente: true })).toEqual([
-      RECEBER,
+  it("PÁT com pedido para receber: Receber primeiro, depois Entregar (a pendência vem antes)", () => {
+    expect(
+      idsDasAcoesDoMomento({ sigla: "PÁT", tipo: "cavalo", etapa: "receber", pedidoAberto: true }),
+    ).toEqual([RECEBER, ENTREGAR]);
+    expect(idsDasAcoesDoMomento({ sigla: "PÁT", tipo: "cavalo" })).toEqual([
+      ENTREGAR,
       DISPONIBILIZAR,
     ]);
   });
 
-  it("baixada (VND e SUC): nenhuma ação, nem com pedido pendente", () => {
+  it("baixada (VND e SUC): nenhuma ação, nem com pedido", () => {
     for (const sigla of SIGLAS_DE_BAIXA) {
       expect(idsDasAcoesDoMomento({ sigla, tipo: "cavalo" }), sigla).toEqual([]);
-      expect(idsDasAcoesDoMomento({ sigla, tipo: "cavalo", pedidoPendente: true }), sigla).toEqual(
-        [],
-      );
+      expect(
+        idsDasAcoesDoMomento({ sigla, tipo: "cavalo", etapa: "receber", pedidoAberto: true }),
+        sigla,
+      ).toEqual([]);
     }
   });
 
-  it("todo id devolvido, para qualquer sigla, com ou sem pedido, existe em ACOES", () => {
+  it("todo id devolvido existe em ACOES, nunca repete e a ordem é estável", () => {
     const existentes = new Set(ACOES.map((a) => a.id));
     for (const sigla of SIGLAS) {
-      for (const pedidoPendente of [false, true]) {
-        for (const id of idsDasAcoesDoMomento({ sigla, tipo: "cavalo", pedidoPendente })) {
-          expect(existentes.has(id), `${sigla}: ${id}`).toBe(true);
-        }
-      }
-    }
-  });
-
-  it("nunca repete um id e a ordem é estável", () => {
-    for (const sigla of SIGLAS) {
-      for (const pedidoPendente of [false, true]) {
-        const ids = idsDasAcoesDoMomento({ sigla, tipo: "cavalo", pedidoPendente });
+      for (const etapa of [null, "receber", "concluir"] as const) {
+        const ids = idsDasAcoesDoMomento({ sigla, tipo: "cavalo", etapa, pedidoAberto: !!etapa });
+        for (const id of ids) expect(existentes.has(id), `${sigla}: ${id}`).toBe(true);
         expect(new Set(ids).size).toBe(ids.length);
-        expect(idsDasAcoesDoMomento({ sigla, tipo: "cavalo", pedidoPendente })).toEqual(ids);
       }
     }
   });

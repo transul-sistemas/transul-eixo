@@ -4,27 +4,26 @@ import { type RefObject } from "react";
 import { agoraEmSaoPaulo, formatarDataEHora } from "@/components/formato/data";
 import { Controller, type Resolver } from "react-hook-form";
 import { Assistente } from "@/components/wizard/assistente";
-import { CampoComMais } from "@/components/wizard/campos";
 import type { DadosDosAssistentes } from "@/lib/dados/escrita-tipos";
 import type { Catalogos, ItemCriado, PlacaGravada } from "@/lib/dados/escrita-tipos";
-import { esquemaDisponibilizacao } from "@/lib/dominio/esquemas/placa";
+import { esquemaEntregaAoOperacional } from "@/lib/dominio/esquemas/placa";
 import { NOMES_DAS_SIGLAS } from "@/lib/dominio/status";
 import { useUsuarioDaSessao } from "@/components/navegacao/usuario-da-sessao";
 import type { DefinicaoDeAssistente } from "@/lib/wizard/passos";
-import { disponibilizarPlacaAcao } from "../acoes";
+import { entregarAoOperacionalAcao } from "../acoes";
 import { errosDoResolvedor } from "./erros-do-resolvedor";
-import { ACAO_DO_MAIS, renderizarMini } from "./mini-cadastro-de-catalogo";
+import { CampoDoCatalogo } from "./mini-cadastro-de-catalogo";
 
-// Disponibilizar ao Operacional: a placa do gestor de frota vai ao Operacional da filial escolhida
-// (de PÁT ou ETv para DOp). Dois passos: a filial e a conferência.
+// Entregar ao Operacional: a placa do gestor de frota vai à custódia do Operacional da filial
+// escolhida (de PÁT ou ETv para DOp). Dois passos: a filial e a conferência.
 
 interface Valores {
   filialId: string;
 }
 
 const DEFINICAO: DefinicaoDeAssistente = {
-  id: "disponibilizar",
-  titulo: "Disponibilizar ao Operacional",
+  id: "entregar-ao-operacional",
+  titulo: "Entregar ao Operacional",
   versaoDoEsquema: 1,
   passos: [
     { id: "filial", titulo: "Filial", campos: ["filialId"] },
@@ -32,22 +31,24 @@ const DEFINICAO: DefinicaoDeAssistente = {
   ],
 };
 
-export function DisponibilizarAoOperacional({
+export function EntregarAoOperacional({
   placa,
   catalogos,
+  criaveis,
   aoItemCriado,
   aoFechar,
   focoFinal,
 }: {
   placa: NonNullable<DadosDosAssistentes["placaAlvo"]>;
   catalogos: Catalogos;
+  criaveis: DadosDosAssistentes["criaveis"];
   aoItemCriado: (item: ItemCriado) => void;
   aoFechar: () => void;
   focoFinal?: RefObject<HTMLElement | null>;
 }) {
   const usuario = useUsuarioDaSessao();
   const resolver: Resolver<Valores> = async (valores) => {
-    const r = esquemaDisponibilizacao.safeParse({
+    const r = esquemaEntregaAoOperacional.safeParse({
       placa: placa.placa,
       filialId: valores.filialId,
       versaoDaPlaca: placa.versao,
@@ -72,10 +73,10 @@ export function DisponibilizarAoOperacional({
       registro={placa.placa}
       rascunho={false}
       focoFinal={focoFinal}
-      rotuloConcluir="Disponibilizar ao Operacional"
-      mensagemConcluido="Placa disponibilizada ao Operacional."
+      rotuloConcluir="Entregar ao Operacional"
+      mensagemConcluido="Placa entregue ao Operacional."
       aoConcluir={(valores, chaveDeEnvio) =>
-        disponibilizarPlacaAcao({
+        entregarAoOperacionalAcao({
           chaveDeEnvio,
           dados: { placa: placa.placa, filialId: valores.filialId, versaoDaPlaca: placa.versao },
         })
@@ -124,15 +125,16 @@ export function DisponibilizarAoOperacional({
           control={form.control}
           name="filialId"
           render={({ field }) => (
-            <CampoComMais
+            <CampoDoCatalogo
               rotulo="Filial"
-              rotuloDoMais={ACAO_DO_MAIS("filial")}
+              tipo="filial"
+              criaveis={criaveis}
               opcoes={catalogos.filiais}
               valor={field.value}
               aoMudar={field.onChange}
               erro={form.formState.errors.filialId?.message}
-              semOpcao="Nenhuma filial ainda. Use o + para cadastrar a primeira."
-              renderMini={(m) => renderizarMini(m, "filial", undefined, aoItemCriado)}
+              semOpcao="Nenhuma filial ainda."
+              aoItemCriado={aoItemCriado}
             />
           )}
         />

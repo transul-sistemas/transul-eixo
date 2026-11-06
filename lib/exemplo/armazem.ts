@@ -1,43 +1,30 @@
 import {
-  motivoDeNaoDisponibilizar,
+  motivoDeNaoEntregar,
+  pedidoAberto,
+  podeConcluirRecebimento,
   podeReceberPedido,
   type PedidoDeTransferencia,
 } from "@/lib/dominio/custodia";
 import type {
   EntradaCadastrarPlaca,
-  EntradaDisponibilizacao,
+  EntradaConcluirRecebimento,
+  EntradaDisponibilizarPlaca,
+  EntradaEntregaAoOperacional,
   EntradaItemDeCatalogo,
-  EntradaRecebimento,
+  EntradaReceberPlaca,
   TipoDeItemDeCatalogo,
 } from "@/lib/dominio/esquemas/placa";
-import { carroceriaDoModelo } from "@/lib/dominio/conjunto";
 import type { EventoDeStatus } from "@/lib/dominio/linha-do-tempo";
 import { normalizarPlaca } from "@/lib/dominio/placa";
-import type { Sigla } from "@/lib/dominio/status";
+import { SIGLAS_DE_BAIXA, type Sigla } from "@/lib/dominio/status";
 import { erroDaAcao, type ResultadoDaAcao, sucesso } from "@/lib/wizard/resultado";
-import {
-  CRS,
-  FILIAIS,
-  GARAGENS,
-  GESTORES,
-  MARCAS,
-  MODELOS,
-  MOTORISTAS,
-  OPERACOES,
-} from "./catalogos";
-import type {
-  CandidatoDoConjunto,
-  Catalogos,
-  ItemCriado,
-  PlacaGravada,
-  ValorDaPlaca,
-} from "@/lib/dados/escrita-tipos";
+import { CARROCERIAS, CRS, FILIAIS, GESTORES, MARCAS, MODELOS, OPERACOES } from "./catalogos";
+import type { Catalogos, ItemCriado, PlacaGravada, ValorDaPlaca } from "@/lib/dados/escrita-tipos";
 import { eventosDeExemplo } from "./eventos";
 import { placasDeExemplo } from "./placas";
 import type { PlacaDeExemplo } from "./tipos";
 
 export type {
-  CandidatoDoConjunto,
   Catalogos,
   ItemCriado,
   PlacaGravada,
@@ -46,27 +33,38 @@ export type {
   VigenciaDeGestor,
 } from "@/lib/dados/escrita-tipos";
 
-// Escrita de exemplo, em memória, sem banco: cadastrar placa, disponibilizar ao Operacional, receber
-// placa (transferência entre gestores) e criar itens de catálogo (o que o "+" cadastra). Tem as
-// mesmas regras que a gravação no banco terá: chave de envio (clique duplo e nova tentativa gravam
-// uma vez), versão por registro (edição concorrente), placa única em qualquer formato, filhos que
-// pertencem ao pai escolhido (modelo da marca, CR da operação, garagem da filial) e evento com hora
-// a cada mudança de situação. O estado vive na memória do processo (some ao reiniciar). Nunca é
-// importado fora de desenvolvimento e testes (ver lib/qualidade/barramento-do-exemplo.ts); a Server
-// Action chega aqui por lib/dados/fonte-de-exemplo.ts.
+// Escrita de exemplo, em memória, sem banco: cadastrar placa, entregar ao Operacional, disponibilizar
+// placa (enviar a outro gestor), receber placa e concluir o recebimento (as duas etapas), e criar
+// itens de catálogo (o que o "+" cadastra). Tem as mesmas regras que a gravação no banco: chave de
+// envio (clique duplo e nova tentativa gravam uma vez), versão por registro (edição concorrente),
+// placa única em qualquer formato, filhos que pertencem ao pai escolhido (modelo da marca) e evento
+// com hora a cada mudança de situação. O estado vive na memória do processo (some ao reiniciar).
+// Nunca é importado fora de desenvolvimento e testes (ver lib/qualidade/barramento-do-exemplo.ts); a
+// Server Action chega aqui por lib/dados/fonte-de-exemplo.ts.
 
 type Atual = PlacaGravada | PedidoDeTransferencia;
 type Resultado<T> = ResultadoDaAcao<T, Atual>;
 
 export interface Armazem {
   cadastrar(entrada: EntradaCadastrarPlaca, chave: string, agora: string): Resultado<PlacaGravada>;
-  disponibilizar(
-    entrada: EntradaDisponibilizacao,
+  entregar(
+    entrada: EntradaEntregaAoOperacional,
     chave: string,
     agora: string,
   ): Resultado<PlacaGravada>;
+  disponibilizar(
+    entrada: EntradaDisponibilizarPlaca,
+    chave: string,
+    agora: string,
+  ): Resultado<PedidoDeTransferencia>;
   receber(
-    entrada: EntradaRecebimento,
+    entrada: EntradaReceberPlaca,
+    chave: string,
+    agora: string,
+    gestorId: string,
+  ): Resultado<PedidoDeTransferencia>;
+  concluir(
+    entrada: EntradaConcluirRecebimento,
     chave: string,
     agora: string,
     gestorId: string,
@@ -75,15 +73,13 @@ export interface Armazem {
   catalogos(): Catalogos;
   obterPlaca(placa: string): PlacaGravada | null;
   eventosDaPlaca(placa: string): EventoDeStatus[];
-  /** O pedido de transferência pendente da placa, se houver (é o que liga a ação "Receber placa"). */
-  pedidoPendenteDa(placa: string): PedidoDeTransferencia | null;
-  /** Todos os pedidos pendentes (o assistente sem placa escolhida lista as placas deles). */
-  pedidosPendentes(): PedidoDeTransferencia[];
+  /** O pedido aberto (pendente ou em conferência) da placa, se houver. */
+  pedidoAbertoDa(placa: string): PedidoDeTransferencia | null;
+  /** Os pedidos abertos para o gestor (as duas etapas do recebimento). */
+  pedidosParaReceber(gestorId: string): PedidoDeTransferencia[];
   placasCadastradas(): PlacaGravada[];
   /** As placas como a lista e a ficha as veem: as de base já com as mudanças, mais as cadastradas. */
   placasParaLista(): PlacaDeExemplo[];
-  /** Quem pode entrar no conjunto da placa: implementos sem cavalo (para o cavalo), cavalos (para o implemento). */
-  candidatosDoConjunto(placa: string): CandidatoDoConjunto[];
 }
 
 const simples = (texto: string) =>
@@ -116,10 +112,7 @@ function daBase(p: PlacaDeExemplo, cat: Catalogos): PlacaGravada {
     crs: p.crs.map((c) => ({ ...c })),
     filialId: filial?.id ?? null,
     filial: p.filial,
-    garagemId: null,
     garagem: "—",
-    motoristaId: null,
-    metaDoConjuntoCentavos: null,
     valor: {
       codigoFipe: null,
       valorFipeCentavos: p.valorFipeCentavos,
@@ -127,7 +120,6 @@ function daBase(p: PlacaDeExemplo, cat: Catalogos): PlacaGravada {
       fonteDoValor: null,
       dataDoValor: null,
     },
-    conjunto: { cavaloId: p.conjunto.cavaloId, implementoIds: [...p.conjunto.implementoIds] },
     versao: 1,
     gestores: [
       { gestorId: gestor?.id ?? "", gestor: p.gestor, inicio: p.desde.slice(0, 16), fim: null },
@@ -135,14 +127,7 @@ function daBase(p: PlacaDeExemplo, cat: Catalogos): PlacaGravada {
   };
 }
 
-function paraExemplo(
-  g: PlacaGravada,
-  base: PlacaDeExemplo | undefined,
-  cat: Catalogos,
-): PlacaDeExemplo {
-  const motorista = g.motoristaId
-    ? (cat.motoristas.find((m) => m.id === g.motoristaId)?.nome ?? null)
-    : (base?.motorista ?? null);
+function paraExemplo(g: PlacaGravada, base: PlacaDeExemplo | undefined): PlacaDeExemplo {
   return {
     id: base?.id ?? `pl-${g.placa}`,
     placa: g.placa,
@@ -156,11 +141,13 @@ function paraExemplo(
     operacao: g.operacao,
     crs: g.crs.map((c) => ({ ...c })),
     gestor: g.gestor,
-    motorista,
+    motorista: base?.motorista ?? null,
     crlvVenceEm: base?.crlvVenceEm ?? null,
     km: base?.km ?? null,
     valorFipeCentavos: g.valor.valorFipeCentavos ?? base?.valorFipeCentavos ?? null,
-    conjunto: { cavaloId: g.conjunto.cavaloId, implementoIds: [...g.conjunto.implementoIds] },
+    conjunto: base
+      ? { cavaloId: base.conjunto.cavaloId, implementoIds: [...base.conjunto.implementoIds] }
+      : { cavaloId: null, implementoIds: [] },
   };
 }
 
@@ -170,12 +157,9 @@ function idDoItem(
   existentes: ReadonlySet<string>,
 ): string {
   const prefixo = tipo === "operacao" ? "op" : tipo;
-  const corpo =
-    tipo === "cr"
-      ? nome.slice(3)
-      : simples(nome)
-          .replace(/[^a-z0-9]+/g, "-")
-          .replace(/^-|-$/g, "");
+  const corpo = simples(nome)
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
   let id = `${prefixo}-${corpo}`;
   for (let n = 2; existentes.has(id); n++) id = `${prefixo}-${corpo}-${n}`;
   return id;
@@ -191,12 +175,11 @@ export function criarArmazem({
   const cat: Catalogos = {
     marcas: [...MARCAS],
     modelos: [...MODELOS],
+    carrocerias: [...CARROCERIAS],
     gestores: [...GESTORES],
     operacoes: [...OPERACOES],
     crs: [...CRS],
     filiais: [...FILIAIS],
-    garagens: [...GARAGENS],
-    motoristas: [...MOTORISTAS],
   };
   const base = new Map(placasBase.map((p) => [p.placa, p]));
   /** Placas mudadas ou cadastradas aqui (a base só é copiada na primeira mudança). */
@@ -206,6 +189,7 @@ export function criarArmazem({
   const pedidos = new Map(pedidosBase.map((p) => [p.id, { ...p }]));
   /** Resultado de cada envio que deu certo, por ação e chave: o mesmo envio de novo devolve o mesmo. */
   const enviados = new Map<string, Resultado<unknown>>();
+  let proximoPedido = 1;
 
   const obterPlaca = (placa: string): PlacaGravada | null => {
     const gravada = gravadas.get(placa);
@@ -226,10 +210,12 @@ export function criarArmazem({
   const placasParaLista = (): PlacaDeExemplo[] => [
     ...placasBase.map((p) => {
       const g = gravadas.get(p.placa);
-      return g ? paraExemplo(g, p, cat) : p;
+      return g ? paraExemplo(g, p) : p;
     }),
-    ...cadastradas.map((placa) => paraExemplo(gravadas.get(placa) as PlacaGravada, undefined, cat)),
+    ...cadastradas.map((placa) => paraExemplo(gravadas.get(placa) as PlacaGravada, undefined)),
   ];
+  const pedidoAbertoDa = (placa: string) =>
+    [...pedidos.values()].find((p) => p.placa === placa && pedidoAberto(p)) ?? null;
 
   /** Roda a ação uma vez por chave; só o que deu certo fica guardado (falha não gasta a chave). */
   function unica<T>(acao: string, chave: string, executar: () => Resultado<T>): Resultado<T> {
@@ -242,94 +228,55 @@ export function criarArmazem({
   }
 
   const emConflito = <T>(atual: Atual) => erroDaAcao<Atual>("conflito", { atual }) as Resultado<T>;
+  const invalida = (campos: Record<string, string[]>) =>
+    erroDaAcao<Atual>("entrada_invalida", { campos });
 
-  /** Confere gestor, operação, CR, marca, modelo, filial e garagem escolhidos; devolve os erros por campo. */
-  function conferirReferencias(e: {
-    gestorId: string;
-    operacaoId: string | null;
-    crId: string | null;
-    marcaId?: string;
-    modeloId?: string;
-    filialId?: string;
-    garagemId?: string;
-  }) {
+  /** Confere gestor, operação, CR, marca, modelo e carroceria escolhidos; devolve os erros por campo. */
+  function conferirReferencias(e: EntradaCadastrarPlaca) {
     const campos: Record<string, string[]> = {};
     const gestor = cat.gestores.find((g) => g.id === e.gestorId);
     if (!gestor) campos.gestorId = ["Este gestor não existe. Escolha um da lista."];
-    const operacao = e.operacaoId ? cat.operacoes.find((o) => o.id === e.operacaoId) : undefined;
-    if (e.operacaoId && !operacao) {
-      campos.operacaoId = ["Esta operação não existe. Escolha uma da lista."];
+    const operacao = cat.operacoes.find((o) => o.id === e.operacaoId);
+    if (!operacao) campos.operacaoId = ["Esta operação não existe. Escolha uma da lista."];
+    const cr = cat.crs.find((c) => c.id === e.crId);
+    if (!cr) campos.crId = ["Este CR não existe. Escolha um da lista."];
+    else if (operacao && cr.operacaoId !== null && cr.operacaoId !== operacao.id) {
+      campos.crId = ["Este CR é de outra operação. Escolha um CR desta operação."];
     }
-    const cr = e.crId ? cat.crs.find((c) => c.id === e.crId) : undefined;
-    if (e.crId && !cr) campos.crId = ["Este CR não existe. Escolha um da lista."];
-    else if (cr && operacao && cr.operacaoId !== operacao.id) {
-      campos.crId = ["Este CR não é da operação escolhida. Escolha o CR dela."];
-    }
-    const marca = e.marcaId ? cat.marcas.find((m) => m.id === e.marcaId) : undefined;
-    if (e.marcaId !== undefined && !marca) {
-      campos.marcaId = ["Esta marca não existe. Escolha uma da lista."];
-    }
-    const modelo = e.modeloId ? cat.modelos.find((m) => m.id === e.modeloId) : undefined;
-    if (e.modeloId !== undefined && !modelo) {
-      campos.modeloId = ["Este modelo não existe. Escolha um da lista."];
-    } else if (modelo && marca && modelo.marcaId !== marca.id) {
+    const marca = cat.marcas.find((m) => m.id === e.marcaId);
+    if (!marca) campos.marcaId = ["Esta marca não existe. Escolha uma da lista."];
+    const modelo = cat.modelos.find((m) => m.id === e.modeloId);
+    if (!modelo) campos.modeloId = ["Este modelo não existe. Escolha um da lista."];
+    else if (marca && modelo.marcaId !== marca.id) {
       campos.modeloId = ["Este modelo não é da marca escolhida. Escolha um modelo dela."];
     }
-    const filial = e.filialId ? cat.filiais.find((f) => f.id === e.filialId) : undefined;
-    if (e.filialId !== undefined && !filial) {
-      campos.filialId = ["Esta filial não existe. Escolha uma da lista."];
+    if (
+      e.tipo === "implemento" &&
+      e.carroceriaId !== null &&
+      !cat.carrocerias.some((c) => c.id === e.carroceriaId)
+    ) {
+      campos.carroceriaId = ["Esta carroceria não existe. Escolha uma da lista."];
     }
-    const garagem = e.garagemId ? cat.garagens.find((g) => g.id === e.garagemId) : undefined;
-    if (e.garagemId !== undefined && !garagem) {
-      campos.garagemId = ["Esta garagem não existe. Escolha uma da lista."];
-    } else if (garagem && filial && garagem.filialId !== filial.id) {
-      campos.garagemId = ["Esta garagem não é da filial escolhida. Escolha uma garagem dela."];
-    }
-    return { campos, gestor, operacao, cr, marca, modelo, filial, garagem };
+    return { campos, gestor, operacao, cr, marca, modelo };
   }
 
   return {
     obterPlaca,
     eventosDaPlaca,
     placasParaLista,
+    pedidoAbertoDa,
     catalogos: () => ({
       marcas: [...cat.marcas],
       modelos: [...cat.modelos],
+      carrocerias: [...cat.carrocerias],
       gestores: [...cat.gestores],
       operacoes: [...cat.operacoes],
       crs: [...cat.crs],
       filiais: [...cat.filiais],
-      garagens: [...cat.garagens],
-      motoristas: [...cat.motoristas],
     }),
     placasCadastradas: () => cadastradas.map((p) => gravadas.get(p) as PlacaGravada),
-    pedidoPendenteDa(placa) {
-      const pedido = [...pedidos.values()].find(
-        (p) => p.placa === placa && p.situacao === "pendente",
-      );
-      return pedido ?? null;
-    },
-    pedidosPendentes: () => [...pedidos.values()].filter((p) => p.situacao === "pendente"),
-
-    candidatosDoConjunto(placa) {
-      const alvo = obterPlaca(placa);
-      if (!alvo || (alvo.tipo !== "cavalo" && alvo.tipo !== "implemento")) return [];
-      const atuais = placasParaLista();
-      const minhaId = atuais.find((p) => p.placa === placa)?.id;
-      const candidatos =
-        alvo.tipo === "cavalo"
-          ? atuais.filter(
-              (p) =>
-                p.tipo === "implemento" &&
-                (p.conjunto.cavaloId === null || p.conjunto.cavaloId === minhaId),
-            )
-          : atuais.filter((p) => p.tipo === "cavalo");
-      return candidatos.map((p) => ({
-        id: p.id,
-        nome: `${p.placa} · ${p.modelo}`,
-        carroceria: carroceriaDoModelo(p.modelo),
-      }));
-    },
+    pedidosParaReceber: (gestorId) =>
+      [...pedidos.values()].filter((p) => pedidoAberto(p) && p.paraGestorId === gestorId),
 
     criarItemDeCatalogo(entrada, chave) {
       return unica("catalogo", chave, () => {
@@ -339,11 +286,9 @@ export function criarArmazem({
         const pai =
           entrada.tipo === "modelo"
             ? cat.marcas.find((m) => m.id === paiId)
-            : entrada.tipo === "cr"
+            : entrada.tipo === "cr" && paiId !== undefined
               ? cat.operacoes.find((o) => o.id === paiId)
-              : entrada.tipo === "garagem"
-                ? cat.filiais.find((f) => f.id === paiId)
-                : undefined;
+              : undefined;
         if (paiId !== undefined && !pai) {
           campos.paiId = ["Este cadastro de origem não existe. Escolha outro."];
         }
@@ -364,16 +309,11 @@ export function criarArmazem({
               return cat.crs.some((c) => simples(c.codigo) === chaveDoNome);
             case "filial":
               return cat.filiais.some((f) => simples(f.nome) === chaveDoNome);
-            case "garagem":
-              return cat.garagens.some(
-                (g) => g.filialId === paiId && simples(g.nome) === chaveDoNome,
-              );
           }
         })();
         if (repetido)
           campos.nome = ["Já existe um cadastro com este nome. Escolha o que já existe."];
-        if (Object.keys(campos).length > 0)
-          return erroDaAcao<Atual>("entrada_invalida", { campos });
+        if (Object.keys(campos).length > 0) return invalida(campos);
 
         const usados = new Set([
           ...cat.marcas.map((x) => x.id),
@@ -382,7 +322,6 @@ export function criarArmazem({
           ...cat.operacoes.map((x) => x.id),
           ...cat.crs.map((x) => x.id),
           ...cat.filiais.map((x) => x.id),
-          ...cat.garagens.map((x) => x.id),
         ]);
         const id = idDoItem(entrada.tipo, nome, usados);
         switch (entrada.tipo) {
@@ -399,13 +338,10 @@ export function criarArmazem({
             cat.operacoes.push({ id, nome });
             break;
           case "cr":
-            cat.crs.push({ id, codigo: nome, operacaoId: paiId as string });
+            cat.crs.push({ id, codigo: nome, operacaoId: paiId ?? null });
             break;
           case "filial":
             cat.filiais.push({ id, nome });
-            break;
-          case "garagem":
-            cat.garagens.push({ id, nome, filialId: paiId as string });
             break;
         }
         return sucesso({ tipo: entrada.tipo, id, nome, ...(paiId !== undefined ? { paiId } : {}) });
@@ -418,10 +354,10 @@ export function criarArmazem({
         const existente = obterPlaca(placa);
         if (existente) return erroDaAcao<Atual>("placa_ja_existe", { atual: existente });
         const r = conferirReferencias(entrada);
-        if (Object.keys(r.campos).length > 0) {
-          return erroDaAcao<Atual>("entrada_invalida", { campos: r.campos });
-        }
+        if (Object.keys(r.campos).length > 0) return invalida(r.campos);
         const gestor = r.gestor!;
+        const operacao = r.operacao!;
+        const cr = r.cr!;
         const valor: ValorDaPlaca =
           "codigoFipe" in entrada
             ? {
@@ -451,21 +387,14 @@ export function criarArmazem({
           desde: agora,
           gestorId: gestor.id,
           gestor: gestor.nome,
-          operacaoId: r.operacao?.id ?? null,
-          operacao: r.operacao?.nome ?? null,
-          crId: r.cr?.id ?? null,
-          crs:
-            r.cr && r.operacao
-              ? [{ codigo: r.cr.codigo, nome: r.operacao.nome, inicio: dia(agora), fim: null }]
-              : [],
-          filialId: r.filial!.id,
-          filial: r.filial!.nome,
-          garagemId: r.garagem!.id,
-          garagem: r.garagem!.nome,
-          motoristaId: null,
-          metaDoConjuntoCentavos: null,
+          operacaoId: operacao.id,
+          operacao: operacao.nome,
+          crId: cr.id,
+          crs: [{ codigo: cr.codigo, nome: operacao.nome, inicio: dia(agora), fim: null }],
+          filialId: null,
+          filial: "Sem filial",
+          garagem: "—",
           valor,
-          conjunto: { cavaloId: null, implementoIds: [] },
           versao: 1,
           gestores: [{ gestorId: gestor.id, gestor: gestor.nome, inicio: agora, fim: null }],
         };
@@ -476,22 +405,17 @@ export function criarArmazem({
       });
     },
 
-    disponibilizar(entrada, chave, agora) {
-      return unica("disponibilizar", chave, () => {
+    entregar(entrada, chave, agora) {
+      return unica("entregar", chave, () => {
         const placa = normalizarPlaca(entrada.placa);
         const atual = obterPlaca(placa);
         if (!atual) return erroDaAcao<Atual>("nao_encontrado");
         if (atual.versao !== entrada.versaoDaPlaca) return emConflito(atual);
-        const motivo = motivoDeNaoDisponibilizar({ sigla: atual.sigla, tipo: atual.tipo });
-        if (motivo !== null) {
-          return erroDaAcao<Atual>("entrada_invalida", { campos: { placa: [motivo] } });
-        }
+        const motivo = motivoDeNaoEntregar({ sigla: atual.sigla, tipo: atual.tipo });
+        if (motivo !== null) return invalida({ placa: [motivo] });
         const filial = cat.filiais.find((f) => f.id === entrada.filialId);
-        if (!filial) {
-          return erroDaAcao<Atual>("entrada_invalida", {
-            campos: { filialId: ["Esta filial não existe. Escolha uma da lista."] },
-          });
-        }
+        if (!filial)
+          return invalida({ filialId: ["Esta filial não existe. Escolha uma da lista."] });
         const nova: PlacaGravada = {
           ...atual,
           sigla: "DOp",
@@ -506,82 +430,122 @@ export function criarArmazem({
       });
     },
 
-    receber(entrada, chave, agora, gestorId) {
+    disponibilizar(entrada, chave) {
+      return unica("disponibilizar", chave, () => {
+        const placa = normalizarPlaca(entrada.placa);
+        const atual = obterPlaca(placa);
+        if (!atual) return erroDaAcao<Atual>("nao_encontrado");
+        if (atual.versao !== entrada.versaoDaPlaca) return emConflito(atual);
+        if (SIGLAS_DE_BAIXA.includes(atual.sigla)) {
+          return invalida({ placa: ["Placa baixada não se disponibiliza."] });
+        }
+        if (pedidoAbertoDa(placa)) {
+          return erroDaAcao<Atual>("entrada_invalida", {
+            mensagem:
+              "Esta placa já tem um pedido de transferência aberto. Espere a resposta ou fale com quem vai receber.",
+          });
+        }
+        const destino = cat.gestores.find((g) => g.id === entrada.paraGestorId);
+        if (!destino) {
+          return invalida({ paraGestorId: ["Este gestor não existe. Escolha um da lista."] });
+        }
+        if (destino.id === atual.gestorId) {
+          return invalida({ paraGestorId: ["A placa já está na carteira deste gestor."] });
+        }
+        const id = `ped-${proximoPedido++}-${placa}`;
+        const pedido: PedidoDeTransferencia = {
+          id,
+          placa,
+          deGestorId: atual.gestorId ?? "",
+          deGestor: atual.gestor,
+          paraGestorId: destino.id,
+          paraGestor: destino.nome,
+          motivo: entrada.motivo,
+          pendenciasConhecidas: entrada.pendenciasConhecidas.map((texto, i) => ({
+            id: `${id}-p${i + 1}`,
+            texto,
+          })),
+          situacao: "pendente",
+          versao: 1,
+        };
+        pedidos.set(id, pedido);
+        return sucesso(pedido);
+      });
+    },
+
+    receber(entrada, chave, _agora, gestorId) {
       return unica("receber", chave, () => {
         const placa = normalizarPlaca(entrada.placa);
         const pedido = pedidos.get(entrada.pedidoId);
         if (!pedido) return erroDaAcao<Atual>("nao_encontrado");
         if (pedido.placa !== placa) {
+          return invalida({ placa: ["Este pedido de transferência é de outra placa."] });
+        }
+        if (pedido.versao !== entrada.versaoDoPedido) return emConflito(pedido);
+        const pode = podeReceberPedido(pedido, gestorId);
+        if (!pode.ok) {
+          return pode.motivo === "pedido_encerrado"
+            ? emConflito(pedido)
+            : erroDaAcao<Atual>("sem_permissao", {
+                mensagem: "Só o gestor de destino recebe esta placa.",
+              });
+        }
+        const recebido: PedidoDeTransferencia = {
+          ...pedido,
+          situacao: "em_conferencia",
+          versao: pedido.versao + 1,
+        };
+        pedidos.set(pedido.id, recebido);
+        return sucesso(recebido);
+      });
+    },
+
+    concluir(entrada, chave, agora, gestorId) {
+      return unica("concluir", chave, () => {
+        const placa = normalizarPlaca(entrada.placa);
+        const pedido = pedidos.get(entrada.pedidoId);
+        if (!pedido) return erroDaAcao<Atual>("nao_encontrado");
+        if (pedido.placa !== placa) {
+          return invalida({ placa: ["Este pedido de transferência é de outra placa."] });
+        }
+        if (pedido.versao !== entrada.versaoDoPedido) return emConflito(pedido);
+        const pode = podeConcluirRecebimento(pedido, gestorId);
+        if (!pode.ok) {
+          if (pode.motivo === "nao_e_o_destinatario") {
+            return erroDaAcao<Atual>("sem_permissao", {
+              mensagem: "Só o gestor de destino conclui esta transferência.",
+            });
+          }
+          return pode.motivo === "pedido_nao_recebido"
+            ? erroDaAcao<Atual>("entrada_invalida", {
+                mensagem: "Receba a placa antes de concluir o recebimento.",
+              })
+            : emConflito(pedido);
+        }
+        const esperadas = pedido.pendenciasConhecidas.map((p) => p.id).sort();
+        const respondidas = entrada.pendencias.map((p) => p.id).sort();
+        if (esperadas.join("|") !== respondidas.join("|")) {
           return erroDaAcao<Atual>("entrada_invalida", {
-            campos: { placa: ["Este pedido de transferência é de outra placa."] },
+            mensagem: "Responda cada pendência do pedido, uma vez.",
           });
         }
-        if (pedido.situacao !== "pendente" || pedido.versao !== entrada.versaoDoPedido) {
-          return emConflito(pedido);
-        }
-        const pode = podeReceberPedido(pedido, gestorId);
-        if (!pode.ok) return erroDaAcao<Atual>("sem_permissao");
         const atual = obterPlaca(placa);
         if (!atual) return erroDaAcao<Atual>("nao_encontrado");
-        if (atual.versao !== entrada.versaoDaPlaca) return emConflito(atual);
-        const destino = cat.gestores.find((g) => g.id === pedido.paraGestorId);
-        const operacao = entrada.operacaoId
-          ? cat.operacoes.find((o) => o.id === entrada.operacaoId)
-          : undefined;
-        const cr = entrada.crId ? cat.crs.find((c) => c.id === entrada.crId) : undefined;
-        const campos: Record<string, string[]> = {};
-        if (entrada.operacaoId && !operacao) campos.operacaoId = ["Esta operação não existe."];
-        if (entrada.crId && !cr) campos.crId = ["Este CR não existe."];
-        else if (cr && operacao && cr.operacaoId !== operacao.id) {
-          campos.crId = ["Este CR não é da operação escolhida."];
-        }
-        if (entrada.motoristaId && !cat.motoristas.some((m) => m.id === entrada.motoristaId)) {
-          campos.motoristaId = ["Este motorista não existe."];
-        }
-        if (!destino) campos.placa = ["O gestor de destino do pedido não existe mais."];
-        if (atual.tipo !== "cavalo" && entrada.metaDoConjuntoCentavos !== null) {
-          campos.metaDoConjuntoCentavos = ["A meta do conjunto é do cavalo. Deixe-a vazia."];
-        }
-        if (Object.keys(campos).length > 0)
-          return erroDaAcao<Atual>("entrada_invalida", { campos });
-
         const fechadas = atual.gestores.map((v, i, todas) =>
           i === todas.length - 1 ? { ...v, fim: agora } : v,
         );
-        const trocouDeCr = (cr?.id ?? null) !== atual.crId;
-        const crs = trocouDeCr
-          ? [
-              ...atual.crs.map((c) => (c.fim === null ? { ...c, fim: dia(agora) } : c)),
-              ...(cr && operacao
-                ? [{ codigo: cr.codigo, nome: operacao.nome, inicio: dia(agora), fim: null }]
-                : []),
-            ]
-          : atual.crs;
         const nova: PlacaGravada = {
           ...atual,
-          sigla: entrada.situacao,
-          desde: agora,
-          gestorId: destino!.id,
-          gestor: destino!.nome,
-          operacaoId: operacao?.id ?? null,
-          operacao: operacao?.nome ?? null,
-          crId: cr?.id ?? null,
-          crs,
-          motoristaId: entrada.motoristaId,
-          metaDoConjuntoCentavos: entrada.metaDoConjuntoCentavos,
-          conjunto: {
-            cavaloId: entrada.conjunto.cavaloId,
-            implementoIds: [...entrada.conjunto.implementoIds],
-          },
+          gestorId: pedido.paraGestorId,
+          gestor: pedido.paraGestor,
           versao: atual.versao + 1,
           gestores: [
             ...fechadas,
-            { gestorId: destino!.id, gestor: destino!.nome, inicio: agora, fim: null },
+            { gestorId: pedido.paraGestorId, gestor: pedido.paraGestor, inicio: agora, fim: null },
           ],
         };
         guardar(nova);
         pedidos.set(pedido.id, { ...pedido, situacao: "concluido", versao: pedido.versao + 1 });
-        registrar(placa, nova.sigla, agora);
         return sucesso(nova);
       });
     },
@@ -611,7 +575,9 @@ function novoArmazemDeExemplo(hoje: string): Armazem {
             id: "ped-exemplo-1",
             placa: comPedido.placa,
             deGestorId: GESTORES[0]!.id,
+            deGestor: GESTORES[0]!.nome,
             paraGestorId: GESTORES[1]!.id,
+            paraGestor: GESTORES[1]!.nome,
             motivo: "Troca de carteira entre filiais",
             pendenciasConhecidas: [
               { id: "pend-1", texto: "CRLV vence em breve" },

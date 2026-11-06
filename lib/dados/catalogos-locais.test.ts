@@ -5,12 +5,11 @@ import { mesclarCatalogos } from "./catalogos-locais";
 const vazio: Catalogos = {
   marcas: [{ id: "marca-volvo", nome: "Volvo" }],
   modelos: [{ id: "modelo-fh", nome: "FH 540", marcaId: "marca-volvo" }],
+  carrocerias: [{ id: "carroceria-sider", nome: "Sider" }],
   gestores: [{ id: "gestor-1", nome: "Gestor 1" }],
   operacoes: [{ id: "op-1", nome: "Operação 1" }],
   crs: [{ id: "cr-1001", codigo: "CR-1001", operacaoId: "op-1" }],
   filiais: [{ id: "filial-a", nome: "Filial A" }],
-  garagens: [{ id: "garagem-a1", nome: "Garagem A1", filialId: "filial-a" }],
-  motoristas: [],
 };
 
 describe("mesclarCatalogos: o que o + criou entra no catálogo da tela", () => {
@@ -26,7 +25,6 @@ describe("mesclarCatalogos: o que o + criou entra no catálogo da tela", () => {
       { tipo: "operacao", id: "op-nova", nome: "Operação Nova" },
       { tipo: "cr", id: "cr-2001", nome: "CR-2001", paiId: "op-nova" },
       { tipo: "filial", id: "filial-nova", nome: "Filial Nova" },
-      { tipo: "garagem", id: "garagem-nova", nome: "Garagem Nova", paiId: "filial-nova" },
     ];
     const c = mesclarCatalogos(vazio, criados);
     expect(c.marcas.at(-1)).toEqual({ id: "marca-daf", nome: "DAF" });
@@ -35,21 +33,16 @@ describe("mesclarCatalogos: o que o + criou entra no catálogo da tela", () => {
     expect(c.operacoes.at(-1)).toEqual({ id: "op-nova", nome: "Operação Nova" });
     expect(c.crs.at(-1)).toEqual({ id: "cr-2001", codigo: "CR-2001", operacaoId: "op-nova" });
     expect(c.filiais.at(-1)).toEqual({ id: "filial-nova", nome: "Filial Nova" });
-    expect(c.garagens.at(-1)).toEqual({
-      id: "garagem-nova",
-      nome: "Garagem Nova",
-      filialId: "filial-nova",
-    });
+  });
+
+  it("CR sem operação entra sem operação (serve a qualquer uma)", () => {
+    const c = mesclarCatalogos(vazio, [{ tipo: "cr", id: "c", nome: "CR-9999" }]);
+    expect(c.crs.at(-1)).toEqual({ id: "c", codigo: "CR-9999", operacaoId: null });
   });
 
   it("o item que o servidor já devolveu no catálogo não entra duas vezes", () => {
     const c = mesclarCatalogos(vazio, [{ tipo: "marca", id: "marca-volvo", nome: "Volvo" }]);
     expect(c.marcas).toHaveLength(1);
-  });
-
-  it("o mesmo item criado duas vezes (re-renderização) entra uma vez só", () => {
-    const item: ItemCriado = { tipo: "marca", id: "marca-daf", nome: "DAF" };
-    expect(mesclarCatalogos(vazio, [item, item]).marcas).toHaveLength(2);
   });
 
   it("não muda o catálogo de entrada", () => {
@@ -58,14 +51,8 @@ describe("mesclarCatalogos: o que o + criou entra no catálogo da tela", () => {
     expect(vazio).toEqual(copia);
   });
 
-  it("modelo, CR ou garagem sem pai são ignorados (nunca entram órfãos)", () => {
-    const c = mesclarCatalogos(vazio, [
-      { tipo: "modelo", id: "m", nome: "Sem pai" },
-      { tipo: "cr", id: "c", nome: "CR-9999" },
-      { tipo: "garagem", id: "g", nome: "Sem filial" },
-    ]);
+  it("modelo sem marca é ignorado (nunca entra órfão)", () => {
+    const c = mesclarCatalogos(vazio, [{ tipo: "modelo", id: "m", nome: "Sem pai" }]);
     expect(c.modelos).toHaveLength(1);
-    expect(c.crs).toHaveLength(1);
-    expect(c.garagens).toHaveLength(1);
   });
 });
