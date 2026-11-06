@@ -175,6 +175,7 @@ select set_eq(
     'config.filial.filial_ler', 'config.filial.filial_criar', 'config.filial.filial_alterar',
     'config.garagem.garagem_ler', 'config.garagem.garagem_criar', 'config.garagem.garagem_alterar',
     'config.filial_do_cr.filial_do_cr_ler', 'config.filial_do_cr.filial_do_cr_criar', 'config.filial_do_cr.filial_do_cr_alterar',
+    'config.unidade_gerencial.unidade_gerencial_ler',
     'config.nomenclatura_de_conjunto.nomenclatura_de_conjunto_ler', 'config.nomenclatura_de_conjunto.nomenclatura_de_conjunto_criar', 'config.nomenclatura_de_conjunto.nomenclatura_de_conjunto_alterar',
     'config.configuracao_de_conjunto.configuracao_de_conjunto_ler', 'config.configuracao_de_conjunto.configuracao_de_conjunto_criar', 'config.configuracao_de_conjunto.configuracao_de_conjunto_alterar',
     'config.camada_de_status.camada_de_status_ler', 'config.camada_de_status.camada_de_status_criar', 'config.camada_de_status.camada_de_status_alterar',

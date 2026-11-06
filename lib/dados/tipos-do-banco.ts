@@ -100,17 +100,23 @@ isOneToOne: false
                   ]
                 },"filial": {
                   Row: {
-                    "criado_em": string,"excluido_em": string | null,"excluido_por": string | null,"id": string,"motivo_da_exclusao": string | null,"nome": string,"versao": number
+                    "criado_em": string,"excluido_em": string | null,"excluido_por": string | null,"garagem_id": string | null,"id": string,"motivo_da_exclusao": string | null,"nome": string,"versao": number
                   }
                   ComputedFields: never
                   Insert: {
-                    "criado_em"?: string,"excluido_em"?: string | null,"excluido_por"?: string | null,"id"?: string,"motivo_da_exclusao"?: string | null,"nome": string,"versao"?: number
+                    "criado_em"?: string,"excluido_em"?: string | null,"excluido_por"?: string | null,"garagem_id"?: string | null,"id"?: string,"motivo_da_exclusao"?: string | null,"nome": string,"versao"?: number
                   }
                   Update: {
-                    "criado_em"?: string,"excluido_em"?: string | null,"excluido_por"?: string | null,"id"?: string,"motivo_da_exclusao"?: string | null,"nome"?: string,"versao"?: number
+                    "criado_em"?: string,"excluido_em"?: string | null,"excluido_por"?: string | null,"garagem_id"?: string | null,"id"?: string,"motivo_da_exclusao"?: string | null,"nome"?: string,"versao"?: number
                   }
                   Relationships: [
-                    
+                    {
+      foreignKeyName: "filial_garagem_id_fkey"
+      columns: ["garagem_id"]
+isOneToOne: true
+      referencedRelation: "garagem"
+      referencedColumns: ["id"]
+    }
                   ]
                 },"filial_do_cr": {
                   Row: {
@@ -142,14 +148,14 @@ isOneToOne: false
                   ]
                 },"garagem": {
                   Row: {
-                    "codigo": string,"conferencia": string,"criado_em": string,"digito_da_raiz": number | null,"id": string,"rotulo": string,"versao": number
+                    "cidade": string | null,"codigo": string,"conferencia": string,"criado_em": string,"digito_da_raiz": number | null,"id": string,"rotulo": string,"uf": string | null,"versao": number
                   }
                   ComputedFields: never
                   Insert: {
-                    "codigo": string,"conferencia"?: string,"criado_em"?: string,"digito_da_raiz"?: number | null,"id"?: string,"rotulo": string,"versao"?: number
+                    "cidade"?: string | null,"codigo": string,"conferencia"?: string,"criado_em"?: string,"digito_da_raiz"?: number | null,"id"?: string,"rotulo": string,"uf"?: string | null,"versao"?: number
                   }
                   Update: {
-                    "codigo"?: string,"conferencia"?: string,"criado_em"?: string,"digito_da_raiz"?: number | null,"id"?: string,"rotulo"?: string,"versao"?: number
+                    "cidade"?: string | null,"codigo"?: string,"conferencia"?: string,"criado_em"?: string,"digito_da_raiz"?: number | null,"id"?: string,"rotulo"?: string,"uf"?: string | null,"versao"?: number
                   }
                   Relationships: [
                     
@@ -333,6 +339,20 @@ isOneToOne: false
       referencedRelation: "camada_de_status"
       referencedColumns: ["codigo"]
     }
+                  ]
+                },"unidade_gerencial": {
+                  Row: {
+                    "codigo": string,"criado_em": string,"ordem": number,"rotulo": string,"rotulo_no_sankhya": string,"versao": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "codigo": string,"criado_em"?: string,"ordem": number,"rotulo": string,"rotulo_no_sankhya": string,"versao"?: number
+                  }
+                  Update: {
+                    "codigo"?: string,"criado_em"?: string,"ordem"?: number,"rotulo"?: string,"rotulo_no_sankhya"?: string,"versao"?: number
+                  }
+                  Relationships: [
+                    
                   ]
                 }
           }
@@ -557,14 +577,14 @@ isOneToOne: false
                   ]
                 },"cr": {
                   Row: {
-                    "ad_bloqueado": string | null,"ad_bloqueado_origem": Database["config"]['Enums']["origem_do_campo"] | null,"ad_frota": string | null,"ad_frota_origem": Database["config"]['Enums']["origem_do_campo"] | null,"analitico": boolean | null,"analitico_origem": Database["config"]['Enums']["origem_do_campo"] | null,"ativo": boolean,"ativo_origem": Database["config"]['Enums']["origem_do_campo"],"bloqueado": boolean,"bloqueado_origem": Database["config"]['Enums']["origem_do_campo"],"codcencus": number,"codigo": string,"conferencia": string,"cr_pai_id": string | null,"cr_pai_origem": Database["config"]['Enums']["origem_do_campo"] | null,"criado_em": string,"excluido_em": string | null,"excluido_por": string | null,"filial_do_cr": string | null,"filial_do_cr_origem": Database["config"]['Enums']["origem_do_campo"] | null,"garagem_conferencia": string | null,"garagem_id": string | null,"garagem_origem": Database["config"]['Enums']["origem_do_campo"] | null,"id": string,"motivo_da_exclusao": string | null,"nome": string | null,"operacao_id": string | null,"participa_da_frota": boolean | null,"participa_da_frota_origem": Database["config"]['Enums']["origem_do_campo"] | null,"tipo": Database["nucleo"]['Enums']["tipo_de_cr"] | null,"tipo_origem": Database["config"]['Enums']["origem_do_campo"] | null,"veiculo_obrigatorio": boolean | null,"veiculo_obrigatorio_origem": Database["config"]['Enums']["origem_do_campo"] | null,"versao": number
+                    "ad_bloqueado": string | null,"ad_bloqueado_origem": Database["config"]['Enums']["origem_do_campo"] | null,"ad_frota": string | null,"ad_frota_origem": Database["config"]['Enums']["origem_do_campo"] | null,"analitico": boolean | null,"analitico_origem": Database["config"]['Enums']["origem_do_campo"] | null,"ativo": boolean,"ativo_origem": Database["config"]['Enums']["origem_do_campo"],"bloqueado": boolean,"bloqueado_origem": Database["config"]['Enums']["origem_do_campo"],"codcencus": number,"codigo": string,"conferencia": string,"cr_pai_id": string | null,"cr_pai_origem": Database["config"]['Enums']["origem_do_campo"] | null,"criado_em": string,"excluido_em": string | null,"excluido_por": string | null,"filial_do_cr": string | null,"filial_do_cr_origem": Database["config"]['Enums']["origem_do_campo"] | null,"garagem_conferencia": string | null,"garagem_id": string | null,"garagem_origem": Database["config"]['Enums']["origem_do_campo"] | null,"id": string,"motivo_da_exclusao": string | null,"nome": string | null,"operacao_id": string | null,"participa_da_frota": boolean | null,"participa_da_frota_origem": Database["config"]['Enums']["origem_do_campo"] | null,"tipo": Database["nucleo"]['Enums']["tipo_de_cr"] | null,"tipo_origem": Database["config"]['Enums']["origem_do_campo"] | null,"unidade_gerencial": string | null,"unidade_gerencial_origem": Database["config"]['Enums']["origem_do_campo"] | null,"veiculo_obrigatorio": boolean | null,"veiculo_obrigatorio_origem": Database["config"]['Enums']["origem_do_campo"] | null,"versao": number
                   }
                   ComputedFields: never
                   Insert: {
-                    "ad_bloqueado"?: string | null,"ad_bloqueado_origem"?: Database["config"]['Enums']["origem_do_campo"] | null,"ad_frota"?: string | null,"ad_frota_origem"?: Database["config"]['Enums']["origem_do_campo"] | null,"analitico"?: boolean | null,"analitico_origem"?: Database["config"]['Enums']["origem_do_campo"] | null,"ativo"?: boolean,"ativo_origem"?: Database["config"]['Enums']["origem_do_campo"],"bloqueado"?: boolean,"bloqueado_origem"?: Database["config"]['Enums']["origem_do_campo"],"codcencus": number,"codigo": string,"conferencia"?: string,"cr_pai_id"?: string | null,"cr_pai_origem"?: Database["config"]['Enums']["origem_do_campo"] | null,"criado_em"?: string,"excluido_em"?: string | null,"excluido_por"?: string | null,"filial_do_cr"?: string | null,"filial_do_cr_origem"?: Database["config"]['Enums']["origem_do_campo"] | null,"garagem_conferencia"?: string | null,"garagem_id"?: string | null,"garagem_origem"?: Database["config"]['Enums']["origem_do_campo"] | null,"id"?: string,"motivo_da_exclusao"?: string | null,"nome"?: string | null,"operacao_id"?: string | null,"participa_da_frota"?: boolean | null,"participa_da_frota_origem"?: Database["config"]['Enums']["origem_do_campo"] | null,"tipo"?: Database["nucleo"]['Enums']["tipo_de_cr"] | null,"tipo_origem"?: Database["config"]['Enums']["origem_do_campo"] | null,"veiculo_obrigatorio"?: boolean | null,"veiculo_obrigatorio_origem"?: Database["config"]['Enums']["origem_do_campo"] | null,"versao"?: number
+                    "ad_bloqueado"?: string | null,"ad_bloqueado_origem"?: Database["config"]['Enums']["origem_do_campo"] | null,"ad_frota"?: string | null,"ad_frota_origem"?: Database["config"]['Enums']["origem_do_campo"] | null,"analitico"?: boolean | null,"analitico_origem"?: Database["config"]['Enums']["origem_do_campo"] | null,"ativo"?: boolean,"ativo_origem"?: Database["config"]['Enums']["origem_do_campo"],"bloqueado"?: boolean,"bloqueado_origem"?: Database["config"]['Enums']["origem_do_campo"],"codcencus": number,"codigo": string,"conferencia"?: string,"cr_pai_id"?: string | null,"cr_pai_origem"?: Database["config"]['Enums']["origem_do_campo"] | null,"criado_em"?: string,"excluido_em"?: string | null,"excluido_por"?: string | null,"filial_do_cr"?: string | null,"filial_do_cr_origem"?: Database["config"]['Enums']["origem_do_campo"] | null,"garagem_conferencia"?: string | null,"garagem_id"?: string | null,"garagem_origem"?: Database["config"]['Enums']["origem_do_campo"] | null,"id"?: string,"motivo_da_exclusao"?: string | null,"nome"?: string | null,"operacao_id"?: string | null,"participa_da_frota"?: boolean | null,"participa_da_frota_origem"?: Database["config"]['Enums']["origem_do_campo"] | null,"tipo"?: Database["nucleo"]['Enums']["tipo_de_cr"] | null,"tipo_origem"?: Database["config"]['Enums']["origem_do_campo"] | null,"unidade_gerencial"?: string | null,"unidade_gerencial_origem"?: Database["config"]['Enums']["origem_do_campo"] | null,"veiculo_obrigatorio"?: boolean | null,"veiculo_obrigatorio_origem"?: Database["config"]['Enums']["origem_do_campo"] | null,"versao"?: number
                   }
                   Update: {
-                    "ad_bloqueado"?: string | null,"ad_bloqueado_origem"?: Database["config"]['Enums']["origem_do_campo"] | null,"ad_frota"?: string | null,"ad_frota_origem"?: Database["config"]['Enums']["origem_do_campo"] | null,"analitico"?: boolean | null,"analitico_origem"?: Database["config"]['Enums']["origem_do_campo"] | null,"ativo"?: boolean,"ativo_origem"?: Database["config"]['Enums']["origem_do_campo"],"bloqueado"?: boolean,"bloqueado_origem"?: Database["config"]['Enums']["origem_do_campo"],"codcencus"?: number,"codigo"?: string,"conferencia"?: string,"cr_pai_id"?: string | null,"cr_pai_origem"?: Database["config"]['Enums']["origem_do_campo"] | null,"criado_em"?: string,"excluido_em"?: string | null,"excluido_por"?: string | null,"filial_do_cr"?: string | null,"filial_do_cr_origem"?: Database["config"]['Enums']["origem_do_campo"] | null,"garagem_conferencia"?: string | null,"garagem_id"?: string | null,"garagem_origem"?: Database["config"]['Enums']["origem_do_campo"] | null,"id"?: string,"motivo_da_exclusao"?: string | null,"nome"?: string | null,"operacao_id"?: string | null,"participa_da_frota"?: boolean | null,"participa_da_frota_origem"?: Database["config"]['Enums']["origem_do_campo"] | null,"tipo"?: Database["nucleo"]['Enums']["tipo_de_cr"] | null,"tipo_origem"?: Database["config"]['Enums']["origem_do_campo"] | null,"veiculo_obrigatorio"?: boolean | null,"veiculo_obrigatorio_origem"?: Database["config"]['Enums']["origem_do_campo"] | null,"versao"?: number
+                    "ad_bloqueado"?: string | null,"ad_bloqueado_origem"?: Database["config"]['Enums']["origem_do_campo"] | null,"ad_frota"?: string | null,"ad_frota_origem"?: Database["config"]['Enums']["origem_do_campo"] | null,"analitico"?: boolean | null,"analitico_origem"?: Database["config"]['Enums']["origem_do_campo"] | null,"ativo"?: boolean,"ativo_origem"?: Database["config"]['Enums']["origem_do_campo"],"bloqueado"?: boolean,"bloqueado_origem"?: Database["config"]['Enums']["origem_do_campo"],"codcencus"?: number,"codigo"?: string,"conferencia"?: string,"cr_pai_id"?: string | null,"cr_pai_origem"?: Database["config"]['Enums']["origem_do_campo"] | null,"criado_em"?: string,"excluido_em"?: string | null,"excluido_por"?: string | null,"filial_do_cr"?: string | null,"filial_do_cr_origem"?: Database["config"]['Enums']["origem_do_campo"] | null,"garagem_conferencia"?: string | null,"garagem_id"?: string | null,"garagem_origem"?: Database["config"]['Enums']["origem_do_campo"] | null,"id"?: string,"motivo_da_exclusao"?: string | null,"nome"?: string | null,"operacao_id"?: string | null,"participa_da_frota"?: boolean | null,"participa_da_frota_origem"?: Database["config"]['Enums']["origem_do_campo"] | null,"tipo"?: Database["nucleo"]['Enums']["tipo_de_cr"] | null,"tipo_origem"?: Database["config"]['Enums']["origem_do_campo"] | null,"unidade_gerencial"?: string | null,"unidade_gerencial_origem"?: Database["config"]['Enums']["origem_do_campo"] | null,"veiculo_obrigatorio"?: boolean | null,"veiculo_obrigatorio_origem"?: Database["config"]['Enums']["origem_do_campo"] | null,"versao"?: number
                   }
                   Relationships: [
                     {
@@ -985,14 +1005,14 @@ isOneToOne: false
                   ]
                 },"operacao": {
                   Row: {
-                    "criado_em": string,"excluido_em": string | null,"excluido_por": string | null,"id": string,"motivo_da_exclusao": string | null,"nome": string,"parada": boolean,"versao": number
+                    "base_cidade": string | null,"base_uf": string | null,"criado_em": string,"excluido_em": string | null,"excluido_por": string | null,"id": string,"motivo_da_exclusao": string | null,"nome": string,"parada": boolean,"rotulo_no_sankhya": string | null,"tipo": string,"versao": number
                   }
                   ComputedFields: never
                   Insert: {
-                    "criado_em"?: string,"excluido_em"?: string | null,"excluido_por"?: string | null,"id"?: string,"motivo_da_exclusao"?: string | null,"nome": string,"parada"?: boolean,"versao"?: number
+                    "base_cidade"?: string | null,"base_uf"?: string | null,"criado_em"?: string,"excluido_em"?: string | null,"excluido_por"?: string | null,"id"?: string,"motivo_da_exclusao"?: string | null,"nome": string,"parada"?: boolean,"rotulo_no_sankhya"?: string | null,"tipo"?: string,"versao"?: number
                   }
                   Update: {
-                    "criado_em"?: string,"excluido_em"?: string | null,"excluido_por"?: string | null,"id"?: string,"motivo_da_exclusao"?: string | null,"nome"?: string,"parada"?: boolean,"versao"?: number
+                    "base_cidade"?: string | null,"base_uf"?: string | null,"criado_em"?: string,"excluido_em"?: string | null,"excluido_por"?: string | null,"id"?: string,"motivo_da_exclusao"?: string | null,"nome"?: string,"parada"?: boolean,"rotulo_no_sankhya"?: string | null,"tipo"?: string,"versao"?: number
                   }
                   Relationships: [
                     
@@ -1841,6 +1861,9 @@ isOneToOne: false
 "tipo_do_cr":
 { Args: { "p_participa_da_frota": boolean,"p_veiculo_obrigatorio": boolean }; Returns: Database["nucleo"]['Enums']["tipo_de_cr"]
                            },
+"tipo_do_cr_pela_unidade":
+{ Args: { "p_unidade": string,"p_veiculo_obrigatorio": boolean }; Returns: Database["nucleo"]['Enums']["tipo_de_cr"]
+                           },
 "ultima_correcao_tardia_em":
 { Args: { "p_ativo_id": string }; Returns: string
                            },
@@ -1849,7 +1872,7 @@ isOneToOne: false
                            }
           }
           Enums: {
-            "com_quem_da_custodia": "gestor"|"operacional","funcao_do_implemento": "semirreboque"|"dolly","regime_de_posse": "propria"|"acionista"|"agregado"|"terceiro"|"alugada","tipo_de_ativo": "cavalo"|"implemento"|"equipamento"|"caminhao"|"apoio","tipo_de_cr": "servico"|"frota_de_ativo"|"frota_sem_placa"
+            "com_quem_da_custodia": "gestor"|"operacional","funcao_do_implemento": "semirreboque"|"dolly","regime_de_posse": "propria"|"acionista"|"agregado"|"terceiro"|"alugada","tipo_de_ativo": "cavalo"|"implemento"|"equipamento"|"caminhao"|"apoio","tipo_de_cr": "servico"|"frota_de_ativo"|"frota_sem_placa"|"acionista"|"participacoes"|"transulog"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -1989,7 +2012,7 @@ export const Constants = {
           }
         },"nucleo": {
           Enums: {
-            "com_quem_da_custodia": ["gestor", "operacional"],"funcao_do_implemento": ["semirreboque", "dolly"],"regime_de_posse": ["propria", "acionista", "agregado", "terceiro", "alugada"],"tipo_de_ativo": ["cavalo", "implemento", "equipamento", "caminhao", "apoio"],"tipo_de_cr": ["servico", "frota_de_ativo", "frota_sem_placa"]
+            "com_quem_da_custodia": ["gestor", "operacional"],"funcao_do_implemento": ["semirreboque", "dolly"],"regime_de_posse": ["propria", "acionista", "agregado", "terceiro", "alugada"],"tipo_de_ativo": ["cavalo", "implemento", "equipamento", "caminhao", "apoio"],"tipo_de_cr": ["servico", "frota_de_ativo", "frota_sem_placa", "acionista", "participacoes", "transulog"]
           }
         },"public": {
           Enums: {

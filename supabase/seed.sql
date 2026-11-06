@@ -221,7 +221,8 @@ insert into config.parametro (chave, valor, descricao) values
 insert into config.garagem (codigo, rotulo, digito_da_raiz, conferencia) values
   ('matriz', 'Matriz', 2, 'conferida'),
   ('cordeiropolis', 'Cordeirópolis', 4, 'conferida'),
-  ('parauapebas', 'Parauapebas', 6, 'conferida');
+  ('parauapebas', 'Parauapebas', 6, 'conferida')
+on conflict (codigo) do nothing;
 
 -- As 13 filiais do CR do Sankhya (AD_GARAGEM do CR), com o rótulo e a ordem de lá. São um rótulo, não o
 -- lugar. A sugestão para a importação é só sugestão, a conferir: nada se deriva dela sem confirmação.

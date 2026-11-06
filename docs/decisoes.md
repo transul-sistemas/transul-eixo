@@ -8,6 +8,24 @@ Modelo de entrada:
 
 ---
 
+## 06/11/2026 — Fatia 3.9c (catálogos e CRs)
+
+- **O que entrou (migrations `tipos_de_cr_por_unidade` e `unidade_gerencial_operacao_e_filial`):**
+  - `config.unidade_gerencial` (frota, acionista, servico, participacoes, transulog, com o rótulo do Sankhya) e `nucleo.cr.unidade_gerencial` (com origem). **O tipo do CR vem da unidade** (`nucleo.tipo_do_cr_pela_unidade`, espelho `tipoDoCrPelaUnidade` em `lib/dominio/cr.ts`, assinatura `d01179725d9db49ddb5bb56cdcb9ce37` no Vitest e no pgTAP 67); o tipo ganhou `acionista`, `participacoes` e `transulog`. Sem unidade, vale a regra antiga. **AD_FROTA vira conferência:** contra a unidade, nos dois sentidos, vai para a fila (`cr_frota_diverge_da_unidade`, uma aberta por CR).
+  - **Filial = Garagem:** `config.garagem` ganhou cidade e UF e passou a nascer na migration (o seed ficou idempotente); `config.filial` ganhou `garagem_id` (único) e nasceram as 3 filiais (Matriz (São Luís/MA), Cordeirópolis/SP, Parauapebas/PA). `config.filial_do_cr` e `nucleo.cr.filial_do_cr` ficam como **legado** (comentário no banco).
+  - **Operação:** `nucleo.operacao` ganhou `tipo` (operacao, parada, administrativa, holding, acionista), `base_cidade`, `base_uf` e `rotulo_no_sankhya` (o texto da coluna Operação, para casar o CR); nasceram as 14 reais.
+  - **Mais de um CR por placa:** saiu o EXCLUDE "um CR por vez"; entrou "o mesmo CR não se sobrepõe a si mesmo". Dois CRs do mesmo tipo ao mesmo tempo **não são recusados**: alerta `placa_com_dois_cr_do_mesmo_tipo` (em `alertas_vigentes_do_ativo`, a definição única) e fila (uma aberta por placa). `nucleo.cr_em` escolhe o de frota (o custo vai a ele; no empate, o mais recente), e daí saem a garagem e o CR da linha. O alerta `buraco_em_cr` passou a olhar a cobertura (com CRs simultâneos, "o próximo" não basta). A regra 1 do `CLAUDE.md` ganhou a nota.
+- **Hipóteses (simples e reversíveis):**
+  1. O nome continua `nucleo.operacao` (o pedido falava em `config.operacao`): mover de schema reescreveria funções, RLS e a leitura mantida sem ganho.
+  2. Dentro da frota, VEICULO "N" é frota sem placa; "S" ou sem o sinal (o CSV não traz VEICULO) é frota de ativo.
+  3. Os nomes das 14 operações levam o prefixo "Operação" quando o Sankhya o usa (Operação Matriz…), e Administrativo SLZ, COR e PAR; TransuLOG é do tipo `operacao`, TranSul Participações é `holding`; a base de ambas é São Luís/MA (filial Matriz no Sankhya).
+  4. CR de acionista não tem operação (a operação "Acionista Fulano" do Sankhya não vira operação) nem entra no alerta de CR sem operação (que é só de serviço).
+  5. A garagem que vem na coluna Filial do Sankhya é gravada com origem `sankhya` e conferida; sem a coluna, vale a derivação pelo primeiro dígito.
+- **Testes vistos falhando antes:** pgTAP 67 (a tabela não existia; 30 asserções) e o Vitest do espelho (3). Ajustados: 31 (o nome novo de alerta), 50 (a política nova) e 65 (os rótulos novos do tipo).
+- **Exceção à regra de memória (06/11/2026):** com 4,6 GB livres e o pedido de acelerar, subiu **só o Postgres local** (`supabase db start`, cerca de 120 MB no contêiner); o pgTAP inteiro roda em 9 s. Nada de pilha completa, e2e ou `pnpm dev`. Os tipos do banco saíram de `supabase gen types --db-url` com o endereço local padrão, sem imprimir nada.
+- **Deslize registrado (06/11/2026):** ao conferir o CSV de CRs, um comando listou na conversa os rótulos da coluna Operação, que trazem **nomes de acionistas** (dado real). Nada foi gravado em arquivo, commit ou log. Daqui em diante, conferência de arquivo real só por contagens, nunca por valores distintos de colunas de texto livre.
+- **Quem decidiu:** Alexandre (o escopo, 06/11/2026); as hipóteses seguem pelo modo AVANÇAR.
+
 ## 06/11/2026 — Grades de proteção e modo AVANÇAR
 
 - **Decisão (Alexandre, 06/11/2026):** objetivo único, Frota › Placas em uso com dados reais o quanto antes. Modo AVANÇAR: as partes seguem sem aprovação entre elas; para só se o CI da `main` ficar vermelho, se algo for tocar a nuvem ou se surgir decisão de negócio nova (aí entra a hipótese mais simples, registrada aqui).

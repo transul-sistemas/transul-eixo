@@ -70,7 +70,7 @@ end;
 $$;
 
 -- ---- estrutura ----
-select enum_has_labels('nucleo', 'tipo_de_cr', array['servico', 'frota_de_ativo', 'frota_sem_placa'], 'o CR de frota é do ativo (placa ou equipamento): frota_de_ativo');
+select enum_has_labels('nucleo', 'tipo_de_cr', array['servico', 'frota_de_ativo', 'frota_sem_placa', 'acionista', 'participacoes', 'transulog'], 'o CR de frota é do ativo (placa ou equipamento): frota_de_ativo; e os tipos da unidade gerencial (3.9c)');
 select has_column('nucleo', 'cr', 'ad_frota', 'o CR guarda o AD_FROTA bruto');
 select has_column('nucleo', 'cr', 'ad_frota_origem', 'com a origem');
 select has_column('nucleo', 'cr', 'ad_bloqueado', 'o CR guarda o AD_BLOQUEADO bruto');
