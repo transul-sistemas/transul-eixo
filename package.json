@@ -18,6 +18,7 @@
     "db:tipos": "node scripts/db-tipos.mjs",
     "dev:usuario": "node scripts/dev-usuario.ts",
     "db:dev-dados": "node scripts/db-dev-dados.ts",
+    "importar:cr": "node scripts/importar-cr.ts",
     "db:carga": "node scripts/db-dev-dados.ts --quantidade 5000",
     "db:diagnostico": "node scripts/db-diagnostico.ts",
     "env:local": "node scripts/env-local.mjs",

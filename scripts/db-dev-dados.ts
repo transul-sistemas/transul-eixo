@@ -2,22 +2,13 @@
 // os dados de desenvolvimento do supabase/dev/dados.sql, SÓ no Supabase LOCAL. Recusa qualquer banco
 // que não seja da própria máquina (nunca produção). Nunca imprime endereço nem chave: lê o
 // `supabase status` por dentro. Fatia 3.9a.
-import { execSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { pathToFileURL } from "node:url";
 import pg from "pg";
 
-/** Só o banco da própria máquina (o Supabase local no Docker). */
-export function bancoLocal(endereco: string): boolean {
-  let url: URL;
-  try {
-    url = new URL(endereco);
-  } catch {
-    return false;
-  }
-  if (url.protocol !== "postgres:" && url.protocol !== "postgresql:") return false;
-  return ["127.0.0.1", "localhost", "[::1]"].includes(url.hostname);
-}
+import { bancoLocal, enderecoDoBancoLocal } from "./banco-local.ts";
+
+export { bancoLocal };
 
 /** `--quantidade 5000` (200 por padrão) e `--sem-gatilhos` (só para medir a carga em lote). */
 export function lerArgumentos(argv: readonly string[]): {
@@ -46,18 +37,6 @@ const TABELAS_COM_GATILHO = [
   "pessoa",
   "operacao",
 ];
-
-function enderecoDoBancoLocal(): string {
-  const texto = execSync("pnpm exec supabase status -o env", {
-    encoding: "utf8",
-    stdio: ["ignore", "pipe", "ignore"],
-  });
-  const linha = texto.split(/\r?\n/).find((l) => l.startsWith("DB_URL="));
-  const endereco = linha?.replace(/^DB_URL="?/, "").replace(/"$/, "");
-  if (!endereco)
-    throw new Error("O supabase status não trouxe o banco: o Supabase local está ligado?");
-  return endereco;
-}
 
 async function principal() {
   const argumentos = lerArgumentos(process.argv.slice(2));
