@@ -50,7 +50,9 @@ jobs:
         run: pnpm exec supabase start
       - if: steps.recente.outputs.roda == 'true'
         run: |
-          pnpm exec supabase status -o env             | sed -nE 's/^API_URL="?([^"]*)"?$/NEXT_PUBLIC_SUPABASE_URL=/p; s/^PUBLISHABLE_KEY="?([^"]*)"?$/NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=/p'             >> "$GITHUB_ENV"
+          pnpm exec supabase status -o env \
+            | sed -nE 's/^API_URL="?([^"]*)"?$/NEXT_PUBLIC_SUPABASE_URL=\1/p; s/^PUBLISHABLE_KEY="?([^"]*)"?$/NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=\1/p' \
+            >> "$GITHUB_ENV"
       - if: steps.recente.outputs.roda == 'true'
         run: pnpm build
       - if: steps.recente.outputs.roda == 'true'
