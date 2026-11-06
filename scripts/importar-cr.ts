@@ -299,6 +299,27 @@ select jsonb_build_object(
        group by 1) t)
 ) as resumo`;
 
+/** A carga dos CRs dentro de uma transação já aberta por quem chama (a carga inicial da v1 a usa). Os
+ * temporários somem no commit ou no rollback de quem chama. */
+export async function carregarCrsNaTransacao(
+  cliente: pg.Client,
+  linhas: readonly LinhaDeCr[],
+): Promise<Omit<ResumoDaImportacao, "modo" | "linhas" | "iguais">> {
+  await cliente.query("alter table nucleo.cr disable trigger t99_leitura_da_placa");
+  await cliente.query("select set_config('eixo.importacao_cr', $1, true)", [
+    JSON.stringify(linhas),
+  ]);
+  await cliente.query(SQL_DA_CARGA);
+  const { rows } = await cliente.query<{
+    resumo: Omit<ResumoDaImportacao, "modo" | "linhas" | "iguais">;
+  }>(SQL_DO_RESUMO);
+  await cliente.query("select nucleo.reconstruir_leitura_das_placas()");
+  await cliente.query("alter table nucleo.cr enable trigger t99_leitura_da_placa");
+  const r = rows[0]?.resumo;
+  if (!r) throw new ErroDaImportacao("O banco não devolveu o resumo da importação.");
+  return r;
+}
+
 export async function importar(
   cliente: pg.Client,
   linhas: readonly LinhaDeCr[],
@@ -306,19 +327,8 @@ export async function importar(
 ): Promise<ResumoDaImportacao> {
   await cliente.query("begin");
   try {
-    await cliente.query("alter table nucleo.cr disable trigger t99_leitura_da_placa");
-    await cliente.query("select set_config('eixo.importacao_cr', $1, true)", [
-      JSON.stringify(linhas),
-    ]);
-    await cliente.query(SQL_DA_CARGA);
-    const { rows } = await cliente.query<{
-      resumo: Omit<ResumoDaImportacao, "modo" | "linhas" | "iguais">;
-    }>(SQL_DO_RESUMO);
-    await cliente.query("select nucleo.reconstruir_leitura_das_placas()");
-    await cliente.query("alter table nucleo.cr enable trigger t99_leitura_da_placa");
+    const r = await carregarCrsNaTransacao(cliente, linhas);
     await cliente.query(aplicar ? "commit" : "rollback");
-    const r = rows[0]?.resumo;
-    if (!r) throw new ErroDaImportacao("O banco não devolveu o resumo da importação.");
     return {
       modo: aplicar ? "aplicação" : "simulação",
       linhas: linhas.length,

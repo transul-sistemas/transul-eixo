@@ -829,14 +829,14 @@ isOneToOne: false
                   ]
                 },"fila_de_excecoes": {
                   Row: {
-                    "assunto": string | null,"ativo_id": string | null,"campo": string | null,"cr_id": string | null,"criado_em": string,"descricao": string,"id": string,"resolucao": string | null,"resolvida_em": string | null,"resolvida_por": string | null,"versao": number
+                    "assunto": string | null,"ativo_id": string | null,"campo": string | null,"cr_id": string | null,"criado_em": string,"descricao": string,"id": string,"pessoa_id": string | null,"resolucao": string | null,"resolvida_em": string | null,"resolvida_por": string | null,"versao": number
                   }
                   ComputedFields: never
                   Insert: {
-                    "assunto"?: string | null,"ativo_id"?: string | null,"campo"?: string | null,"cr_id"?: string | null,"criado_em"?: string,"descricao": string,"id"?: string,"resolucao"?: string | null,"resolvida_em"?: string | null,"resolvida_por"?: string | null,"versao"?: number
+                    "assunto"?: string | null,"ativo_id"?: string | null,"campo"?: string | null,"cr_id"?: string | null,"criado_em"?: string,"descricao": string,"id"?: string,"pessoa_id"?: string | null,"resolucao"?: string | null,"resolvida_em"?: string | null,"resolvida_por"?: string | null,"versao"?: number
                   }
                   Update: {
-                    "assunto"?: string | null,"ativo_id"?: string | null,"campo"?: string | null,"cr_id"?: string | null,"criado_em"?: string,"descricao"?: string,"id"?: string,"resolucao"?: string | null,"resolvida_em"?: string | null,"resolvida_por"?: string | null,"versao"?: number
+                    "assunto"?: string | null,"ativo_id"?: string | null,"campo"?: string | null,"cr_id"?: string | null,"criado_em"?: string,"descricao"?: string,"id"?: string,"pessoa_id"?: string | null,"resolucao"?: string | null,"resolvida_em"?: string | null,"resolvida_por"?: string | null,"versao"?: number
                   }
                   Relationships: [
                     {
@@ -880,6 +880,18 @@ isOneToOne: false
       columns: ["cr_id"]
 isOneToOne: false
       referencedRelation: "cr"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "fila_de_excecoes_pessoa_id_fkey"
+      columns: ["pessoa_id"]
+isOneToOne: false
+      referencedRelation: "pessoa"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "fila_de_excecoes_pessoa_id_fkey"
+      columns: ["pessoa_id"]
+isOneToOne: false
+      referencedRelation: "pessoa_para_leitura"
       referencedColumns: ["id"]
     },{
       foreignKeyName: "fila_de_excecoes_resolvida_por_fkey"
@@ -1045,14 +1057,14 @@ isOneToOne: false
                   ]
                 },"pessoa": {
                   Row: {
-                    "codparc": number | null,"criado_em": string,"documento_mascarado": string | null,"email": string | null,"excluido_em": string | null,"excluido_por": string | null,"id": string,"motivo_da_exclusao": string | null,"nome": string,"versao": number
+                    "cadastro_pendente": boolean,"codparc": number | null,"criado_em": string,"documento_mascarado": string | null,"email": string | null,"excluido_em": string | null,"excluido_por": string | null,"id": string,"motivo_da_exclusao": string | null,"nome": string,"versao": number
                   }
                   ComputedFields: never
                   Insert: {
-                    "codparc"?: number | null,"criado_em"?: string,"documento_mascarado"?: string | null,"email"?: string | null,"excluido_em"?: string | null,"excluido_por"?: string | null,"id"?: string,"motivo_da_exclusao"?: string | null,"nome": string,"versao"?: number
+                    "cadastro_pendente"?: boolean,"codparc"?: number | null,"criado_em"?: string,"documento_mascarado"?: string | null,"email"?: string | null,"excluido_em"?: string | null,"excluido_por"?: string | null,"id"?: string,"motivo_da_exclusao"?: string | null,"nome": string,"versao"?: number
                   }
                   Update: {
-                    "codparc"?: number | null,"criado_em"?: string,"documento_mascarado"?: string | null,"email"?: string | null,"excluido_em"?: string | null,"excluido_por"?: string | null,"id"?: string,"motivo_da_exclusao"?: string | null,"nome"?: string,"versao"?: number
+                    "cadastro_pendente"?: boolean,"codparc"?: number | null,"criado_em"?: string,"documento_mascarado"?: string | null,"email"?: string | null,"excluido_em"?: string | null,"excluido_por"?: string | null,"id"?: string,"motivo_da_exclusao"?: string | null,"nome"?: string,"versao"?: number
                   }
                   Relationships: [
                     

@@ -8,6 +8,22 @@ Modelo de entrada:
 
 ---
 
+## 06/11/2026 — Carga inicial pela cópia da v1 (Parte 2, plano B)
+
+- **Origem e destino:** a cópia `C:\Backups	ransul_v1_completo.dump` restaurada num Postgres local separado (contêiner `transul_v1_local`, porta 54330, só as tabelas usadas, sem dono nem permissões); destino, o banco local do Eixo. Script `importacao/carga-v1.ts` (fora do Git, como pedido), idempotente pela placa vigente, `--simular` (padrão, desfaz) ou `--aplicar`; mostra só contagens; o erro mostra só o código.
+- **O que leva:** ativos ativos (cavalo, caminhão, implemento) com `cadastro_pendente` (RENAVAM, eixos e carroceria vêm da ponte), marca, modelo e ano (informados); placa; posse com histórico; gestor da carteira com histórico (os 12 gestores como pessoas sem login, com a marca de pendente, por falta de CPF); CRs da 3.9c na mesma transação, casados pela descrição = placa (analíticos e não bloqueados, frota e acionista); operação pelo CR de frota (montada na placa de tração); composições vigentes.
+- **Simulação no banco local (06/11/2026, só agregados):** 928 ativos (315 cavalos, 6 caminhões, 604 semirreboques, 3 dollies); 1.062 posses; gestor: 154 do histórico e 795 atuais; CR: 974 vínculos, 83 placas sem CR casado; operação: 209 montadas pelo CR, 112 sem operação no CR; 175 composições (59 com 1 implemento, 113 com 2, 3 com 3); 928 linhas na lista de placas; fila: 928 cadastro incompleto, 19 placas com dois CRs do mesmo tipo.
+- **Hipóteses (simples e reversíveis):**
+  1. **Situação inicial PÁT na hora da carga** (a v1 não tem a régua: a "situação" dela é a categoria de posse); a equipe corrige com "Registrar evento".
+  2. **Histórico emendado:** a regra do Eixo exige posse e gestor sem buraco e com o último em aberto; cada registro da v1 termina quando começa o seguinte, o último fica em aberto e o de duração zero sai.
+  3. **Placa sem posse na v1:** própria, com data derivada, e fila (`carga_inicial_sem_posse`); na simulação, nenhuma.
+  4. **Dolly:** o implemento do meio do rodotrem de 3 unidades; o rodotrem da v1 com 2 implementos fica sem o dolly (o nome do conjunto sai pendente até os eixos e o dolly).
+  5. **Equipamentos (55) fora da carga:** o Eixo exige o número de série, que a v1 não tem.
+  6. Pessoa sem documento só com a marca `cadastro_pendente` (migration `pessoa_pendente`, pgTAP 69): abre a fila `pessoa_sem_documento`; o documento gravado derruba a marca e resolve a exceção.
+- **Deslize registrado (06/11/2026):** uma tentativa da carga mostrou na tela a mensagem do banco com o **nome de um gestor** (o gatilho de documento cita o nome). Nada foi gravado em arquivo, commit ou log. A carga passou a mostrar só o código do erro; as contagens de recusa mascaram placa e id.
+- **Ainda não aplicada:** o banco local é compartilhado com o agente da Parte 3, e o pgTAP conta com o banco vazio. A aplicação vem no fim: reset, migrations, `node importacao/carga-v1.ts --aplicar`.
+- **Quem decidiu:** Alexandre (plano B); as hipóteses seguem pelo modo AVANÇAR.
+
 ## 06/11/2026 — Plano B da carga inicial: cadastro pendente
 
 - **Decisão (Alexandre, 06/11/2026):** a autenticação da ponte do Sankhya falhou (HTTP 400). A carga inicial das placas sai da cópia da v1 sem esperar o Sankhya; RENAVAM, eixos e carroceria entram como **pendentes**, com alerta e fila; a ponte os preenche quando voltar, casando pela placa.
