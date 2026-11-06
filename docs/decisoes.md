@@ -8,6 +8,13 @@ Modelo de entrada:
 
 ---
 
+## 06/11/2026 — Parte 4: backup criptografado do banco
+
+- **O que entrou:** `pnpm backup:banco [--nuvem] [--pasta <pasta>]` e `pnpm backup:restaurar <arquivo>` (`scripts/backup.ts`). `pg_dump` em formato custom das áreas do Eixo e de `supabase_migrations`, com as permissões (sem elas a restauração perde os GRANTs), criptografado em AES-256-GCM com chave derivada por scrypt da senha `EIXO_BACKUP_SENHA` (no `.env.local`; o `.env.example` ganhou o nome). Arquivo em `C:/Backups/eixo` por padrão, nome com origem e hora. **Nuvem só com `--nuvem`**, pelo pooler, com a senha do banco passada ao contêiner por variável de ambiente (nunca na linha de comando). **Restaurar só no banco local**, e só depois de conferir o arquivo inteiro (senha e integridade) antes do primeiro byte ao `pg_restore` (`--clean --if-exists --single-transaction`). Os logins (`auth.users`) não entram: são do Supabase Auth.
+- **Testes vistos falhando antes:** 10 do Vitest (o módulo não existia): ida e volta, arquivo sem o texto original, senha errada, arquivo adulterado, arquivo estranho, senha curta ou ausente, argumentos (restaurar na nuvem recusado), esquemas e nome. **Ida e volta real no banco local:** backup de 597 KB, restaurado, e o pgTAP inteiro (816) passou depois.
+- **Achado:** o pgTAP conta com o banco local vazio (códigos de CR fixos). A carga de dado real no banco local fica para o fim de cada rodada (idempotente), com `supabase db reset` antes dos testes.
+- **Quem decidiu:** Alexandre (o pedido); a forma, hipótese simples.
+
 ## 06/11/2026 — Fatia 3.9c (catálogos e CRs)
 
 - **O que entrou (migrations `tipos_de_cr_por_unidade` e `unidade_gerencial_operacao_e_filial`):**
