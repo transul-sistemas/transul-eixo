@@ -15,7 +15,20 @@ Modelo de entrada:
 - **Alternativa descartada:** recriar o projeto em sa-east-1 (São Paulo) e reaplicar tudo.
 - **Roteiro e estado da publicação:** `docs/publicacao-de-teste.md`.
 - **Achado do roteiro:** uma restauração "só de dados" do banco local para a nuvem não fecha: os catálogos que nascem por migração e pelo seed (garagens, operações, carrocerias, filiais) têm identificadores diferentes em cada banco, e os CRs e as placas apontam para os locais. O caminho seguro é rodar a mesma carga (idempotente, casada por código e nome) contra a nuvem, por quem tem a senha; a forma fica para a decisão de Alexandre.
-- **Quem decidiu:** Alexandre.
+- **A carga leva dado de pessoas? Sim, pouco e sem documento.** Tipos (sem valores):
+  - **Gestores de frota (12):** nome, papel de gestor e o histórico de quais placas cada um geriu e quando. Sem CPF, sem contato; o e-mail só entra no Auth quando o login for criado (e fica no arquivo de `importacao/`, fora do Git).
+  - **Acionistas e agregados (pessoas físicas ou empresas):** o nome aparece na descrição de CRs (sobretudo nos agrupadores "Acionista …"); as placas dos veículos deles, com o regime de posse (acionista, agregado, terceiro) e o histórico de posse, são dado **indiretamente identificável**. O dono (pessoa) não é gravado na posse.
+  - **Registro de quem fez o quê:** a auditoria guarda quem gravou cada mudança (os usuários do Eixo).
+  - **Não leva:** CPF, RG, endereço, telefone, dados bancários, salário, motoristas, saúde.
+- **O que isso pede de LGPD (a confirmar com o jurídico ou o encarregado da TranSul):**
+  1. **Transferência internacional (art. 33):** o dado fica nos EUA; a LGPD permite com garantia adequada: as cláusulas-padrão contratuais da ANPD (Resolução CD/ANPD nº 19/2024) ou o acordo de tratamento de dados (DPA) do Supabase, conferido e arquivado.
+  2. **Base legal e finalidade** registradas por tipo: gestão da frota e dos contratos com acionistas e agregados (execução de contrato e legítimo interesse); nada além disso.
+  3. **Registro das operações de tratamento (art. 37)** e o **encarregado (art. 41)** nomeado.
+  4. **Transparência:** aviso interno aos gestores e cláusula ou aviso aos acionistas e agregados.
+  5. **Segurança (art. 46):** RLS por perfil, `service_role` fora do app e da Vercel, TLS, backup cifrado, senha forte por pessoa; plano de **incidente (art. 48)**.
+  6. **Retenção e descarte:** a cópia da v1 (`C:\Backups`), o contêiner `transul_v1_local` e os arquivos de `importacao/` com nome e e-mail ficam só nesta máquina e saem quando a implantação fechar; prazo a definir.
+  7. **Minimização:** a carga já não leva documento nem contato; a ponte do Sankhya continua com a lista fechada de campos (sem CPF em linhas).
+- **Quem decidiu:** Alexandre (a região); os itens de LGPD são a lista do que falta, para Alexandre e o jurídico.
 
 ## 06/11/2026 — Ajustes da carga da v1 antes de aplicar (Alexandre)
 

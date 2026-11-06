@@ -183,6 +183,34 @@ function esperar(processo: ReturnType<typeof spawn>, nome: string): Promise<void
   });
 }
 
+/** Lê uma linha do terminal sem eco (a senha nunca aparece nem vai para arquivo). */
+function perguntarOculto(texto: string): Promise<string> {
+  return new Promise((resolve) => {
+    process.stdout.write(texto);
+    const entrada = process.stdin;
+    let valor = "";
+    if (entrada.isTTY) entrada.setRawMode(true);
+    entrada.resume();
+    entrada.setEncoding("utf8");
+    const ler = (parte: string) => {
+      for (const c of parte) {
+        if (c === "\r" || c === "\n") {
+          entrada.off("data", ler);
+          if (entrada.isTTY) entrada.setRawMode(false);
+          entrada.pause();
+          process.stdout.write("\n");
+          resolve(valor);
+          return;
+        }
+        if (c === "\u0003") process.exit(130);
+        if (c === "\u007f" || c === "\b") valor = valor.slice(0, -1);
+        else valor += c;
+      }
+    };
+    entrada.on("data", ler);
+  });
+}
+
 function carregarAmbiente() {
   for (const arquivo of [".env.local"]) if (existsSync(arquivo)) process.loadEnvFile(arquivo);
 }
@@ -197,8 +225,11 @@ async function backup(argv: string[]) {
 
   let dump: ReturnType<typeof spawn>;
   if (nuvem) {
-    if (!process.env.SUPABASE_DB_PASSWORD)
-      throw new ErroDoBackup("Falta SUPABASE_DB_PASSWORD no .env.local.");
+    // A senha do banco é digitada na hora, sem eco (roteiro de 06/11/2026); o ambiente só vale se existir.
+    const senhaDoBanco =
+      process.env.SUPABASE_DB_PASSWORD ||
+      (await perguntarOculto("Senha do banco (não aparece ao digitar): "));
+    if (!senhaDoBanco) throw new ErroDoBackup("Sem a senha do banco: nada foi feito.");
     dump = rodar(
       "docker",
       [
@@ -225,7 +256,7 @@ async function backup(argv: string[]) {
         PGHOST: NUVEM.host,
         PGPORT: NUVEM.porta,
         PGUSER: NUVEM.usuario,
-        PGPASSWORD: process.env.SUPABASE_DB_PASSWORD,
+        PGPASSWORD: senhaDoBanco,
         PGDATABASE: NUVEM.banco,
       },
     );
