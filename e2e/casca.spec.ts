@@ -106,6 +106,8 @@ test.describe("casca pequena: gaveta do menu", () => {
   test("a gaveta não ocupa a tela toda: sobra o fundo para tocar", async ({ page }) => {
     await abrirHidratada(page, "/inicio/tarefas");
     await abrirMenu(page).click();
+    // A caixa só existe com a gaveta à vista (a barra chega pelo streaming, às vezes depois do toque).
+    await expect(gaveta(page)).toBeVisible();
     const caixa = await gaveta(page).boundingBox();
     const largura = page.viewportSize()?.width ?? 0;
     expect(caixa?.width).toBeLessThan(largura - 40);
