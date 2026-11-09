@@ -47,7 +47,30 @@ jobs:
       # O e2e precisa do Supabase local (login e usuários de teste, desde a 3.8): sobe antes do
       # `supabase status`, que o preparo do Playwright lê por dentro (nunca impresso).
       - if: steps.recente.outputs.roda == 'true'
-        run: pnpm exec supabase start
+        run: |
+          # Hipótese (09/11/2026): a porta 54322 ocupada por uma conexão de saída (faixa efêmera do Linux,
+          # 32768-60999) durante o download das imagens. Reserva 54320-54329 fora dessa faixa, mantendo as
+          # reservas que o runner já tiver, e registra quem usa essas portas enquanto o Supabase sobe.
+          reservadas="$(sysctl -n net.ipv4.ip_local_reserved_ports)"
+          sudo sysctl -qw net.ipv4.ip_local_reserved_ports="${reservadas:+$reservadas,}54320-54329"
+          echo "portas reservadas: $(sysctl -n net.ipv4.ip_local_reserved_ports)"
+          (while sleep 0.2; do
+            s="$(sudo ss -tanpH '( sport >= :54320 and sport <= :54329 )' 2>/dev/null || true)"
+            [ -n "$s" ] && printf '%s\n%s\n' "$(date +%T.%N)" "$s"
+          done) > "$RUNNER_TEMP/portas-supabase.log" 2>&1 &
+          amostrador=$!
+          if pnpm exec supabase start; then status=0; else status=$?; fi
+          kill "$amostrador" 2>/dev/null || true
+          if [ "$status" -ne 0 ]; then
+            echo "::group::Portas 54320-54329 durante o supabase start"
+            cat "$RUNNER_TEMP/portas-supabase.log"
+            echo "::endgroup::"
+            echo "::group::Portas 54320-54329 agora e contêineres"
+            sudo ss -tanp '( sport >= :54320 and sport <= :54329 )' || true
+            docker ps -a --format '{{.Names}} {{.Status}} {{.Ports}}' || true
+            echo "::endgroup::"
+          fi
+          exit "$status"
       - if: steps.recente.outputs.roda == 'true'
         run: |
           pnpm exec supabase status -o env \
