@@ -393,7 +393,7 @@ export function criarArmazem({
         const nova: PlacaGravada = {
           placa,
           tipo: entrada.tipo,
-          renavam: entrada.renavam,
+          renavam: entrada.tipo === "equipamento" ? "" : entrada.renavam,
           marcaId: r.marca!.id,
           marca: r.marca!.nome,
           modeloId: r.modelo!.id,

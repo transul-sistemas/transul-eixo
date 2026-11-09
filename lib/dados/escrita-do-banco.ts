@@ -230,7 +230,8 @@ export function escritaDoBanco(cliente: () => Promise<ClienteDeEscrita>): FonteD
       const implemento = entrada.tipo === "implemento" ? entrada : null;
       const r = await chamar<string>(c, "cadastrar_ativo", {
         p_tipo: entrada.tipo,
-        p_renavam: entrada.renavam,
+        p_renavam: entrada.tipo === "equipamento" ? null : entrada.renavam,
+        p_numero_de_serie: entrada.tipo === "equipamento" ? entrada.numeroDeSerie : null,
         p_placa: entrada.placa,
         p_gestor_id: entrada.gestorId,
         p_cr_id: entrada.crId,

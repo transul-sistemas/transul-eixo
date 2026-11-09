@@ -166,9 +166,9 @@ export function problemasDoImplemento({
  * filial nem garagem: a garagem é a do CR (calculada no banco). Sem conjunto no cadastro.
  */
 export function esquemaCadastrarPlaca({ anoAtual, hoje }: { anoAtual: number; hoje: string }) {
+  // O equipamento não tem RENAVAM: é identificado pelo número de série (o banco exige um ou outro).
   const identificacao = {
     placa,
-    renavam,
     marcaId: id("a marca"),
     modeloId: id("o modelo"),
     ano: z
@@ -184,6 +184,7 @@ export function esquemaCadastrarPlaca({ anoAtual, hoje }: { anoAtual: number; ho
   const comFipe = (tipo: "cavalo" | "caminhao") =>
     z.object({
       ...identificacao,
+      renavam,
       tipo: z.literal(tipo),
       codigoFipe: z
         .string({ error: "Informe o código FIPE." })
@@ -199,11 +200,17 @@ export function esquemaCadastrarPlaca({ anoAtual, hoje }: { anoAtual: number; ho
       .refine(dataValida, { error: "Data inválida. Use uma data real, como 10/09/2026." })
       .refine((d) => d <= hoje, { error: "A data do valor não pode ser no futuro." }),
   };
-  const comValorManual = (tipo: "equipamento" | "apoio") =>
-    z.object({ ...identificacao, tipo: z.literal(tipo), ...valorManual });
+  const doApoio = z.object({ ...identificacao, renavam, tipo: z.literal("apoio"), ...valorManual });
+  const doEquipamento = z.object({
+    ...identificacao,
+    numeroDeSerie: texto("o número de série", 60),
+    tipo: z.literal("equipamento"),
+    ...valorManual,
+  });
   const doImplemento = z
     .object({
       ...identificacao,
+      renavam,
       tipo: z.literal("implemento"),
       ...valorManual,
       funcao: z.enum(FUNCOES_DO_IMPLEMENTO, {
@@ -223,13 +230,7 @@ export function esquemaCadastrarPlaca({ anoAtual, hoje }: { anoAtual: number; ho
   return z
     .discriminatedUnion(
       "tipo",
-      [
-        comFipe("cavalo"),
-        comFipe("caminhao"),
-        doImplemento,
-        comValorManual("equipamento"),
-        comValorManual("apoio"),
-      ],
+      [comFipe("cavalo"), comFipe("caminhao"), doImplemento, doEquipamento, doApoio],
       { error: "Escolha o tipo de ativo." },
     )
     .superRefine((dados, ctx) => {

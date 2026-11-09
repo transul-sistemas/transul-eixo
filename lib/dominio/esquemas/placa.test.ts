@@ -77,7 +77,7 @@ describe("esquemaCadastrarPlaca: identificação", () => {
     expect(r.success).toBe(true);
     if (r.success) {
       expect(r.data.placa).toBe("AAA0A00");
-      expect(r.data.renavam).toBe("00639884962");
+      expect("renavam" in r.data && r.data.renavam).toBe("00639884962");
     }
   });
   it("aceita a placa antiga e a Mercosul", () => {
@@ -99,6 +99,24 @@ describe("esquemaCadastrarPlaca: identificação", () => {
     ).toBe(
       false, // apoio sem fonte e data do valor
     );
+  });
+});
+
+describe("esquemaCadastrarPlaca: o equipamento usa número de série, não RENAVAM", () => {
+  const equipamento = { ...implemento, tipo: "equipamento", renavam: undefined };
+  it("aceita o equipamento sem RENAVAM, com o número de série (sem espaços nas pontas)", () => {
+    const r = esquema.safeParse({ ...equipamento, numeroDeSerie: " ser-123 " });
+    expect(r.success).toBe(true);
+    if (r.success && r.data.tipo === "equipamento") {
+      expect(r.data.numeroDeSerie).toBe("ser-123");
+      expect("renavam" in r.data).toBe(false);
+    }
+  });
+  it("sem o número de série, recusa com a mensagem do campo", () => {
+    expect(campos({ ...equipamento, numeroDeSerie: "" })).toContain("numeroDeSerie");
+  });
+  it("os outros tipos seguem exigindo o RENAVAM", () => {
+    expect(campos({ ...cavalo, renavam: undefined })).toContain("renavam");
   });
 });
 
@@ -144,7 +162,10 @@ describe("esquemaCadastrarPlaca: valor por tipo", () => {
   });
   it("implemento, equipamento e apoio: valor manual, fonte e data do valor", () => {
     for (const tipo of ["implemento", "equipamento", "apoio"]) {
-      expect(esquema.safeParse({ ...implemento, tipo }).success, tipo).toBe(true);
+      expect(
+        esquema.safeParse({ ...implemento, tipo, numeroDeSerie: "SERIE-1" }).success,
+        tipo,
+      ).toBe(true);
       expect(campos({ ...implemento, tipo, fonteDoValor: "" }), tipo).toContain("fonteDoValor");
       expect(campos({ ...implemento, tipo, dataDoValor: undefined }), tipo).toContain(
         "dataDoValor",
