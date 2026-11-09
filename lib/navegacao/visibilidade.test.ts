@@ -100,9 +100,14 @@ describe("modulosVisiveis (catálogo real)", () => {
       expect(visiveis.flatMap((m) => m.telas)).toHaveLength(35);
     }
   });
-  it("com Acompanhamento, Placas e Carteira prontos, o Gestor de frota vê os três e o Operacional não vê nada", () => {
+  it("com Acompanhamento, Placas, Abastecimento e Carteira prontos, o Gestor de frota vê os quatro e o Operacional não vê nada", () => {
     expect(modulosVisiveis("Gestor de frota").map((m) => [m.id, m.telas.map((t) => t.id)])).toEqual(
-      [["frota", ["frota.acompanhamento", "frota.placas", "frota.carteira"]]],
+      [
+        [
+          "frota",
+          ["frota.acompanhamento", "frota.placas", "frota.abastecimento", "frota.carteira"],
+        ],
+      ],
     );
     expect(modulosVisiveis("Operacional")).toEqual([]);
   });
