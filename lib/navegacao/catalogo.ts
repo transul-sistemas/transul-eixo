@@ -151,6 +151,7 @@ export const CATALOGO: readonly ModuloDoCatalogo[] = [
       icone: "IconChartLine",
       dispositivos: DESKTOP,
       descricao: "Explica as variações da frota em quatro camadas.",
+      estado: "pronto",
     },
   ]),
   modulo("operacional", "Operacional", "IconBuildingWarehouse", "operacional", [
