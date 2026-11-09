@@ -5,7 +5,7 @@
 -- `set constraints all immediate`, que confere tudo o que está pendente.
 begin;
 
-select plan(67);
+select plan(68);
 
 create temp table ids (nome text primary key, id uuid not null);
 
@@ -373,6 +373,20 @@ select is(
     where nucleo.sigla_valida(s.sigla, t.tipo, c.ctx = 'conjunto')),
   '13630926e1d4e60aa695ae90d0e64db2',
   'a validade (sigla × tipo × contexto) do banco é a mesma do espelho em TypeScript (mesma assinatura)'
+);
+
+-- ---- o cálculo em lote (Análise da Frota) ----
+-- A situação no fim de cada dia, calculada de uma vez para várias placas e dias, é a mesma da placa a
+-- placa, dia a dia (nucleo.situacao_no_dia), com toda a herança do conjunto dos cenários acima.
+select results_eq(
+  $$select s.ativo_id, s.dia, s.sigla
+      from nucleo.situacao_no_fim_dos_dias((select array_agg(i.id) from ids i join nucleo.ativo a on a.id = i.id), '2026-01-01', '2026-05-31') s
+     order by 1, 2$$,
+  $$select i.id, d.dia::date, nucleo.situacao_no_dia(i.id, d.dia::date)
+      from ids i join nucleo.ativo a on a.id = i.id
+     cross join generate_series('2026-01-01'::date, '2026-05-31'::date, interval '1 day') d (dia)
+     order by 1, 2$$,
+  'a situação em lote (placas × dias) é a mesma de nucleo.situacao_no_dia, placa a placa'
 );
 
 select * from finish();

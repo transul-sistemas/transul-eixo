@@ -2042,11 +2042,21 @@ isOneToOne: false
               "causa_id": string,"sigla": string
             }[]
                            },
+"situacao_dos_dias_visiveis":
+{ Args: { "p_ate": string,"p_ativos": (string)[],"p_inicio": string }; Returns: {
+              "ativo_id": string,"dia": string,"sigla": string
+            }[]
+                           },
 "situacao_em":
 { Args: { "p_ativo_id": string,"p_em": string }; Returns: string
                            },
 "situacao_no_dia":
 { Args: { "p_ativo_id": string,"p_dia": string }; Returns: string
+                           },
+"situacao_no_fim_dos_dias":
+{ Args: { "p_ate": string,"p_ativos": (string)[],"p_inicio": string }; Returns: {
+              "ativo_id": string,"dia": string,"sigla": string
+            }[]
                            },
 "texto_simples":
 { Args: { "p_texto": string }; Returns: string
