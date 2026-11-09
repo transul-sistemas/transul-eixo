@@ -228,6 +228,9 @@ export function escritaDoBanco(cliente: () => Promise<ClienteDeEscrita>): FonteD
     async cadastrarPlaca(entrada, chave): Promise<Resultado<PlacaGravada>> {
       const c = await cliente();
       const implemento = entrada.tipo === "implemento" ? entrada : null;
+      // Ano e valor vão no próprio cadastro (uma transação): nunca fica a placa sem eles.
+      const comFipe = "codigoFipe" in entrada ? entrada : null;
+      const comValorManual = "valorManualCentavos" in entrada ? entrada : null;
       const r = await chamar<string>(c, "cadastrar_ativo", {
         p_tipo: entrada.tipo,
         p_renavam: entrada.tipo === "equipamento" ? null : entrada.renavam,
@@ -242,6 +245,13 @@ export function escritaDoBanco(cliente: () => Promise<ClienteDeEscrita>): FonteD
         p_eixos: implemento?.eixos ?? null,
         p_modelo_id: entrada.modeloId,
         p_chave: chave,
+        p_ano_fabricacao: entrada.ano,
+        p_codigo_fipe: comFipe?.codigoFipe ?? null,
+        p_valor_fipe: comFipe ? reaisDeCentavos(comFipe.valorFipeCentavos) : null,
+        p_valor_fipe_referencia: comFipe ? `${new Date().toISOString().slice(0, 7)}-01` : null,
+        p_valor_manual: comValorManual ? reaisDeCentavos(comValorManual.valorManualCentavos) : null,
+        p_valor_manual_fonte: comValorManual?.fonteDoValor ?? null,
+        p_valor_manual_em: comValorManual?.dataDoValor ?? null,
       });
       if (!r.ok) {
         if (r.erro.code === "23505" && !/chave de envio/i.test(r.erro.message)) {
@@ -257,33 +267,6 @@ export function escritaDoBanco(cliente: () => Promise<ClienteDeEscrita>): FonteD
           );
         }
         return resultadoDoErro(r.erro);
-      }
-      // O ano e o valor moram no ativo (com origem "informada", posta pelo gatilho); o cadastro
-      // atômico não os recebe, então seguem logo depois, na mesma ação. Se esta parte falhar, a placa
-      // já existe e o campo fica pendente (visão campo_pendente), com a mensagem de como resolver.
-      const valores: Record<string, unknown> = { ano_fabricacao: entrada.ano };
-      if ("codigoFipe" in entrada) {
-        valores.codigo_fipe = entrada.codigoFipe;
-        valores.valor_fipe = reaisDeCentavos(entrada.valorFipeCentavos);
-        valores.valor_fipe_referencia = `${new Date().toISOString().slice(0, 7)}-01`;
-      } else if ("valorManualCentavos" in entrada) {
-        valores.valor_manual = reaisDeCentavos(entrada.valorManualCentavos);
-        valores.valor_manual_fonte = entrada.fonteDoValor;
-        valores.valor_manual_em = entrada.dataDoValor;
-      }
-      const { error } = await c
-        .schema("nucleo")
-        .from("ativo")
-        .update(valores)
-        .eq("id", r.dados)
-        .select("id")
-        .single();
-      if (error) {
-        console.error("cadastro: o valor não foi gravado:", error.code, error.message);
-        return erroDaAcao("falha", {
-          mensagem:
-            "A placa foi cadastrada, mas o ano e o valor não foram gravados. Abra a ficha e informe-os de novo.",
-        });
       }
       const nova = await placaDoBanco(c, entrada.placa);
       if (!nova) throw new Error("A placa cadastrada não voltou na leitura.");
@@ -513,21 +496,28 @@ export function escritaDoBanco(cliente: () => Promise<ClienteDeEscrita>): FonteD
 
     async placasQuePodemSerEntregues(): Promise<PlacaAEscolher[]> {
       const c = await cliente();
-      const pagina = await ler<{
-        linhas: { placa: string; modelo: string; tipo: string; sigla: string }[];
-      }>(c, "listar_placas", {
-        p_busca: "",
-        p_grupos: [],
-        p_tipos: ["cavalo", "caminhao"],
-        p_siglas: ["PÁT", "ETv"],
-        p_baixadas: false,
-        p_ordem: "placa",
-        p_decrescente: false,
-        p_pagina: 1,
-        p_tam: 100,
-        p_para_receber: false,
-      });
-      return pagina.linhas
+      // Todas as placas que podem ir ao Operacional, página a página (sem parar nas primeiras 100).
+      const TAM = 100;
+      const linhas: { placa: string; modelo: string; tipo: string; sigla: string }[] = [];
+      for (let pagina = 1; ; pagina++) {
+        const lida = await ler<{
+          linhas: { placa: string; modelo: string; tipo: string; sigla: string }[];
+        }>(c, "listar_placas", {
+          p_busca: "",
+          p_grupos: [],
+          p_tipos: ["cavalo", "caminhao"],
+          p_siglas: ["PÁT", "ETv"],
+          p_baixadas: false,
+          p_ordem: "placa",
+          p_decrescente: false,
+          p_pagina: pagina,
+          p_tam: TAM,
+          p_para_receber: false,
+        });
+        linhas.push(...lida.linhas);
+        if (lida.linhas.length < TAM) break;
+      }
+      return linhas
         .filter((l) => podeEntregar(l.sigla as Sigla, l.tipo as TipoDeAtivo))
         .map((l) => ({ placa: l.placa, nome: `${l.placa} · ${l.modelo}` }));
     },

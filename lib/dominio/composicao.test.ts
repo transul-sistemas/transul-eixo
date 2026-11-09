@@ -103,6 +103,14 @@ describe("configuracaoDoConjunto: a configuração pela estrutura, nunca pelo to
     expect(configuracaoDoConjunto([])).toBeNull();
   });
 
+  it("sem a carroceria do semirreboque também fica pendente (igual a config.nome_do_conjunto)", () => {
+    const semCarroceria: UnidadeDoConjunto = { ...semi(1, 3), carroceria: null };
+    expect(configuracaoDoConjunto([semCarroceria])).toBe("pendente");
+    expect(configuracaoDoConjunto([{ ...semi(1, 2), carroceria: null }, semi(2, 2)])).toBe(
+      "pendente",
+    );
+  });
+
   it("estrutura sem configuração conhecida fica sem nome definido", () => {
     expect(configuracaoDoConjunto([semi(1, 4), semi(2, 4)])).toBe("sem_nome_definido");
     expect(configuracaoDoConjunto([semi(1, 3), dolly(2), semi(3, 3)])).toBe("sem_nome_definido");

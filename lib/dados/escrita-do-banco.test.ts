@@ -117,7 +117,7 @@ describe("cadastrarPlaca pelo banco", () => {
     fonteDoValor: "Nota",
     dataDoValor: "2026-09-10",
   };
-  it("chama cadastrar_ativo com a chave, a função, a carroceria e os eixos, grava ano e valor e devolve a linha", async () => {
+  it("chama cadastrar_ativo com a chave, a função, a carroceria, os eixos, o ano e o valor (uma transação só) e devolve a linha", async () => {
     respostas.cadastrar_ativo = { data: "a-1", error: null };
     respostas.placa_para_assistente = {
       data: { ...placaDoBanco, tipo: "implemento" },
@@ -134,14 +134,14 @@ describe("cadastrarPlaca pelo banco", () => {
         p_cr_id: "c-1",
         p_operacao_id: "o-1",
         p_chave: CHAVE,
+        p_ano_fabricacao: 2022,
+        p_valor_manual: 123.45,
+        p_valor_manual_fonte: "Nota",
+        p_valor_manual_em: "2026-09-10",
       }),
     );
-    expect(update).toHaveBeenCalledWith({
-      ano_fabricacao: 2022,
-      valor_manual: 123.45,
-      valor_manual_fonte: "Nota",
-      valor_manual_em: "2026-09-10",
-    });
+    // Nada de UPDATE separado: se o cadastro gravou, ano e valor gravaram junto.
+    expect(update).not.toHaveBeenCalled();
     expect(r.ok && r.linha).toMatchObject({ placa: "AAA1A11", versao: 3 });
   });
   it("placa repetida (23505) vira placa_ja_existe, com a placa que está lá", async () => {
@@ -263,5 +263,34 @@ describe("o + e a contagem pelo banco", () => {
     expect(await contarParaReceberNoBanco(cliente)).toBe(2);
     respostas.contar_para_receber = { data: null, error: { message: "fora" } };
     expect(await contarParaReceberNoBanco(cliente)).toBe(0);
+  });
+});
+
+describe("placasQuePodemSerEntregues pelo banco: sem o limite de 100 placas", () => {
+  it("lê as páginas até o fim", async () => {
+    const linha = (n: number) => ({
+      placa: `AAA${String(n).padStart(4, "0")}`,
+      modelo: "FH",
+      tipo: "cavalo",
+      sigla: "PÁT",
+    });
+    rpc.mockImplementation(async (funcao: string, argumentos?: Record<string, unknown>) => {
+      if (funcao !== "listar_placas") return { data: null, error: null };
+      const pagina = Number(argumentos?.p_pagina);
+      const tam = Number(argumentos?.p_tam);
+      const total = 250;
+      const inicio = (pagina - 1) * tam;
+      const linhas = Array.from({ length: Math.max(0, Math.min(tam, total - inicio)) }, (_, i) =>
+        linha(inicio + i),
+      );
+      return { data: { linhas, total }, error: null };
+    });
+    try {
+      expect(await fonte.placasQuePodemSerEntregues()).toHaveLength(250);
+    } finally {
+      rpc.mockImplementation(
+        async (funcao: string) => respostas[funcao] ?? { data: null, error: null },
+      );
+    }
   });
 });
