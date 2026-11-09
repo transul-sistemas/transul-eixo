@@ -7,6 +7,8 @@ const ENTREGAR = "frota.entregar-ao-operacional";
 const DISPONIBILIZAR = "frota.disponibilizar-placa";
 const RECEBER = "frota.receber-placa";
 const CONCLUIR = "frota.concluir-recebimento";
+const CANCELAR = "frota.cancelar-pedido";
+const DEVOLVER = "frota.devolver-placa";
 
 describe("idsDasAcoesDoMomento: quais ações de ACOES combinam com a placa", () => {
   it("carreta (implemento) em PÁT ou ETv não tem o botão Entregar ao Operacional", () => {
@@ -51,7 +53,7 @@ describe("idsDasAcoesDoMomento: quais ações de ACOES combinam com a placa", ()
     ).toEqual([RECEBER]);
     expect(
       idsDasAcoesDoMomento({ sigla: "MAN", tipo: "cavalo", etapa: "concluir", pedidoAberto: true }),
-    ).toEqual([CONCLUIR]);
+    ).toEqual([CONCLUIR, DEVOLVER]);
     for (const sigla of SIGLAS) {
       const ids = idsDasAcoesDoMomento({ sigla, tipo: "cavalo" });
       expect(ids, sigla).not.toContain(RECEBER);
@@ -87,6 +89,37 @@ describe("idsDasAcoesDoMomento: quais ações de ACOES combinam com a placa", ()
         for (const id of ids) expect(existentes.has(id), `${sigla}: ${id}`).toBe(true);
         expect(new Set(ids).size).toBe(ids.length);
       }
+    }
+  });
+});
+
+describe("idsDasAcoesDoMomento: cancelar e devolver o pedido", () => {
+  it("Devolver placa acompanha Concluir recebimento (o destino, em conferência)", () => {
+    const ids = idsDasAcoesDoMomento({
+      sigla: "PÁT",
+      tipo: "cavalo",
+      etapa: "concluir",
+      pedidoAberto: true,
+    });
+    expect(ids).toContain(DEVOLVER);
+    expect(
+      idsDasAcoesDoMomento({ sigla: "PÁT", tipo: "cavalo", etapa: "receber", pedidoAberto: true }),
+    ).not.toContain(DEVOLVER);
+  });
+  it("Cancelar pedido só para a origem com o pedido pendente", () => {
+    expect(
+      idsDasAcoesDoMomento({ sigla: "PÁT", tipo: "cavalo", pedidoAberto: true, cancelavel: true }),
+    ).toContain(CANCELAR);
+    expect(
+      idsDasAcoesDoMomento({ sigla: "PÁT", tipo: "cavalo", pedidoAberto: true }),
+    ).not.toContain(CANCELAR);
+  });
+  it("as duas ações existem no catálogo", () => {
+    for (const id of [CANCELAR, DEVOLVER]) {
+      expect(
+        ACOES.some((a) => a.id === id),
+        id,
+      ).toBe(true);
     }
   });
 });

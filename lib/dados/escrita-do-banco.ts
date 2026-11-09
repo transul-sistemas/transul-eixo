@@ -373,6 +373,43 @@ export function escritaDoBanco(cliente: () => Promise<ClienteDeEscrita>): FonteD
       return sucesso(paraPlacaGravada(nova));
     },
 
+    async cancelarPedido(entrada, chave): Promise<Resultado<PedidoDeTransferencia>> {
+      const c = await cliente();
+      const antes = await pedidoDaPlaca(c, entrada.placa);
+      const r = await chamar<string>(c, "cancelar_pedido", {
+        p_transferencia_id: entrada.pedidoId,
+        p_versao: entrada.versaoDoPedido,
+        p_chave: chave,
+      });
+      if (!r.ok) {
+        return comAtual(resultadoDoErro<PedidoDeTransferencia>(r.erro), () =>
+          pedidoDaPlaca(c, entrada.placa),
+        );
+      }
+      // Cancelado, o pedido deixa de ser aberto e some da leitura: devolve o que se viu, encerrado.
+      if (!antes) throw new Error("O pedido cancelado não estava na leitura.");
+      return sucesso({ ...antes, situacao: "cancelado", versao: antes.versao + 1 });
+    },
+
+    async devolverPlaca(entrada, chave): Promise<Resultado<PedidoDeTransferencia>> {
+      const c = await cliente();
+      const antes = await pedidoDaPlaca(c, entrada.placa);
+      const r = await chamar<string>(c, "devolver_placa", {
+        p_transferencia_id: entrada.pedidoId,
+        p_versao: entrada.versaoDoPedido,
+        p_motivo: entrada.motivo,
+        p_chave: chave,
+      });
+      if (!r.ok) {
+        return comAtual(resultadoDoErro<PedidoDeTransferencia>(r.erro), () =>
+          pedidoDaPlaca(c, entrada.placa),
+        );
+      }
+      // Devolvido, o destino deixa de ver a placa: devolve o que se viu, encerrado.
+      if (!antes) throw new Error("O pedido devolvido não estava na leitura.");
+      return sucesso({ ...antes, situacao: "devolvido", versao: antes.versao + 1 });
+    },
+
     async criarItemDeCatalogo(entrada, chave): Promise<Resultado<ItemCriado>> {
       const c = await cliente();
       if (entrada.tipo === "cr") {

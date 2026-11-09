@@ -40,9 +40,9 @@ describe("<ConteudoDaBusca>: campo e lista", () => {
     expect(html).toContain('role="group" aria-label="Telas"');
     expect(html).toContain('role="group" aria-label="Ações"');
     expect(html).toContain('id="lista-opcao-0"');
-    expect(html.match(/role="option"/g)?.length).toBe(4); // a tela e as três ações que combinam
+    expect(html.match(/role="option"/g)?.length).toBe(5); // a tela e as quatro ações que combinam
     expect(html.match(/aria-selected="true"/g)).toHaveLength(1);
-    expect(html.match(/aria-selected="false"/g)).toHaveLength(3);
+    expect(html.match(/aria-selected="false"/g)).toHaveLength(4);
   });
   it("cada opção mostra o caminho Módulo › Tela", () => {
     expect(html).toContain("Frota › Placas");

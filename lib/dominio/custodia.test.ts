@@ -5,7 +5,9 @@ import {
   MENSAGEM_DE_SIGLA_QUE_NAO_ENTREGA,
   MENSAGEM_DE_TIPO_QUE_NAO_ENTREGA,
   motivoDeNaoEntregar,
+  podeCancelarPedido,
   podeConcluirRecebimento,
+  podeDevolverPedido,
   podeDisponibilizarPlaca,
   podeEntregar,
   podeReceberPedido,
@@ -145,5 +147,55 @@ describe("etapaDoRecebimento: qual das duas etapas o pedido espera", () => {
     expect(etapaDoRecebimento(pedido({ situacao: "em_conferencia" }))).toBe("concluir");
     expect(etapaDoRecebimento(pedido({ situacao: "concluido" }))).toBeNull();
     expect(etapaDoRecebimento(null)).toBeNull();
+  });
+});
+
+describe("podeCancelarPedido: a origem desiste enquanto o destino não recebeu", () => {
+  it("a origem, com o pedido pendente: pode", () => {
+    expect(podeCancelarPedido(pedido(), "gestor-1")).toEqual({ ok: true });
+  });
+  it("o destino e um terceiro não cancelam", () => {
+    expect(podeCancelarPedido(pedido(), "gestor-2")).toEqual({
+      ok: false,
+      motivo: "nao_e_a_origem",
+    });
+    expect(podeCancelarPedido(pedido(), "gestor-3")).toEqual({
+      ok: false,
+      motivo: "nao_e_a_origem",
+    });
+  });
+  it("depois que o destino recebeu, ou encerrado, não se cancela", () => {
+    for (const situacao of ["em_conferencia", "concluido", "devolvido", "cancelado"] as const) {
+      expect(podeCancelarPedido(pedido({ situacao }), "gestor-1"), situacao).toEqual({
+        ok: false,
+        motivo: "pedido_ja_recebido",
+      });
+    }
+  });
+});
+
+describe("podeDevolverPedido: o destino recusa o pedido em conferência", () => {
+  it("o destino, com o pedido em conferência: pode", () => {
+    expect(podeDevolverPedido(pedido({ situacao: "em_conferencia" }), "gestor-2")).toEqual({
+      ok: true,
+    });
+  });
+  it("pendente: receba antes de devolver", () => {
+    expect(podeDevolverPedido(pedido(), "gestor-2")).toEqual({
+      ok: false,
+      motivo: "pedido_nao_recebido",
+    });
+  });
+  it("a origem e um terceiro não devolvem; encerrado também não", () => {
+    for (const gestor of ["gestor-1", "gestor-3"]) {
+      expect(podeDevolverPedido(pedido({ situacao: "em_conferencia" }), gestor), gestor).toEqual({
+        ok: false,
+        motivo: "nao_e_o_destinatario",
+      });
+    }
+    expect(podeDevolverPedido(pedido({ situacao: "concluido" }), "gestor-2")).toEqual({
+      ok: false,
+      motivo: "pedido_encerrado",
+    });
   });
 });

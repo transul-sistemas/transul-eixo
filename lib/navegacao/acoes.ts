@@ -76,6 +76,28 @@ export const ACOES: readonly AcaoDoCatalogo[] = [
     descricao: "Envia a placa a outro gestor de frota, com o motivo e as pendências conhecidas.",
     rota: "/frota/placas?assistente=disponibilizar-placa",
   },
+  {
+    id: "frota.cancelar-pedido",
+    nome: "Cancelar pedido",
+    icone: "IconArrowBackUp",
+    modulo: "frota",
+    permissao: { modulo: "frota", acao: "criar" },
+    estado: "pronto",
+    descricao:
+      "Desiste do pedido de transferência que você enviou, enquanto o outro gestor ainda não recebeu a placa.",
+    rota: "/frota/placas?assistente=cancelar-pedido",
+  },
+  {
+    id: "frota.devolver-placa",
+    nome: "Devolver placa",
+    icone: "IconArrowBackUp",
+    modulo: "frota",
+    permissao: { modulo: "frota", acao: "criar" },
+    estado: "pronto",
+    descricao:
+      "Recusa a placa recebida de outro gestor, com o motivo; ela continua na carteira de quem enviou.",
+    rota: "/frota/placas?assistente=devolver-placa",
+  },
 ];
 
 function nomeDoModulo(id: IdDoModulo): string {

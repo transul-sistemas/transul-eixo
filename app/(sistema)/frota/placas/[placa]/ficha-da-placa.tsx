@@ -25,7 +25,7 @@ import { VoltarALista } from "./voltar-a-lista";
 import { AssistentesDaFrota } from "../assistentes/assistentes-da-frota";
 import { carregarDadosDosAssistentes } from "../assistentes/carregar-dados";
 import { FaixaParaReceberNaFicha } from "../faixa-para-receber";
-import { etapaDoRecebimento } from "@/lib/dominio/custodia";
+import { etapaDoRecebimento, podeCancelarPedido } from "@/lib/dominio/custodia";
 
 /** A janela da faixa colorida: os últimos 30 dias, até agora. */
 const DIAS_DA_JANELA = 30;
@@ -86,6 +86,10 @@ export async function FichaDaPlaca({
     tipo: ficha.tipo,
     etapa,
     pedidoAberto: pedido !== null,
+    cancelavel:
+      pedido !== null &&
+      dadosDosAssistentes?.gestorId != null &&
+      podeCancelarPedido(pedido, dadosDosAssistentes.gestorId).ok,
   })
     .map((id) => ACOES.find((acao) => acao.id === id))
     .filter((acao) => acao !== undefined)

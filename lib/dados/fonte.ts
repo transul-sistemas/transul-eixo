@@ -1,7 +1,9 @@
 import type { PedidoDeTransferencia } from "@/lib/dominio/custodia";
 import type {
   EntradaCadastrarPlaca,
+  EntradaCancelarPedido,
   EntradaConcluirRecebimento,
+  EntradaDevolverPlaca,
   EntradaDisponibilizarPlaca,
   EntradaEntregaAoOperacional,
   EntradaItemDeCatalogo,
@@ -95,6 +97,20 @@ export interface FonteDeEscrita {
     agora: string,
     gestorId: string,
   ): Gravacao<PlacaGravada>;
+  /** A origem desiste do pedido pendente; devolve o pedido já cancelado. */
+  cancelarPedido(
+    entrada: EntradaCancelarPedido,
+    chave: string,
+    agora: string,
+    gestorId: string,
+  ): Gravacao<PedidoDeTransferencia>;
+  /** O destino recusa o pedido em conferência; devolve o pedido já devolvido. */
+  devolverPlaca(
+    entrada: EntradaDevolverPlaca,
+    chave: string,
+    agora: string,
+    gestorId: string,
+  ): Gravacao<PedidoDeTransferencia>;
   criarItemDeCatalogo(entrada: EntradaItemDeCatalogo, chave: string): Gravacao<ItemCriado>;
   /** Os tipos que o "+" cria nesta fonte. */
   readonly criaveis: readonly TipoDeItemDeCatalogo[];

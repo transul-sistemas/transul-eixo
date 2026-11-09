@@ -365,3 +365,22 @@ test.describe("entregar ao Operacional: só cavalo ou caminhão", () => {
     await expect(aviso.getByLabel("Filial", { exact: true })).toHaveCount(0);
   });
 });
+
+test.describe("devolver placa", () => {
+  test("pela ficha: o destino recebe e devolve com o motivo; o recebimento sai da ficha", async ({
+    page,
+  }) => {
+    await receberPelaFicha(page);
+    await page.getByRole("button", { name: "Devolver placa" }).click();
+    const d = dialogo(page, "Devolver placa");
+    await d.getByRole("button", { name: "Continuar" }).click();
+    await expect(d.getByText("Informe o motivo.")).toBeVisible();
+    await d.getByLabel("Motivo da devolução").fill("Avaria não informada");
+    await d.getByRole("button", { name: "Continuar" }).click();
+    await d.getByRole("button", { name: "Devolver placa" }).click();
+    await expect(d.getByTestId("assistente-concluido")).toContainText("Placa devolvida.");
+    await d.getByRole("button", { name: "Fechar", exact: true }).click();
+    await expect(d).toBeHidden();
+    await expect(page.getByRole("button", { name: "Concluir recebimento" })).toHaveCount(0);
+  });
+});

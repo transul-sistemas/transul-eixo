@@ -3,13 +3,15 @@ import { ACOES, type AcaoDoCatalogo, buscarAcoes } from "./acoes";
 import { CATALOGO } from "./catalogo";
 
 describe("ações dos assistentes da Frota", () => {
-  it("são Cadastrar placa, Receber placa, Concluir recebimento, Entregar ao Operacional e Disponibilizar placa, todas prontas", () => {
+  it("são Cadastrar placa, Receber placa, Concluir recebimento, Entregar ao Operacional, Disponibilizar placa, Cancelar pedido e Devolver placa, todas prontas", () => {
     expect(ACOES.map((a) => a.id)).toEqual([
       "frota.cadastrar-placa",
       "frota.receber-placa",
       "frota.concluir-recebimento",
       "frota.entregar-ao-operacional",
       "frota.disponibilizar-placa",
+      "frota.cancelar-pedido",
+      "frota.devolver-placa",
     ]);
     expect(ACOES.map((a) => a.nome)).toEqual([
       "Cadastrar placa",
@@ -17,6 +19,8 @@ describe("ações dos assistentes da Frota", () => {
       "Concluir recebimento",
       "Entregar ao Operacional",
       "Disponibilizar placa",
+      "Cancelar pedido",
+      "Devolver placa",
     ]);
     expect(ACOES.every((a) => a.estado === "pronto")).toBe(true);
   });
@@ -28,6 +32,8 @@ describe("ações dos assistentes da Frota", () => {
       "frota.concluir-recebimento": "/frota/placas?assistente=concluir-recebimento",
       "frota.entregar-ao-operacional": "/frota/placas?assistente=entregar-ao-operacional",
       "frota.disponibilizar-placa": "/frota/placas?assistente=disponibilizar-placa",
+      "frota.cancelar-pedido": "/frota/placas?assistente=cancelar-pedido",
+      "frota.devolver-placa": "/frota/placas?assistente=devolver-placa",
     });
   });
   it("cada ação pertence a um módulo do catálogo, e a permissão é a desse módulo", () => {
@@ -77,7 +83,7 @@ describe("buscarAcoes", () => {
       buscarAcoes("placa", "Administrador")
         .map((a) => a.nome)
         .sort(),
-    ).toEqual(["Cadastrar placa", "Disponibilizar placa", "Receber placa"]);
+    ).toEqual(["Cadastrar placa", "Devolver placa", "Disponibilizar placa", "Receber placa"]);
     // "Receber placa" saiu do módulo Operacional: só o nome de "Entregar ao Operacional" combina.
     expect(buscarAcoes("operacional", "Administrador").map((a) => a.nome)).toEqual([
       "Entregar ao Operacional",

@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 import { SIGLAS, SIGLAS_DE_BAIXA } from "../status";
 import {
   esquemaCadastrarPlaca,
+  esquemaCancelarPedido,
   esquemaConcluirRecebimento,
+  esquemaDevolverPlaca,
   esquemaDisponibilizarPlaca,
   esquemaEntregaAoOperacional,
   esquemaEntregaAoOperacionalDe,
@@ -481,5 +483,23 @@ describe("esquemaItemDeCatalogo: o que o mini-wizard do + cria", () => {
     const r = esquemaItemDeCatalogo.safeParse({ ...ok, paiId: "qualquer" });
     expect(r.success).toBe(true);
     if (r.success) expect("paiId" in r.data).toBe(false);
+  });
+});
+
+describe("esquemaCancelarPedido e esquemaDevolverPlaca", () => {
+  const base = { placa: "abc-1d23", pedidoId: "ped-1", versaoDoPedido: 1 };
+  it("cancelar pede a confirmação", () => {
+    expect(esquemaCancelarPedido.safeParse({ ...base, confirmado: true }).success).toBe(true);
+    const r = esquemaCancelarPedido.safeParse({ ...base, confirmado: false });
+    expect(r.success).toBe(false);
+    expect(r.error?.issues[0]?.message).toBe("Confirme que quer cancelar o pedido.");
+  });
+  it("devolver pede o motivo", () => {
+    expect(esquemaDevolverPlaca.safeParse({ ...base, motivo: " Avaria " }).data?.motivo).toBe(
+      "Avaria",
+    );
+    const r = esquemaDevolverPlaca.safeParse({ ...base, motivo: "   " });
+    expect(r.success).toBe(false);
+    expect(r.error?.issues[0]?.message).toBe("Informe o motivo.");
   });
 });

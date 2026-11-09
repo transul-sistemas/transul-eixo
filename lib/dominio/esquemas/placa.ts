@@ -331,6 +331,26 @@ export const esquemaConcluirRecebimento = z
   });
 export type EntradaConcluirRecebimento = z.infer<typeof esquemaConcluirRecebimento>;
 
+// ---------- cancelar e devolver o pedido ----------
+
+/** Cancelar pedido: a origem desiste do pedido pendente, confirmando. */
+export const esquemaCancelarPedido = z.object({
+  placa,
+  pedidoId: id("o pedido de transferência"),
+  versaoDoPedido: versao,
+  confirmado: z.literal(true, { error: "Confirme que quer cancelar o pedido." }),
+});
+export type EntradaCancelarPedido = z.infer<typeof esquemaCancelarPedido>;
+
+/** Devolver placa: o destino recusa o pedido em conferência, com o motivo. */
+export const esquemaDevolverPlaca = z.object({
+  placa,
+  pedidoId: id("o pedido de transferência"),
+  versaoDoPedido: versao,
+  motivo: texto("o motivo", 300),
+});
+export type EntradaDevolverPlaca = z.infer<typeof esquemaDevolverPlaca>;
+
 export { TIPOS_DE_ATIVO };
 
 // ---------- itens de catálogo (o mini-wizard do "+") ----------

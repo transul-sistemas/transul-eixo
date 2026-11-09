@@ -2,12 +2,16 @@ import {
   motivoDeNaoEntregar,
   pedidoAberto,
   podeConcluirRecebimento,
+  podeCancelarPedido,
+  podeDevolverPedido,
   podeReceberPedido,
   type PedidoDeTransferencia,
 } from "@/lib/dominio/custodia";
 import type {
   EntradaCadastrarPlaca,
+  EntradaCancelarPedido,
   EntradaConcluirRecebimento,
+  EntradaDevolverPlaca,
   EntradaDisponibilizarPlaca,
   EntradaEntregaAoOperacional,
   EntradaItemDeCatalogo,
@@ -69,6 +73,18 @@ export interface Armazem {
     agora: string,
     gestorId: string,
   ): Resultado<PlacaGravada>;
+  cancelar(
+    entrada: EntradaCancelarPedido,
+    chave: string,
+    agora: string,
+    gestorId: string,
+  ): Resultado<PedidoDeTransferencia>;
+  devolver(
+    entrada: EntradaDevolverPlaca,
+    chave: string,
+    agora: string,
+    gestorId: string,
+  ): Resultado<PedidoDeTransferencia>;
   criarItemDeCatalogo(entrada: EntradaItemDeCatalogo, chave: string): Resultado<ItemCriado>;
   catalogos(): Catalogos;
   obterPlaca(placa: string): PlacaGravada | null;
@@ -547,6 +563,57 @@ export function criarArmazem({
         guardar(nova);
         pedidos.set(pedido.id, { ...pedido, situacao: "concluido", versao: pedido.versao + 1 });
         return sucesso(nova);
+      });
+    },
+
+    cancelar(entrada, chave, _agora, gestorId) {
+      return unica("cancelar", chave, () => {
+        const pedido = pedidos.get(entrada.pedidoId);
+        if (!pedido || pedido.placa !== normalizarPlaca(entrada.placa)) {
+          return erroDaAcao<Atual>("nao_encontrado");
+        }
+        const pode = podeCancelarPedido(pedido, gestorId);
+        if (!pode.ok && pode.motivo === "nao_e_a_origem") {
+          return erroDaAcao<Atual>("sem_permissao", {
+            mensagem: "Só o gestor de origem cancela este pedido.",
+          });
+        }
+        if (pedido.versao !== entrada.versaoDoPedido || !pode.ok) return emConflito(pedido);
+        const cancelado: PedidoDeTransferencia = {
+          ...pedido,
+          situacao: "cancelado",
+          versao: pedido.versao + 1,
+        };
+        pedidos.set(pedido.id, cancelado);
+        return sucesso(cancelado);
+      });
+    },
+
+    devolver(entrada, chave, _agora, gestorId) {
+      return unica("devolver", chave, () => {
+        const pedido = pedidos.get(entrada.pedidoId);
+        if (!pedido || pedido.placa !== normalizarPlaca(entrada.placa)) {
+          return erroDaAcao<Atual>("nao_encontrado");
+        }
+        const pode = podeDevolverPedido(pedido, gestorId);
+        if (!pode.ok && pode.motivo === "nao_e_o_destinatario") {
+          return erroDaAcao<Atual>("sem_permissao", {
+            mensagem: "Só o gestor de destino devolve esta placa.",
+          });
+        }
+        if (!pode.ok && pode.motivo === "pedido_nao_recebido") {
+          return erroDaAcao<Atual>("entrada_invalida", {
+            mensagem: "Só se devolve um pedido em conferência: receba a placa antes de devolvê-la.",
+          });
+        }
+        if (pedido.versao !== entrada.versaoDoPedido || !pode.ok) return emConflito(pedido);
+        const devolvido: PedidoDeTransferencia = {
+          ...pedido,
+          situacao: "devolvido",
+          versao: pedido.versao + 1,
+        };
+        pedidos.set(pedido.id, devolvido);
+        return sucesso(devolvido);
       });
     },
   };

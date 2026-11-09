@@ -295,6 +295,10 @@ export function escritaDoArmazem(armazem: Armazem): FonteDeEscrita {
       armazem.receber(entrada, chave, agora, gestorId),
     concluirRecebimento: async (entrada, chave, agora, gestorId) =>
       armazem.concluir(entrada, chave, agora, gestorId),
+    cancelarPedido: async (entrada, chave, agora, gestorId) =>
+      armazem.cancelar(entrada, chave, agora, gestorId),
+    devolverPlaca: async (entrada, chave, agora, gestorId) =>
+      armazem.devolver(entrada, chave, agora, gestorId),
     criarItemDeCatalogo: async (entrada, chave) => armazem.criarItemDeCatalogo(entrada, chave),
     catalogos: async () => armazem.catalogos(),
     placaParaAssistente: async (placa) => armazem.obterPlaca(placa),

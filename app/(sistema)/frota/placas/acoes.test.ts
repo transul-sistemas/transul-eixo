@@ -36,6 +36,8 @@ vi.mock("@/lib/seguranca/gestor-atual", () => ({ gestorAtual: async () => "gesto
 import {
   cadastrarPlacaAcao,
   concluirRecebimentoAcao,
+  devolverPlacaAcao,
+  cancelarPedidoAcao,
   criarItemDeCatalogoAcao,
   disponibilizarPlacaAcao,
   entregarAoOperacionalAcao,
@@ -216,5 +218,36 @@ describe("criarItemDeCatalogoAcao", () => {
       dados: { tipo: "marca", nome: "DAF" },
     });
     expect(!r.ok && r.erro.codigo).toBe("sem_permissao");
+  });
+});
+
+describe("cancelarPedidoAcao e devolverPlacaAcao", () => {
+  const alvo = { placa: foraDoPatio.placa, pedidoId: "ped-1", versaoDoPedido: 1 };
+
+  it("Operacional não cancela nem devolve: sem_permissao, sem tocar o cache", async () => {
+    mocks.perfil.atual = "Operacional";
+    const a = await cancelarPedidoAcao({
+      chaveDeEnvio: CHAVE,
+      dados: { ...alvo, confirmado: true },
+    });
+    const b = await devolverPlacaAcao({
+      chaveDeEnvio: OUTRA,
+      dados: { ...alvo, motivo: "Avaria" },
+    });
+    expect(!a.ok && a.erro.codigo).toBe("sem_permissao");
+    expect(!b.ok && b.erro.codigo).toBe("sem_permissao");
+    expect(mocks.revalidatePath).not.toHaveBeenCalled();
+  });
+
+  it("o destino devolve o pedido recebido e invalida a ficha e o menu", async () => {
+    await receberPlacaAcao({ chaveDeEnvio: CHAVE, dados: { ...alvo, conferido: true } });
+    mocks.revalidatePath.mockClear();
+    const r = await devolverPlacaAcao({
+      chaveDeEnvio: OUTRA,
+      dados: { ...alvo, versaoDoPedido: 2, motivo: "Avaria" },
+    });
+    expect(r.ok && r.linha.situacao).toBe("devolvido");
+    expect(mocks.revalidatePath).toHaveBeenCalledWith(`/frota/placas/${foraDoPatio.placa}`);
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/", "layout");
   });
 });
