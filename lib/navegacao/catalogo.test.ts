@@ -82,7 +82,7 @@ describe("catálogo: telas", () => {
       expect(tela.descricao.endsWith("."), tela.id).toBe(true);
     }
   });
-  it("tudo está em-breve, menos a Demonstração e as cinco telas da Frota (Acompanhamento, Placas, Abastecimento, Carteira e Análise), que estão prontas", () => {
+  it("tudo está em-breve, menos as cinco telas da Frota (Acompanhamento, Placas, Abastecimento, Carteira e Análise), Catálogos e parâmetros, Usuários e perfis e a Demonstração, que estão prontas", () => {
     const prontas = telas.filter((t) => t.estado === "pronto").map((t) => t.id);
     expect(prontas).toEqual([
       "frota.acompanhamento",
@@ -90,6 +90,8 @@ describe("catálogo: telas", () => {
       "frota.abastecimento",
       "frota.carteira",
       "frota.analise",
+      "cadastros.catalogos",
+      "admin.usuarios-e-perfis",
       "admin.demonstracao",
     ]);
     expect(telas.filter((t) => t.estado === "restrito")).toEqual([]);

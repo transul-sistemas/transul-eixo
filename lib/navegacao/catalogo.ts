@@ -336,6 +336,7 @@ export const CATALOGO: readonly ModuloDoCatalogo[] = [
       icone: "IconListDetails",
       dispositivos: DESKTOP,
       descricao: "Mantém catálogos, regras e parâmetros, como o dia do corte da competência.",
+      estado: "pronto",
     },
   ]),
   modulo("admin", "Administração", "IconSettings", "admin", [
@@ -345,6 +346,7 @@ export const CATALOGO: readonly ModuloDoCatalogo[] = [
       icone: "IconUserShield",
       dispositivos: DESKTOP,
       descricao: "Gerencia usuários, perfis e permissões.",
+      estado: "pronto",
     },
     {
       slug: "auditoria",

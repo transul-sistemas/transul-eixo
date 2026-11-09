@@ -56,12 +56,20 @@ test.describe("fora do catálogo", () => {
 });
 
 test.describe("modos do Acompanhamento", () => {
-  for (const modo of ["grade", "agora", "censo", "mapa"]) {
+  // No modo exemplo, a tela existe mas lê só do banco: cada modo abre com a aba certa marcada e o
+  // aviso de que não há dados de exemplo (o conteúdo de cada modo é conferido em e2e-banco/).
+  const nomes = { grade: "Grade", agora: "Agora", censo: "Censo", mapa: "Mapa" } as const;
+  for (const [modo, nome] of Object.entries(nomes)) {
     test(`/frota/acompanhamento?modo=${modo} abre a tela`, async ({ page }) => {
       const resposta = await page.goto(`/frota/acompanhamento?modo=${modo}`);
       expect(resposta?.status()).toBe(200);
       await expect(page.getByRole("heading", { level: 1, name: "Acompanhamento" })).toBeVisible();
-      await expect(page.getByText("Modos previstos: Grade, Agora, Censo e Mapa.")).toBeVisible();
+      const abas = page.getByRole("navigation", { name: "Modos do Acompanhamento" });
+      await expect(abas.getByRole("link", { name: nome, exact: true })).toHaveAttribute(
+        "aria-current",
+        "page",
+      );
+      await expect(page.getByText("O Acompanhamento lê só do banco")).toBeVisible();
     });
   }
 });

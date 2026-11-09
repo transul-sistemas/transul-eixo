@@ -49,8 +49,9 @@ describe("<BarraLateral>: grupos", () => {
     expect(html).not.toContain('href="/pessoas/escala"');
   });
   it("tela em breve leva a etiqueta Em breve; a pronta não", () => {
+    // No grupo Administração só a Auditoria está em breve (Usuários e perfis e Demonstração, prontas).
     const html = barra({ rotaAtual: "/admin/demonstracao" });
-    expect(contar(html, "Em breve")).toBe(2);
+    expect(contar(html, "Em breve")).toBe(1);
   });
   it("quem não vê nenhuma tela recebe um aviso, não uma barra vazia", () => {
     const html = barra({ perfil: "Operacional", rotaAtual: "/" });
