@@ -106,7 +106,12 @@ test.describe.serial("transferência pelo banco: disponibilizar, receber e concl
   }) => {
     const { contexto, pagina } = await comoGestor(browser);
     await pagina.goto(ROTA);
-    await expect(pagina.locator('[data-contador="frota.placas"]')).toBeVisible();
+    // Pelo menu à vista: enquanto o streaming troca a barra, o React guarda uma cópia oculta dela.
+    await expect(
+      pagina
+        .getByRole("navigation", { name: "Menu principal" })
+        .locator('[data-contador="frota.placas"]'),
+    ).toBeVisible();
     await expect(pagina.locator("[data-faixa-para-receber]")).toBeVisible();
     await pagina.getByRole("link", { name: "Ver placas para receber" }).click();
     await expect(pagina).toHaveURL(/chip=para_receber/);
