@@ -289,7 +289,8 @@ test.describe("ficha da placa: o conteúdo", () => {
   test("as ações do momento abrem o assistente, só para quem vê (o Administrador provisório)", async ({
     page,
   }) => {
-    // Uma placa no pátio (PÁT): entregar ao Operacional e disponibilizar placa. Receber placa só com
+    // Uma placa no pátio (PÁT): entregar ao Operacional e disponibilizar placa, depois as da ficha
+    // (mudar situação, engatar e desatrelar no cavalo com implementos, corrigir). Receber placa só com
     // pedido de transferência esperando por quem usa (o de exemplo está na AAA0A00).
     await abrirHidratada(page, `${LISTA}?chip=patio&chip=cavalo`);
     const placaNoPatio = (await page
@@ -301,6 +302,10 @@ test.describe("ficha da placa: o conteúdo", () => {
     await expect(grupo.getByRole("button")).toHaveText([
       "Entregar ao Operacional",
       "Disponibilizar placa",
+      "Mudar situação",
+      "Engatar implemento",
+      "Desatrelar implemento",
+      "Corrigir placa",
     ]);
     const botao = grupo.getByRole("button", { name: "Entregar ao Operacional" });
     await expect(botao).not.toHaveAttribute("aria-disabled", "true");
@@ -309,13 +314,16 @@ test.describe("ficha da placa: o conteúdo", () => {
     await expect(page).toHaveURL(
       new RegExp(`/frota/placas/${placaNoPatio}\?.*assistente=entregar-ao-operacional`),
     );
-    await abrirFicha(page, "AAA0A04"); // DOp: já está no Operacional; só se disponibiliza
-    await expect(
-      page.getByRole("group", { name: "Ações do momento" }).getByRole("button"),
-    ).toHaveText(["Disponibilizar placa"]);
-    await abrirFicha(page, "AAA0A00"); // com pedido de transferência pendente: só Receber placa
+    await abrirFicha(page, "AAA0A04"); // DOp: já está no Operacional; não se entrega de novo
+    const grupoDOp = page.getByRole("group", { name: "Ações do momento" });
+    await expect(grupoDOp.getByRole("button").first()).toHaveText("Disponibilizar placa");
+    await expect(grupoDOp.getByRole("button", { name: "Entregar ao Operacional" })).toHaveCount(0);
+    await abrirFicha(page, "AAA0A00"); // com pedido de transferência pendente: Receber placa primeiro
     const grupoDoPedido = page.getByRole("group", { name: "Ações do momento" });
-    await expect(grupoDoPedido.getByRole("button")).toHaveText(["Receber placa"]);
+    await expect(grupoDoPedido.getByRole("button").first()).toHaveText("Receber placa");
+    await expect(grupoDoPedido.getByRole("button", { name: "Disponibilizar placa" })).toHaveCount(
+      0,
+    );
   });
 });
 
