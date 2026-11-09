@@ -136,6 +136,7 @@ export const CATALOGO: readonly ModuloDoCatalogo[] = [
       icone: "IconGasStation",
       dispositivos: DESKTOP,
       descricao: "Mostra o abastecimento por placa, com litros e consumo.",
+      estado: "pronto",
     },
     {
       slug: "carteira",

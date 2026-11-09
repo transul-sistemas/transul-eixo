@@ -49,7 +49,7 @@ describe("<ConteudoDaBusca>: campo e lista", () => {
     expect(html).toContain("Frota › Receber placa");
   });
   it("tela em breve leva a etiqueta Em breve", () => {
-    expect(conteudo("abastecimento")).toContain("Em breve");
+    expect(conteudo("comparativo")).toContain("Em breve");
   });
   it("a ação pronta aparece habilitada e sem a etiqueta Em breve", () => {
     expect(html).toContain("Frota › Cadastrar placa");

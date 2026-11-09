@@ -82,11 +82,12 @@ describe("catálogo: telas", () => {
       expect(tela.descricao.endsWith("."), tela.id).toBe(true);
     }
   });
-  it("tudo está em-breve, menos a Demonstração, o Acompanhamento, as Placas, a Carteira e a Análise da Frota, que estão prontos", () => {
+  it("tudo está em-breve, menos a Demonstração e as cinco telas da Frota (Acompanhamento, Placas, Abastecimento, Carteira e Análise), que estão prontas", () => {
     const prontas = telas.filter((t) => t.estado === "pronto").map((t) => t.id);
     expect(prontas).toEqual([
       "frota.acompanhamento",
       "frota.placas",
+      "frota.abastecimento",
       "frota.carteira",
       "frota.analise",
       "admin.demonstracao",
