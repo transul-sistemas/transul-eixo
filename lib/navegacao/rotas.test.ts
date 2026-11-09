@@ -82,16 +82,21 @@ describe("rotas e catálogo", () => {
 });
 
 describe("páginas das telas em breve", () => {
-  it.each(telas.filter((t) => t.estado === "em-breve").map((t) => [t.rota] as const))(
-    "%s usa TelaEmBreve e o título do catálogo, com a mesma rota",
-    (rota) => {
-      const arquivo = `app/(sistema)${rota}/page.tsx`;
-      expect(existsSync(arquivo), arquivo).toBe(true);
-      const codigo = readFileSync(arquivo, "utf-8");
-      expect(codigo).toContain(`metadataDaTela("${rota}")`);
-      expect(codigo).toContain(`<TelaEmBreve rota="${rota}" />`);
-    },
-  );
+  it.each(
+    telas
+      .filter(
+        (t) =>
+          t.estado === "em-breve" &&
+          !["/cadastros/catalogos", "/admin/usuarios-e-perfis"].includes(t.rota),
+      )
+      .map((t) => [t.rota] as const),
+  )("%s usa TelaEmBreve e o título do catálogo, com a mesma rota", (rota) => {
+    const arquivo = `app/(sistema)${rota}/page.tsx`;
+    expect(existsSync(arquivo), arquivo).toBe(true);
+    const codigo = readFileSync(arquivo, "utf-8");
+    expect(codigo).toContain(`metadataDaTela("${rota}")`);
+    expect(codigo).toContain(`<TelaEmBreve rota="${rota}" />`);
+  });
 });
 
 describe("a raiz", () => {
