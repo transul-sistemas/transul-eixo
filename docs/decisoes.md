@@ -8,6 +8,22 @@ Modelo de entrada:
 
 ---
 
+## 09/11/2026 — Semana 1 da Frota: largura antes de profundidade, e as hipóteses tomadas
+
+- **Decisão (Alexandre, 09/11/2026):** foco no localhost; Supabase remoto, Vercel e publicação ficam para depois. Um módulo está "pronto na primeira versão" quando abre com dados e o assistente principal grava. Testes proporcionais: pgTAP nas regras (TDD), um e2e do caminho principal; sem mutações SQL nem rodadas de auditoria nas fatias novas. Subagentes em paralelo, um por módulo, cada um num worktree e num banco descartável próprio; integração na main com o pgTAP inteiro verde.
+- **S2 (pedido só pelas funções), decisões do Alexandre:** D1, o Administrador não mexe na carteira por fora do fluxo; D2, a origem cancela o próprio pedido enquanto o destino não recebeu. Saem o INSERT e o UPDATE diretos em `transferencia` e `transferencia_pendencia` (e o INSERT direto na carteira; `gestor_id`, `inicio` e `ativo_id` imutáveis); as funções do pedido rodam como dono, com a conferência que já tinham, e `respondida_por` é o usuário atual. pgTAP 84.
+- **Hipóteses (a mais simples, sem regra escrita; revisar se Alexandre discordar):**
+  - Cancelar pedido não pede motivo; Devolver placa (destino, pedido em conferência) pede, e a placa fica com a origem. A exclusão lógica do pedido deixou de existir pela API.
+  - Na carteira, o UPDATE de `fim` continua (a baixa roda com o usuário); a cobertura t95 segue impedindo placa sem gestor.
+  - Bugs do cadastro: o "+" de CR aceita `frota.criar` (o CR nasce de frota, a conferir); CR livre é conferido na frota toda; ano e valor gravam dentro de `cadastrar_ativo`; carroceria vazia dá "pendente" no banco e no TypeScript; a entrega ao Operacional lê as placas página a página.
+  - Mudar situação oferece todas as siglas válidas para o tipo e o conjunto, inclusive as da custódia (DOp, ACe, CAr, CAn, ETc); VND e SUC só pela ficha. Hora digitada em -03:00. Mudar situação, engatar e desatrelar não têm versão (o clique duplo é barrado pelo assistente).
+  - Corrigir placa: eixos e carroceria por `corrigir_campo` (com motivo gravado); RENAVAM e número de série só se completam quando faltam, e o motivo deles não é gravado (precisaria de função nova).
+  - Acompanhamento: a grade mostra placas sem implementos; lançar uma sigla fecha as camadas de prioridade maior abertas; dia futuro recusado; dia passado grava às 23:59 e é recusado se já houver lançamento depois; a célula mostra a situação no fim do dia.
+  - Carteira: a do mês é toda vigência de gestor que toca o mês; só o próprio gestor confirma (Administrador e Diretoria leem); "Confirmar pendentes" vale para a página; "não confere" exige observação.
+  - Cadastros: carrocerias, marcas, filiais e operações têm cadastrar, editar e arquivar; CR (fato do Sankhya), modelos, garagens, régua e nomenclatura são só leitura; não há "restaurar arquivado".
+  - Usuários e perfis: a tela não cria login (a chave mestra não fica no app); muda perfil e situação de quem já tem login; filiais e operações do usuário ficam só leitura; a Diretoria também muda acesso, porque a semente de permissões já lhe dá `admin.editar`.
+- **Quem decidiu:** Alexandre (rumo, D1 e D2); as hipóteses, o Claude, registradas para revisão.
+
 ## 09/11/2026 — Só o gestor de destino recebe e conclui a transferência (P0 S1)
 
 - **Decisão (Alexandre, 09/11/2026):**
