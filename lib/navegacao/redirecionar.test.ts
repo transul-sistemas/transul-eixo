@@ -24,7 +24,9 @@ describe("destinoDoModulo (para onde /frota, /pessoas etc. redirecionam)", () =>
     expect(destinoDoModulo("Gestor de frota", "pessoas", parametros(""))).toBeUndefined();
     expect(destinoDoModulo("Operacional", "frota", parametros(""))).toBeUndefined();
   });
-  it("com as Placas prontas, o Gestor de frota é levado a elas", () => {
-    expect(destinoDoModulo("Gestor de frota", "frota", parametros(""))).toBe("/frota/placas");
+  it("com o Acompanhamento pronto, o Gestor de frota é levado a ele (a primeira tela da Frota)", () => {
+    expect(destinoDoModulo("Gestor de frota", "frota", parametros(""))).toBe(
+      "/frota/acompanhamento",
+    );
   });
 });

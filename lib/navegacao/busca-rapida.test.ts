@@ -32,7 +32,7 @@ describe("montarGrupos: com termo", () => {
       tipo: "tela",
       rotulo: "Frota › Carteira",
       rota: "/frota/carteira",
-      emBreve: true,
+      emBreve: false,
       disponivel: true,
     });
   });
@@ -82,7 +82,7 @@ describe("montarGrupos: com termo", () => {
     expect(montarGrupos("zzzz", "Administrador", SEM_CONTEXTO)).toEqual([]);
   });
   it("perfil que não abre a tela não a encontra", () => {
-    expect(rotulos("carteira", "Gestor de frota")).toEqual([]);
+    expect(rotulos("carteira", "Operacional")).toEqual([]);
     expect(rotulos("receber placa", "Operacional")).toEqual([]);
   });
   it("os ids dos itens são únicos", () => {

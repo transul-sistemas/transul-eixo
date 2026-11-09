@@ -112,6 +112,7 @@ export const CATALOGO: readonly ModuloDoCatalogo[] = [
       icone: "IconListDetails",
       dispositivos: DESKTOP_E_TABLET,
       descricao: "Acompanha cada placa pela régua de status, nos modos Grade, Agora, Censo e Mapa.",
+      estado: "pronto",
       modos: [
         { id: "grade", nome: "Grade" },
         { id: "agora", nome: "Agora" },
@@ -141,7 +142,8 @@ export const CATALOGO: readonly ModuloDoCatalogo[] = [
       nome: "Carteira",
       icone: "IconWallet",
       dispositivos: TODOS,
-      descricao: "Confirma a carteira mensal e entrega placas ao Operacional.",
+      descricao: "Confirma a carteira mensal, placa a placa.",
+      estado: "pronto",
     },
     {
       slug: "analise",

@@ -100,9 +100,9 @@ describe("modulosVisiveis (catálogo real)", () => {
       expect(visiveis.flatMap((m) => m.telas)).toHaveLength(35);
     }
   });
-  it("com só as Placas prontas, o Gestor de frota vê Frota › Placas e o Operacional não vê nada", () => {
+  it("com Acompanhamento, Placas e Carteira prontos, o Gestor de frota vê os três e o Operacional não vê nada", () => {
     expect(modulosVisiveis("Gestor de frota").map((m) => [m.id, m.telas.map((t) => t.id)])).toEqual(
-      [["frota", ["frota.placas"]]],
+      [["frota", ["frota.acompanhamento", "frota.placas", "frota.carteira"]]],
     );
     expect(modulosVisiveis("Operacional")).toEqual([]);
   });
@@ -153,7 +153,7 @@ describe("rotaInicialDoModulo (para onde /frota, /pessoas etc. redirecionam)", (
   it("no catálogo real, quem não vê nada não é levado a lugar nenhum", () => {
     for (const m of CATALOGO) {
       expect(rotaInicialDoModulo("Operacional", m.id), m.id).toBeUndefined();
-      const esperado = m.id === "frota" ? "/frota/placas" : undefined;
+      const esperado = m.id === "frota" ? "/frota/acompanhamento" : undefined;
       expect(rotaInicialDoModulo("Gestor de frota", m.id), m.id).toBe(esperado);
     }
   });
