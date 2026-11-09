@@ -6,6 +6,7 @@ import { formatarInteiro } from "@/components/formato/numero";
 import { Etiqueta } from "@/components/etiqueta";
 import { FaixaDeKpis } from "@/components/layout/faixa-de-kpis";
 import { PaginaDeLeitura } from "@/components/layout/pagina-de-leitura";
+import { ProvedorDoUsuario } from "@/components/navegacao/usuario-da-sessao";
 import { EsqueletoDaTabela, ListaVazia } from "@/components/tabela/estados";
 import { lerAgora, lerCenso, lerGrade, type LinhaDoAgora } from "@/lib/dados/acompanhamento";
 import { modoDosDados } from "@/lib/dados/fonte";
@@ -20,6 +21,7 @@ import {
   NOMES_DOS_AGRUPAMENTOS,
 } from "@/lib/navegacao/acompanhamento";
 import { acharTela } from "@/lib/navegacao/catalogo";
+import { exigirSessao } from "@/lib/seguranca/sessao-do-servidor";
 import { cn } from "@/lib/utils";
 import { STATUS, type Status } from "@/lib/visual/tons";
 import { GradeDoMes } from "./grade-do-mes";
@@ -119,7 +121,8 @@ function Filtros({
 }
 
 async function ModoGrade({ estado, hoje }: { estado: EstadoDoAcompanhamento; hoje: string }) {
-  const grade = await lerGrade(estado);
+  // O assistente "Lançar situação" guarda o rascunho pelo usuário da sessão (ProvedorDoUsuario).
+  const [grade, sessao] = await Promise.all([lerGrade(estado), exigirSessao()]);
   const mesAtual = hoje.slice(0, 7);
   return (
     <>
@@ -176,7 +179,9 @@ async function ModoGrade({ estado, hoje }: { estado: EstadoDoAcompanhamento; hoj
             : {})}
         />
       ) : (
-        <GradeDoMes grade={grade} />
+        <ProvedorDoUsuario usuario={sessao.usuarioId}>
+          <GradeDoMes grade={grade} />
+        </ProvedorDoUsuario>
       )}
       <nav aria-label="Páginas da grade" className="flex flex-wrap items-center gap-3 text-sm">
         <span data-testid="total-da-grade" className="text-muted-foreground">

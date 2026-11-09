@@ -5,6 +5,7 @@ import { formatarMes, hojeEmSaoPaulo } from "@/components/formato/data";
 import { formatarInteiro } from "@/components/formato/numero";
 import { FaixaDeKpis } from "@/components/layout/faixa-de-kpis";
 import { PaginaDeLeitura } from "@/components/layout/pagina-de-leitura";
+import { ProvedorDoUsuario } from "@/components/navegacao/usuario-da-sessao";
 import { EsqueletoDaTabela, ListaVazia } from "@/components/tabela/estados";
 import { lerCarteiraDoMes } from "@/lib/dados/acompanhamento";
 import { modoDosDados } from "@/lib/dados/fonte";
@@ -17,6 +18,7 @@ import {
   mesVizinho,
 } from "@/lib/navegacao/acompanhamento";
 import { acharTela } from "@/lib/navegacao/catalogo";
+import { exigirSessao } from "@/lib/seguranca/sessao-do-servidor";
 import { cn } from "@/lib/utils";
 import { ListaDaCarteira } from "./lista-da-carteira";
 
@@ -58,7 +60,8 @@ function paraParametros(bruto: Record<string, string | string[] | undefined>): U
 }
 
 async function Conteudo({ estado, hoje }: { estado: EstadoDaCarteira; hoje: string }) {
-  const carteira = await lerCarteiraDoMes(estado);
+  // O assistente "Confirmar carteira" guarda o rascunho pelo usuário da sessão (ProvedorDoUsuario).
+  const [carteira, sessao] = await Promise.all([lerCarteiraDoMes(estado), exigirSessao()]);
   const contagens: Record<FiltroDaCarteira, number> = {
     todas: carteira.total,
     pendentes: carteira.pendentes,
@@ -89,7 +92,11 @@ async function Conteudo({ estado, hoje }: { estado: EstadoDaCarteira; hoje: stri
         />
       );
   } else {
-    lista = <ListaDaCarteira carteira={carteira} />;
+    lista = (
+      <ProvedorDoUsuario usuario={sessao.usuarioId}>
+        <ListaDaCarteira carteira={carteira} />
+      </ProvedorDoUsuario>
+    );
   }
   return (
     <>
