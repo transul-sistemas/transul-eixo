@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { criarLojaDaGaveta, trocouDeTela } from "./gaveta";
+import { cresceuATela, criarLojaDaGaveta, trocouDeTela } from "./gaveta";
 
 describe("gaveta do menu (celular e tablet)", () => {
   it("começa fechada", () => {
@@ -58,5 +58,23 @@ describe("trocouDeTela", () => {
   });
   it("noutro caminho, sim", () => {
     expect(trocouDeTela("/inicio/tarefas", "/frota/placas")).toBe(true);
+  });
+});
+
+// A barra hidrata com o valor do servidor ("tela grande") e só depois lê a tela de verdade: se a pessoa
+// tocou em "Abrir menu" antes de a barra hidratar, esse primeiro valor não pode fechar a gaveta. Só a
+// tela que cresce de fato (de pequena para grande) fecha.
+describe("cresceuATela", () => {
+  it("na hidratação (grande desde o começo, o valor do servidor), não", () => {
+    expect(cresceuATela(true, true)).toBe(false);
+  });
+  it("de grande para pequena (o navegador corrige o servidor), não", () => {
+    expect(cresceuATela(true, false)).toBe(false);
+  });
+  it("pequena que continua pequena, não", () => {
+    expect(cresceuATela(false, false)).toBe(false);
+  });
+  it("de pequena para grande, sim", () => {
+    expect(cresceuATela(false, true)).toBe(true);
   });
 });

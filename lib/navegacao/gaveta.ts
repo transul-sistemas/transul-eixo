@@ -39,3 +39,12 @@ export const gaveta = criarLojaDaGaveta();
 export function trocouDeTela(anterior: string, atual: string): boolean {
   return anterior !== atual;
 }
+
+/**
+ * A gaveta fecha quando a tela cresce (de pequena para grande). A barra hidrata com o valor do
+ * servidor ("grande") antes de ler a tela de verdade; esse primeiro valor não é crescimento e não
+ * pode desfazer o toque em "Abrir menu" feito antes de a barra chegar.
+ */
+export function cresceuATela(eraGrande: boolean, ehGrande: boolean): boolean {
+  return !eraGrande && ehGrande;
+}

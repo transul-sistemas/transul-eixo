@@ -29,7 +29,7 @@ import {
   type EstadoDaBarra,
   somarContadores,
 } from "@/lib/navegacao/estado-da-barra";
-import { gaveta, trocouDeTela } from "@/lib/navegacao/gaveta";
+import { cresceuATela, gaveta, trocouDeTela } from "@/lib/navegacao/gaveta";
 import { criarLoja } from "@/lib/navegacao/loja-da-barra";
 import type { Perfil } from "@/lib/navegacao/perfis";
 import { modulosVisiveis, podeAbrir } from "@/lib/navegacao/visibilidade";
@@ -253,15 +253,18 @@ export function BarraLateral({
     raizDaBarra.current?.setAttribute("data-pronta", "");
   }, []);
 
-  // A gaveta fecha ao mudar de tela e quando a tela cresce. A primeira montagem não é troca de tela:
-  // a barra chega por streaming e não pode desfazer o toque em "Abrir menu" feito antes dela (3.9a).
+  // A gaveta fecha ao mudar de tela e quando a tela cresce. A primeira montagem não é troca de tela
+  // nem crescimento (a hidratação vê "tela grande", o valor do servidor): a barra chega por streaming
+  // e não pode desfazer o toque em "Abrir menu" feito antes dela (3.9a).
   const caminhoAnterior = useRef(caminho);
   useEffect(() => {
     if (!incorporada && trocouDeTela(caminhoAnterior.current, caminho)) gaveta.fechar();
     caminhoAnterior.current = caminho;
   }, [caminho, incorporada]);
+  const eraGrande = useRef(telaGrande);
   useEffect(() => {
-    if (!incorporada && telaGrande) gaveta.fechar();
+    if (!incorporada && cresceuATela(eraGrande.current, telaGrande)) gaveta.fechar();
+    eraGrande.current = telaGrande;
   }, [telaGrande, incorporada]);
 
   // Aberta, a gaveta fecha com Esc e prende o foco nela; ao fechar, o foco volta ao Abrir menu.
