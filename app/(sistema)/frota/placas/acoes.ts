@@ -6,10 +6,12 @@ import { agoraEmSaoPaulo, hojeEmSaoPaulo } from "@/components/formato/data";
 import {
   type ContextoDaEscrita,
   executarCadastrarPlaca,
+  executarCancelarPedido,
   executarConcluirRecebimento,
   executarCorrigirPlaca,
   executarCriarItemDeCatalogo,
   executarDesatrelar,
+  executarDevolverPlaca,
   executarDisponibilizarPlaca,
   executarEngatar,
   executarEntregarAoOperacional,
@@ -125,6 +127,15 @@ export async function desatrelarImplementoAcao(bruto: unknown) {
 
 export async function corrigirPlacaAcao(bruto: unknown) {
   return executar<PlacaGravada>(bruto, executarCorrigirPlaca, daPlaca, EDITAR);
+}
+
+/** A origem cancela o pedido pendente; o destino devolve o recebido. Os dois mexem no selo do menu. */
+export async function cancelarPedidoAcao(bruto: unknown) {
+  return executar<PedidoDeTransferencia>(bruto, executarCancelarPedido, daPlaca, EDITAR, true);
+}
+
+export async function devolverPlacaAcao(bruto: unknown) {
+  return executar<PedidoDeTransferencia>(bruto, executarDevolverPlaca, daPlaca, EDITAR, true);
 }
 
 /** O que o "+" cria (marca, modelo, gestor, operação, CR e filial). */

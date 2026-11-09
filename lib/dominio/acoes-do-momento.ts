@@ -11,6 +11,8 @@ import { SIGLAS_DE_BAIXA, type Sigla } from "./status";
 // - "Disponibilizar placa": envia a outro gestor de frota, sem pedido aberto.
 // - "Mudar situação" e "Corrigir placa": qualquer placa fora da baixa. "Engatar implemento": só o
 //   cavalo; "Desatrelar implemento": só o cavalo com implementos engatados.
+// - "Devolver placa": junto de "Concluir recebimento" (o destino recusa o pedido em conferência).
+// - "Cancelar pedido": a origem, enquanto o destino não recebeu (quem chama diz se é o caso).
 // - Placa baixada (VND e SUC): nenhuma ação.
 export function idsDasAcoesDoMomento({
   sigla,
@@ -18,6 +20,7 @@ export function idsDasAcoesDoMomento({
   etapa = null,
   pedidoAberto = false,
   comImplementos = false,
+  cancelavel = false,
 }: {
   sigla: Sigla;
   tipo: TipoDeAtivo;
@@ -27,11 +30,14 @@ export function idsDasAcoesDoMomento({
   pedidoAberto?: boolean;
   /** O cavalo tem implementos engatados (só então há o que desatrelar). */
   comImplementos?: boolean;
+  /** Quem usa é a origem de um pedido ainda pendente (pode cancelar). */
+  cancelavel?: boolean;
 }): string[] {
   if (SIGLAS_DE_BAIXA.includes(sigla)) return [];
   const ids: string[] = [];
   if (etapa === "receber") ids.push("frota.receber-placa");
-  if (etapa === "concluir") ids.push("frota.concluir-recebimento");
+  if (etapa === "concluir") ids.push("frota.concluir-recebimento", "frota.devolver-placa");
+  if (cancelavel) ids.push("frota.cancelar-pedido");
   if (podeEntregar(sigla, tipo)) ids.push("frota.entregar-ao-operacional");
   if (podeDisponibilizarPlaca({ sigla, pedidoAberto: pedidoAberto || etapa !== null })) {
     ids.push("frota.disponibilizar-placa");

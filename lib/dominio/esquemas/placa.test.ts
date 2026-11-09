@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 import { SIGLAS, SIGLAS_DE_BAIXA } from "../status";
 import {
   esquemaCadastrarPlaca,
+  esquemaCancelarPedido,
   esquemaConcluirRecebimento,
+  esquemaDevolverPlaca,
   esquemaDisponibilizarPlaca,
   esquemaEntregaAoOperacional,
   esquemaEntregaAoOperacionalDe,
@@ -75,7 +77,7 @@ describe("esquemaCadastrarPlaca: identificação", () => {
     expect(r.success).toBe(true);
     if (r.success) {
       expect(r.data.placa).toBe("AAA0A00");
-      expect(r.data.renavam).toBe("00639884962");
+      expect("renavam" in r.data && r.data.renavam).toBe("00639884962");
     }
   });
   it("aceita a placa antiga e a Mercosul", () => {
@@ -97,6 +99,24 @@ describe("esquemaCadastrarPlaca: identificação", () => {
     ).toBe(
       false, // apoio sem fonte e data do valor
     );
+  });
+});
+
+describe("esquemaCadastrarPlaca: o equipamento usa número de série, não RENAVAM", () => {
+  const equipamento = { ...implemento, tipo: "equipamento", renavam: undefined };
+  it("aceita o equipamento sem RENAVAM, com o número de série (sem espaços nas pontas)", () => {
+    const r = esquema.safeParse({ ...equipamento, numeroDeSerie: " ser-123 " });
+    expect(r.success).toBe(true);
+    if (r.success && r.data.tipo === "equipamento") {
+      expect(r.data.numeroDeSerie).toBe("ser-123");
+      expect("renavam" in r.data).toBe(false);
+    }
+  });
+  it("sem o número de série, recusa com a mensagem do campo", () => {
+    expect(campos({ ...equipamento, numeroDeSerie: "" })).toContain("numeroDeSerie");
+  });
+  it("os outros tipos seguem exigindo o RENAVAM", () => {
+    expect(campos({ ...cavalo, renavam: undefined })).toContain("renavam");
   });
 });
 
@@ -142,7 +162,10 @@ describe("esquemaCadastrarPlaca: valor por tipo", () => {
   });
   it("implemento, equipamento e apoio: valor manual, fonte e data do valor", () => {
     for (const tipo of ["implemento", "equipamento", "apoio"]) {
-      expect(esquema.safeParse({ ...implemento, tipo }).success, tipo).toBe(true);
+      expect(
+        esquema.safeParse({ ...implemento, tipo, numeroDeSerie: "SERIE-1" }).success,
+        tipo,
+      ).toBe(true);
       expect(campos({ ...implemento, tipo, fonteDoValor: "" }), tipo).toContain("fonteDoValor");
       expect(campos({ ...implemento, tipo, dataDoValor: undefined }), tipo).toContain(
         "dataDoValor",
@@ -481,5 +504,23 @@ describe("esquemaItemDeCatalogo: o que o mini-wizard do + cria", () => {
     const r = esquemaItemDeCatalogo.safeParse({ ...ok, paiId: "qualquer" });
     expect(r.success).toBe(true);
     if (r.success) expect("paiId" in r.data).toBe(false);
+  });
+});
+
+describe("esquemaCancelarPedido e esquemaDevolverPlaca", () => {
+  const base = { placa: "abc-1d23", pedidoId: "ped-1", versaoDoPedido: 1 };
+  it("cancelar pede a confirmação", () => {
+    expect(esquemaCancelarPedido.safeParse({ ...base, confirmado: true }).success).toBe(true);
+    const r = esquemaCancelarPedido.safeParse({ ...base, confirmado: false });
+    expect(r.success).toBe(false);
+    expect(r.error?.issues[0]?.message).toBe("Confirme que quer cancelar o pedido.");
+  });
+  it("devolver pede o motivo", () => {
+    expect(esquemaDevolverPlaca.safeParse({ ...base, motivo: " Avaria " }).data?.motivo).toBe(
+      "Avaria",
+    );
+    const r = esquemaDevolverPlaca.safeParse({ ...base, motivo: "   " });
+    expect(r.success).toBe(false);
+    expect(r.error?.issues[0]?.message).toBe("Informe o motivo.");
   });
 });

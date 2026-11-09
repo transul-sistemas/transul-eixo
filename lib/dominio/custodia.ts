@@ -94,6 +94,24 @@ export function podeConcluirRecebimento(
   return { ok: true };
 }
 
+/** Cancelar pedido: só o gestor de origem, e só enquanto o destino não recebeu (pendente). */
+export function podeCancelarPedido(
+  pedido: PedidoDeTransferencia,
+  gestorId: string,
+): { ok: true } | { ok: false; motivo: "nao_e_a_origem" | "pedido_ja_recebido" } {
+  if (pedido.deGestorId !== gestorId) return { ok: false, motivo: "nao_e_a_origem" };
+  if (pedido.situacao !== "pendente") return { ok: false, motivo: "pedido_ja_recebido" };
+  return { ok: true };
+}
+
+/** Devolver placa: só o gestor de destino, e só um pedido já recebido (em conferência). */
+export function podeDevolverPedido(
+  pedido: PedidoDeTransferencia,
+  gestorId: string,
+): { ok: true } | { ok: false; motivo: RecusaDoRecebimento | "pedido_nao_recebido" } {
+  return podeConcluirRecebimento(pedido, gestorId);
+}
+
 /** Qual das duas etapas o pedido espera: receber (pendente), concluir (em conferência) ou nenhuma. */
 export function etapaDoRecebimento(
   pedido: PedidoDeTransferencia | null,

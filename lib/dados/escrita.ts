@@ -2,7 +2,9 @@ import { z } from "zod";
 import type { PedidoDeTransferencia } from "@/lib/dominio/custodia";
 import {
   esquemaCadastrarPlaca,
+  esquemaCancelarPedido,
   esquemaConcluirRecebimento,
+  esquemaDevolverPlaca,
   esquemaDisponibilizarPlaca,
   esquemaEntregaAoOperacionalDe,
   esquemaItemDeCatalogo,
@@ -210,6 +212,32 @@ export async function executarCorrigirPlaca(
   const v = validar(esquemaCorrigirPlaca, dados);
   if (!v.ok) return v.erro;
   return gravando(() => fonte.corrigirPlaca(v.dados, chave, agora));
+}
+
+/** Cancelar pedido: a origem desiste enquanto o destino não recebeu. */
+export async function executarCancelarPedido(
+  chave: string,
+  dados: unknown,
+  { fonte, agora, gestorId }: ContextoDaEscrita,
+): Promise<Resultado<PedidoDeTransferencia>> {
+  const semChave = conferirChave(chave);
+  if (semChave) return semChave;
+  const v = validar(esquemaCancelarPedido, dados);
+  if (!v.ok) return v.erro;
+  return gravando(() => fonte.cancelarPedido(v.dados, chave, agora, gestorId));
+}
+
+/** Devolver placa: o destino recusa o pedido em conferência, com o motivo. */
+export async function executarDevolverPlaca(
+  chave: string,
+  dados: unknown,
+  { fonte, agora, gestorId }: ContextoDaEscrita,
+): Promise<Resultado<PedidoDeTransferencia>> {
+  const semChave = conferirChave(chave);
+  if (semChave) return semChave;
+  const v = validar(esquemaDevolverPlaca, dados);
+  if (!v.ok) return v.erro;
+  return gravando(() => fonte.devolverPlaca(v.dados, chave, agora, gestorId));
 }
 
 export async function executarCriarItemDeCatalogo(

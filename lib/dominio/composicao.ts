@@ -56,6 +56,7 @@ interface Estrutura {
   carrocerias: number;
   eixosDistintos: number;
   eixosFaltando: boolean;
+  carroceriaFaltando: boolean;
   eixosDoSemi: number | null;
   eixosDoDolly: number | null;
 }
@@ -72,6 +73,7 @@ function estrutura(unidades: readonly UnidadeDoConjunto[]): Estrutura {
     carrocerias: new Set(semis.map((s) => s.carroceria)).size,
     eixosDistintos: new Set(eixosConhecidos).size,
     eixosFaltando: semis.some((s) => s.eixos === null),
+    carroceriaFaltando: semis.some((s) => s.carroceria === null),
     eixosDoSemi: eixosConhecidos[0] ?? null,
     eixosDoDolly: dollies[0]?.eixos ?? null,
   };
@@ -104,7 +106,8 @@ export function motivoDeComposicaoInvalida(unidades: readonly UnidadeDoConjunto[
 }
 
 /**
- * A configuração do conjunto pela estrutura; "pendente" sem os eixos de algum semirreboque e
+ * A configuração do conjunto pela estrutura; "pendente" sem os eixos ou sem a carroceria de algum
+ * semirreboque (como config.nome_do_conjunto, pgTAP 85) e
  * "sem_nome_definido" quando a estrutura não bate com nenhuma configuração conhecida.
  */
 export function configuracaoDoConjunto(
@@ -113,6 +116,6 @@ export function configuracaoDoConjunto(
 ): string | null {
   const e = estrutura(unidades);
   if (e.n === 0) return null;
-  if (e.eixosFaltando) return "pendente";
+  if (e.eixosFaltando || e.carroceriaFaltando) return "pendente";
   return configuracaoDa(e, configuracoes)?.codigo ?? "sem_nome_definido";
 }

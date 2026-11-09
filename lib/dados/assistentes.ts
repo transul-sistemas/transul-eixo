@@ -19,6 +19,8 @@ const SOBRE_A_PLACA = [
   "engatar-implemento",
   "desatrelar-implemento",
   "corrigir-placa",
+  "cancelar-pedido",
+  "devolver-placa",
 ];
 
 export interface PedidoDosDados {
@@ -53,7 +55,10 @@ export async function dadosDosAssistentes(
     assistente === "engatar-implemento" ? await fonte.implementosLivres() : [];
   const semPlaca = placaAlvo === null && valida === null;
   const precisaDosPedidos =
-    semPlaca && (assistente === "receber-placa" || assistente === "concluir-recebimento");
+    semPlaca &&
+    (assistente === "receber-placa" ||
+      assistente === "concluir-recebimento" ||
+      assistente === "devolver-placa");
   const pedidos = precisaDosPedidos && gestorId ? await fonte.pedidosParaReceber(gestorId) : [];
   const placasParaEntregar =
     semPlaca && assistente === "entregar-ao-operacional"

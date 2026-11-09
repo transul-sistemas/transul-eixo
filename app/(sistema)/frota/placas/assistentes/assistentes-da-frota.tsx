@@ -11,6 +11,7 @@ import type { DadosDosAssistentes, ItemCriado, PlacaGravada } from "@/lib/dados/
 import { mesclarCatalogos } from "@/lib/dados/catalogos-locais";
 import {
   etapaDoRecebimento,
+  podeCancelarPedido,
   MENSAGEM_DE_TIPO_QUE_NAO_ENTREGA,
   motivoDeNaoEntregar,
   type PedidoDeTransferencia,
@@ -21,9 +22,11 @@ import { NOMES_DOS_TIPOS } from "@/lib/dados/placas-tipos";
 import { normalizarPlaca, placaNormalizadaValida } from "@/lib/dominio/placa";
 import { SIGLAS_DE_BAIXA } from "@/lib/dominio/status";
 import { CadastrarPlaca } from "./cadastrar-placa";
+import { CancelarPedido } from "./cancelar-pedido";
 import { ConcluirRecebimento } from "./concluir-recebimento";
 import { CorrigirPlaca } from "./corrigir-placa";
 import { DesatrelarImplemento } from "./desatrelar-implemento";
+import { DevolverPlaca } from "./devolver-placa";
 import { DisponibilizarPlaca } from "./disponibilizar-placa";
 import { EngatarImplemento } from "./engatar-implemento";
 import { EntregarAoOperacional } from "./entregar-ao-operacional";
@@ -60,6 +63,8 @@ const ASSISTENTE_DA_ACAO: Record<string, string> = {
   "frota.engatar-implemento": "engatar-implemento",
   "frota.desatrelar-implemento": "desatrelar-implemento",
   "frota.corrigir-placa": "corrigir-placa",
+  "frota.cancelar-pedido": "cancelar-pedido",
+  "frota.devolver-placa": "devolver-placa",
 };
 
 export function AssistentesDaFrota({
@@ -93,6 +98,8 @@ export function AssistentesDaFrota({
   const engatar = useAssistenteNaUrl("engatar-implemento");
   const desatrelar = useAssistenteNaUrl("desatrelar-implemento");
   const corrigir = useAssistenteNaUrl("corrigir-placa");
+  const cancelar = useAssistenteNaUrl("cancelar-pedido");
+  const devolver = useAssistenteNaUrl("devolver-placa");
   const botao = useRef<HTMLButtonElement>(null);
   const [criados, setCriados] = useState<ItemCriado[]>([]);
   const catalogos = useMemo(
@@ -124,6 +131,16 @@ export function AssistentesDaFrota({
 
   const receberGuardado = useGuardadoEnquantoAberto(receber.aberto, comPedido("receber"));
   const concluirGuardado = useGuardadoEnquantoAberto(concluir.aberto, comPedido("concluir"));
+  const devolverGuardado = useGuardadoEnquantoAberto(devolver.aberto, comPedido("concluir"));
+  const cancelavel =
+    alvo !== null &&
+    dados.pedido !== null &&
+    dados.gestorId !== null &&
+    podeCancelarPedido(dados.pedido, dados.gestorId).ok;
+  const cancelarGuardado = useGuardadoEnquantoAberto(
+    cancelar.aberto,
+    cancelavel && alvo && dados.pedido ? { placa: alvo, pedido: dados.pedido } : null,
+  );
   const entregarGuardada = useGuardadoEnquantoAberto<PlacaGravada>(
     entregar.aberto,
     alvo && podeEntregar(alvo.sigla, alvo.tipo) ? alvo : null,
@@ -164,6 +181,8 @@ export function AssistentesDaFrota({
     "concluir-recebimento": concluir.abrir,
     "entregar-ao-operacional": entregar.abrir,
     "disponibilizar-placa": disponibilizar.abrir,
+    "cancelar-pedido": cancelar.abrir,
+    "devolver-placa": devolver.abrir,
   };
   function aoAbrirDaFicha(id: string) {
     const assistente = ASSISTENTE_DA_ACAO[id];
@@ -332,6 +351,31 @@ export function AssistentesDaFrota({
         )
       ) : null}
 
+      {noNavegador && cancelar.aberto ? (
+        cancelarGuardado ? (
+          <CancelarPedido
+            key={cancelarGuardado.placa.placa}
+            placa={cancelarGuardado.placa}
+            pedido={cancelarGuardado.pedido}
+            aoFechar={cancelar.fechar}
+          />
+        ) : (
+          <EscolherAPlaca
+            titulo="Cancelar pedido"
+            opcoes={[]}
+            vazio={
+              semPlaca
+                ? "Abra a ficha da placa que você disponibilizou e use Cancelar pedido nela."
+                : alvo === null
+                  ? naoAchou
+                  : `A placa ${nomeDaPlaca} não tem pedido seu esperando o outro gestor. Depois que ele recebe, o pedido não se cancela mais.`
+            }
+            aoEscolher={escolherPlaca}
+            aoFechar={cancelar.fechar}
+          />
+        )
+      ) : null}
+
       {noNavegador && engatar.aberto ? (
         engatarGuardada ? (
           <EngatarImplemento
@@ -406,6 +450,33 @@ export function AssistentesDaFrota({
             }
             aoEscolher={escolherPlaca}
             aoFechar={corrigir.fechar}
+          />
+        )
+      ) : null}
+
+      {noNavegador && devolver.aberto ? (
+        devolverGuardado ? (
+          <DevolverPlaca
+            key={devolverGuardado.placa.placa}
+            placa={devolverGuardado.placa}
+            pedido={devolverGuardado.pedido}
+            aoFechar={devolver.fechar}
+          />
+        ) : (
+          <EscolherAPlaca
+            titulo="Devolver placa"
+            opcoes={semPlaca ? dados.placasParaConcluir : []}
+            vazio={
+              semPlaca
+                ? "Nenhuma placa recebida espera por você. Só se devolve a placa depois de recebê-la."
+                : alvo === null
+                  ? naoAchou
+                  : etapa === "receber"
+                    ? `A placa ${nomeDaPlaca} ainda não foi recebida. Use Receber placa antes de devolvê-la.`
+                    : `A placa ${nomeDaPlaca} não tem recebimento seu para devolver.`
+            }
+            aoEscolher={escolherPlaca}
+            aoFechar={devolver.fechar}
           />
         )
       ) : null}

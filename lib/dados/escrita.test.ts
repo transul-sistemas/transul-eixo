@@ -9,7 +9,9 @@ import { criarArmazem } from "@/lib/exemplo/armazem";
 import { placasDeExemplo } from "@/lib/exemplo/placas";
 import {
   executarCadastrarPlaca,
+  executarCancelarPedido,
   executarConcluirRecebimento,
+  executarDevolverPlaca,
   executarCriarItemDeCatalogo,
   executarDisponibilizarPlaca,
   executarEntregarAoOperacional,
@@ -334,5 +336,52 @@ describe("nada lança: falha da fonte vira erro tipado", () => {
       expect(r.erro.mensagem).toMatch(/Tente de novo/);
       expect(r.erro.mensagem).not.toMatch(/banco fora do ar/);
     }
+  });
+});
+
+describe("executarCancelarPedido e executarDevolverPlaca", () => {
+  const alvo = (parcial: Record<string, unknown> = {}) => ({
+    placa: foraDoPatio.placa,
+    pedidoId: "ped-1",
+    versaoDoPedido: 1,
+    ...parcial,
+  });
+
+  it("a origem cancela o pedido pendente; o destino não", async () => {
+    const doDestino = await executarCancelarPedido(CHAVE_A, alvo({ confirmado: true }), contexto());
+    expect(doDestino.ok).toBe(false);
+    if (!doDestino.ok) expect(doDestino.erro.codigo).toBe("sem_permissao");
+    const ctx = contexto(undefined, "gestor-1");
+    const r = await executarCancelarPedido(CHAVE_A, alvo({ confirmado: true }), ctx);
+    expect(r.ok).toBe(true);
+    if (r.ok) expect(r.linha.situacao).toBe("cancelado");
+    expect(await ctx.fonte.pedidoAbertoDa(foraDoPatio.placa)).toBeNull();
+  });
+
+  it("cancelar sem confirmar é recusado pelo esquema", async () => {
+    const r = await executarCancelarPedido(
+      CHAVE_A,
+      alvo({ confirmado: false }),
+      contexto(undefined, "gestor-1"),
+    );
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.erro.codigo).toBe("entrada_invalida");
+  });
+
+  it("o destino devolve o pedido recebido, com motivo; a placa fica com a origem", async () => {
+    const ctx = contexto();
+    const pendente = await executarDevolverPlaca(CHAVE_A, alvo({ motivo: "Avaria" }), ctx);
+    expect(pendente.ok).toBe(false);
+    const recebido = await executarReceber(CHAVE_B, alvo({ conferido: true }), ctx);
+    expect(recebido.ok).toBe(true);
+    const r = await executarDevolverPlaca(
+      "33333333-3333-4333-8333-333333333333",
+      alvo({ versaoDoPedido: 2, motivo: "Avaria" }),
+      ctx,
+    );
+    expect(r.ok).toBe(true);
+    if (r.ok) expect(r.linha.situacao).toBe("devolvido");
+    const placa = await ctx.fonte.placaParaAssistente(foraDoPatio.placa);
+    expect(placa?.gestor).toBe(foraDoPatio.gestor);
   });
 });

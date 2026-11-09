@@ -1,5 +1,6 @@
 import {
   IconAdjustments,
+  IconArrowBackUp,
   IconArrowsExchange,
   IconBook,
   IconBuildingStore,
@@ -48,6 +49,7 @@ export type Icone = typeof IconHome2;
 // está aqui quebra o teste de catálogo, não a tela.
 const ICONES: Record<string, Icone> = {
   IconAdjustments,
+  IconArrowBackUp,
   IconArrowsExchange,
   IconBook,
   IconBuildingStore,

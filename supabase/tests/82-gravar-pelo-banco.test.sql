@@ -92,9 +92,9 @@ select has_function('nucleo', 'listar_placas',
 select ok(
   (select bool_and(not p.prosecdef) from pg_proc p join pg_namespace n on n.oid = p.pronamespace
     where n.nspname = 'nucleo' and p.proname in ('contar_para_receber', 'pedido_aberto_da_placa', 'pedidos_para_receber',
-      'placa_para_assistente', 'catalogos_dos_assistentes', 'disponibilizar_placa', 'receber_placa', 'concluir_recebimento',
+      'placa_para_assistente', 'catalogos_dos_assistentes',
       'placas_filtradas', 'listar_placas', 'contar_chips_de_placas')),
-  'as funções novas rodam com a RLS de quem chama (SECURITY INVOKER)'
+  'as leituras novas rodam com a RLS de quem chama (SECURITY INVOKER); as gravações do pedido rodam como dono desde a S2 (pgTAP 84)'
 );
 select set_eq(
   $$select p.oid::regprocedure::text from pg_proc p join pg_namespace n on n.oid = p.pronamespace

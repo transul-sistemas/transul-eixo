@@ -39,6 +39,8 @@ import { CampoDoCatalogo } from "./mini-cadastro-de-catalogo";
 export interface ValoresDoCadastro {
   placa: string;
   renavam: string;
+  /** Só do equipamento (que não tem RENAVAM). */
+  numeroDeSerie: string;
   tipo: string;
   marcaId: string;
   modeloId: string;
@@ -63,6 +65,7 @@ export interface ValoresDoCadastro {
 const VALORES_INICIAIS: ValoresDoCadastro = {
   placa: "",
   renavam: "",
+  numeroDeSerie: "",
   tipo: "",
   marcaId: "",
   modeloId: "",
@@ -84,12 +87,12 @@ const VALORES_INICIAIS: ValoresDoCadastro = {
 export const DEFINICAO_DO_CADASTRO: DefinicaoDeAssistente = {
   id: "cadastrar-placa",
   titulo: "Cadastrar placa",
-  versaoDoEsquema: 3,
+  versaoDoEsquema: 4,
   passos: [
     {
       id: "identificacao",
       titulo: "Identificação",
-      campos: ["placa", "renavam", "tipo", "ano"],
+      campos: ["placa", "renavam", "numeroDeSerie", "tipo", "ano"],
     },
     {
       id: "veiculo",
@@ -386,17 +389,30 @@ function PassoDoCadastro({
               />
             )}
           </Campo>
-          <Campo rotulo="RENAVAM" erro={erros.renavam?.message}>
-            {(p) => (
-              <input
-                {...p}
-                {...form.register("renavam")}
-                autoComplete="off"
-                inputMode="numeric"
-                className={CLASSE_DO_CAMPO}
-              />
-            )}
-          </Campo>
+          {tipo === "equipamento" ? (
+            <Campo rotulo="Número de série" erro={erros.numeroDeSerie?.message}>
+              {(p) => (
+                <input
+                  {...p}
+                  {...form.register("numeroDeSerie")}
+                  autoComplete="off"
+                  className={CLASSE_DO_CAMPO}
+                />
+              )}
+            </Campo>
+          ) : (
+            <Campo rotulo="RENAVAM" erro={erros.renavam?.message}>
+              {(p) => (
+                <input
+                  {...p}
+                  {...form.register("renavam")}
+                  autoComplete="off"
+                  inputMode="numeric"
+                  className={CLASSE_DO_CAMPO}
+                />
+              )}
+            </Campo>
+          )}
         </GradeDeCampos>
         <GradeDeCampos>
           <Campo rotulo="Tipo de ativo" erro={erros.tipo?.message}>

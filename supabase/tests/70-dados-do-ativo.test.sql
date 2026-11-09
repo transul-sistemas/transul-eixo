@@ -337,7 +337,9 @@ select throws_ok(
 );
 reset role;
 select tests.como(pg_temp.id('auth_ga'));
-select throws_ok($$select nucleo.criar_cr(7202, '07.202.001', 'Sem permissão', null)$$, '42501', null, 'quem não tem Cadastros não cria CR');
+-- Bug b de 09/11/2026: o gestor de frota (frota.criar) cria o CR pelo "+" do cadastro; a recusa de quem
+-- não tem frota.criar nem cadastros.criar está no pgTAP 85.
+select lives_ok($$select nucleo.criar_cr(7202, '07.202.001', 'Do gestor', null)$$, 'o gestor de frota cria o CR pelo "+" do cadastro');
 reset role;
 
 -- ---- entregar ao Operacional: atômica, com versão e chave de envio ----

@@ -203,8 +203,8 @@ select is(
 );
 select is(
   config.nome_do_conjunto(null, 2, false, 2, null),
-  null,
-  'sem carroceria, sem nome'
+  'pendente',
+  'sem carroceria, o nome fica pendente (bug e de 09/11/2026: igual ao TypeScript; pgTAP 85)'
 );
 
 -- ---- unicidades e travas dos catálogos ----

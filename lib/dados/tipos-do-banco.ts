@@ -1288,14 +1288,14 @@ isOneToOne: false
                   ]
                 },"transferencia": {
                   Row: {
-                    "ativo_id": string,"concluida_em": string | null,"criado_em": string,"de_gestor_id": string,"devolvida_em": string | null,"excluido_em": string | null,"excluido_por": string | null,"id": string,"motivo": string,"motivo_da_exclusao": string | null,"para_gestor_id": string,"recebida_em": string | null,"situacao": string,"versao": number
+                    "ativo_id": string,"cancelada_em": string | null,"concluida_em": string | null,"criado_em": string,"de_gestor_id": string,"devolvida_em": string | null,"excluido_em": string | null,"excluido_por": string | null,"id": string,"motivo": string,"motivo_da_devolucao": string | null,"motivo_da_exclusao": string | null,"para_gestor_id": string,"recebida_em": string | null,"situacao": string,"versao": number
                   }
                   ComputedFields: never
                   Insert: {
-                    "ativo_id": string,"concluida_em"?: string | null,"criado_em"?: string,"de_gestor_id": string,"devolvida_em"?: string | null,"excluido_em"?: string | null,"excluido_por"?: string | null,"id"?: string,"motivo": string,"motivo_da_exclusao"?: string | null,"para_gestor_id": string,"recebida_em"?: string | null,"situacao"?: string,"versao"?: number
+                    "ativo_id": string,"cancelada_em"?: string | null,"concluida_em"?: string | null,"criado_em"?: string,"de_gestor_id": string,"devolvida_em"?: string | null,"excluido_em"?: string | null,"excluido_por"?: string | null,"id"?: string,"motivo": string,"motivo_da_devolucao"?: string | null,"motivo_da_exclusao"?: string | null,"para_gestor_id": string,"recebida_em"?: string | null,"situacao"?: string,"versao"?: number
                   }
                   Update: {
-                    "ativo_id"?: string,"concluida_em"?: string | null,"criado_em"?: string,"de_gestor_id"?: string,"devolvida_em"?: string | null,"excluido_em"?: string | null,"excluido_por"?: string | null,"id"?: string,"motivo"?: string,"motivo_da_exclusao"?: string | null,"para_gestor_id"?: string,"recebida_em"?: string | null,"situacao"?: string,"versao"?: number
+                    "ativo_id"?: string,"cancelada_em"?: string | null,"concluida_em"?: string | null,"criado_em"?: string,"de_gestor_id"?: string,"devolvida_em"?: string | null,"excluido_em"?: string | null,"excluido_por"?: string | null,"id"?: string,"motivo"?: string,"motivo_da_devolucao"?: string | null,"motivo_da_exclusao"?: string | null,"para_gestor_id"?: string,"recebida_em"?: string | null,"situacao"?: string,"versao"?: number
                   }
                   Relationships: [
                     {
@@ -1646,7 +1646,10 @@ isOneToOne: false
 { Args: Record<PropertyKey, never>; Returns: number
                            },
 "cadastrar_ativo":
-{ Args: { "p_carroceria_id"?: string,"p_chassi"?: string,"p_chave"?: string,"p_cr_id": string,"p_eixos"?: number,"p_em"?: string,"p_funcao"?: Database["nucleo"]['Enums']["funcao_do_implemento"],"p_gestor_id": string,"p_modelo_id"?: string,"p_numero_de_serie"?: string,"p_operacao_id": string,"p_pessoa_dona_id"?: string,"p_placa": string,"p_regime"?: Database["nucleo"]['Enums']["regime_de_posse"],"p_renavam": string,"p_situacao_inicial"?: string,"p_tipo": Database["nucleo"]['Enums']["tipo_de_ativo"] }; Returns: string
+{ Args: { "p_ano_fabricacao"?: number,"p_carroceria_id"?: string,"p_chassi"?: string,"p_chave"?: string,"p_codigo_fipe"?: string,"p_cr_id": string,"p_eixos"?: number,"p_em"?: string,"p_funcao"?: Database["nucleo"]['Enums']["funcao_do_implemento"],"p_gestor_id": string,"p_modelo_id"?: string,"p_numero_de_serie"?: string,"p_operacao_id": string,"p_pessoa_dona_id"?: string,"p_placa": string,"p_regime"?: Database["nucleo"]['Enums']["regime_de_posse"],"p_renavam": string,"p_situacao_inicial"?: string,"p_tipo": Database["nucleo"]['Enums']["tipo_de_ativo"],"p_valor_fipe"?: number,"p_valor_fipe_referencia"?: string,"p_valor_manual"?: number,"p_valor_manual_em"?: string,"p_valor_manual_fonte"?: string }; Returns: string
+                           },
+"cancelar_pedido":
+{ Args: { "p_chave"?: string,"p_em"?: string,"p_transferencia_id": string,"p_versao": number }; Returns: string
                            },
 "catalogos_dos_assistentes":
 { Args: Record<PropertyKey, never>; Returns: Json
@@ -1677,11 +1680,17 @@ isOneToOne: false
 "criar_cr":
 { Args: { "p_chave"?: string,"p_codcencus": number,"p_codigo": string,"p_nome": string }; Returns: string
                            },
+"crs_ocupados":
+{ Args: Record<PropertyKey, never>; Returns: string[]
+                           },
 "desatrelar":
 { Args: { "p_cavalo_id": string,"p_em": string,"p_implementos"?: (string)[] }; Returns: number
                            },
 "detalhe_da_placa":
 { Args: { "p_placa": string }; Returns: Json
+                           },
+"devolver_placa":
+{ Args: { "p_chave"?: string,"p_em"?: string,"p_motivo": string,"p_transferencia_id": string,"p_versao": number }; Returns: string
                            },
 "disponibilizar_placa":
 { Args: { "p_ativo_id": string,"p_chave"?: string,"p_em"?: string,"p_motivo": string,"p_para_gestor_id": string,"p_pendencias": (string)[],"p_versao": number }; Returns: string
