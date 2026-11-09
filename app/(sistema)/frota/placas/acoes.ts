@@ -7,9 +7,13 @@ import {
   type ContextoDaEscrita,
   executarCadastrarPlaca,
   executarConcluirRecebimento,
+  executarCorrigirPlaca,
   executarCriarItemDeCatalogo,
+  executarDesatrelar,
   executarDisponibilizarPlaca,
+  executarEngatar,
   executarEntregarAoOperacional,
+  executarMudarSituacao,
   executarReceber,
 } from "@/lib/dados/escrita";
 import type { AtualDaAcao, ItemCriado, PlacaGravada } from "@/lib/dados/escrita-tipos";
@@ -104,6 +108,23 @@ export async function receberPlacaAcao(bruto: unknown) {
 
 export async function concluirRecebimentoAcao(bruto: unknown) {
   return executar<PlacaGravada>(bruto, executarConcluirRecebimento, daPlaca, EDITAR, true);
+}
+
+/** Mudar situação (um evento de status com data e hora) e engatar criam; o banco confere de novo. */
+export async function mudarSituacaoAcao(bruto: unknown) {
+  return executar<PlacaGravada>(bruto, executarMudarSituacao, daPlaca);
+}
+
+export async function engatarImplementoAcao(bruto: unknown) {
+  return executar<PlacaGravada>(bruto, executarEngatar, daPlaca);
+}
+
+export async function desatrelarImplementoAcao(bruto: unknown) {
+  return executar<PlacaGravada>(bruto, executarDesatrelar, daPlaca, EDITAR);
+}
+
+export async function corrigirPlacaAcao(bruto: unknown) {
+  return executar<PlacaGravada>(bruto, executarCorrigirPlaca, daPlaca, EDITAR);
 }
 
 /** O que o "+" cria (marca, modelo, gestor, operação, CR e filial). */

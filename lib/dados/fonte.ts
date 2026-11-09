@@ -11,8 +11,15 @@ import type {
 import type { ConsultaDeTabela } from "@/lib/navegacao/tabela";
 import type { ResultadoDaAcao } from "@/lib/wizard/resultado";
 import type {
+  EntradaCorrigirPlaca,
+  EntradaDesatrelar,
+  EntradaEngatar,
+  EntradaMudarSituacao,
+} from "@/lib/dominio/esquemas/ficha-da-placa";
+import type {
   AtualDaAcao,
   Catalogos,
+  ConjuntoDaPlaca,
   ItemCriado,
   PlacaAEscolher,
   PlacaGravada,
@@ -95,6 +102,26 @@ export interface FonteDeEscrita {
     agora: string,
     gestorId: string,
   ): Gravacao<PlacaGravada>;
+  /** Mudar situação: um evento de status com data e hora (a placa solta ou o conjunto). */
+  mudarSituacao(
+    entrada: EntradaMudarSituacao,
+    chave: string,
+    agora: string,
+  ): Gravacao<PlacaGravada>;
+  /** Engatar um implemento no cavalo; devolve o cavalo. */
+  engatar(entrada: EntradaEngatar, chave: string, agora: string): Gravacao<PlacaGravada>;
+  /** Desatrelar implementos do cavalo; devolve o cavalo. */
+  desatrelar(entrada: EntradaDesatrelar, chave: string, agora: string): Gravacao<PlacaGravada>;
+  /** Completar o RENAVAM e o número de série; corrigir eixos e carroceria, com o motivo. */
+  corrigirPlaca(
+    entrada: EntradaCorrigirPlaca,
+    chave: string,
+    agora: string,
+  ): Gravacao<PlacaGravada>;
+  /** O conjunto da placa (com o nome pela nomenclatura), ou `null` se ela não está em conjunto. */
+  conjuntoDaPlaca(placa: string): Promise<ConjuntoDaPlaca | null>;
+  /** Os implementos soltos (sem cavalo) que podem ser engatados. */
+  implementosLivres(): Promise<PlacaAEscolher[]>;
   criarItemDeCatalogo(entrada: EntradaItemDeCatalogo, chave: string): Gravacao<ItemCriado>;
   /** Os tipos que o "+" cria nesta fonte. */
   readonly criaveis: readonly TipoDeItemDeCatalogo[];

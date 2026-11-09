@@ -8,6 +8,12 @@ import {
   esquemaItemDeCatalogo,
   esquemaReceberPlaca,
 } from "@/lib/dominio/esquemas/placa";
+import {
+  esquemaCorrigirPlaca,
+  esquemaDesatrelar,
+  esquemaEngatar,
+  esquemaMudarSituacao,
+} from "@/lib/dominio/esquemas/ficha-da-placa";
 import { normalizarPlaca } from "@/lib/dominio/placa";
 import { chaveDeEnvioValida } from "@/lib/wizard/chave-de-envio";
 import { erroDaAcao, errosDeCampos, type ResultadoDaAcao } from "@/lib/wizard/resultado";
@@ -138,6 +144,72 @@ export async function executarConcluirRecebimento(
   const v = validar(esquemaConcluirRecebimento, dados);
   if (!v.ok) return v.erro;
   return gravando(() => fonte.concluirRecebimento(v.dados, chave, agora, gestorId));
+}
+
+/**
+ * Mudar situação: o esquema depende do tipo da placa e de ela estar em conjunto (as siglas válidas
+ * são outras), então a placa e o conjunto são lidos antes, como na entrega ao Operacional.
+ */
+export async function executarMudarSituacao(
+  chave: string,
+  dados: unknown,
+  { fonte, agora }: ContextoDaEscrita,
+): Promise<Resultado<PlacaGravada>> {
+  const semChave = conferirChave(chave);
+  if (semChave) return semChave;
+  const aPlaca = validar(SO_A_PLACA, dados);
+  if (!aPlaca.ok) return aPlaca.erro;
+  return gravando(async () => {
+    const placa = normalizarPlaca(aPlaca.dados.placa);
+    const atual = await fonte.placaParaAssistente(placa);
+    if (!atual) return erroDaAcao("nao_encontrado");
+    const conjunto = await fonte.conjuntoDaPlaca(placa);
+    const v = validar(
+      esquemaMudarSituacao({ tipo: atual.tipo, emConjunto: conjunto !== null, agora }),
+      dados,
+    );
+    if (!v.ok) return v.erro;
+    return fonte.mudarSituacao(v.dados, chave, agora);
+  });
+}
+
+/** Engatar implemento: o cavalo recebe um implemento solto, na posição e no instante dados. */
+export async function executarEngatar(
+  chave: string,
+  dados: unknown,
+  { fonte, agora }: ContextoDaEscrita,
+): Promise<Resultado<PlacaGravada>> {
+  const semChave = conferirChave(chave);
+  if (semChave) return semChave;
+  const v = validar(esquemaEngatar({ agora }), dados);
+  if (!v.ok) return v.erro;
+  return gravando(() => fonte.engatar(v.dados, chave, agora));
+}
+
+/** Desatrelar implemento: os implementos escolhidos saem do cavalo e voltam ao pátio. */
+export async function executarDesatrelar(
+  chave: string,
+  dados: unknown,
+  { fonte, agora }: ContextoDaEscrita,
+): Promise<Resultado<PlacaGravada>> {
+  const semChave = conferirChave(chave);
+  if (semChave) return semChave;
+  const v = validar(esquemaDesatrelar({ agora }), dados);
+  if (!v.ok) return v.erro;
+  return gravando(() => fonte.desatrelar(v.dados, chave, agora));
+}
+
+/** Corrigir placa: completa RENAVAM e série e corrige eixos e carroceria, com o motivo. */
+export async function executarCorrigirPlaca(
+  chave: string,
+  dados: unknown,
+  { fonte, agora }: ContextoDaEscrita,
+): Promise<Resultado<PlacaGravada>> {
+  const semChave = conferirChave(chave);
+  if (semChave) return semChave;
+  const v = validar(esquemaCorrigirPlaca, dados);
+  if (!v.ok) return v.erro;
+  return gravando(() => fonte.corrigirPlaca(v.dados, chave, agora));
 }
 
 export async function executarCriarItemDeCatalogo(

@@ -10,6 +10,7 @@ import { erroDaAcao, type ResultadoDaAcao, sucesso } from "@/lib/wizard/resultad
 import type {
   AtualDaAcao,
   Catalogos,
+  ConjuntoDaPlaca,
   ItemCriado,
   PlacaAEscolher,
   PlacaGravada,
@@ -67,7 +68,15 @@ export function resultadoDoErro<T>(erro: ErroDoBanco): Resultado<T> {
   if (codigo === "42501")
     return erroDaAcao<AtualDaAcao>("sem_permissao", { mensagem: erro.message });
   if (codigo === "40001") return erroDaAcao<AtualDaAcao>("conflito");
-  if (codigo === "23514" || codigo === "23503" || codigo === "P0001" || codigo.startsWith("22")) {
+  // 23000 é a chave que não aceita troca; 23P01, a vigência ou o conjunto que se sobrepõe.
+  if (
+    codigo === "23514" ||
+    codigo === "23503" ||
+    codigo === "23000" ||
+    codigo === "23P01" ||
+    codigo === "P0001" ||
+    codigo.startsWith("22")
+  ) {
     return erroDaAcao<AtualDaAcao>("entrada_invalida", { mensagem: erro.message });
   }
   if (codigo === "23505")
@@ -196,6 +205,14 @@ export function paraPedido(p: PedidoDoBanco): PedidoDeTransferencia {
     situacao,
     versao: p.versao,
   };
+}
+
+/** `aaaa-mm-ddThh:mm` de São Paulo como instante com fuso (São Paulo está em -03:00 o ano todo). */
+export const instanteDeSaoPaulo = (local: string) => `${local}:00-03:00`;
+
+interface LinhaDeConjunto {
+  cavalo: string | null;
+  implementos: string[] | null;
 }
 
 /** Centavos inteiros para reais (o JSON leva o número mais curto, que o numeric(15,2) lê exato). */
@@ -371,6 +388,159 @@ export function escritaDoBanco(cliente: () => Promise<ClienteDeEscrita>): FonteD
       const nova = await placaDoBanco(c, entrada.placa);
       if (!nova) throw new Error("A placa recebida não voltou na leitura.");
       return sucesso(paraPlacaGravada(nova));
+    },
+
+    async mudarSituacao(entrada): Promise<Resultado<PlacaGravada>> {
+      const c = await cliente();
+      const atual = await placaDoBanco(c, entrada.placa);
+      if (!atual) return erroDaAcao("nao_encontrado");
+      // O evento é a gravação: o banco confere se a sigla vale para o tipo e para o conjunto.
+      const r = await chamar<string>(c, "registrar_evento", {
+        p_ativo_id: atual.ativo_id,
+        p_sigla: entrada.sigla,
+        p_em: instanteDeSaoPaulo(entrada.quando),
+        p_origem: "manual",
+      });
+      if (!r.ok) return resultadoDoErro(r.erro);
+      const nova = await placaDoBanco(c, entrada.placa);
+      if (!nova) throw new Error("A placa mudada não voltou na leitura.");
+      return sucesso(paraPlacaGravada(nova));
+    },
+
+    async engatar(entrada): Promise<Resultado<PlacaGravada>> {
+      const c = await cliente();
+      const cavalo = await placaDoBanco(c, entrada.placa);
+      const implemento = await placaDoBanco(c, entrada.implemento);
+      if (!cavalo || !implemento) return erroDaAcao("nao_encontrado");
+      const r = await chamar<string>(c, "engatar", {
+        p_cavalo_id: cavalo.ativo_id,
+        p_implemento_id: implemento.ativo_id,
+        p_posicao: entrada.posicao,
+        p_em: instanteDeSaoPaulo(entrada.quando),
+      });
+      if (!r.ok) return resultadoDoErro(r.erro);
+      const nova = await placaDoBanco(c, entrada.placa);
+      if (!nova) throw new Error("O cavalo engatado não voltou na leitura.");
+      return sucesso(paraPlacaGravada(nova));
+    },
+
+    async desatrelar(entrada): Promise<Resultado<PlacaGravada>> {
+      const c = await cliente();
+      const cavalo = await placaDoBanco(c, entrada.placa);
+      if (!cavalo) return erroDaAcao("nao_encontrado");
+      const ids: string[] = [];
+      for (const placa of entrada.implementos) {
+        const implemento = await placaDoBanco(c, placa);
+        if (!implemento) return erroDaAcao("nao_encontrado");
+        ids.push(implemento.ativo_id);
+      }
+      const r = await chamar<number>(c, "desatrelar", {
+        p_cavalo_id: cavalo.ativo_id,
+        p_em: instanteDeSaoPaulo(entrada.quando),
+        p_implementos: ids,
+      });
+      if (!r.ok) return resultadoDoErro(r.erro);
+      const nova = await placaDoBanco(c, entrada.placa);
+      if (!nova) throw new Error("O cavalo desatrelado não voltou na leitura.");
+      return sucesso(paraPlacaGravada(nova));
+    },
+
+    async corrigirPlaca(entrada, chave): Promise<Resultado<PlacaGravada>> {
+      const c = await cliente();
+      const atual = await placaDoBanco(c, entrada.placa);
+      if (!atual) return erroDaAcao("nao_encontrado");
+      const comoEsta = () =>
+        placaDoBanco(c, entrada.placa).then((p) => (p ? paraPlacaGravada(p) : null));
+      if ((atual.versao ?? 0) !== entrada.versaoDaPlaca) {
+        return comAtual(erroDaAcao<AtualDaAcao>("conflito"), comoEsta);
+      }
+      // RENAVAM e série são chaves: o banco só deixa PREENCHER o que falta (cadastro pendente).
+      const chaves: Record<string, unknown> = {};
+      if (entrada.renavam !== undefined) chaves.renavam = entrada.renavam;
+      if (entrada.numeroDeSerie !== undefined) chaves.numero_de_serie = entrada.numeroDeSerie;
+      let versao: number | null = entrada.versaoDaPlaca;
+      let primeira = true;
+      if (Object.keys(chaves).length > 0) {
+        const { error } = await c
+          .schema("nucleo")
+          .from("ativo")
+          .update(chaves)
+          .eq("id", atual.ativo_id)
+          .select("id")
+          .single();
+        if (error) return resultadoDoErro(error);
+        versao = null;
+        primeira = false;
+      }
+      // Eixos e carroceria são campos corrigíveis: a correção guarda o valor, o motivo e o anterior.
+      const campos: [string, unknown][] = [];
+      if (entrada.eixos !== undefined) campos.push(["eixos", entrada.eixos]);
+      if (entrada.carroceriaId !== undefined) campos.push(["carroceria_id", entrada.carroceriaId]);
+      for (const [campo, valor] of campos) {
+        const r = await chamar<string>(c, "corrigir_campo", {
+          p_ativo_id: atual.ativo_id,
+          p_campo: campo,
+          p_valor: valor,
+          p_motivo: entrada.motivo,
+          // A chave de envio vale para a primeira gravação do envio; as outras repetem sem dano.
+          p_chave: primeira ? chave : null,
+          p_versao: versao,
+        });
+        if (!r.ok) return comAtual(resultadoDoErro<PlacaGravada>(r.erro), comoEsta);
+        versao = null;
+        primeira = false;
+      }
+      const nova = await placaDoBanco(c, entrada.placa);
+      if (!nova) throw new Error("A placa corrigida não voltou na leitura.");
+      return sucesso(paraPlacaGravada(nova));
+    },
+
+    async conjuntoDaPlaca(placa): Promise<ConjuntoDaPlaca | null> {
+      const c = await cliente();
+      const d = await ler<LinhaDeConjunto | null>(c, "detalhe_da_placa", {
+        p_placa: normalizarPlaca(placa),
+      });
+      if (!d) return null;
+      const implementos = d.implementos ?? [];
+      const cavalo = d.cavalo ?? (implementos.length > 0 ? normalizarPlaca(placa) : null);
+      if (cavalo === null) return null;
+      // O nome sai da nomenclatura no banco (carroceria × configuração); sem ele, a ficha diz isso.
+      const doCavalo = await placaDoBanco(c, cavalo);
+      const nome = doCavalo
+        ? await ler<string | null>(c, "nome_do_conjunto", { p_cavalo_id: doCavalo.ativo_id })
+        : null;
+      const lista =
+        d.cavalo === null
+          ? implementos
+          : ((await ler<LinhaDeConjunto | null>(c, "detalhe_da_placa", { p_placa: cavalo }))
+              ?.implementos ?? []);
+      return { cavalo, implementos: lista, nome };
+    },
+
+    async implementosLivres(): Promise<PlacaAEscolher[]> {
+      const c = await cliente();
+      const pagina = await ler<{
+        linhas: {
+          placa: string;
+          modelo: string;
+          sigla: string;
+          cavalo: string | null;
+        }[];
+      }>(c, "listar_placas", {
+        p_busca: "",
+        p_grupos: [],
+        p_tipos: ["implemento"],
+        p_siglas: [],
+        p_baixadas: false,
+        p_ordem: "placa",
+        p_decrescente: false,
+        p_pagina: 1,
+        p_tam: 100,
+        p_para_receber: false,
+      });
+      return pagina.linhas
+        .filter((l) => l.cavalo === null && !["ALU", "EMP", "VEN"].includes(l.sigla))
+        .map((l) => ({ placa: l.placa, nome: `${l.placa} · ${l.modelo}` }));
     },
 
     async criarItemDeCatalogo(entrada, chave): Promise<Resultado<ItemCriado>> {

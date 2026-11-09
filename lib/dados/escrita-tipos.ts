@@ -102,6 +102,16 @@ export interface PlacaAEscolher {
   nome: string;
 }
 
+/** O conjunto de uma placa (cavalo com implementos): o nome vem da tabela de nomenclatura, nunca é gravado. */
+export interface ConjuntoDaPlaca {
+  /** A placa do cavalo (mestre) do conjunto. */
+  cavalo: string;
+  /** As placas dos implementos engatados, na ordem da posição. */
+  implementos: string[];
+  /** "Bitrem Sider"; nulo sem nome definido ou pendente (faltam os eixos). */
+  nome: string | null;
+}
+
 export interface DadosDosAssistentes {
   /** Quem usa (o id do usuário da sessão): a chave dos rascunhos. */
   usuario: string;
@@ -123,4 +133,8 @@ export interface DadosDosAssistentes {
   placasParaConcluir: PlacaAEscolher[];
   /** Entregar ao Operacional aberto sem placa: cavalos e caminhões em PÁT ou ETv. */
   placasParaEntregar: PlacaAEscolher[];
+  /** A placa alvo é cavalo com implementos (ou implemento engatado): o conjunto dela e o nome. */
+  conjuntoDaPlaca: ConjuntoDaPlaca | null;
+  /** Engatar implemento: os implementos soltos que podem entrar no conjunto. */
+  implementosLivres: PlacaAEscolher[];
 }

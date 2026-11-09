@@ -15,6 +15,10 @@ const SOBRE_A_PLACA = [
   "concluir-recebimento",
   "entregar-ao-operacional",
   "disponibilizar-placa",
+  "mudar-situacao",
+  "engatar-implemento",
+  "desatrelar-implemento",
+  "corrigir-placa",
 ];
 
 export interface PedidoDosDados {
@@ -44,6 +48,9 @@ export async function dadosDosAssistentes(
   const quer = carregarDaPlaca || (assistente !== null && SOBRE_A_PLACA.includes(assistente));
   const placaAlvo = valida !== null && quer ? await fonte.placaParaAssistente(valida) : null;
   const pedido = placaAlvo !== null ? await fonte.pedidoAbertoDa(placaAlvo.placa) : null;
+  const conjuntoDaPlaca = placaAlvo !== null ? await fonte.conjuntoDaPlaca(placaAlvo.placa) : null;
+  const implementosLivres =
+    assistente === "engatar-implemento" ? await fonte.implementosLivres() : [];
   const semPlaca = placaAlvo === null && valida === null;
   const precisaDosPedidos =
     semPlaca && (assistente === "receber-placa" || assistente === "concluir-recebimento");
@@ -64,5 +71,7 @@ export async function dadosDosAssistentes(
     placasParaReceber: paraEscolher(pedidos.filter((p) => p.situacao === "pendente")),
     placasParaConcluir: paraEscolher(pedidos.filter((p) => p.situacao === "em_conferencia")),
     placasParaEntregar,
+    conjuntoDaPlaca,
+    implementosLivres,
   };
 }

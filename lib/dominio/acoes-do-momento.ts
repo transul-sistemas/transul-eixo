@@ -9,12 +9,15 @@ import { SIGLAS_DE_BAIXA, type Sigla } from "./status";
 //   gestor de destino (quem chama passa a etapa só se o pedido é para quem usa).
 // - "Entregar ao Operacional": leva a placa de PÁT ou ETv para DOp, só cavalo ou caminhão.
 // - "Disponibilizar placa": envia a outro gestor de frota, sem pedido aberto.
+// - "Mudar situação" e "Corrigir placa": qualquer placa fora da baixa. "Engatar implemento": só o
+//   cavalo; "Desatrelar implemento": só o cavalo com implementos engatados.
 // - Placa baixada (VND e SUC): nenhuma ação.
 export function idsDasAcoesDoMomento({
   sigla,
   tipo,
   etapa = null,
   pedidoAberto = false,
+  comImplementos = false,
 }: {
   sigla: Sigla;
   tipo: TipoDeAtivo;
@@ -22,6 +25,8 @@ export function idsDasAcoesDoMomento({
   etapa?: "receber" | "concluir" | null;
   /** A placa já tem um pedido de transferência aberto (para qualquer pessoa). */
   pedidoAberto?: boolean;
+  /** O cavalo tem implementos engatados (só então há o que desatrelar). */
+  comImplementos?: boolean;
 }): string[] {
   if (SIGLAS_DE_BAIXA.includes(sigla)) return [];
   const ids: string[] = [];
@@ -31,5 +36,9 @@ export function idsDasAcoesDoMomento({
   if (podeDisponibilizarPlaca({ sigla, pedidoAberto: pedidoAberto || etapa !== null })) {
     ids.push("frota.disponibilizar-placa");
   }
+  ids.push("frota.mudar-situacao");
+  if (tipo === "cavalo") ids.push("frota.engatar-implemento");
+  if (tipo === "cavalo" && comImplementos) ids.push("frota.desatrelar-implemento");
+  ids.push("frota.corrigir-placa");
   return ids;
 }

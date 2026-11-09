@@ -76,6 +76,48 @@ export const ACOES: readonly AcaoDoCatalogo[] = [
     descricao: "Envia a placa a outro gestor de frota, com o motivo e as pendências conhecidas.",
     rota: "/frota/placas?assistente=disponibilizar-placa",
   },
+  {
+    id: "frota.mudar-situacao",
+    nome: "Mudar situação",
+    icone: "IconArrowsExchange",
+    modulo: "frota",
+    permissao: { modulo: "frota", acao: "criar" },
+    estado: "pronto",
+    descricao:
+      "Registra a nova situação da placa solta ou do conjunto, com a data e a hora da mudança.",
+    rota: "/frota/placas?assistente=mudar-situacao",
+  },
+  {
+    id: "frota.engatar-implemento",
+    nome: "Engatar implemento",
+    icone: "IconCirclePlus",
+    modulo: "frota",
+    permissao: { modulo: "frota", acao: "criar" },
+    estado: "pronto",
+    descricao: "Engata um implemento solto no cavalo, na posição e no instante escolhidos.",
+    rota: "/frota/placas?assistente=engatar-implemento",
+  },
+  {
+    id: "frota.desatrelar-implemento",
+    nome: "Desatrelar implemento",
+    icone: "IconSend",
+    modulo: "frota",
+    permissao: { modulo: "frota", acao: "criar" },
+    estado: "pronto",
+    descricao: "Tira um, vários ou todos os implementos do cavalo, que voltam ao pátio.",
+    rota: "/frota/placas?assistente=desatrelar-implemento",
+  },
+  {
+    id: "frota.corrigir-placa",
+    nome: "Corrigir placa",
+    icone: "IconChecklist",
+    modulo: "frota",
+    permissao: { modulo: "frota", acao: "criar" },
+    estado: "pronto",
+    descricao:
+      "Completa o RENAVAM e o número de série e corrige os eixos e a carroceria, com o motivo.",
+    rota: "/frota/placas?assistente=corrigir-placa",
+  },
 ];
 
 function nomeDoModulo(id: IdDoModulo): string {

@@ -265,3 +265,151 @@ describe("o + e a contagem pelo banco", () => {
     expect(await contarParaReceberNoBanco(cliente)).toBe(0);
   });
 });
+
+describe("a ficha da placa pelo banco: situação, conjunto e correção", () => {
+  beforeEach(() => {
+    respostas.placa_para_assistente = { data: placaDoBanco, error: null };
+  });
+  it("mudar situação chama registrar_evento com o instante de São Paulo e devolve a placa", async () => {
+    respostas.registrar_evento = { data: "e-1", error: null };
+    const r = await fonte.mudarSituacao(
+      { placa: "AAA1A11", sigla: "MAN", quando: "2026-11-09T09:30" },
+      CHAVE,
+      "2026-11-09T10:00",
+    );
+    expect(rpc).toHaveBeenCalledWith("registrar_evento", {
+      p_ativo_id: "a-1",
+      p_sigla: "MAN",
+      p_em: "2026-11-09T09:30:00-03:00",
+      p_origem: "manual",
+    });
+    expect(r.ok && r.linha.placa).toBe("AAA1A11");
+  });
+  it("a regra do banco (sigla que não vale) volta como entrada inválida, com a mensagem dele", async () => {
+    respostas.registrar_evento = {
+      data: null,
+      error: { code: "23514", message: "A situação CAr não vale para esta placa." },
+    };
+    const r = await fonte.mudarSituacao(
+      { placa: "AAA1A11", sigla: "CAr", quando: "2026-11-09T09:30" },
+      CHAVE,
+      "2026-11-09T10:00",
+    );
+    expect(!r.ok && r.erro.codigo).toBe("entrada_invalida");
+    expect(!r.ok && r.erro.mensagem).toMatch(/não vale/);
+  });
+  it("engatar e desatrelar passam os ids, a posição e o instante", async () => {
+    respostas.engatar = { data: "c-1", error: null };
+    respostas.desatrelar = { data: 1, error: null };
+    const e = await fonte.engatar(
+      { placa: "AAA1A11", implemento: "AAA1A11", posicao: 2, quando: "2026-11-09T09:30" },
+      CHAVE,
+      "2026-11-09T10:00",
+    );
+    expect(rpc).toHaveBeenCalledWith("engatar", {
+      p_cavalo_id: "a-1",
+      p_implemento_id: "a-1",
+      p_posicao: 2,
+      p_em: "2026-11-09T09:30:00-03:00",
+    });
+    expect(e.ok).toBe(true);
+    const d = await fonte.desatrelar(
+      { placa: "AAA1A11", implementos: ["AAA1A11"], quando: "2026-11-09T09:30" },
+      CHAVE,
+      "2026-11-09T10:00",
+    );
+    expect(rpc).toHaveBeenCalledWith("desatrelar", {
+      p_cavalo_id: "a-1",
+      p_em: "2026-11-09T09:30:00-03:00",
+      p_implementos: ["a-1"],
+    });
+    expect(d.ok).toBe(true);
+  });
+  it("corrigir: chave por update, eixos e carroceria por corrigir_campo sem versão nem chave", async () => {
+    respostas.corrigir_campo = { data: "x", error: null };
+    const r = await fonte.corrigirPlaca(
+      {
+        placa: "AAA1A11",
+        versaoDaPlaca: 3,
+        motivo: "Conferido no CRLV",
+        renavam: "00639884962",
+        eixos: 3,
+        carroceriaId: "car-1",
+      },
+      CHAVE,
+      "2026-11-09T10:00",
+    );
+    expect(update).toHaveBeenCalledWith({ renavam: "00639884962" });
+    const chamadas = rpc.mock.calls.filter(([f]) => f === "corrigir_campo");
+    expect(chamadas).toHaveLength(2);
+    expect(chamadas[0]?.[1]).toMatchObject({
+      p_campo: "eixos",
+      p_valor: 3,
+      p_motivo: "Conferido no CRLV",
+      p_chave: null,
+      p_versao: null,
+    });
+    expect(r.ok).toBe(true);
+  });
+  it("corrigir só campos: a primeira correção leva a chave e a versão; versão velha dá conflito", async () => {
+    respostas.corrigir_campo = { data: "x", error: null };
+    await fonte.corrigirPlaca(
+      { placa: "AAA1A11", versaoDaPlaca: 3, motivo: "m", eixos: 3 },
+      CHAVE,
+      "2026-11-09T10:00",
+    );
+    expect(rpc).toHaveBeenCalledWith(
+      "corrigir_campo",
+      expect.objectContaining({ p_chave: CHAVE, p_versao: 3, p_campo: "eixos" }),
+    );
+    const velho = await fonte.corrigirPlaca(
+      { placa: "AAA1A11", versaoDaPlaca: 2, motivo: "m", eixos: 3 },
+      CHAVE,
+      "2026-11-09T10:00",
+    );
+    expect(!velho.ok && velho.erro.codigo).toBe("conflito");
+  });
+  it("trocar uma chave preenchida (23000) volta como entrada inválida", async () => {
+    respostas.update = {
+      data: null,
+      error: { code: "23000", message: "A chave renavam não aceita correção local." },
+    };
+    const r = await fonte.corrigirPlaca(
+      { placa: "AAA1A11", versaoDaPlaca: 3, motivo: "m", renavam: "00639884962" },
+      CHAVE,
+      "2026-11-09T10:00",
+    );
+    expect(!r.ok && r.erro.codigo).toBe("entrada_invalida");
+  });
+  it("o conjunto lê o cavalo e os implementos do detalhe e o nome da nomenclatura", async () => {
+    respostas.detalhe_da_placa = {
+      data: { cavalo: null, implementos: ["BBB2B22", "CCC3C33"] },
+      error: null,
+    };
+    respostas.nome_do_conjunto = { data: "Bitrem Sider", error: null };
+    const c = await fonte.conjuntoDaPlaca("AAA1A11");
+    expect(c).toEqual({
+      cavalo: "AAA1A11",
+      implementos: ["BBB2B22", "CCC3C33"],
+      nome: "Bitrem Sider",
+    });
+    expect(rpc).toHaveBeenCalledWith("nome_do_conjunto", { p_cavalo_id: "a-1" });
+    respostas.detalhe_da_placa = { data: { cavalo: null, implementos: [] }, error: null };
+    expect(await fonte.conjuntoDaPlaca("AAA1A11")).toBeNull();
+  });
+  it("os implementos livres são os sem cavalo e dentro da frota", async () => {
+    respostas.listar_placas = {
+      data: {
+        linhas: [
+          { placa: "BBB2B22", modelo: "Sider", sigla: "PÁT", cavalo: null },
+          { placa: "CCC3C33", modelo: "Sider", sigla: "PÁT", cavalo: "AAA1A11" },
+          { placa: "DDD4D44", modelo: "Baú", sigla: "ALU", cavalo: null },
+        ],
+      },
+      error: null,
+    };
+    expect(await fonte.implementosLivres()).toEqual([
+      { placa: "BBB2B22", nome: "BBB2B22 · Sider" },
+    ]);
+  });
+});

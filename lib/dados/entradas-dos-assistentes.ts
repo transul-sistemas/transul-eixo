@@ -24,3 +24,18 @@ export function paraEntradaDoCadastro(valores: Valores): Valores {
     eixos: numeroOuNada(valores.eixos) ?? null,
   };
 }
+
+/**
+ * A entrada de "Corrigir placa" no formato do esquema: campo deixado vazio some (não corrige), e os
+ * eixos viram número.
+ */
+export function paraEntradaDaCorrecao(valores: Valores): Valores {
+  const texto = (v: unknown) => (typeof v === "string" && v.trim() !== "" ? v : undefined);
+  return {
+    ...valores,
+    renavam: texto(valores.renavam),
+    numeroDeSerie: texto(valores.numeroDeSerie),
+    carroceriaId: texto(valores.carroceriaId),
+    eixos: numeroOuNada(valores.eixos),
+  };
+}

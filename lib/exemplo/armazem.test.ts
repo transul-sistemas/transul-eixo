@@ -386,3 +386,118 @@ describe("a lista enxerga o que foi gravado", () => {
     expect(todas[0]?.sigla).toBe("DOp");
   });
 });
+
+describe("a ficha da placa: mudar situação, engatar, desatrelar e corrigir", () => {
+  const armazem = () => criarArmazem({ placasBase: base });
+  const cavaloComConjunto = base.find(
+    (p) => p.tipo === "cavalo" && p.conjunto.implementoIds.length > 0,
+  )!;
+  const cavaloSolto = base.find(
+    (p) =>
+      p.tipo === "cavalo" &&
+      p.placa !== cavaloComConjunto.placa &&
+      p.conjunto.implementoIds.length < 3 &&
+      p.sigla !== "VND" &&
+      p.sigla !== "SUC",
+  )!;
+  const livre = base.find(
+    (p) =>
+      p.tipo === "implemento" &&
+      p.conjunto.cavaloId === null &&
+      !["VND", "SUC", "ALU", "EMP", "VEN"].includes(p.sigla),
+  )!;
+
+  it("mudar situação grava o evento na ordem do tempo, muda a placa e sobe a versão; a mesma chave não repete", () => {
+    const a = armazem();
+    const antes = a.obterPlaca(cavaloSolto.placa)!;
+    const totalAntes = a.eventosDaPlaca(cavaloSolto.placa).length;
+    const entrada = {
+      placa: cavaloSolto.placa,
+      sigla: "MAN" as const,
+      quando: "2026-10-31T09:00",
+    };
+    const r = a.mudarSituacao(entrada, CHAVE_A, AGORA);
+    expect(r.ok && r.linha.sigla).toBe("MAN");
+    expect(r.ok && r.linha.versao).toBe(antes.versao + 1);
+    expect(a.eventosDaPlaca(cavaloSolto.placa).at(-1)).toEqual({
+      sigla: "MAN",
+      em: "2026-10-31T09:00",
+    });
+    const de_novo = a.mudarSituacao(entrada, CHAVE_A, AGORA);
+    expect(de_novo).toEqual(r);
+    expect(a.eventosDaPlaca(cavaloSolto.placa)).toHaveLength(totalAntes + 1);
+  });
+
+  it("engatar põe o implemento no conjunto do cavalo; desatrelar tira", () => {
+    const a = armazem();
+    expect(a.implementosLivres().map((p) => p.placa)).toContain(livre.placa);
+    const engatou = a.engatar(
+      { placa: cavaloSolto.placa, implemento: livre.placa, posicao: 1, quando: "2026-10-31T09:00" },
+      CHAVE_A,
+      AGORA,
+    );
+    expect(engatou.ok).toBe(true);
+    expect(a.conjuntoDaPlaca(cavaloSolto.placa)).toMatchObject({ cavalo: cavaloSolto.placa });
+    expect(a.conjuntoDaPlaca(cavaloSolto.placa)?.implementos).toContain(livre.placa);
+    expect(a.conjuntoDaPlaca(livre.placa)?.cavalo).toBe(cavaloSolto.placa);
+    expect(a.implementosLivres().map((p) => p.placa)).not.toContain(livre.placa);
+    const saiu = a.desatrelar(
+      { placa: cavaloSolto.placa, implementos: [livre.placa], quando: "2026-10-31T09:10" },
+      CHAVE_B,
+      AGORA,
+    );
+    expect(saiu.ok).toBe(true);
+    expect(a.conjuntoDaPlaca(cavaloSolto.placa)?.implementos ?? []).not.toContain(livre.placa);
+    expect(a.conjuntoDaPlaca(livre.placa)).toBeNull();
+  });
+
+  it("recusa engatar o que já está engatado e desatrelar o que não é do cavalo", () => {
+    const a = armazem();
+    const doConjunto = a.conjuntoDaPlaca(cavaloComConjunto.placa)!;
+    const jaEngatado = a.engatar(
+      {
+        placa: cavaloSolto.placa,
+        implemento: doConjunto.implementos[0]!,
+        posicao: 1,
+        quando: "2026-10-31T09:00",
+      },
+      CHAVE_A,
+      AGORA,
+    );
+    expect(!jaEngatado.ok && jaEngatado.erro.codigo).toBe("entrada_invalida");
+    const alheio = a.desatrelar(
+      { placa: cavaloSolto.placa, implementos: [livre.placa], quando: "2026-10-31T09:00" },
+      CHAVE_B,
+      AGORA,
+    );
+    expect(!alheio.ok && alheio.erro.codigo).toBe("entrada_invalida");
+  });
+
+  it("corrigir confere a versão e não troca RENAVAM preenchido", () => {
+    const a = armazem();
+    const atual = a.obterPlaca(cavaloSolto.placa)!;
+    const velho = a.corrigir(
+      { placa: cavaloSolto.placa, versaoDaPlaca: atual.versao + 5, motivo: "m", eixos: 3 },
+      CHAVE_A,
+      AGORA,
+    );
+    expect(!velho.ok && velho.erro.codigo).toBe("conflito");
+    const troca = a.corrigir(
+      {
+        placa: cavaloSolto.placa,
+        versaoDaPlaca: atual.versao,
+        motivo: "m",
+        renavam: "00639884962",
+      },
+      CHAVE_B,
+      AGORA,
+    );
+    expect(!troca.ok && troca.erro.codigo).toBe("entrada_invalida");
+    const ok = a.corrigir(
+      { placa: cavaloSolto.placa, versaoDaPlaca: atual.versao, motivo: "m", eixos: 3 },
+      CHAVE_C,
+      AGORA,
+    );
+    expect(ok.ok && ok.linha.versao).toBe(atual.versao + 1);
+  });
+});

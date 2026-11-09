@@ -295,6 +295,16 @@ export function escritaDoArmazem(armazem: Armazem): FonteDeEscrita {
       armazem.receber(entrada, chave, agora, gestorId),
     concluirRecebimento: async (entrada, chave, agora, gestorId) =>
       armazem.concluir(entrada, chave, agora, gestorId),
+    mudarSituacao: async (entrada, chave, agora) => armazem.mudarSituacao(entrada, chave, agora),
+    engatar: async (entrada, chave, agora) => armazem.engatar(entrada, chave, agora),
+    desatrelar: async (entrada, chave, agora) => armazem.desatrelar(entrada, chave, agora),
+    corrigirPlaca: async (entrada, chave, agora) => armazem.corrigir(entrada, chave, agora),
+    conjuntoDaPlaca: async (placa) => armazem.conjuntoDaPlaca(placa),
+    implementosLivres: async () =>
+      armazem
+        .implementosLivres()
+        .map((p) => ({ placa: p.placa, nome: `${p.placa} · ${p.modelo}` }))
+        .sort((a, b) => (a.placa < b.placa ? -1 : 1)),
     criarItemDeCatalogo: async (entrada, chave) => armazem.criarItemDeCatalogo(entrada, chave),
     catalogos: async () => armazem.catalogos(),
     placaParaAssistente: async (placa) => armazem.obterPlaca(placa),

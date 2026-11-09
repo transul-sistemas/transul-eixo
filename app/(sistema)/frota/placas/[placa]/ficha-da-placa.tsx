@@ -86,11 +86,14 @@ export async function FichaDaPlaca({
     tipo: ficha.tipo,
     etapa,
     pedidoAberto: pedido !== null,
+    comImplementos: (dadosDosAssistentes?.conjuntoDaPlaca?.implementos.length ?? 0) > 0,
   })
     .map((id) => ACOES.find((acao) => acao.id === id))
     .filter((acao) => acao !== undefined)
     .filter((acao) => podeVerAcao(perfil, acao))
     .map(({ id, nome }) => ({ id, nome }));
+
+  const conjunto = dadosDosAssistentes?.conjuntoDaPlaca ?? null;
 
   const conteudos: Record<AbaId, React.ReactNode> = {
     resumo: <SecoesDoResumo detalhe={ficha} hrefDaPlaca={hrefDaFicha} disposicao="grade" />,
@@ -138,9 +141,19 @@ export async function FichaDaPlaca({
               </span>
             </>
           }
-          subtitulo={`${ficha.modelo}, ${NOMES_DOS_TIPOS[ficha.tipo].toLowerCase()}${
-            ficha.ano !== null ? `, ano ${ficha.ano}` : ""
-          }`}
+          subtitulo={
+            <>
+              {`${ficha.modelo}, ${NOMES_DOS_TIPOS[ficha.tipo].toLowerCase()}${
+                ficha.ano !== null ? `, ano ${ficha.ano}` : ""
+              }`}
+              {conjunto ? (
+                <span data-testid="conjunto-da-ficha">
+                  {" · "}Conjunto {conjunto.nome ?? "sem nome definido"}:{" "}
+                  {[conjunto.cavalo, ...conjunto.implementos].join(" + ")}
+                </span>
+              ) : null}
+            </>
+          }
           situacao={
             <>
               <Etiqueta status={ficha.grupo} titulo={ficha.nomeDaSituacao}>

@@ -48,10 +48,15 @@ describe("idsDasAcoesDoMomento: quais ações de ACOES combinam com a placa", ()
         etapa: "receber",
         pedidoAberto: true,
       }),
-    ).toEqual([RECEBER]);
+    ).toEqual([RECEBER, "frota.mudar-situacao", "frota.corrigir-placa"]);
     expect(
       idsDasAcoesDoMomento({ sigla: "MAN", tipo: "cavalo", etapa: "concluir", pedidoAberto: true }),
-    ).toEqual([CONCLUIR]);
+    ).toEqual([
+      CONCLUIR,
+      "frota.mudar-situacao",
+      "frota.engatar-implemento",
+      "frota.corrigir-placa",
+    ]);
     for (const sigla of SIGLAS) {
       const ids = idsDasAcoesDoMomento({ sigla, tipo: "cavalo" });
       expect(ids, sigla).not.toContain(RECEBER);
@@ -62,11 +67,36 @@ describe("idsDasAcoesDoMomento: quais ações de ACOES combinam com a placa", ()
   it("PÁT com pedido para receber: Receber primeiro, depois Entregar (a pendência vem antes)", () => {
     expect(
       idsDasAcoesDoMomento({ sigla: "PÁT", tipo: "cavalo", etapa: "receber", pedidoAberto: true }),
-    ).toEqual([RECEBER, ENTREGAR]);
+    ).toEqual([
+      RECEBER,
+      ENTREGAR,
+      "frota.mudar-situacao",
+      "frota.engatar-implemento",
+      "frota.corrigir-placa",
+    ]);
     expect(idsDasAcoesDoMomento({ sigla: "PÁT", tipo: "cavalo" })).toEqual([
       ENTREGAR,
       DISPONIBILIZAR,
+      "frota.mudar-situacao",
+      "frota.engatar-implemento",
+      "frota.corrigir-placa",
     ]);
+  });
+
+  it("mudar situação e corrigir placa valem para qualquer tipo; engatar só para o cavalo; desatrelar só com implementos", () => {
+    for (const tipo of ["cavalo", "implemento", "apoio", "equipamento", "caminhao"] as const) {
+      const ids = idsDasAcoesDoMomento({ sigla: "MAN", tipo });
+      expect(ids, tipo).toContain("frota.mudar-situacao");
+      expect(ids, tipo).toContain("frota.corrigir-placa");
+      expect(ids.includes("frota.engatar-implemento"), tipo).toBe(tipo === "cavalo");
+      expect(ids, tipo).not.toContain("frota.desatrelar-implemento");
+    }
+    expect(idsDasAcoesDoMomento({ sigla: "MAN", tipo: "cavalo", comImplementos: true })).toContain(
+      "frota.desatrelar-implemento",
+    );
+    expect(
+      idsDasAcoesDoMomento({ sigla: "MAN", tipo: "implemento", comImplementos: true }),
+    ).not.toContain("frota.desatrelar-implemento");
   });
 
   it("baixada (VND e SUC): nenhuma ação, nem com pedido", () => {

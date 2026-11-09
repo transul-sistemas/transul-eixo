@@ -19,11 +19,16 @@ import {
 } from "@/lib/dominio/custodia";
 import { NOMES_DOS_TIPOS } from "@/lib/dados/placas-tipos";
 import { normalizarPlaca, placaNormalizadaValida } from "@/lib/dominio/placa";
+import { SIGLAS_DE_BAIXA } from "@/lib/dominio/status";
 import { CadastrarPlaca } from "./cadastrar-placa";
 import { ConcluirRecebimento } from "./concluir-recebimento";
+import { CorrigirPlaca } from "./corrigir-placa";
+import { DesatrelarImplemento } from "./desatrelar-implemento";
 import { DisponibilizarPlaca } from "./disponibilizar-placa";
+import { EngatarImplemento } from "./engatar-implemento";
 import { EntregarAoOperacional } from "./entregar-ao-operacional";
 import { EscolherAPlaca } from "./escolher-a-placa";
+import { MudarSituacao } from "./mudar-situacao";
 import { ReceberPlaca } from "./receber-placa";
 
 // O hospedeiro dos assistentes da Frota: abre o que a URL pede (`?assistente=`), na lista de
@@ -32,6 +37,10 @@ import { ReceberPlaca } from "./receber-placa";
 // atendido.
 
 const semAssinatura = () => () => {};
+
+const ABRA_A_FICHA = (acao: string) =>
+  `Abra a ficha da placa (ou busque a placa na lista) e use ${acao} nela.`;
+const BAIXADA = (placa: string) => `A placa ${placa} está baixada e não aceita esta ação.`;
 
 /** Guarda o primeiro valor pronto enquanto o assistente está aberto; ao fechar, solta. */
 function useGuardadoEnquantoAberto<T>(aberto: boolean, agora: T | null): T | null {
@@ -47,6 +56,10 @@ const ASSISTENTE_DA_ACAO: Record<string, string> = {
   "frota.concluir-recebimento": "concluir-recebimento",
   "frota.entregar-ao-operacional": "entregar-ao-operacional",
   "frota.disponibilizar-placa": "disponibilizar-placa",
+  "frota.mudar-situacao": "mudar-situacao",
+  "frota.engatar-implemento": "engatar-implemento",
+  "frota.desatrelar-implemento": "desatrelar-implemento",
+  "frota.corrigir-placa": "corrigir-placa",
 };
 
 export function AssistentesDaFrota({
@@ -76,6 +89,10 @@ export function AssistentesDaFrota({
   const concluir = useAssistenteNaUrl("concluir-recebimento");
   const entregar = useAssistenteNaUrl("entregar-ao-operacional");
   const disponibilizar = useAssistenteNaUrl("disponibilizar-placa");
+  const mudarSituacao = useAssistenteNaUrl("mudar-situacao");
+  const engatar = useAssistenteNaUrl("engatar-implemento");
+  const desatrelar = useAssistenteNaUrl("desatrelar-implemento");
+  const corrigir = useAssistenteNaUrl("corrigir-placa");
   const botao = useRef<HTMLButtonElement>(null);
   const [criados, setCriados] = useState<ItemCriado[]>([]);
   const catalogos = useMemo(
@@ -118,7 +135,31 @@ export function AssistentesDaFrota({
       : null,
   );
 
+  const naoBaixada = alvo !== null && !SIGLAS_DE_BAIXA.includes(alvo.sigla);
+  const mudarGuardada = useGuardadoEnquantoAberto<PlacaGravada>(
+    mudarSituacao.aberto,
+    naoBaixada ? alvo : null,
+  );
+  const engatarGuardada = useGuardadoEnquantoAberto<PlacaGravada>(
+    engatar.aberto,
+    naoBaixada && alvo.tipo === "cavalo" ? alvo : null,
+  );
+  const desatrelarGuardada = useGuardadoEnquantoAberto(
+    desatrelar.aberto,
+    naoBaixada && alvo.tipo === "cavalo" && dados.conjuntoDaPlaca !== null
+      ? { placa: alvo, conjunto: dados.conjuntoDaPlaca }
+      : null,
+  );
+  const corrigirGuardada = useGuardadoEnquantoAberto<PlacaGravada>(
+    corrigir.aberto,
+    naoBaixada ? alvo : null,
+  );
+
   const abridores: Record<string, () => void> = {
+    "mudar-situacao": mudarSituacao.abrir,
+    "engatar-implemento": engatar.abrir,
+    "desatrelar-implemento": desatrelar.abrir,
+    "corrigir-placa": corrigir.abrir,
     "receber-placa": receber.abrir,
     "concluir-recebimento": concluir.abrir,
     "entregar-ao-operacional": entregar.abrir,
@@ -262,6 +303,109 @@ export function AssistentesDaFrota({
             }
             aoEscolher={escolherPlaca}
             aoFechar={disponibilizar.fechar}
+          />
+        )
+      ) : null}
+
+      {noNavegador && mudarSituacao.aberto ? (
+        mudarGuardada ? (
+          <MudarSituacao
+            key={mudarGuardada.placa}
+            placa={mudarGuardada}
+            conjunto={dados.conjuntoDaPlaca}
+            aoFechar={mudarSituacao.fechar}
+          />
+        ) : (
+          <EscolherAPlaca
+            titulo="Mudar situação"
+            opcoes={[]}
+            vazio={
+              semPlaca
+                ? ABRA_A_FICHA("Mudar situação")
+                : alvo === null
+                  ? naoAchou
+                  : BAIXADA(nomeDaPlaca)
+            }
+            aoEscolher={escolherPlaca}
+            aoFechar={mudarSituacao.fechar}
+          />
+        )
+      ) : null}
+
+      {noNavegador && engatar.aberto ? (
+        engatarGuardada ? (
+          <EngatarImplemento
+            key={engatarGuardada.placa}
+            placa={engatarGuardada}
+            conjunto={dados.conjuntoDaPlaca}
+            livres={dados.implementosLivres}
+            aoFechar={engatar.fechar}
+          />
+        ) : (
+          <EscolherAPlaca
+            titulo="Engatar implemento"
+            opcoes={[]}
+            vazio={
+              semPlaca
+                ? ABRA_A_FICHA("Engatar implemento")
+                : alvo === null
+                  ? naoAchou
+                  : naoBaixada
+                    ? `A placa ${nomeDaPlaca} não é um cavalo. Só o cavalo recebe implementos.`
+                    : BAIXADA(nomeDaPlaca)
+            }
+            aoEscolher={escolherPlaca}
+            aoFechar={engatar.fechar}
+          />
+        )
+      ) : null}
+
+      {noNavegador && desatrelar.aberto ? (
+        desatrelarGuardada ? (
+          <DesatrelarImplemento
+            key={desatrelarGuardada.placa.placa}
+            placa={desatrelarGuardada.placa}
+            conjunto={desatrelarGuardada.conjunto}
+            aoFechar={desatrelar.fechar}
+          />
+        ) : (
+          <EscolherAPlaca
+            titulo="Desatrelar implemento"
+            opcoes={[]}
+            vazio={
+              semPlaca
+                ? ABRA_A_FICHA("Desatrelar implemento")
+                : alvo === null
+                  ? naoAchou
+                  : `A placa ${nomeDaPlaca} não tem implemento engatado para desatrelar.`
+            }
+            aoEscolher={escolherPlaca}
+            aoFechar={desatrelar.fechar}
+          />
+        )
+      ) : null}
+
+      {noNavegador && corrigir.aberto ? (
+        corrigirGuardada ? (
+          <CorrigirPlaca
+            key={corrigirGuardada.placa}
+            placa={corrigirGuardada}
+            catalogos={catalogos}
+            aoFechar={corrigir.fechar}
+          />
+        ) : (
+          <EscolherAPlaca
+            titulo="Corrigir placa"
+            opcoes={[]}
+            vazio={
+              semPlaca
+                ? ABRA_A_FICHA("Corrigir placa")
+                : alvo === null
+                  ? naoAchou
+                  : BAIXADA(nomeDaPlaca)
+            }
+            aoEscolher={escolherPlaca}
+            aoFechar={corrigir.fechar}
           />
         )
       ) : null}

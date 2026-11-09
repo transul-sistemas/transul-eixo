@@ -14,12 +14,24 @@ import type {
   EntradaReceberPlaca,
   TipoDeItemDeCatalogo,
 } from "@/lib/dominio/esquemas/placa";
+import type {
+  EntradaCorrigirPlaca,
+  EntradaDesatrelar,
+  EntradaEngatar,
+  EntradaMudarSituacao,
+} from "@/lib/dominio/esquemas/ficha-da-placa";
 import type { EventoDeStatus } from "@/lib/dominio/linha-do-tempo";
 import { normalizarPlaca } from "@/lib/dominio/placa";
 import { SIGLAS_DE_BAIXA, type Sigla } from "@/lib/dominio/status";
 import { erroDaAcao, type ResultadoDaAcao, sucesso } from "@/lib/wizard/resultado";
 import { CARROCERIAS, CRS, FILIAIS, GESTORES, MARCAS, MODELOS, OPERACOES } from "./catalogos";
-import type { Catalogos, ItemCriado, PlacaGravada, ValorDaPlaca } from "@/lib/dados/escrita-tipos";
+import type {
+  Catalogos,
+  ConjuntoDaPlaca,
+  ItemCriado,
+  PlacaGravada,
+  ValorDaPlaca,
+} from "@/lib/dados/escrita-tipos";
 import { eventosDeExemplo } from "./eventos";
 import { placasDeExemplo } from "./placas";
 import type { PlacaDeExemplo } from "./tipos";
@@ -69,6 +81,17 @@ export interface Armazem {
     agora: string,
     gestorId: string,
   ): Resultado<PlacaGravada>;
+  mudarSituacao(
+    entrada: EntradaMudarSituacao,
+    chave: string,
+    agora: string,
+  ): Resultado<PlacaGravada>;
+  engatar(entrada: EntradaEngatar, chave: string, agora: string): Resultado<PlacaGravada>;
+  desatrelar(entrada: EntradaDesatrelar, chave: string, agora: string): Resultado<PlacaGravada>;
+  corrigir(entrada: EntradaCorrigirPlaca, chave: string, agora: string): Resultado<PlacaGravada>;
+  conjuntoDaPlaca(placa: string): ConjuntoDaPlaca | null;
+  /** Os implementos que não estão em nenhum conjunto e podem entrar num (não baixados nem fora da frota). */
+  implementosLivres(): PlacaDeExemplo[];
   criarItemDeCatalogo(entrada: EntradaItemDeCatalogo, chave: string): Resultado<ItemCriado>;
   catalogos(): Catalogos;
   obterPlaca(placa: string): PlacaGravada | null;
@@ -127,7 +150,11 @@ function daBase(p: PlacaDeExemplo, cat: Catalogos): PlacaGravada {
   };
 }
 
-function paraExemplo(g: PlacaGravada, base: PlacaDeExemplo | undefined): PlacaDeExemplo {
+function paraExemplo(
+  g: PlacaGravada,
+  base: PlacaDeExemplo | undefined,
+  conjunto?: PlacaDeExemplo["conjunto"],
+): PlacaDeExemplo {
   return {
     id: base?.id ?? `pl-${g.placa}`,
     placa: g.placa,
@@ -145,9 +172,11 @@ function paraExemplo(g: PlacaGravada, base: PlacaDeExemplo | undefined): PlacaDe
     crlvVenceEm: base?.crlvVenceEm ?? null,
     km: base?.km ?? null,
     valorFipeCentavos: g.valor.valorFipeCentavos ?? base?.valorFipeCentavos ?? null,
-    conjunto: base
-      ? { cavaloId: base.conjunto.cavaloId, implementoIds: [...base.conjunto.implementoIds] }
-      : { cavaloId: null, implementoIds: [] },
+    conjunto: conjunto
+      ? { cavaloId: conjunto.cavaloId, implementoIds: [...conjunto.implementoIds] }
+      : base
+        ? { cavaloId: base.conjunto.cavaloId, implementoIds: [...base.conjunto.implementoIds] }
+        : { cavaloId: null, implementoIds: [] },
   };
 }
 
@@ -204,15 +233,30 @@ export function criarArmazem({
     return deBase ? eventosDeExemplo(deBase) : [];
   };
   const registrar = (placa: string, sigla: Sigla, em: string) => {
-    eventos.set(placa, [...eventosDaPlaca(placa), { sigla, em }]);
+    const todos = [...eventosDaPlaca(placa), { sigla, em }];
+    eventos.set(
+      placa,
+      todos.sort((a, b) => (a.em < b.em ? -1 : a.em > b.em ? 1 : 0)),
+    );
   };
+  /** Composição mudada aqui (a base só é copiada na primeira mudança): por placa, ids da lista de exemplo. */
+  const conjuntos = new Map<string, PlacaDeExemplo["conjunto"]>();
+  const idDaPlaca = (placa: string) => base.get(placa)?.id ?? `pl-${placa}`;
+  const conjuntoDe = (placa: string): PlacaDeExemplo["conjunto"] =>
+    conjuntos.get(placa) ?? base.get(placa)?.conjunto ?? { cavaloId: null, implementoIds: [] };
+  const placaDoId = (id: string): string | null =>
+    [...base.values(), ...cadastradas.map((p) => ({ id: idDaPlaca(p), placa: p }))].find(
+      (p) => p.id === id,
+    )?.placa ?? null;
   const guardar = (placa: PlacaGravada) => void gravadas.set(placa.placa, placa);
   const placasParaLista = (): PlacaDeExemplo[] => [
     ...placasBase.map((p) => {
       const g = gravadas.get(p.placa);
-      return g ? paraExemplo(g, p) : p;
+      return g ? paraExemplo(g, p, conjuntos.get(p.placa)) : p;
     }),
-    ...cadastradas.map((placa) => paraExemplo(gravadas.get(placa) as PlacaGravada, undefined)),
+    ...cadastradas.map((placa) =>
+      paraExemplo(gravadas.get(placa) as PlacaGravada, undefined, conjuntos.get(placa)),
+    ),
   ];
   const pedidoAbertoDa = (placa: string) =>
     [...pedidos.values()].find((p) => p.placa === placa && pedidoAberto(p)) ?? null;
@@ -274,6 +318,119 @@ export function criarArmazem({
       crs: [...cat.crs],
       filiais: [...cat.filiais],
     }),
+    conjuntoDaPlaca(placa) {
+      const conj = conjuntoDe(placa);
+      const cavalo = conj.cavaloId !== null ? placaDoId(conj.cavaloId) : null;
+      const ids = cavalo !== null ? conjuntoDe(cavalo).implementoIds : conj.implementoIds;
+      const implementos = ids.map(placaDoId).filter((p): p is string => p !== null);
+      const mestre = cavalo ?? (implementos.length > 0 ? placa : null);
+      if (mestre === null || implementos.length === 0) return null;
+      const quantos = `${implementos.length} ${implementos.length === 1 ? "implemento" : "implementos"}`;
+      return { cavalo: mestre, implementos, nome: `Conjunto de ${quantos}` };
+    },
+    implementosLivres: () =>
+      placasParaLista().filter(
+        (p) =>
+          p.tipo === "implemento" &&
+          p.conjunto.cavaloId === null &&
+          !SIGLAS_DE_BAIXA.includes(p.sigla) &&
+          !["ALU", "EMP", "VEN"].includes(p.sigla),
+      ),
+
+    mudarSituacao(entrada, chave) {
+      return unica("mudar-situacao", chave, () => {
+        const placa = normalizarPlaca(entrada.placa);
+        const atual = obterPlaca(placa);
+        if (!atual) return erroDaAcao<Atual>("nao_encontrado");
+        if (SIGLAS_DE_BAIXA.includes(atual.sigla)) {
+          return invalida({ placa: ["Placa baixada não muda de situação."] });
+        }
+        registrar(placa, entrada.sigla, entrada.quando);
+        const ultimo = eventosDaPlaca(placa).at(-1) as EventoDeStatus;
+        const nova: PlacaGravada = {
+          ...atual,
+          sigla: ultimo.sigla as Sigla,
+          desde: ultimo.em,
+          versao: atual.versao + 1,
+        };
+        guardar(nova);
+        return sucesso(nova);
+      });
+    },
+
+    engatar(entrada, chave) {
+      return unica("engatar", chave, () => {
+        const cavalo = obterPlaca(normalizarPlaca(entrada.placa));
+        const implemento = obterPlaca(normalizarPlaca(entrada.implemento));
+        if (!cavalo || !implemento) return erroDaAcao<Atual>("nao_encontrado");
+        if (cavalo.tipo !== "cavalo") {
+          return invalida({ placa: ["Só um cavalo recebe implementos."] });
+        }
+        if (implemento.tipo !== "implemento") {
+          return invalida({ implemento: ["Só um implemento entra no conjunto."] });
+        }
+        if (conjuntoDe(implemento.placa).cavaloId !== null) {
+          return invalida({ implemento: ["Este implemento já está engatado em outro cavalo."] });
+        }
+        const doCavalo = conjuntoDe(cavalo.placa);
+        if (doCavalo.implementoIds.length >= 3) {
+          return invalida({ implemento: ["O conjunto tem no máximo três unidades."] });
+        }
+        conjuntos.set(cavalo.placa, {
+          cavaloId: null,
+          implementoIds: [...doCavalo.implementoIds, idDaPlaca(implemento.placa)],
+        });
+        conjuntos.set(implemento.placa, { cavaloId: idDaPlaca(cavalo.placa), implementoIds: [] });
+        guardar({ ...implemento, versao: implemento.versao + 1 });
+        const nova = { ...cavalo, versao: cavalo.versao + 1 };
+        guardar(nova);
+        return sucesso(nova);
+      });
+    },
+
+    desatrelar(entrada, chave) {
+      return unica("desatrelar", chave, () => {
+        const cavalo = obterPlaca(normalizarPlaca(entrada.placa));
+        if (!cavalo) return erroDaAcao<Atual>("nao_encontrado");
+        const doCavalo = conjuntoDe(cavalo.placa);
+        const saem = entrada.implementos.map((p) => idDaPlaca(normalizarPlaca(p)));
+        if (!saem.every((id) => doCavalo.implementoIds.includes(id))) {
+          return invalida({ implementos: ["Há implemento que não está engatado neste cavalo."] });
+        }
+        conjuntos.set(cavalo.placa, {
+          cavaloId: null,
+          implementoIds: doCavalo.implementoIds.filter((id) => !saem.includes(id)),
+        });
+        for (const placaDoImplemento of entrada.implementos) {
+          const implemento = obterPlaca(normalizarPlaca(placaDoImplemento));
+          if (!implemento) continue;
+          conjuntos.set(implemento.placa, { cavaloId: null, implementoIds: [] });
+          guardar({ ...implemento, versao: implemento.versao + 1 });
+        }
+        const nova = { ...cavalo, versao: cavalo.versao + 1 };
+        guardar(nova);
+        return sucesso(nova);
+      });
+    },
+
+    corrigir(entrada, chave) {
+      return unica("corrigir", chave, () => {
+        const atual = obterPlaca(normalizarPlaca(entrada.placa));
+        if (!atual) return erroDaAcao<Atual>("nao_encontrado");
+        if (atual.versao !== entrada.versaoDaPlaca) return emConflito(atual);
+        if (entrada.renavam !== undefined && atual.renavam !== "") {
+          return invalida({ renavam: ["O RENAVAM já está preenchido e não aceita correção."] });
+        }
+        const nova: PlacaGravada = {
+          ...atual,
+          renavam: entrada.renavam ?? atual.renavam,
+          versao: atual.versao + 1,
+        };
+        guardar(nova);
+        return sucesso(nova);
+      });
+    },
+
     placasCadastradas: () => cadastradas.map((p) => gravadas.get(p) as PlacaGravada),
     pedidosParaReceber: (gestorId) =>
       [...pedidos.values()].filter((p) => pedidoAberto(p) && p.paraGestorId === gestorId),
