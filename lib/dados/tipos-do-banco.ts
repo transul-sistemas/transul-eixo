@@ -363,6 +363,9 @@ isOneToOne: false
             "ativo_sem_gestor":
 { Args: { "p_ativo_id": string }; Returns: boolean
                            },
+"meu_gestor_de_frota":
+{ Args: Record<PropertyKey, never>; Returns: string
+                           },
 "minha_carteira_de_placas":
 { Args: Record<PropertyKey, never>; Returns: string
                            },
@@ -507,6 +510,56 @@ isOneToOne: false
       columns: ["operacao_na_saida_id"]
 isOneToOne: false
       referencedRelation: "operacao"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"confirmacao_da_carteira": {
+                  Row: {
+                    "ativo_id": string,"confere": boolean,"confirmado_em": string,"confirmado_por": string | null,"criado_em": string,"gestor_id": string,"id": string,"mes": string,"observacao": string | null,"versao": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "ativo_id": string,"confere": boolean,"confirmado_em"?: string,"confirmado_por"?: string | null,"criado_em"?: string,"gestor_id": string,"id"?: string,"mes": string,"observacao"?: string | null,"versao"?: number
+                  }
+                  Update: {
+                    "ativo_id"?: string,"confere"?: boolean,"confirmado_em"?: string,"confirmado_por"?: string | null,"criado_em"?: string,"gestor_id"?: string,"id"?: string,"mes"?: string,"observacao"?: string | null,"versao"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "confirmacao_da_carteira_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: false
+      referencedRelation: "alerta_de_vinculo"
+      referencedColumns: ["ativo_id"]
+    },{
+      foreignKeyName: "confirmacao_da_carteira_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: false
+      referencedRelation: "ativo"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "confirmacao_da_carteira_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: false
+      referencedRelation: "campo_pendente"
+      referencedColumns: ["ativo_id"]
+    },{
+      foreignKeyName: "confirmacao_da_carteira_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: false
+      referencedRelation: "operacao_do_ativo"
+      referencedColumns: ["ativo_id"]
+    },{
+      foreignKeyName: "confirmacao_da_carteira_gestor_id_fkey"
+      columns: ["gestor_id"]
+isOneToOne: false
+      referencedRelation: "pessoa"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "confirmacao_da_carteira_gestor_id_fkey"
+      columns: ["gestor_id"]
+isOneToOne: false
+      referencedRelation: "pessoa_para_leitura"
       referencedColumns: ["id"]
     }
                   ]
@@ -1624,7 +1677,15 @@ isOneToOne: false
                 }
           }
           Functions: {
-            "alerta_correcao_tardia":
+            "abastecimento_do_mes":
+{ Args: { "p_busca"?: string,"p_mes"?: string,"p_ordem"?: string,"p_pagina"?: number,"p_tam"?: number }; Returns: Json
+                           },
+"agora_do_acompanhamento":
+{ Args: { "p_agrupamento": string,"p_tipos"?: (string)[] }; Returns: {
+              "atencao": number,"chave": string,"em_atividade": number,"fora": number,"impedida": number,"patio": number,"pendente": number,"rotulo": string,"total": number
+            }[]
+                           },
+"alerta_correcao_tardia":
 { Args: { "p_em": string,"p_ultima": string }; Returns: boolean
                            },
 "alerta_parado_em_patio":
@@ -1639,6 +1700,9 @@ isOneToOne: false
 "alertas_vigentes_do_ativo":
 { Args: { "p_ativo_id": string,"p_em": string }; Returns: (string)[]
                            },
+"analise_da_frota":
+{ Args: { "p_agrupamento"?: string,"p_filial"?: string,"p_mes": string,"p_operacao_id"?: string }; Returns: Json
+                           },
 "ativo_da_placa":
 { Args: { "p_placa": string }; Returns: string
                            },
@@ -1651,8 +1715,16 @@ isOneToOne: false
 "cancelar_pedido":
 { Args: { "p_chave"?: string,"p_em"?: string,"p_transferencia_id": string,"p_versao": number }; Returns: string
                            },
+"carteira_do_mes":
+{ Args: { "p_filtro"?: string,"p_mes": string,"p_pagina"?: number,"p_tam"?: number }; Returns: Json
+                           },
 "catalogos_dos_assistentes":
 { Args: Record<PropertyKey, never>; Returns: Json
+                           },
+"censo_do_acompanhamento":
+{ Args: { "p_dia": string,"p_tipos"?: (string)[] }; Returns: {
+              "grupo": string,"nome": string,"quantidade": number,"sigla": string
+            }[]
                            },
 "concluir_recebimento":
 { Args: { "p_chave"?: string,"p_em"?: string,"p_respostas": Json,"p_transferencia_id": string,"p_versao": number }; Returns: string
@@ -1662,6 +1734,9 @@ isOneToOne: false
                            },
 "conferir_conjunto":
 { Args: { "p_cavalo_id": string }; Returns: undefined
+                           },
+"confirmar_carteira":
+{ Args: { "p_chave"?: string,"p_itens": Json,"p_mes": string }; Returns: Json
                            },
 "contar_chips_de_placas":
 { Args: { "p_baixadas": boolean,"p_busca": string,"p_grupos": (string)[],"p_para_receber"?: boolean,"p_siglas": (string)[],"p_tipos": (string)[] }; Returns: {
@@ -1716,6 +1791,9 @@ isOneToOne: false
 "garagem_em":
 { Args: { "p_ativo_id": string,"p_em": string }; Returns: string
                            },
+"grade_do_acompanhamento":
+{ Args: { "p_busca"?: string,"p_mes": string,"p_pagina"?: number,"p_tam"?: number,"p_tipos"?: (string)[] }; Returns: Json
+                           },
 "gravar_campo":
 { Args: { "p_ativo_id": string,"p_campo": string,"p_motivo": string,"p_origem": Database["config"]['Enums']["origem_do_campo"],"p_valor": Json }; Returns: undefined
                            },
@@ -1724,8 +1802,17 @@ isOneToOne: false
               "em": string,"sigla": string
             }[]
                            },
+"hoje_em_sao_paulo":
+{ Args: Record<PropertyKey, never>; Returns: string
+                           },
 "inicio_do_pat":
 { Args: { "p_ativo_id": string }; Returns: string
+                           },
+"instante_do_dia":
+{ Args: { "p_dia": string }; Returns: string
+                           },
+"lancar_situacao_do_dia":
+{ Args: { "p_ativo_id": string,"p_chave"?: string,"p_dia": string,"p_sigla": string }; Returns: Json
                            },
 "linha_calculada_da_placa":
 { Args: { "p_ativo_id": string,"p_em"?: string }; Returns: {
@@ -1797,6 +1884,9 @@ isOneToOne: false
 "normalizar_renavam":
 { Args: { "p_texto": string }; Returns: string
                            },
+"opcoes_da_analise":
+{ Args: Record<PropertyKey, never>; Returns: Json
+                           },
 "operacao_e_degrau_em":
 { Args: { "p_ativo_id": string,"p_em": string }; Returns: {
               "degrau": string,"operacao_id": string
@@ -1817,12 +1907,58 @@ isOneToOne: false
 "pedidos_para_receber":
 { Args: Record<PropertyKey, never>; Returns: Json
                            },
+"periodo_do_mes":
+{ Args: { "p_mes": string }; Returns: unknown
+                           },
 "placa_para_assistente":
 { Args: { "p_placa": string }; Returns: Json
                            },
 "placa_valida":
 { Args: { "p_texto": string }; Returns: boolean
                            },
+"placas_da_carteira_do_mes":
+{ Args: { "p_gestor_id": string,"p_mes": string }; Returns: {
+              "ativo_id": string,"confere": boolean,"confirmado_em": string,"grupo": string,"modelo": string,"nome_da_situacao": string,"observacao": string,"placa": string,"sigla": string,"tipo": string
+            }[]
+                           },
+"placas_da_grade":
+{ Args: { "p_busca": string,"p_inicio": string,"p_tipos": (string)[] }; Returns: {
+              "alertas_vigentes": (string)[],
+"ano": number | null,
+"ativo_id": string,
+"baixada_em": string | null,
+"busca": string,
+"causa_id": string | null,
+"cavalo": string | null,
+"cr": string | null,
+"desde": string | null,
+"filial": string | null,
+"filial_da_custodia_id": string | null,
+"garagem": string | null,
+"gestor": string | null,
+"gestor_id": string | null,
+"grupo": string | null,
+"implementos": (string)[],
+"inicio_do_pat": string | null,
+"modelo": string,
+"nome_da_situacao": string | null,
+"operacao": string | null,
+"operacao_id": string | null,
+"placa": string,
+"proximo_recalculo": string | null,
+"recalculado_em": string,
+"renavam": string | null,
+"sigla": string,
+"tipo": string,
+"ultima_correcao_tardia_em": string | null,
+"valor_fipe": number | null
+            }[]
+                          SetofOptions: {
+        from: "*"
+        to: "leitura_da_placa"
+        isOneToOne: false
+        isSetofReturn: true
+      } },
 "placas_filtradas":
 { Args: { "p_baixadas": boolean,"p_busca": string,"p_grupos": (string)[],"p_para_receber"?: boolean,"p_siglas": (string)[],"p_tipos": (string)[] }; Returns: {
               "alertas": (string)[] | null,
@@ -1908,6 +2044,9 @@ isOneToOne: false
                            },
 "situacao_em":
 { Args: { "p_ativo_id": string,"p_em": string }; Returns: string
+                           },
+"situacao_no_dia":
+{ Args: { "p_ativo_id": string,"p_dia": string }; Returns: string
                            },
 "texto_simples":
 { Args: { "p_texto": string }; Returns: string
