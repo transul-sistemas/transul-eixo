@@ -8,6 +8,28 @@ Modelo de entrada:
 
 ---
 
+## 09/11/2026 — Só o gestor de destino recebe e conclui a transferência (P0 S1)
+
+- **Decisão (Alexandre, 09/11/2026):**
+  - Somente o **gestor de destino** recebe e conclui uma transferência ("Receber placa" e "Concluir recebimento").
+  - O **gestor de origem** não recebe nem conclui o próprio pedido, embora continue com a placa na carteira (e com `frota.editar`) até a conclusão.
+  - **Terceiros** (outro gestor, Operacional) não recebem nem concluem.
+  - O **Administrador não tem exceção**: não recebe nem conclui em nome do destino.
+  - A autorização é conferida **no banco**, em `nucleo.pedido_para_agir` e também nas funções internas SECURITY DEFINER `nucleo.receber_transferencia` e `nucleo.concluir_transferencia`, que o app pode executar.
+  - A chamada sem sessão de usuário fica reservada a quem chama **fora da API** (o dono do banco, como nos pgTAP 30, 31 e 81). Uma sessão da API (`authenticated` ou `anon`) sem usuário no token passa pela mesma conferência e é recusada.
+- **Motivo:** a homologação de 09/11/2026 achou no código que as três conferências aceitavam "o destino ou quem edita a placa na Frota": a origem recebia e concluía o próprio pedido, respondendo as pendências pelo destino. A regra da fatia 3.6 (item 7 abaixo) já dizia "o destino altera, recebe e conclui"; a exceção para quem edita a placa só existia em comentários. Na revisão de segurança apareceu um segundo caminho: nas funções internas, a falta de `auth.uid()` liberava também uma sessão `authenticated` sem usuário no token (pela API, só com um token forjado com a chave do projeto).
+- **O que entrou:**
+  - migration `20261109120000_so_o_destino_recebe` (recria as três funções com o mesmo corpo; muda só a condição de quem age e a justificativa);
+  - pgTAP `83-so-o-destino-recebe` (26 asserções): origem, destino, terceiro e Administrador, pelas funções do app e pelas internas; `anon` e PUBLIC sem EXECUTE; `anon` e sessão sem usuário recusados; recusas que não mudam o pedido, o gestor nem as pendências.
+- **Evidência (banco local descartável, `project_id` próprio, apagado no fim; sem tocar o banco com a carga da v1):**
+  - RED da regra: sem a migration, o 83 (então com 18 asserções) falhou 6 (origem e Administrador "executou" em vez de 42501).
+  - RED do reforço: com a primeira versão da migration, o 83 ampliado (27) falhou 2 (sessão sem usuário nas funções internas).
+  - GREEN: 83 com 26/26; 82, 30, 31 e 81 passando; suíte pgTAP inteira (21 arquivos, 934 testes) PASS; `db lint` sem apontamentos; tipos do banco sem mudança; Vitest 2207/2207.
+  - A asserção sobre a `service_role` ficou só na sondagem (sem EXECUTE: passou), porque a armadilha da chave mestra proíbe citá-la fora de `workers/`.
+- **Pendente:** e2e do modo banco (`e2e-banco/gravacao.spec.ts`) não rodou localmente (2,3 GB livres, abaixo da regra de memória de 04/11/2026); fica para o CI. O e2e já faz o próprio destino receber e concluir, e o modo exemplo já recusava quem não é o destinatário (`lib/exemplo/armazem.ts`).
+- **Alternativas descartadas:** manter "o destino ou quem edita a placa"; uma exceção para o Administrador agir pelo destino (sem regra de negócio que a peça); manter a liberação por `auth.uid()` nulo nas funções internas.
+- **Quem decidiu:** Alexandre (a regra e a ausência de exceção para o Administrador).
+
 ## 06/11/2026 — Backup testado num banco local vazio
 
 - **Resultado:** `pnpm backup:banco` (banco local com a carga, 1.649 KB), `supabase db reset` local (a `querys/04` deu zero), `pnpm backup:restaurar` sem erro e a `querys/04` idêntica ao esperado (1.331 e 90 CRs, 928 placas, 175 conjuntos com 294 implementos, 12 gestores pendentes, fila 928, 19 e 3).
