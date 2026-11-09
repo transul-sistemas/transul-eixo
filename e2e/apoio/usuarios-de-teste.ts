@@ -58,7 +58,7 @@ export function supabaseLocal(): {
 }
 
 /** CPF válido a partir de 9 dígitos (os dois verificadores calculados). */
-function cpf(base: string): string {
+export function cpf(base: string): string {
   const digito = (numeros: string) => {
     const soma = [...numeros].reduce((s, d, i) => s + Number(d) * (numeros.length + 1 - i), 0);
     const resto = (soma * 10) % 11;

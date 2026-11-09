@@ -1,5 +1,5 @@
 import { expect, type Page, test } from "@playwright/test";
-import { comBanco } from "../e2e/apoio/usuarios-de-teste";
+import { comBanco, cpf } from "../e2e/apoio/usuarios-de-teste";
 
 // Cadastros › Catálogos e Administração › Usuários e perfis, pelo banco local, com a sessão do
 // Administrador: o catálogo do Eixo grava (cadastrar, editar e arquivar pelo assistente), o que é do
@@ -71,36 +71,58 @@ test.describe.serial("Cadastros › Catálogos", () => {
 
 const NOME_DO_USUARIO_DE_TESTE = "Pessoa do e2e de acesso";
 const EMAIL_DO_USUARIO_DE_TESTE = "acesso-e2e@eixo.teste";
+// CPF fictício (a base 91000000x é a dos usuários de teste; o 9 é só deste).
+const DOCUMENTO_DO_USUARIO_DE_TESTE = cpf("910000009");
 
-/** Um usuário só deste teste (Operacional), criado uma vez e recolocado no estado de partida a cada execução. */
+/**
+ * Um usuário só deste teste (Operacional), criado uma vez e recolocado no estado de partida a cada
+ * execução. Cada passo procura antes de criar (login pelo e-mail, pessoa pelo CPF fictício), então
+ * uma execução interrompida no meio não impede a seguinte.
+ */
 async function prepararUsuarioDeTeste(): Promise<void> {
   await comBanco(async (banco) => {
-    const { rows } = await banco.query<{ pessoa_id: string }>(
-      `select u.pessoa_id from nucleo.usuario u
-         join auth.users a on a.id = u.auth_user_id where a.email = $1`,
-      [EMAIL_DO_USUARIO_DE_TESTE],
-    );
-    if (rows[0]) {
-      await banco.query(
-        `update nucleo.usuario set perfil = 'operacional', ativo = true where pessoa_id = $1`,
-        [rows[0].pessoa_id],
-      );
-      return;
+    let authId = (
+      await banco.query<{ id: string }>(`select id from auth.users where email = $1`, [
+        EMAIL_DO_USUARIO_DE_TESTE,
+      ])
+    ).rows[0]?.id;
+    if (!authId) {
+      authId = (
+        await banco.query<{ id: string }>(
+          `insert into auth.users (id, aud, role, email, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
+           values (gen_random_uuid(), 'authenticated', 'authenticated', $1, '{}'::jsonb, '{}'::jsonb, now(), now())
+           returning id`,
+          [EMAIL_DO_USUARIO_DE_TESTE],
+        )
+      ).rows[0]!.id;
     }
-    const auth = await banco.query<{ id: string }>(
-      `insert into auth.users (id, aud, role, email, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
-       values (gen_random_uuid(), 'authenticated', 'authenticated', $1, '{}'::jsonb, '{}'::jsonb, now(), now())
-       returning id`,
-      [EMAIL_DO_USUARIO_DE_TESTE],
+    let pessoaId = (
+      await banco.query<{ pessoa_id: string }>(
+        "select pessoa_id from nucleo.pessoa_documento where documento = $1",
+        [DOCUMENTO_DO_USUARIO_DE_TESTE],
+      )
+    ).rows[0]?.pessoa_id;
+    if (!pessoaId) {
+      // A pessoa nasce com o documento na mesma transação (o banco confere no fim dela).
+      pessoaId = (
+        await banco.query<{ pessoa_id: string }>(
+          `with nova as (insert into nucleo.pessoa (nome) values ($1) returning id)
+           insert into nucleo.pessoa_documento (pessoa_id, documento) select id, $2 from nova returning pessoa_id`,
+          [NOME_DO_USUARIO_DE_TESTE, DOCUMENTO_DO_USUARIO_DE_TESTE],
+        )
+      ).rows[0]!.pessoa_id;
+    }
+    const usuario = await banco.query(
+      `update nucleo.usuario set perfil = 'operacional', ativo = true
+        where pessoa_id = $1 and auth_user_id = $2`,
+      [pessoaId, authId],
     );
-    const pessoa = await banco.query<{ id: string }>(
-      `insert into nucleo.pessoa (nome) values ($1) returning id`,
-      [NOME_DO_USUARIO_DE_TESTE],
-    );
-    await banco.query(
-      `insert into nucleo.usuario (pessoa_id, auth_user_id, perfil) values ($1, $2, 'operacional')`,
-      [pessoa.rows[0]!.id, auth.rows[0]!.id],
-    );
+    if (usuario.rowCount === 0) {
+      await banco.query(
+        `insert into nucleo.usuario (pessoa_id, auth_user_id, perfil) values ($1, $2, 'operacional')`,
+        [pessoaId, authId],
+      );
+    }
   });
 }
 
