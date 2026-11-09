@@ -71,10 +71,10 @@ describe("migalhas da ficha: Módulo › Tela › Identificador", () => {
     expect(migalhas("/frota/placas/%41AA0A00", "Administrador").at(-1)?.texto).toBe("AAA0A00");
   });
   it("o módulo continua levando à primeira tela que o perfil abre", () => {
-    // O Gestor de frota não vê telas em breve: a primeira que ele abre é Placas.
+    // O Gestor de frota não vê telas em breve: a primeira que ele abre é o Acompanhamento.
     expect(migalhas("/frota/placas/AAA0A00", "Gestor de frota")[0]).toEqual({
       texto: "Frota",
-      href: "/frota/placas",
+      href: "/frota/acompanhamento",
     });
   });
   it("rota filha inválida ou de tela sem ficha não tem trilha", () => {

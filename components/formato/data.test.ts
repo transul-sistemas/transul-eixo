@@ -1,5 +1,19 @@
 import { describe, expect, it } from "vitest";
-import { agoraEmSaoPaulo, formatarData, formatarDataEHora, hojeEmSaoPaulo } from "./data";
+import {
+  agoraEmSaoPaulo,
+  formatarData,
+  formatarDataEHora,
+  formatarMes,
+  hojeEmSaoPaulo,
+} from "./data";
+
+describe("formatarMes", () => {
+  it("mostra mm/aaaa e recusa o que não é mês", () => {
+    expect(formatarMes("2026-01")).toBe("01/2026");
+    expect(formatarMes("2026-13")).toBe("—");
+    expect(formatarMes(null)).toBe("—");
+  });
+});
 
 describe("formatarData", () => {
   it("texto aaaa-mm-dd vira dd/mm/aaaa sem passar por fuso", () => {

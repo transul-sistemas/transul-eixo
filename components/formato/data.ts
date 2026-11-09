@@ -75,6 +75,12 @@ export function agoraEmSaoPaulo(agora: Date): string {
   return `${partes.year}-${partes.month}-${partes.day}T${partes.hour}:${partes.minute}`;
 }
 
+/** O mês `aaaa-mm` como `mm/aaaa`. */
+export function formatarMes(valor: string | null | undefined): string {
+  const achado = /^(\d{4})-(0[1-9]|1[0-2])$/.exec(valor ?? "");
+  return achado ? `${achado[2]}/${achado[1]}` : "—";
+}
+
 /** O dia de hoje em São Paulo, como `aaaa-mm-dd` (para guardar e comparar, não para mostrar). */
 export function hojeEmSaoPaulo(agora: Date): string {
   const partes = Object.fromEntries(

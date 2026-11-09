@@ -194,7 +194,9 @@ select set_eq(
     'nucleo.correcao_de_campo.correcao_de_campo_ler',
     'nucleo.fila_de_excecoes.fila_de_excecoes_ler', 'nucleo.fila_de_excecoes.fila_de_excecoes_alterar',
     -- 3.9a: a leitura mantida das placas (equivalência com ve_ativo no pgTAP 81).
-    'nucleo.leitura_da_placa.leitura_da_placa_ler'
+    'nucleo.leitura_da_placa.leitura_da_placa_ler',
+    -- Carteira mensal (testada em 86-carteira-mensal.test.sql).
+    'nucleo.confirmacao_da_carteira.confirmacao_da_carteira_ler'
   ],
   'as políticas de cada tabela, com o nome de cada uma (todas testadas abaixo ou na matriz)'
 );
