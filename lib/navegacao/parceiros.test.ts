@@ -16,6 +16,14 @@ describe("estado de Parceiros na URL", () => {
     expect(e.consulta.busca).toBe("ana");
     expect(e.consulta.chips).toEqual(["acionista"]);
   });
+  it("a lista abre na página 1 com 20 (ou o tamanho lembrado), e a URL manda", () => {
+    const padrao = lerParceiros(new URLSearchParams(""));
+    expect([padrao.consulta.pagina, padrao.consulta.tam]).toEqual([1, 20]);
+    expect(lerParceiros(new URLSearchParams(""), 50).consulta.tam).toBe(50);
+    const pedida = lerParceiros(new URLSearchParams("pagina=3&tam=100"), 50);
+    expect([pedida.consulta.pagina, pedida.consulta.tam]).toEqual([3, 100]);
+    expect(lerParceiros(new URLSearchParams("tam=900")).consulta.tam).toBe(100);
+  });
   it("a conciliação lê mês, agrupador e situação; o desconhecido volta ao padrão", () => {
     expect(
       lerConciliacao(new URLSearchParams(`mes=2026-03&agrupador=${UUID}&situacao=diferenca`)),

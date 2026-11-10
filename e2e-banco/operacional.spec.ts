@@ -19,6 +19,7 @@ interface Alvo {
   ativo: string;
 }
 
+// No banco do localhost (dados reais e a demonstração) este teste só grava em placa ZDM da demonstração (Alexandre, 10/11/2026).
 async function entregarUmaPlaca(): Promise<Alvo> {
   return comBanco(async (banco) => {
     await banco.query(
@@ -34,6 +35,8 @@ async function entregarUmaPlaca(): Promise<Alvo> {
         where (l.tipo = 'caminhao' or (l.tipo = 'cavalo' and cardinality(l.implementos) > 0))
           and l.sigla in ('PÁT', 'ETv') and l.baixada_em is null
           and l.filial_da_custodia_id is null
+          and (l.placa like 'ZDM%'
+               or not exists (select 1 from nucleo.leitura_da_placa z where z.placa like 'ZDM%'))
         order by l.placa, l.ativo_id limit 1`,
     );
     const alvo = rows[0];

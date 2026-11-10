@@ -28,7 +28,11 @@ async function arquivarOParceiroDoE2e(): Promise<void> {
   });
 }
 
-/** Uma placa vigente dos dados de desenvolvimento, sem locação em aberto. */
+/**
+ * Uma placa vigente sem locação em aberto. Este teste GRAVA: no banco do localhost (dados reais e a
+ * demonstração) ele só usa o bloco ZDM da demonstração, nunca placa real (Alexandre, 10/11/2026); sem a
+ * demonstração (CI, dados de desenvolvimento) usa qualquer placa livre.
+ */
 async function umaPlacaLivre(): Promise<string> {
   return comBanco(async (banco) => {
     const { rows } = await banco.query<{ placa: string }>(
@@ -36,6 +40,8 @@ async function umaPlacaLivre(): Promise<string> {
         where pa.fim is null and pa.excluido_em is null
           and not exists (select 1 from parceiros.locacao l
                            where l.ativo_id = pa.ativo_id and l.excluido_em is null)
+          and (pa.placa like 'ZDM%'
+               or not exists (select 1 from nucleo.placa_do_ativo z where z.placa like 'ZDM%'))
         order by pa.placa limit 1`,
     );
     if (!rows[0]) throw new Error("Os dados de desenvolvimento não têm placa vigente.");
@@ -52,8 +58,11 @@ test.describe("Parceiros (Administrador)", () => {
   }) => {
     const placa = await umaPlacaLivre();
 
-    await page.goto("/parceiros/lista");
+    // A lista é paginada no banco (20 por página): a busca deixa o parceiro do e2e na primeira, e a
+    // lista (vazia antes) precisa atualizar sozinha depois de gravar.
+    await page.goto(`/parceiros/lista?q=${encodeURIComponent("do e2e")}`);
     await expect(page.getByRole("heading", { level: 1, name: "Parceiros" })).toBeVisible();
+    await expect(page.getByText("Nenhum parceiro encontrado")).toBeVisible();
     await page.getByRole("button", { name: "Cadastrar parceiro" }).click();
     const cadastro = dialogo(page, "Cadastrar parceiro");
     await cadastro.getByLabel("CPF ou CNPJ").fill(CNPJ);
@@ -70,6 +79,7 @@ test.describe("Parceiros (Administrador)", () => {
     const linha = tabela.getByRole("row").filter({ hasText: NOME });
     await expect(linha).toHaveCount(1);
     await expect(linha).toContainText("/0001-");
+    await expect(page.getByTestId("resumo-da-pagina")).toHaveText("Mostrando 1–1 de 1 parceiros");
     await linha.getByRole("link", { name: `Abrir a ficha do parceiro ${NOME}` }).click();
     await expect(page.getByRole("tab", { name: "Resumo" })).toHaveAttribute(
       "aria-selected",

@@ -29,7 +29,7 @@ select col_type_is('parceiros', 'locacao', 'valor_mensal', 'numeric(15,2)', 'o v
 select ok(exists (select 1 from pg_constraint where conrelid = 'parceiros.locacao'::regclass and contype = 'x'),
   'a vigência da locação tem EXCLUDE (sem sobreposição por placa)');
 select ok(
-  not (select prosecdef from pg_proc where oid = 'nucleo.parceiros_do_mes(date,text,text[])'::regprocedure)
+  not (select prosecdef from pg_proc where oid = 'nucleo.parceiros_do_mes(date,text,text[],integer,integer)'::regprocedure)
   and not (select prosecdef from pg_proc where oid = 'nucleo.conciliacao_do_mes(date,uuid,text)'::regprocedure)
   and not (select prosecdef from pg_proc where oid = 'nucleo.locacoes(text)'::regprocedure),
   'as leituras rodam com a permissão de quem chama (security invoker)');
@@ -41,7 +41,7 @@ select ok(not has_table_privilege('authenticated', 'parceiros.parceiro', 'insert
   and not has_table_privilege('authenticated', 'parceiros.locacao', 'update')
   and not has_table_privilege('authenticated', 'parceiros.justificativa_da_conciliacao', 'insert'),
   'authenticated não grava direto nas tabelas de Parceiros');
-select ok(not has_function_privilege('anon', 'nucleo.parceiros_do_mes(date,text,text[])', 'execute'),
+select ok(not has_function_privilege('anon', 'nucleo.parceiros_do_mes(date,text,text[],integer,integer)', 'execute'),
   'anon não executa a lista');
 
 -- ---- Cadastrar parceiro (Diretoria) ----

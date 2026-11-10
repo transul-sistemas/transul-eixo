@@ -1,6 +1,6 @@
+import { cookies } from "next/headers";
 import Link from "next/link";
 import { connection } from "next/server";
-import { formatarMes } from "@/components/formato/data";
 import { Moeda } from "@/components/formato/moeda";
 import { formatarInteiro } from "@/components/formato/numero";
 import {
@@ -10,16 +10,23 @@ import {
 import { FaixaDeKpis, type Kpi } from "@/components/layout/faixa-de-kpis";
 import { PaginaDeLeitura } from "@/components/layout/pagina-de-leitura";
 import { EsqueletoDaTabela, ListaVazia } from "@/components/tabela/estados";
+import { Paginador } from "@/components/tabela/paginador";
 import { modoDosDados } from "@/lib/dados/fonte";
 import { lerParceirosDoMes } from "@/lib/dados/parceiros";
 import type { ParceirosDoMes } from "@/lib/dados/parceiros-tipos";
 import { acharTela } from "@/lib/navegacao/catalogo";
 import {
+  CAMPOS_DOS_PARCEIROS,
   CHIPS_DE_TIPO_DE_PARCEIRO,
   enderecoDaConciliacao,
   lerParceiros,
+  PADRAO_DOS_PARCEIROS,
   ROTA_DOS_PARCEIROS,
 } from "@/lib/navegacao/parceiros";
+import {
+  lerTamanhoLembrado,
+  NOME_DO_COOKIE_DO_TAMANHO,
+} from "@/lib/navegacao/preferencias-da-tabela";
 import { temPermissao } from "@/lib/seguranca/exigir-permissao";
 import { exigirSessao } from "@/lib/seguranca/sessao-do-servidor";
 import {
@@ -34,7 +41,8 @@ export type { ParametrosDaBusca };
 
 // Parceiros › lista (primeira versão): cada parceiro com os tipos, as placas vinculadas agora e os
 // totais do mês nos CRs do agrupador do Sankhya, prontos no banco. Os números vêm do staging
-// provisório (a cópia da v1) até a ponte do Sankhya.
+// provisório (a cópia da v1) até a ponte do Sankhya. O banco pagina (20 por página por padrão, com 20,
+// 50 e 100 lembrado por pessoa); os KPIs e os chips são do filtro inteiro.
 
 function cabecalho() {
   const tela = acharTela(ROTA_DOS_PARCEIROS)?.tela;
@@ -90,7 +98,11 @@ export function PaginaDeParceirosCarregando() {
 }
 
 async function Conteudo({ parametros }: { parametros: URLSearchParams }) {
-  const estado = lerParceiros(parametros);
+  const tam = lerTamanhoLembrado(
+    (await cookies()).get(NOME_DO_COOKIE_DO_TAMANHO)?.value,
+    PADRAO_DOS_PARCEIROS.tam,
+  );
+  const estado = lerParceiros(parametros, tam);
   const [dados, sessao] = await Promise.all([lerParceirosDoMes(estado), exigirSessao()]);
   const filtrando = estado.consulta.busca !== "" || estado.consulta.chips.length > 0;
   const podeCadastrar = temPermissao(sessao.perfil, { modulo: "parceiros", acao: "criar" });
@@ -130,7 +142,7 @@ async function Conteudo({ parametros }: { parametros: URLSearchParams }) {
           já mostra os CRs de todos.
         </p>
       ) : null}
-      {dados.linhas.length === 0 ? (
+      {dados.total === 0 ? (
         filtrando ? (
           <ListaVazia
             titulo="Nenhum parceiro encontrado"
@@ -144,16 +156,17 @@ async function Conteudo({ parametros }: { parametros: URLSearchParams }) {
           />
         )
       ) : (
-        <>
-          <TabelaDeParceiros linhas={dados.linhas} mes={dados.mes} />
-          <p className="text-muted-foreground text-sm" aria-live="polite">
-            {dados.linhas.length === 1
-              ? "1 parceiro"
-              : `${formatarInteiro(dados.linhas.length)} parceiros`}{" "}
-            em {formatarMes(dados.mes)}
-          </p>
-        </>
+        <TabelaDeParceiros linhas={dados.linhas} mes={dados.mes} />
       )}
+      <Paginador
+        pagina={dados.pagina}
+        paginas={dados.paginas}
+        total={dados.total}
+        tam={dados.tam}
+        itens="parceiros"
+        padrao={{ ...PADRAO_DOS_PARCEIROS, tam }}
+        campos={CAMPOS_DOS_PARCEIROS}
+      />
     </PaginaDeLeitura>
   );
 }

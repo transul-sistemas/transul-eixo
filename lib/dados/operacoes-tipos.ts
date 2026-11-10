@@ -44,7 +44,13 @@ export interface OperacoesDoMes {
   /** Os meses com viagem (`aaaa-mm`), do mais recente ao mais antigo. */
   meses: string[];
   veResultado: boolean;
+  /** A página que o banco entregou (20 por padrão, até 100); além do fim, a última. */
   linhas: LinhaDeOperacao[];
+  pagina: number;
+  paginas: number;
+  tam: number;
+  /** As operações do filtro inteiro (não só da página). */
+  total: number;
   totais: {
     operacoes: number;
     placas: number;

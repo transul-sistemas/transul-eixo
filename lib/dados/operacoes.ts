@@ -17,7 +17,7 @@ import { type ErroDoBanco, resultadoDoErro } from "./escrita-do-banco";
 export type * from "./operacoes-tipos";
 
 // A leitura de Operações (lista e ficha): só o banco, com a sessão de quem usa (a RLS decide o que
-// cada perfil vê). Quem filtra, ordena e soma é o banco (nucleo.operacoes_do_mes e
+// cada perfil vê). Quem filtra, ordena, pagina e soma é o banco (nucleo.operacoes_do_mes e
 // nucleo.ficha_da_operacao, sobre o staging provisório da v1 até a ponte do Sankhya); aqui só se
 // converte o formato. A gravação do assistente "Editar operação" confere a versão.
 
@@ -78,6 +78,10 @@ interface ListaDoBanco {
   meses: string[];
   ve_resultado: boolean;
   linhas: LinhaDoBanco[];
+  pagina: number;
+  paginas: number;
+  tam: number;
+  total: number;
   totais: CascataDoBanco & { operacoes: number; placas: number };
   chips: Record<string, number>;
 }
@@ -158,6 +162,8 @@ export async function lerOperacoesDoMes(
     p_busca: consulta.busca === "" ? null : consulta.busca,
     p_chips: consulta.chips.length === 0 ? null : consulta.chips,
     p_ordem: `${consulta.ordem.sentido === "desc" ? "-" : ""}${consulta.ordem.campo}`,
+    p_pagina: consulta.pagina,
+    p_tam: consulta.tam,
   });
   if (error) throw new Error(`operacoes_do_mes: ${error.message}`);
   const d = data as ListaDoBanco;
@@ -176,6 +182,10 @@ export async function lerOperacoesDoMes(
       crs: l.crs,
       cascata: d.ve_resultado ? cascataDe(l) : null,
     })),
+    pagina: d.pagina,
+    paginas: d.paginas,
+    tam: d.tam,
+    total: d.total,
     totais: {
       operacoes: d.totais.operacoes,
       placas: d.totais.placas,

@@ -1,8 +1,8 @@
 import { type ConsultaDeTabela, lerTabela, type PadraoDaTabela } from "./tabela";
 
 // O estado de Operações › lista na URL: o mês (`mes=aaaa-mm`; sem ele, o banco abre o mês mais
-// recente com viagens) e a tabela (busca `q`, chips de tipo e de filial, ordem). A lista tem uma
-// linha por operação (são poucas): o banco entrega todas, sem página.
+// recente com viagens) e a tabela (busca `q`, chips de tipo e de filial, ordem, página e tamanho). O
+// banco filtra, ordena e pagina (nucleo.operacoes_do_mes); o tamanho lembrado vem do cookie.
 
 export const ROTA_DAS_OPERACOES = "/operacoes/lista";
 
@@ -18,7 +18,7 @@ export const CAMPOS_DAS_OPERACOES = [
   "margem_percentual",
 ] as const;
 
-export const PADRAO_DAS_OPERACOES: PadraoDaTabela = { tam: 100, ordem: "nome" };
+export const PADRAO_DAS_OPERACOES: PadraoDaTabela = { tam: 20, ordem: "nome" };
 
 /** Os chips da lista: o tipo da operação e a filial (a garagem da base). */
 export const CHIPS_DE_TIPO = [
@@ -50,9 +50,16 @@ export function lerMes(parametros: URLSearchParams): string | null {
   return mes !== null && MES.test(mes) ? mes : null;
 }
 
-export function lerOperacoes(parametros: URLSearchParams): EstadoDasOperacoes {
+export function lerOperacoes(
+  parametros: URLSearchParams,
+  tamLembrado: number = PADRAO_DAS_OPERACOES.tam,
+): EstadoDasOperacoes {
   const conhecidos: readonly string[] = [...CHIPS_DE_TIPO, ...CHIPS_DE_FILIAL].map((c) => c.id);
-  const consulta = lerTabela(parametros, PADRAO_DAS_OPERACOES, CAMPOS_DAS_OPERACOES);
+  const consulta = lerTabela(
+    parametros,
+    { ...PADRAO_DAS_OPERACOES, tam: tamLembrado },
+    CAMPOS_DAS_OPERACOES,
+  );
   return {
     mes: lerMes(parametros),
     consulta: { ...consulta, chips: consulta.chips.filter((c) => conhecidos.includes(c)) },

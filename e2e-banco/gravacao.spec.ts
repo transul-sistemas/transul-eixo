@@ -17,6 +17,7 @@ interface Gestor {
 }
 
 /** O gestor de frota do e2e (a pessoa ligada ao login do perfil). */
+// No banco do localhost (dados reais e a demonstração) este teste só grava em placa ZDM da demonstração (Alexandre, 10/11/2026).
 async function gestorDoE2e(): Promise<Gestor> {
   return comBanco(async (banco) => {
     const { rows } = await banco.query<Gestor>(
@@ -45,6 +46,8 @@ async function placaDeOutroGestor(
           and not exists (select 1 from nucleo.transferencia t
                            where t.ativo_id = l.ativo_id and t.excluido_em is null
                              and t.situacao in ('pendente', 'em_conferencia'))
+          and (l.placa like 'ZDM%'
+               or not exists (select 1 from nucleo.leitura_da_placa z where z.placa like 'ZDM%'))
         order by l.placa
         offset $2 limit 1`,
       [gestorDoE2e, pular],

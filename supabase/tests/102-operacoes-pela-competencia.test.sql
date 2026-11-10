@@ -33,7 +33,7 @@ create temp table visao as
 create temp table lista as
   select m.mes, l
     from (values ('2026-02-01'::date), ('2026-03-01'::date)) m (mes),
-         jsonb_array_elements(nucleo.operacoes_do_mes(m.mes)->'linhas') l;
+         jsonb_array_elements(nucleo.operacoes_do_mes(m.mes, '94')->'linhas') l;
 
 -- ---- A ficha pela competência gerencial e pelo valor líquido ----
 select is((select (c->>'custo_servico')::numeric from ficha where chave = 'graos' and mes = '2026-03-01'), 770.00,
