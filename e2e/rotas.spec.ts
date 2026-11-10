@@ -20,12 +20,17 @@ for (const tema of ["light", "dark"] as const) {
         const resposta = await page.goto(tela.rota);
         expect(resposta?.status()).toBe(200);
 
-        if (tela.estado === "em-breve") {
+        if (tela.estado === "esqueleto") {
+          // A tela esqueleto abre inteira, no padrão: título, KPIs, painéis, tabela com o olho.
           await expect(
             page.getByRole("heading", { level: 1, name: tela.nome, exact: true }),
           ).toBeVisible();
-          await expect(page.getByRole("status")).toHaveText("Esta tela entra em breve.");
           await expect(page).toHaveTitle(`${tela.nome} · TranSul Eixo`);
+          await expect(page.getByRole("list", { name: "Indicadores" })).toBeVisible();
+          await expect(page.locator("[data-olho]").first()).toBeVisible();
+          await expect(page.locator("[data-sem-dados]").first()).toContainText(
+            "Sem dados ainda: depende de",
+          );
         } else {
           await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
         }

@@ -280,7 +280,7 @@ test.describe("rebaixar o papel tira o acesso na hora", () => {
     try {
       const resposta = await page.goto("/pessoas");
       expect(resposta?.status()).toBe(404);
-      await page.goto("/inicio/tarefas");
+      await page.goto("/inicio/mapa-do-sistema");
       await expect(grupo(page, "Pessoas")).toHaveCount(0);
     } finally {
       await trocar("diretoria");
