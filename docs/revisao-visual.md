@@ -5,7 +5,7 @@ Roteiro de uma página para abrir cada tela pronta no seu computador e aprovar o
 ## Como abrir
 
 1. Docker aberto e banco local de pé: `pnpm exec supabase start` (se ainda não estiver).
-2. Quase todas as telas leem só do banco: `$env:EIXO_DADOS = "banco"; pnpm dev` (no modo exemplo elas mostram um aviso).
+2. Quase todas as telas leem só do banco: abra o Eixo no modo banco como explica `docs/como-abrir-o-eixo.md` (no modo exemplo elas mostram um aviso).
 3. Abra http://localhost:3000/entrar e entre com o login local criado por `pnpm dev:usuario`.
 4. Outro perfil: `pnpm dev:usuario -- --perfil gestor_de_frota` (ou `operacional`, `diretoria`).
 
