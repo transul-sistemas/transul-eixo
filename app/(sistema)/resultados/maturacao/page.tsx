@@ -1,7 +1,8 @@
-import { metadataDaTela, TelaEmBreve } from "@/components/navegacao/tela-em-breve";
+import { TelaDeEsqueleto } from "@/components/esqueleto/tela-de-esqueleto";
+import { metadataDaTela } from "@/components/navegacao/tela-em-breve";
 
 export const metadata = metadataDaTela("/resultados/maturacao");
 
 export default function Pagina() {
-  return <TelaEmBreve rota="/resultados/maturacao" />;
+  return <TelaDeEsqueleto rota="/resultados/maturacao" />;
 }
