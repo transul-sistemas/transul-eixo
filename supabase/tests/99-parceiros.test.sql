@@ -19,7 +19,7 @@ grant select on docs to authenticated;
 create function pg_temp.doc(p_base text) returns text language sql as $$ select doc from docs where base = p_base $$;
 grant execute on function pg_temp.doc(text) to authenticated;
 
-select plan(59);
+select plan(60);
 
 -- ---- Estrutura ----
 select has_table('parceiros', 'parceiro', 'existe parceiros.parceiro');
@@ -101,6 +101,8 @@ select is((select (j->'parceiro'->>'versao')::int from ficha), 1, 'com a versão
 select is((select jsonb_path_query_array(j, '$.placas[*].placa') from ficha), '["PPP9A01", "PPP9A02", "PPP9A03"]'::jsonb,
   'as placas vinculadas agora');
 select is(nucleo.ficha_do_parceiro('00000000-0000-0000-0000-000000000000', '2026-03-01'), null, 'parceiro inexistente volta nulo');
+select is(nucleo.ficha_do_parceiro(pg_temp.id('locadora'), '2026-03-01')->'totais', 'null'::jsonb,
+  'sem agrupador, a ficha não tem conciliação (totais nulos)');
 
 -- ---- Conciliação ----
 create temp table conc as select nucleo.conciliacao_do_mes('2026-03-01', pg_temp.id('agrupador_p'), null) as j;

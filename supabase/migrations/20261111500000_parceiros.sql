@@ -382,14 +382,15 @@ begin
     'parceiro', v_parceiro,
     'mes', v_mes,
     'meses', to_jsonb(v_meses),
-    'totais', (
+    -- Sem agrupador não há conciliação: os totais vêm nulos (a ficha avisa).
+    'totais', case when v_agrupador is not null then (
       select jsonb_build_object(
                'despesa', coalesce(sum(c.despesa), 0), 'receita', coalesce(sum(c.receita), 0),
                'crs', count(*),
                'confere', count(*) filter (where c.situacao = 'confere'),
                'diferenca', count(*) filter (where c.situacao = 'diferenca'),
                'sem_lancamento', count(*) filter (where c.situacao = 'sem_lancamento'))
-        from nucleo.conciliacao_por_cr(v_mes, v_agrupador) c where v_agrupador is not null),
+        from nucleo.conciliacao_por_cr(v_mes, v_agrupador) c) end,
     'placas', coalesce((
       select jsonb_agg(jsonb_build_object(
                'ativo_id', x.ativo_id, 'placa', l.placa, 'tipo', l.tipo, 'modelo', l.modelo,
