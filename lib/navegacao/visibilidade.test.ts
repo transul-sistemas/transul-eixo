@@ -26,11 +26,40 @@ const FIXTURE: readonly ModuloDoCatalogo[] = [
   modulo("frota", [
     tela("pronta", "pronto", "frota"),
     tela("breve", "em-breve", "frota"),
+    tela("estrutura", "esqueleto", "frota"),
     tela("restrita", "restrito", "frota"),
   ]),
   modulo("operacional", [tela("breve", "em-breve", "operacional")]),
   modulo("admin", [tela("pronta", "pronto", "admin")]),
 ];
+
+describe("tela esqueleto (estrutura sem dados)", () => {
+  const estrutura = tela("estrutura", "esqueleto", "frota");
+  it("só Administrador e Diretoria abrem", () => {
+    expect(podeAbrir("Administrador", estrutura)).toBe(true);
+    expect(podeAbrir("Diretoria", estrutura)).toBe(true);
+    expect(podeAbrir("Gestor de frota", estrutura)).toBe(false);
+    expect(podeAbrir("Operacional", estrutura)).toBe(false);
+  });
+  it("não aparece no menu de quem não a abre", () => {
+    const nomes = (perfil: (typeof PERFIS)[number]) =>
+      modulosVisiveis(perfil, FIXTURE)
+        .flatMap((m) => m.telas)
+        .map((t) => t.id);
+    expect(nomes("Administrador")).toContain("frota.estrutura");
+    expect(nomes("Gestor de frota")).not.toContain("frota.estrutura");
+    expect(nomes("Operacional")).not.toContain("frota.estrutura");
+  });
+  it("no catálogo real, nenhum perfil sem acompanhamento da obra vê tela esqueleto", () => {
+    for (const perfil of ["Gestor de frota", "Operacional"] as const) {
+      const vistas = modulosVisiveis(perfil).flatMap((m) => m.telas);
+      expect(
+        vistas.filter((t) => t.estado === "esqueleto"),
+        perfil,
+      ).toEqual([]);
+    }
+  });
+});
 
 describe("podeAbrir", () => {
   const pronta = tela("pronta", "pronto", "frota");
@@ -63,7 +92,7 @@ describe("modulosVisiveis (catálogo de teste)", () => {
     for (const perfil of ["Administrador", "Diretoria"] as const) {
       const visiveis = modulosVisiveis(perfil, FIXTURE);
       expect(visiveis.map((m) => m.id)).toEqual(["inicio", "frota", "operacional", "admin"]);
-      expect(visiveis.find((m) => m.id === "frota")?.telas).toHaveLength(3);
+      expect(visiveis.find((m) => m.id === "frota")?.telas).toHaveLength(4);
     }
   });
   it("Gestor de frota vê só Início e Frota, sem telas em breve, e a restrita aparece", () => {
@@ -103,6 +132,7 @@ describe("modulosVisiveis (catálogo real)", () => {
   it("com as cinco telas da Frota prontas, o Gestor de frota vê as cinco; o Operacional vê Pátio, Totem, Ordens de carregamento e a Escala", () => {
     expect(modulosVisiveis("Gestor de frota").map((m) => [m.id, m.telas.map((t) => t.id)])).toEqual(
       [
+        ["inicio", ["inicio.mapa-do-sistema"]],
         [
           "frota",
           [
@@ -116,6 +146,7 @@ describe("modulosVisiveis (catálogo real)", () => {
       ],
     );
     expect(modulosVisiveis("Operacional").map((m) => [m.id, m.telas.map((t) => t.id)])).toEqual([
+      ["inicio", ["inicio.mapa-do-sistema"]],
       [
         "operacional",
         ["operacional.patio", "operacional.totem", "operacional.ordens-de-carregamento"],
@@ -183,13 +214,20 @@ describe("rotaInicialDoModulo (para onde /frota, /pessoas etc. redirecionam)", (
   it("no catálogo real, cada perfil só é levado ao módulo que vê", () => {
     for (const m of CATALOGO) {
       const doOperacional =
-        m.id === "operacional"
-          ? "/operacional/patio"
-          : m.id === "pessoas"
-            ? "/pessoas/escala"
-            : undefined;
+        m.id === "inicio"
+          ? "/inicio/mapa-do-sistema"
+          : m.id === "operacional"
+            ? "/operacional/patio"
+            : m.id === "pessoas"
+              ? "/pessoas/escala"
+              : undefined;
       expect(rotaInicialDoModulo("Operacional", m.id), m.id).toBe(doOperacional);
-      const esperado = m.id === "frota" ? "/frota/acompanhamento" : undefined;
+      const esperado =
+        m.id === "frota"
+          ? "/frota/acompanhamento"
+          : m.id === "inicio"
+            ? "/inicio/mapa-do-sistema"
+            : undefined;
       expect(rotaInicialDoModulo("Gestor de frota", m.id), m.id).toBe(esperado);
     }
   });

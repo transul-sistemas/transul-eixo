@@ -99,4 +99,23 @@ describe("decidirAcesso", () => {
       tipo: "seguir",
     });
   });
+
+  it("tela esqueleto (10/11/2026): só Administrador e Diretoria; os outros perfis recebem 404", () => {
+    for (const perfil of ["Gestor de frota", "Operacional"] as const) {
+      for (const rota of ["/inicio/tarefas", "/inicio/resumo-do-dia", "/operacional/analise"]) {
+        expect(decidirAcesso(rota, "", { ...logado, perfil }), `${perfil} ${rota}`).toEqual({
+          tipo: "nao-encontrada",
+        });
+      }
+    }
+    for (const perfil of ["Administrador", "Diretoria"] as const) {
+      expect(decidirAcesso("/inicio/tarefas", "", { ...logado, perfil })).toEqual({
+        tipo: "seguir",
+      });
+    }
+    // O Mapa do sistema está pronto e todos os perfis o abrem.
+    expect(
+      decidirAcesso("/inicio/mapa-do-sistema", "", { ...logado, perfil: "Operacional" }),
+    ).toEqual({ tipo: "seguir" });
+  });
 });

@@ -6,7 +6,7 @@
 
 import { acharFicha, acharTela, type IdDoModulo } from "@/lib/navegacao/catalogo";
 import type { Perfil } from "@/lib/navegacao/perfis";
-import { telaLiberada } from "@/lib/navegacao/visibilidade";
+import { telaLiberada, veEsqueleto } from "@/lib/navegacao/visibilidade";
 import { DESTINO_PADRAO, destinoInicial } from "./redirecionamento";
 
 const ROTAS_PUBLICAS = ["/entrar", "/esqueci-a-senha", "/auth/confirmar"];
@@ -79,6 +79,9 @@ export function decidirAcesso(caminho: string, busca: string, estado: EstadoDoPe
   // Tela fora do recorte do perfil no módulo (o Operacional em Pessoas só tem a Escala): 404.
   const tela = (acharTela(caminho) ?? acharFicha(caminho))?.tela;
   if (estado.perfil && tela && !telaLiberada(estado.perfil, tela))
+    return { tipo: "nao-encontrada" };
+  // Tela esqueleto (estrutura sem dados): só quem acompanha a obra (Administrador e Diretoria) a abre.
+  if (estado.perfil && tela?.estado === "esqueleto" && !veEsqueleto(estado.perfil))
     return { tipo: "nao-encontrada" };
   return { tipo: "seguir" };
 }

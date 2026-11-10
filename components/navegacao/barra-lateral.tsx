@@ -134,6 +134,14 @@ function ItemDaTela({
       {tela.estado === "em-breve" ? (
         <span className="text-muted-foreground text-xs">Em breve</span>
       ) : null}
+      {tela.estado === "esqueleto" ? (
+        <span
+          title="A tela abre inteira, mas ainda sem dados: só Administrador e Diretoria a veem"
+          className="text-muted-foreground border-border rounded border px-1 text-[0.6875rem] leading-4"
+        >
+          Estrutura
+        </span>
+      ) : null}
       {quantidade ? <Contador id={tela.id} quantidade={quantidade} rotulo={tela.contador} /> : null}
     </>
   );
