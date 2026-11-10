@@ -1786,6 +1786,9 @@ isOneToOne: false
 "contar_para_receber":
 { Args: Record<PropertyKey, never>; Returns: number
                            },
+"contexto_da_operacao":
+{ Args: { "p_mes"?: string,"p_operacao": string }; Returns: Json
+                           },
 "corrigir_campo":
 { Args: { "p_ativo_id": string,"p_campo": string,"p_chave"?: string,"p_motivo": string,"p_valor": Json,"p_versao"?: number }; Returns: string
                            },
@@ -1948,6 +1951,9 @@ isOneToOne: false
                            },
 "mascarar_documento":
 { Args: { "p_texto": string }; Returns: string
+                           },
+"mes_fechado_mais_recente":
+{ Args: { "p_hoje"?: string }; Returns: string
                            },
 "meses_das_operacoes":
 { Args: Record<PropertyKey, never>; Returns: (string)[]
@@ -2151,6 +2157,9 @@ isOneToOne: false
                            },
 "renavam_valido":
 { Args: { "p_texto": string }; Returns: boolean
+                           },
+"resultado_da_operacao":
+{ Args: { "p_fim": string,"p_inicio": string,"p_operacao": string }; Returns: Json
                            },
 "revogar_correcao":
 { Args: { "p_correcao_id": string,"p_motivo": string }; Returns: undefined
