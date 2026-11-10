@@ -4,9 +4,11 @@ import { comBanco, emailDe, sessaoDe } from "../e2e/apoio/usuarios-de-teste";
 // Operacional (primeira versão), o caminho principal no modo banco, com a sessão do Operacional: o
 // motorista registra a chegada no Totem, o Pátio mostra a placa na fila e aceita (DOp → ACe), e a ordem
 // de carregamento nasce pelo assistente "Criar ordem" (ACe → CAr). Dados: `pnpm db:dev-dados`.
-// Preparo (pelo dono do banco LOCAL, como no Studio): um caminhão em PÁT ou ETv é entregue ao
-// Operacional de uma filial do usuário do e2e. No fim, a placa volta ao gestor em PÁT, para rodar de
-// novo com segurança.
+// Preparo (pelo dono do banco LOCAL, como no Studio): um caminhão ou um conjunto (cavalo com implemento
+// engatado; o ACe só vale para eles) livre em PÁT ou ETv (os dados de desenvolvimento têm conjuntos
+// assim; os caminhões nascem em manutenção) é entregue ao Operacional de uma filial do usuário do e2e
+// (a primeira por nome; criada se não houver nenhuma). No fim, a placa volta ao gestor em PÁT, para
+// rodar de novo com segurança.
 
 test.use({ storageState: sessaoDe("operacional") });
 
@@ -17,19 +19,28 @@ interface Alvo {
   ativo: string;
 }
 
-async function entregarUmCaminhao(): Promise<Alvo> {
+async function entregarUmaPlaca(): Promise<Alvo> {
   return comBanco(async (banco) => {
+    await banco.query(
+      `insert into config.filial (nome)
+       select 'Filial do e2e (fictícia)'
+        where not exists (select 1 from config.filial where excluido_em is null)
+       on conflict do nothing`,
+    );
     const { rows } = await banco.query<Alvo & { filial: string; versao: number }>(
       `select l.placa, l.ativo_id as ativo, a.versao,
               (select id from config.filial where excluido_em is null order by nome, id limit 1) as filial
          from nucleo.leitura_da_placa l join nucleo.ativo a on a.id = l.ativo_id
-        where l.tipo = 'caminhao' and l.sigla in ('PÁT', 'ETv') and l.baixada_em is null
+        where (l.tipo = 'caminhao' or (l.tipo = 'cavalo' and cardinality(l.implementos) > 0))
+          and l.sigla in ('PÁT', 'ETv') and l.baixada_em is null
           and l.filial_da_custodia_id is null
         order by l.placa, l.ativo_id limit 1`,
     );
     const alvo = rows[0];
     if (!alvo?.filial)
-      throw new Error("Os dados de desenvolvimento não têm caminhão livre ou filial.");
+      throw new Error(
+        "Os dados de desenvolvimento não têm caminhão ou conjunto livre em PÁT ou ETv.",
+      );
     await banco.query(
       `insert into nucleo.usuario_filial (usuario_id, filial_id)
        select u.pessoa_id, $2 from nucleo.usuario u join auth.users au on au.id = u.auth_user_id
@@ -77,7 +88,7 @@ async function devolverAoGestor(alvo: Alvo): Promise<void> {
 test("Totem, Pátio e Ordens: a chegada entra na fila, a placa é aceita e ganha a ordem", async ({
   page,
 }) => {
-  const alvo = await entregarUmCaminhao();
+  const alvo = await entregarUmaPlaca();
   try {
     // Totem: a chegada entra na fila.
     await page.goto("/operacional/totem");
