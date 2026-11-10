@@ -9,6 +9,7 @@ import {
   argumentosDoBackup,
   argumentosDaRestauracao,
   argumentosDoRecarregarApi,
+  argumentosDoSinalDaApi,
   conferirSenha,
   criptografar,
   descriptografar,
@@ -129,6 +130,17 @@ describe("depois da restauração", () => {
     ]);
   });
 
+  it("também manda o sinal de recarga direto ao processo da API (o aviso pelo banco pode não chegar)", () => {
+    // 10/11/2026: depois de várias restaurações seguidas, a API parou de ouvir o canal "pgrst" e o
+    // notify não chegou; o SIGUSR1 recarrega o esquema sem desligar o contêiner.
+    expect(argumentosDoSinalDaApi()).toEqual([
+      "kill",
+      "-s",
+      "SIGUSR1",
+      "supabase_rest_TranSul_Eixo",
+    ]);
+  });
+
   it("a restauração chama o recarregamento depois do pg_restore", () => {
     const codigo = readFileSync(new URL("./backup.ts", import.meta.url), "utf8");
     const corpo = codigo.slice(codigo.indexOf("async function restaurar("));
@@ -136,5 +148,6 @@ describe("depois da restauração", () => {
     const recarga = corpo.indexOf("argumentosDoRecarregarApi()");
     expect(fimDoRestore).toBeGreaterThan(-1);
     expect(recarga).toBeGreaterThan(fimDoRestore);
+    expect(corpo.indexOf("argumentosDoSinalDaApi()")).toBeGreaterThan(fimDoRestore);
   });
 });

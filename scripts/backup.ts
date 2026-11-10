@@ -41,6 +41,7 @@ export const ESQUEMAS_DO_BACKUP = [
 
 const PASTA_PADRAO = "C:/Backups/eixo";
 const CONTEINER_LOCAL = "supabase_db_TranSul_Eixo";
+const CONTEINER_DA_API = "supabase_rest_TranSul_Eixo";
 const NUVEM = {
   host: "aws-0-us-east-2.pooler.supabase.com",
   porta: "5432",
@@ -111,6 +112,12 @@ export function argumentosDoRecarregarApi(): string[] {
     "-c",
     "notify pgrst, 'reload schema'",
   ];
+}
+
+/** SIGUSR1 ao PostgREST local: recarrega o esquema sem desligar o contêiner. Reforço do notify, que
+ * pode não chegar se a API perdeu a escuta do canal "pgrst" (visto em 10/11/2026). */
+export function argumentosDoSinalDaApi(): string[] {
+  return ["kill", "-s", "SIGUSR1", CONTEINER_DA_API];
 }
 
 export function nomeDoArquivo(origem: "local" | "nuvem", agora: Date): string {
@@ -327,6 +334,7 @@ async function restaurar(argv: string[]) {
   await pipeline(passada(arquivo, senha, true), restore.stdin as NodeJS.WritableStream);
   await fim;
   await esperar(rodar("docker", argumentosDoRecarregarApi()), "O recarregamento do esquema da API");
+  await esperar(rodar("docker", argumentosDoSinalDaApi()), "O sinal de recarga da API");
   console.log("Backup restaurado no banco local (áreas do Eixo e histórico das migrations).");
 }
 
