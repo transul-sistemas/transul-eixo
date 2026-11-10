@@ -1724,6 +1724,9 @@ isOneToOne: false
 "cadastrar_parceiro":
 { Args: { "p_chave"?: string,"p_codparc"?: number,"p_cr_agrupador_id"?: string,"p_documento": string,"p_nome": string,"p_tipos": (string)[] }; Returns: Json
                            },
+"cadastrar_parceiro_pendente":
+{ Args: { "p_cr_agrupador_id": string }; Returns: Json
+                           },
 "cadastrar_pessoa":
 { Args: { "p_documento": string,"p_email"?: string,"p_funcao"?: string,"p_inicio"?: string,"p_nome": string,"p_operacao"?: string }; Returns: Json
                            },
@@ -1748,6 +1751,9 @@ isOneToOne: false
                            },
 "competencia_gerencial":
 { Args: { "p_dia_corte": number,"p_dtentsai": string,"p_dtneg": string,"p_menor_dtneg_de_origem"?: string,"p_provisao"?: boolean }; Returns: string
+                           },
+"completar_documento_do_parceiro":
+{ Args: { "p_chave"?: string,"p_documento": string,"p_parceiro": string }; Returns: Json
                            },
 "conciliacao_do_mes":
 { Args: { "p_agrupador"?: string,"p_mes"?: string,"p_situacao"?: string }; Returns: Json
@@ -1799,6 +1805,11 @@ isOneToOne: false
                            },
 "desatrelar":
 { Args: { "p_cavalo_id": string,"p_em": string,"p_implementos"?: (string)[] }; Returns: number
+                           },
+"despesa_na_competencia":
+{ Args: { "p_mes": string }; Returns: {
+              "codcencus": string,"codnat": string,"valor": number
+            }[]
                            },
 "detalhe_da_placa":
 { Args: { "p_placa": string }; Returns: Json
