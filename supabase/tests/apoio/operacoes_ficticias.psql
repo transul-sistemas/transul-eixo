@@ -106,13 +106,15 @@ insert into staging.viagem (nunota, codcencus, dt_negociacao, status_cte, frete_
   (940005, '9402', '2026-03-11', 'R', 800.00, null),
   (940006, '9403', '2026-03-12', 'A', 2000.00, null);
 insert into staging.natureza (codnat, descricao) values ('94001', 'Combustível 94'), ('94002', 'Salário 94');
-insert into staging.despesa (origem_id, nufin, codcencus, codnat, dt_competencia, provisao, valor_desdobramento, invalidado_em) values
-  ('d94-1', '1', '9401', '94001', '2026-03-10', 'REAL', 400.00, null),
-  ('d94-2', '2', '9401', '94001', '2026-03-10', 'PROVISAO', 100.00, null),
-  ('d94-3', '3', '9402', '94002', '2026-03-20', 'REAL', 600.00, null),
-  ('d94-4', '4', '9402', '94002', '2026-03-20', 'REAL', 50.00, '2026-04-01 00:00-03'),
-  ('d94-5', '5', '9402', '94002', '2026-02-28', 'REAL', 70.00, null),
-  ('d94-6', '6', '9403', '94002', '2026-03-15', null, 300.00, null);
+-- O custo é o valor líquido (glossário, "Resultados"); o desdobramento vem igual, como no Sankhya sem
+-- desconto nem juros.
+insert into staging.despesa (origem_id, nufin, codcencus, codnat, dt_competencia, provisao, valor_desdobramento, valor_liquido, invalidado_em) values
+  ('d94-1', '1', '9401', '94001', '2026-03-10', 'REAL', 400.00, 400.00, null),
+  ('d94-2', '2', '9401', '94001', '2026-03-10', 'PROVISAO', 100.00, 100.00, null),
+  ('d94-3', '3', '9402', '94002', '2026-03-20', 'REAL', 600.00, 600.00, null),
+  ('d94-4', '4', '9402', '94002', '2026-03-20', 'REAL', 50.00, 50.00, '2026-04-01 00:00-03'),
+  ('d94-5', '5', '9402', '94002', '2026-02-28', 'REAL', 70.00, 70.00, null),
+  ('d94-6', '6', '9403', '94002', '2026-03-15', null, 300.00, 300.00, null);
 insert into staging.folha (chave_folha, referencia, tipfolha, codfunc, codcencus, departamento, salario_bruto) values
   ('f94-1', '2026-03-01', 'Mensal', 1, '9402', 'Departamento 94', 1000.00),
   ('f94-2', '2026-03-01', 'Mensal', 2, '9402', 'Departamento 94', 1500.00),
