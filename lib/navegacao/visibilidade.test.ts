@@ -100,7 +100,7 @@ describe("modulosVisiveis (catálogo real)", () => {
       expect(visiveis.flatMap((m) => m.telas)).toHaveLength(35);
     }
   });
-  it("com as cinco telas da Frota prontas, o Gestor de frota vê as cinco e o Operacional não vê nada", () => {
+  it("com as cinco telas da Frota prontas, o Gestor de frota vê as cinco; o Operacional vê Pátio, Totem e Ordens de carregamento", () => {
     expect(modulosVisiveis("Gestor de frota").map((m) => [m.id, m.telas.map((t) => t.id)])).toEqual(
       [
         [
@@ -115,7 +115,12 @@ describe("modulosVisiveis (catálogo real)", () => {
         ],
       ],
     );
-    expect(modulosVisiveis("Operacional")).toEqual([]);
+    expect(modulosVisiveis("Operacional").map((m) => [m.id, m.telas.map((t) => t.id)])).toEqual([
+      [
+        "operacional",
+        ["operacional.patio", "operacional.totem", "operacional.ordens-de-carregamento"],
+      ],
+    ]);
   });
   it("a Demonstração, pronta, só abre para quem tem o módulo de Administração", () => {
     const demonstracao = acharTela("/admin/demonstracao")?.tela;
@@ -161,9 +166,10 @@ describe("rotaInicialDoModulo (para onde /frota, /pessoas etc. redirecionam)", (
     expect(rotaInicialDoModulo("Administrador", "frota")).toBe("/frota/acompanhamento");
     expect(rotaInicialDoModulo("Administrador", "inicio")).toBe("/inicio/tarefas");
   });
-  it("no catálogo real, quem não vê nada não é levado a lugar nenhum", () => {
+  it("no catálogo real, cada perfil só é levado ao módulo que vê", () => {
     for (const m of CATALOGO) {
-      expect(rotaInicialDoModulo("Operacional", m.id), m.id).toBeUndefined();
+      const doOperacional = m.id === "operacional" ? "/operacional/patio" : undefined;
+      expect(rotaInicialDoModulo("Operacional", m.id), m.id).toBe(doOperacional);
       const esperado = m.id === "frota" ? "/frota/acompanhamento" : undefined;
       expect(rotaInicialDoModulo("Gestor de frota", m.id), m.id).toBe(esperado);
     }
