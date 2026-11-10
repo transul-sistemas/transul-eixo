@@ -85,4 +85,18 @@ describe("decidirAcesso", () => {
   it("com tudo, segue", () => {
     expect(decidirAcesso("/frota/placas", "", logado)).toEqual({ tipo: "seguir" });
   });
+
+  it("o Operacional tem Pessoas só para a Escala (10/11/2026): a lista e a ficha dão 404", () => {
+    const operacional = { ...logado, perfil: "Operacional" as const };
+    expect(decidirAcesso("/pessoas/escala", "?mes=2026-06", operacional)).toEqual({
+      tipo: "seguir",
+    });
+    expect(decidirAcesso("/pessoas/lista", "", operacional)).toEqual({ tipo: "nao-encontrada" });
+    expect(decidirAcesso("/pessoas/lista/abc", "", operacional)).toEqual({
+      tipo: "nao-encontrada",
+    });
+    expect(decidirAcesso("/pessoas/lista", "", { ...logado, perfil: "Diretoria" })).toEqual({
+      tipo: "seguir",
+    });
+  });
 });

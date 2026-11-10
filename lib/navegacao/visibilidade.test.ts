@@ -100,7 +100,7 @@ describe("modulosVisiveis (catálogo real)", () => {
       expect(visiveis.flatMap((m) => m.telas)).toHaveLength(35);
     }
   });
-  it("com as cinco telas da Frota prontas, o Gestor de frota vê as cinco; o Operacional vê Pátio, Totem e Ordens de carregamento", () => {
+  it("com as cinco telas da Frota prontas, o Gestor de frota vê as cinco; o Operacional vê Pátio, Totem, Ordens de carregamento e a Escala", () => {
     expect(modulosVisiveis("Gestor de frota").map((m) => [m.id, m.telas.map((t) => t.id)])).toEqual(
       [
         [
@@ -120,7 +120,21 @@ describe("modulosVisiveis (catálogo real)", () => {
         "operacional",
         ["operacional.patio", "operacional.totem", "operacional.ordens-de-carregamento"],
       ],
+      ["pessoas", ["pessoas.escala"]],
     ]);
+  });
+  it("Pessoas para o Operacional (10/11/2026): só a Escala (da filial dele); a lista e a ficha, não", () => {
+    const escala = acharTela("/pessoas/escala")?.tela;
+    const lista = acharTela("/pessoas/lista")?.tela;
+    expect(escala && lista).toBeDefined();
+    if (!escala || !lista) return;
+    expect(podeAbrir("Operacional", escala)).toBe(true);
+    expect(podeAbrir("Operacional", lista)).toBe(false);
+    for (const perfil of ["Administrador", "Diretoria"] as const) {
+      expect(podeAbrir(perfil, escala)).toBe(true);
+      expect(podeAbrir(perfil, lista)).toBe(true);
+    }
+    expect(podeAbrir("Gestor de frota", escala)).toBe(false);
   });
   it("a Demonstração, pronta, só abre para quem tem o módulo de Administração", () => {
     const demonstracao = acharTela("/admin/demonstracao")?.tela;
@@ -168,7 +182,12 @@ describe("rotaInicialDoModulo (para onde /frota, /pessoas etc. redirecionam)", (
   });
   it("no catálogo real, cada perfil só é levado ao módulo que vê", () => {
     for (const m of CATALOGO) {
-      const doOperacional = m.id === "operacional" ? "/operacional/patio" : undefined;
+      const doOperacional =
+        m.id === "operacional"
+          ? "/operacional/patio"
+          : m.id === "pessoas"
+            ? "/pessoas/escala"
+            : undefined;
       expect(rotaInicialDoModulo("Operacional", m.id), m.id).toBe(doOperacional);
       const esperado = m.id === "frota" ? "/frota/acompanhamento" : undefined;
       expect(rotaInicialDoModulo("Gestor de frota", m.id), m.id).toBe(esperado);

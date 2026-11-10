@@ -124,7 +124,7 @@ select set_eq(
 select is(
   (select md5(string_agg(perfil || '|' || modulo || '|' || acao || '|' || escopo, ',' order by perfil || '|' || modulo || '|' || acao || '|' || escopo collate "C"))
      from config.permissao_do_perfil),
-  '57ad0676d56af6d5e66e8b5be07e9396',
+  'd343d54d27c68753725c5309d7f09da1',
   'as permissões do seed são as mesmas do espelho em TypeScript (mesma assinatura)'
 );
 

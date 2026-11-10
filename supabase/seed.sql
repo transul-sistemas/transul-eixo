@@ -188,9 +188,6 @@ insert into config.permissao_do_perfil (perfil, modulo, acao, escopo) values
   ('diretoria', 'cadastros', 'editar', 'tudo'),
   ('diretoria', 'cadastros', 'excluir', 'tudo'),
   ('diretoria', 'admin', 'ver', 'tudo'),
-  ('diretoria', 'admin', 'criar', 'tudo'),
-  ('diretoria', 'admin', 'editar', 'tudo'),
-  ('diretoria', 'admin', 'excluir', 'tudo'),
   ('administrador', 'pessoas', 'ver_documento', 'tudo'),
   ('gestor_de_frota', 'inicio', 'ver', 'tudo'),
   ('gestor_de_frota', 'frota', 'ver', 'minha_carteira'),
@@ -200,7 +197,8 @@ insert into config.permissao_do_perfil (perfil, modulo, acao, escopo) values
   ('operacional', 'inicio', 'ver', 'tudo'),
   ('operacional', 'operacional', 'ver', 'filial'),
   ('operacional', 'operacional', 'criar', 'filial'),
-  ('operacional', 'operacional', 'editar', 'filial');
+  ('operacional', 'operacional', 'editar', 'filial'),
+  ('operacional', 'pessoas', 'ver', 'filial');
 
 -- Papéis da pessoa (o gestor da carteira exige o de gestor de frota).
 insert into config.papel (codigo, nome) values

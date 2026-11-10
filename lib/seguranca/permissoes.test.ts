@@ -17,7 +17,7 @@ describe("catálogo de permissões: seed, banco e espelho dizem o mesmo", () => 
   it("a assinatura do espelho é a mesma constante que o pgTAP 50 confere no banco", () => {
     const md5 = createHash("md5").update(assinaturaDasPermissoes(), "utf8").digest("hex");
     expect(md5).toBe(ASSINATURA_DAS_PERMISSOES);
-    expect(ASSINATURA_DAS_PERMISSOES).toBe("57ad0676d56af6d5e66e8b5be07e9396");
+    expect(ASSINATURA_DAS_PERMISSOES).toBe("d343d54d27c68753725c5309d7f09da1");
   });
 
   it("o seed semeia exatamente as permissões do espelho", () => {
