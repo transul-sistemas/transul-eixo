@@ -1,3 +1,4 @@
+import { textoDoErro } from "@/lib/log/erro";
 import { unstable_rethrow } from "next/navigation";
 import { type DadosDosAssistentes, dadosDosAssistentes } from "@/lib/dados/assistentes";
 import { fonteDeEscrita } from "@/lib/dados/fonte";
@@ -37,7 +38,7 @@ export async function carregarDadosDosAssistentes(pedido: {
   } catch (erro) {
     // O redirecionamento da sessão (sem login, sem vínculo) não é erro: segue para o Next.
     unstable_rethrow(erro);
-    console.error("dados dos assistentes indisponíveis:", erro);
+    console.error("dados dos assistentes indisponíveis:", textoDoErro(erro));
     return null;
   }
 }

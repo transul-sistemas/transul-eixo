@@ -9,6 +9,7 @@ import { pathToFileURL } from "node:url";
 import { createClient } from "@supabase/supabase-js";
 import { comBanco, supabaseLocal } from "../e2e/apoio/usuarios-de-teste.ts";
 import { bancoLocal } from "./db-dev-dados.ts";
+import { ErroDoEixo, textoDoErro } from "../lib/log/erro.ts";
 
 const PERFIS = ["administrador", "diretoria", "gestor_de_frota", "operacional"] as const;
 type CodigoDoPerfil = (typeof PERFIS)[number];
@@ -31,13 +32,13 @@ export function lerArgumentosDoUsuario(argv: readonly string[]): {
   };
   const perfil = valor("--perfil") ?? "administrador";
   if (!(PERFIS as readonly string[]).includes(perfil)) {
-    throw new Error(`Perfil desconhecido: use ${PERFIS.join(", ")}.`);
+    throw new ErroDoEixo(`Perfil desconhecido: use ${PERFIS.join(", ")}.`);
   }
   const codigo = perfil as CodigoDoPerfil;
   const email = (valor("--email") ?? `dev.${codigo.replace(/_/g, "-")}@eixo.local`)
     .trim()
     .toLowerCase();
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error("E-mail inválido.");
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new ErroDoEixo("E-mail inválido.");
   return { perfil: codigo, email };
 }
 
@@ -64,7 +65,7 @@ export function enderecoLocal(endereco: string): boolean {
 function lerSenhaSemEco(pergunta: string): Promise<string> {
   const entrada = process.stdin;
   if (!entrada.isTTY) {
-    return Promise.reject(new Error("Rode no terminal: a senha é digitada, sem eco."));
+    return Promise.reject(new ErroDoEixo("Rode no terminal: a senha é digitada, sem eco."));
   }
   process.stdout.write(pergunta);
   entrada.setRawMode(true);
@@ -86,7 +87,7 @@ function lerSenhaSemEco(pergunta: string): Promise<string> {
           entrada.setRawMode(false);
           entrada.pause();
           entrada.off("data", aoLer);
-          recusar(new Error("Cancelado."));
+          recusar(new ErroDoEixo("Cancelado."));
           return;
         }
         if (caractere === "\u007f" || caractere === "\b") texto = texto.slice(0, -1);
@@ -101,24 +102,25 @@ async function principal() {
   const { perfil, email } = lerArgumentosDoUsuario(process.argv.slice(2));
   const local = supabaseLocal();
   if (!enderecoLocal(local.url) || !bancoLocal(local.banco)) {
-    throw new Error("Recusado: o dev:usuario só roda no Supabase local.");
+    throw new ErroDoEixo("Recusado: o dev:usuario só roda no Supabase local.");
   }
 
   const primeira = await lerSenhaSemEco(`Senha para ${email} (mínimo 12 caracteres): `);
   const segunda = await lerSenhaSemEco("Digite a senha de novo: ");
   const problema = validarSenha(primeira, segunda);
-  if (problema) throw new Error(problema);
+  if (problema) throw new ErroDoEixo(problema);
 
   const admin = createClient(local.url, local.chaveSecreta, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
   const { data: lista, error: erroDaLista } = await admin.auth.admin.listUsers({ perPage: 1000 });
-  if (erroDaLista) throw new Error(`Não foi possível ler os usuários: ${erroDaLista.message}`);
+  if (erroDaLista)
+    throw new ErroDoEixo(`Não foi possível ler os usuários (${textoDoErro(erroDaLista)}).`);
   const existente = lista.users.find((u) => u.email === email);
   const { error } = existente
     ? await admin.auth.admin.updateUserById(existente.id, { password: primeira })
     : await admin.auth.admin.createUser({ email, password: primeira, email_confirm: true });
-  if (error) throw new Error(`O Auth local recusou: ${error.message}`);
+  if (error) throw new ErroDoEixo(`O Auth local recusou (${textoDoErro(error)}).`);
 
   // A Pessoa de teste do perfil (achada pelo CPF), o papel de gestor e o vínculo, como no Studio.
   await comBanco(async (banco) => {
@@ -131,7 +133,7 @@ async function principal() {
       [base],
     );
     const documento = rows[0]?.documento;
-    if (!documento) throw new Error("Sem CPF de teste para o perfil.");
+    if (!documento) throw new ErroDoEixo("Sem CPF de teste para o perfil.");
     let pessoa = (
       await banco.query<{ pessoa_id: string }>(
         "select pessoa_id from nucleo.pessoa_documento where documento = $1",
@@ -162,7 +164,7 @@ async function principal() {
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   principal().catch((erro: unknown) => {
-    console.error(erro instanceof Error ? erro.message : erro);
+    console.error(textoDoErro(erro));
     process.exit(1);
   });
 }

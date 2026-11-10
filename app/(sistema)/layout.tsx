@@ -1,3 +1,4 @@
+import { textoDoErro } from "@/lib/log/erro";
 import { unstable_rethrow } from "next/navigation";
 import { connection } from "next/server";
 import { type ReactNode, Suspense } from "react";
@@ -23,7 +24,7 @@ async function contarParaReceberSemCair(): Promise<number> {
     return await contarParaReceber(hojeEmSaoPaulo(new Date()));
   } catch (erro) {
     unstable_rethrow(erro);
-    console.error("contagem de placas para receber indisponível:", erro);
+    console.error("contagem de placas para receber indisponível:", textoDoErro(erro));
     return 0;
   }
 }

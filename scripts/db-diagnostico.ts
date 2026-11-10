@@ -9,6 +9,7 @@ import { appendFileSync, existsSync, readFileSync, writeFileSync } from "node:fs
 import { pathToFileURL } from "node:url";
 import pg from "pg";
 import { bancoLocal } from "./db-dev-dados.ts";
+import { ErroDoEixo, textoDoErro } from "../lib/log/erro.ts";
 
 const MIGRATION = "supabase/migrations/20261104200000_leitura_das_placas.sql";
 
@@ -18,7 +19,7 @@ export function linhaSemAlertas(migration: string): string {
   const fim = ";\ncomment on view nucleo.linha_de_placa";
   const a = migration.indexOf(inicio);
   const b = migration.indexOf(fim, a);
-  if (a < 0 || b < 0) throw new Error("Não achei a visão linha_de_placa na migration.");
+  if (a < 0 || b < 0) throw new ErroDoEixo("Não achei a visão linha_de_placa na migration.");
   let corpo = migration.slice(a + inicio.length, b);
   const coluna = "    al.alertas,\n";
   const juncao = corpo.slice(
@@ -26,7 +27,7 @@ export function linhaSemAlertas(migration: string): string {
     corpo.indexOf(") al on true\n") + ") al on true\n".length,
   );
   if (!corpo.includes(coluna) || !juncao.startsWith("  left join lateral")) {
-    throw new Error("Não achei os alertas na visão linha_de_placa.");
+    throw new ErroDoEixo("Não achei os alertas na visão linha_de_placa.");
   }
   corpo = corpo.replace(coluna, "").replace(juncao, "");
   return corpo;
@@ -104,7 +105,7 @@ function enderecoDoBancoLocal(): string {
   const linha = texto.split(/\r?\n/).find((l) => l.startsWith("DB_URL="));
   const endereco = linha?.replace(/^DB_URL="?/, "").replace(/"$/, "");
   if (!endereco)
-    throw new Error("O supabase status não trouxe o banco: o Supabase local está ligado?");
+    throw new ErroDoEixo("O supabase status não trouxe o banco: o Supabase local está ligado?");
   return endereco;
 }
 
@@ -117,7 +118,8 @@ async function principal() {
   const saida = valor("--saida") ?? "diagnostico-da-lista.md";
   const rotulo = valor("--rotulo") ?? "?";
   const endereco = enderecoDoBancoLocal();
-  if (!bancoLocal(endereco)) throw new Error("Recusado: o diagnóstico só roda no Supabase local.");
+  if (!bancoLocal(endereco))
+    throw new ErroDoEixo("Recusado: o diagnóstico só roda no Supabase local.");
   const escrever = (...linhas: string[]) => {
     const texto = linhas.join("\n");
     appendFileSync(saida, `${texto}\n`, "utf8");
@@ -340,7 +342,7 @@ async function principal() {
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   principal().catch((erro: unknown) => {
-    console.error(erro instanceof Error ? erro.message : erro);
+    console.error(textoDoErro(erro));
     process.exit(1);
   });
 }

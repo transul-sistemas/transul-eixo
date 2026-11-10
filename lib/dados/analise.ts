@@ -1,3 +1,4 @@
+import { textoDoErro } from "@/lib/log/erro";
 import type { EstadoDaAnalise } from "@/lib/navegacao/analise";
 import type { AnaliseDaFrota, OpcoesDaAnalise } from "./analise-tipos";
 import type { ErroDoBanco } from "./escrita-do-banco";
@@ -75,7 +76,7 @@ export async function lerAnaliseDaFrota(
   const c = await cliente();
   // Antes de ler a linha mantida, recalcula as que venceram (plano B do recálculo, 3.9a).
   const { error } = await c.schema("nucleo").rpc("atualizar_leitura_vencida");
-  if (error) console.error("atualizar_leitura_vencida falhou:", error.message);
+  if (error) console.error("atualizar_leitura_vencida falhou:", textoDoErro(error));
   const a = await ler<AnaliseDoBanco>(c, "analise_da_frota", {
     p_mes: `${estado.mes}-01`,
     p_filial: estado.filial,

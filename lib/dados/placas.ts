@@ -1,3 +1,4 @@
+import { textoDoErro } from "@/lib/log/erro";
 import type { ConsultaDeTabela } from "@/lib/navegacao/tabela";
 import { fonteDePlacas } from "./fonte";
 import { normalizarPlaca } from "@/lib/dominio/placa";
@@ -63,7 +64,7 @@ export async function dadosDoPainel(
     return detalhe ? { placa, situacao: "ok", detalhe } : { placa, situacao: "nao-encontrada" };
   } catch (erro) {
     // Sem logger no projeto ainda (Sentry entra depois): ao menos o erro fica no log do servidor.
-    console.error(`dadosDoPainel falhou para ${placa}`, erro);
+    console.error("dadosDoPainel falhou:", textoDoErro(erro));
     return { placa, situacao: "erro" };
   }
 }

@@ -1,3 +1,4 @@
+import { textoDoErro } from "@/lib/log/erro";
 import {
   podeEntregar,
   type PedidoDeTransferencia,
@@ -81,7 +82,7 @@ export function resultadoDoErro<T>(erro: ErroDoBanco): Resultado<T> {
   }
   if (codigo === "23505")
     return erroDaAcao<AtualDaAcao>("entrada_invalida", { mensagem: erro.message });
-  console.error("gravação no banco falhou:", codigo, erro.message);
+  console.error("gravação no banco falhou:", textoDoErro(erro));
   return erroDaAcao<AtualDaAcao>("falha");
 }
 
@@ -698,7 +699,7 @@ export function escritaDoBanco(cliente: () => Promise<ClienteDeEscrita>): FonteD
 export async function contarParaReceberNoBanco(c: ClienteDeEscrita): Promise<number> {
   const r = await chamar<number>(c, "contar_para_receber");
   if (!r.ok) {
-    console.error("contar_para_receber falhou:", r.erro.message);
+    console.error("contar_para_receber falhou:", textoDoErro(r.erro));
     return 0;
   }
   return Number(r.dados) || 0;

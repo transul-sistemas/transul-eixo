@@ -1,5 +1,6 @@
 "use server";
 
+import { textoDoErro } from "@/lib/log/erro";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { hojeEmSaoPaulo } from "@/components/formato/data";
@@ -61,7 +62,7 @@ export async function registrarChegadaAcao(
   try {
     resultado = await gravarChegada(dados.data, envelope.data.chaveDeEnvio);
   } catch (erro) {
-    console.error("registrar a chegada falhou:", erro);
+    console.error("registrar a chegada falhou:", textoDoErro(erro));
     return erroDaAcao("falha");
   }
   if (resultado.ok) invalidarOperacional();
@@ -82,7 +83,7 @@ export async function avancarNoPatioAcao(bruto: unknown): Promise<ResultadoDaAca
   try {
     resultado = await gravarAvancoNoPatio(dados.data, envelope.data.chaveDeEnvio);
   } catch (erro) {
-    console.error("avançar a placa no pátio falhou:", erro);
+    console.error("avançar a placa no pátio falhou:", textoDoErro(erro));
     return erroDaAcao("falha");
   }
   if (resultado.ok) invalidarOperacional();
@@ -103,7 +104,7 @@ export async function criarOrdemAcao(bruto: unknown): Promise<ResultadoDaAcao<Or
   try {
     resultado = await gravarOrdem(dados.data, envelope.data.chaveDeEnvio);
   } catch (erro) {
-    console.error("criar a ordem de carregamento falhou:", erro);
+    console.error("criar a ordem de carregamento falhou:", textoDoErro(erro));
     return erroDaAcao("falha");
   }
   if (resultado.ok) invalidarOperacional();

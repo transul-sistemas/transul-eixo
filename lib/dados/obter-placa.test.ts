@@ -139,7 +139,9 @@ describe("dadosDoPainel: o que a página entrega ao painel, sem nunca derrubar a
     const registro = vi.spyOn(console, "error").mockImplementation(() => {});
     await dadosDoPainel("AAA0A04", HOJE, { simulacao: { falhaNoPainel: true } });
     expect(registro).toHaveBeenCalledTimes(1);
-    expect(String(registro.mock.calls[0]?.[0])).toContain("AAA0A04");
+    expect(String(registro.mock.calls[0]?.[0])).toContain("dadosDoPainel falhou");
+    // Lote 2: o log nunca leva a placa.
+    expect(registro.mock.calls[0]?.map(String).join(" ")).not.toContain("AAA0A04");
     registro.mockRestore();
   });
 

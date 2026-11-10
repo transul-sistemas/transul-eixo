@@ -1,5 +1,6 @@
 "use server";
 
+import { textoDoErro } from "@/lib/log/erro";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import {
@@ -47,7 +48,7 @@ export async function editarOperacaoAcao(
     const cliente = (await criarClienteDoServidor()) as unknown as ClienteDasOperacoes;
     resultado = await editarOperacao(cliente, dados.data);
   } catch (erro) {
-    console.error("gravação da operação falhou:", erro);
+    console.error("gravação da operação falhou:", textoDoErro(erro));
     return erroDaAcao("falha");
   }
   if (resultado.ok) {

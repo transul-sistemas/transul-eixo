@@ -1,5 +1,6 @@
 "use server";
 
+import { textoDoErro } from "@/lib/log/erro";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { type CarteiraConfirmada, gravarConfirmacaoDaCarteira } from "@/lib/dados/acompanhamento";
@@ -42,7 +43,7 @@ export async function confirmarCarteiraAcao(
   try {
     resultado = await gravarConfirmacaoDaCarteira(dados.data, envelope.data.chaveDeEnvio);
   } catch (erro) {
-    console.error("confirmar a carteira falhou:", erro);
+    console.error("confirmar a carteira falhou:", textoDoErro(erro));
     return erroDaAcao("falha");
   }
   if (resultado.ok) revalidatePath("/frota/carteira");

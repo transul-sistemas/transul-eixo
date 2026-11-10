@@ -1,5 +1,6 @@
 "use server";
 
+import { textoDoErro } from "@/lib/log/erro";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { agoraEmSaoPaulo, hojeEmSaoPaulo } from "@/components/formato/data";
@@ -76,7 +77,7 @@ async function executar<T>(
       gestorId: await gestorAtual(),
     });
   } catch (erro) {
-    console.error("ação de escrita falhou:", erro);
+    console.error("ação de escrita falhou:", textoDoErro(erro));
     return erroDaAcao("falha");
   }
   if (resultado.ok) {
