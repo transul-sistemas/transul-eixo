@@ -29,8 +29,7 @@ Onde não há fonte de dados: "Sem dados ainda: depende de <fonte>". Nunca um n�
   Ordens, Carteira, grade do Acompanhamento) e `lib/navegacao/preferencias-da-tabela.ts`.
 - Teste: `lib/qualidade/lista-de-vinte.test.ts`, o critério (i) do teste de consistência do "esqueleto
   global". Falha quando uma tabela de dados não usa o componente padrão ou não abre com 20.
-  Pendências registradas no próprio teste: Operações e Parceiros (a função de leitura devolve a lista
-  inteira e precisa de `p_pagina`/`p_tam`), catálogos e usuários.
+  Pendências registradas no próprio teste: catálogos (página própria de 50) e tabela de usuários.
 
 ## Período das telas de Operações
 

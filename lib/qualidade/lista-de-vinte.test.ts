@@ -15,19 +15,12 @@ import {
 // encolhe). Nenhuma pendência nova entra sem aprovação.
 
 const PENDENCIAS_DE_PASTA: Record<string, string> = {
-  // O banco devolve a lista inteira: paginar exige p_pagina e p_tam em função de leitura existente
-  // (nucleo.operacoes_do_mes e a de parceiros), mudança que vai ao checkpoint do Opus.
-  "app/(sistema)/operacoes/lista": "nucleo.operacoes_do_mes sem p_pagina/p_tam",
-  "app/(sistema)/parceiros/lista": "função de leitura dos parceiros sem p_pagina/p_tam",
   // Catálogo e usuários: fora do pedido de 10/11/2026; paginam (ou não) do seu jeito.
   "app/(sistema)/cadastros/catalogos": "catálogo com página própria de 50 linhas",
   "app/(sistema)/admin/usuarios-e-perfis": "tabela de usuários sem paginação",
 };
 
-const PENDENCIAS_DE_TAMANHO: Record<string, string> = {
-  "lib/navegacao/operacoes.ts:PADRAO_DAS_OPERACOES=100": "mesma pendência da lista de Operações",
-  "lib/navegacao/parceiros.ts:PADRAO_DOS_PARCEIROS=100": "mesma pendência da lista de Parceiros",
-};
+const PENDENCIAS_DE_TAMANHO: Record<string, string> = {};
 
 describe("toda lista de dados pagina pelo componente padrão (critério i do esqueleto global)", () => {
   it("só as pendências registradas ficam sem o Paginador/seletor padrão", () => {
