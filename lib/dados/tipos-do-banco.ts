@@ -1718,6 +1718,11 @@ isOneToOne: false
 "carteira_do_mes":
 { Args: { "p_filtro"?: string,"p_mes": string,"p_pagina"?: number,"p_tam"?: number }; Returns: Json
                            },
+"cascata_das_operacoes":
+{ Args: { "p_mes": string }; Returns: {
+              "crs": number,"custo_frota": number,"custo_servico": number,"documentos": number,"operacao_id": string,"receita": number
+            }[]
+                           },
 "catalogos_dos_assistentes":
 { Args: Record<PropertyKey, never>; Returns: Json
                            },
@@ -1748,6 +1753,11 @@ isOneToOne: false
                            },
 "corrigir_campo":
 { Args: { "p_ativo_id": string,"p_campo": string,"p_chave"?: string,"p_motivo": string,"p_valor": Json,"p_versao"?: number }; Returns: string
+                           },
+"cr_da_operacao_no_mes":
+{ Args: { "p_mes": string }; Returns: {
+              "codcencus": string,"cr_id": string,"frota": boolean,"operacao_id": string
+            }[]
                            },
 "cr_em":
 { Args: { "p_ativo_id": string,"p_em": string }; Returns: string
@@ -1784,6 +1794,9 @@ isOneToOne: false
                            },
 "estado_em":
 { Args: { "p_ativo_id": string,"p_camada": string,"p_em": string }; Returns: string
+                           },
+"ficha_da_operacao":
+{ Args: { "p_mes"?: string,"p_operacao": string }; Returns: Json
                            },
 "filial_do_cr_em":
 { Args: { "p_ativo_id": string,"p_em": string }; Returns: string
@@ -1863,6 +1876,9 @@ isOneToOne: false
 "mascarar_documento":
 { Args: { "p_texto": string }; Returns: string
                            },
+"meses_das_operacoes":
+{ Args: Record<PropertyKey, never>; Returns: (string)[]
+                           },
 "meta_do_conjunto_de":
 { Args: { "p_ativo_id": string,"p_em"?: string }; Returns: number
                            },
@@ -1894,6 +1910,12 @@ isOneToOne: false
                            },
 "operacao_em":
 { Args: { "p_ativo_id": string,"p_em": string }; Returns: string
+                           },
+"operacoes_do_mes":
+{ Args: { "p_busca"?: string,"p_chips"?: (string)[],"p_mes"?: string,"p_ordem"?: string }; Returns: Json
+                           },
+"operacoes_que_vejo":
+{ Args: Record<PropertyKey, never>; Returns: (string)[]
                            },
 "pedido_aberto_da_placa":
 { Args: { "p_placa": string }; Returns: Json

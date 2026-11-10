@@ -1,0 +1,127 @@
+-- Dados fictícios dos testes 94 e 95 (Operações › lista e ficha). Incluído logo depois do
+-- `\ir apoio/como_usuario.psql`; vive na transação do teste e some no `rollback`.
+--
+-- Duas operações fictícias ("Grãos 94" em Cordeirópolis/SP e "Cimento 94" em São Luís/MA) e três CRs:
+--   9401 frota de ativo, operação Grãos 94 (o rótulo do Sankhya), com a placa FFF9A01 do Gestor A;
+--   9402 serviço, operação Grãos 94;
+--   9403 serviço, rótulo Grãos 94, mas montado no Eixo em Cimento 94 a partir de 01/03/2026 (a montagem
+--        vence o rótulo).
+-- Março de 2026:
+--   Grãos 94:   receita 1.000,00 (9401) + 3.000,00 (9402) = 4.000,00; frota 400,00; serviço 600,00;
+--               margem 3.000,00 (75,0 %); folha: 2 funcionários, 2.700,00 de salário bruto.
+--   Cimento 94: receita 2.000,00; frota 0; serviço 300,00; margem 1.700,00 (85,0 %).
+-- Fora da conta: CT-e de 01/04 (limite do mês), CT-e que sumiu do Sankhya, CT-e com status R,
+-- provisão, despesa invalidada e despesa de fevereiro.
+
+create function pg_temp.id(p_nome text) returns uuid language sql as $$
+  select nullif(current_setting('t.' || lower(regexp_replace(p_nome, '[^A-Za-z0-9]', '_', 'g')), true), '')::uuid
+$$;
+create function pg_temp.guardar(p_nome text, p_id uuid) returns uuid language sql as $$
+  select set_config('t.' || lower(regexp_replace(p_nome, '[^A-Za-z0-9]', '_', 'g')), p_id::text, true)::uuid
+$$;
+create function pg_temp.renavam(p_n bigint) returns text language plpgsql as $$
+declare
+  v_prefixo text := lpad(p_n::text, 10, '0');
+begin
+  for v_dv in 0..9 loop
+    if nucleo.renavam_valido(v_prefixo || v_dv::text) then
+      return v_prefixo || v_dv::text;
+    end if;
+  end loop;
+  raise exception 'sem dígito verificador para %', v_prefixo;
+end;
+$$;
+create function pg_temp.cpf(p_n bigint) returns text language plpgsql as $$
+declare
+  v_base text := lpad(p_n::text, 9, '0');
+begin
+  for v_a in 0..9 loop
+    for v_b in 0..9 loop
+      if nucleo.documento_valido(v_base || v_a::text || v_b::text) then
+        return v_base || v_a::text || v_b::text;
+      end if;
+    end loop;
+  end loop;
+  raise exception 'sem CPF para %', v_base;
+end;
+$$;
+create function pg_temp.pessoa(p_nome text, p_n bigint, p_perfil text, p_gestor boolean) returns uuid language plpgsql as $$
+declare
+  v_pessoa uuid;
+  v_auth uuid;
+begin
+  insert into nucleo.pessoa (nome) values (p_nome) returning id into v_pessoa;
+  insert into nucleo.pessoa_documento (pessoa_id, documento) values (v_pessoa, pg_temp.cpf(p_n));
+  if p_gestor then
+    insert into nucleo.papel_da_pessoa (pessoa_id, papel) values (v_pessoa, 'gestor_de_frota');
+  end if;
+  v_auth := tests.criar_usuario(lower(replace(p_nome, ' ', '.')) || '.9495@exemplo.local');
+  insert into nucleo.usuario (pessoa_id, auth_user_id, perfil) values (v_pessoa, v_auth, p_perfil);
+  perform pg_temp.guardar('auth_' || p_nome, v_auth);
+  return pg_temp.guardar(p_nome, v_pessoa);
+end;
+$$;
+create function pg_temp.erro_de(p_sql text) returns text language plpgsql as $$
+begin
+  begin
+    execute p_sql;
+    raise exception 'a tentativa executou' using errcode = 'ZZ999';
+  exception when others then
+    return case when sqlstate = 'ZZ999' then 'executou' else sqlstate end;
+  end;
+end;
+$$;
+
+select pg_temp.pessoa('Gestor A', 940000001, 'gestor_de_frota', true);
+select pg_temp.pessoa('Adm', 940000002, 'administrador', false);
+select pg_temp.pessoa('Dir', 940000003, 'diretoria', false);
+select pg_temp.pessoa('Oper', 940000004, 'operacional', false);
+
+insert into nucleo.operacao (nome, tipo, base_cidade, base_uf) values
+  ('Grãos 94', 'operacao', 'Cordeirópolis', 'SP'),
+  ('Cimento 94', 'operacao', 'São Luís', 'MA');
+select pg_temp.guardar('graos', (select id from nucleo.operacao where nome = 'Grãos 94'));
+select pg_temp.guardar('cimento', (select id from nucleo.operacao where nome = 'Cimento 94'));
+
+insert into nucleo.cr (codcencus, codigo, participa_da_frota, veiculo_obrigatorio, operacao_id) values
+  (9401, 'K94A', true, true, pg_temp.id('graos')),
+  (9402, 'K94B', false, null, pg_temp.id('graos')),
+  (9403, 'K94C', false, null, pg_temp.id('graos'));
+insert into nucleo.cr_de_servico_na_operacao (cr_id, operacao_id, inicio, inicio_origem, montado_por)
+  values ((select id from nucleo.cr where codcencus = 9403), pg_temp.id('cimento'), '2026-03-01 00:00-03',
+          'informada', pg_temp.id('Adm'));
+
+select pg_temp.guardar('k1', nucleo.cadastrar_ativo(
+  p_tipo => 'cavalo', p_renavam => pg_temp.renavam(9401), p_placa => 'FFF9A01',
+  p_gestor_id => pg_temp.id('Gestor A'), p_cr_id => (select id from nucleo.cr where codcencus = 9401),
+  p_operacao_id => pg_temp.id('graos'), p_em => '2026-01-10 08:00-03'));
+set constraints all immediate;
+set constraints all deferred;
+
+insert into staging.viagem (nunota, codcencus, dt_negociacao, status_cte, frete_empresa, sumiu_do_sankhya_em) values
+  (940001, '9401', '2026-03-05', 'A', 1000.00, null),
+  (940002, '9402', '2026-03-31', null, 3000.00, null),
+  (940003, '9402', '2026-04-01', 'A', 500.00, null),
+  (940004, '9402', '2026-03-10', 'A', 700.00, '2026-04-02 10:00-03'),
+  (940005, '9402', '2026-03-11', 'R', 800.00, null),
+  (940006, '9403', '2026-03-12', 'A', 2000.00, null);
+insert into staging.natureza (codnat, descricao) values ('94001', 'Combustível 94'), ('94002', 'Salário 94');
+insert into staging.despesa (origem_id, nufin, codcencus, codnat, dt_competencia, provisao, valor_desdobramento, invalidado_em) values
+  ('d94-1', '1', '9401', '94001', '2026-03-10', 'REAL', 400.00, null),
+  ('d94-2', '2', '9401', '94001', '2026-03-10', 'PROVISAO', 100.00, null),
+  ('d94-3', '3', '9402', '94002', '2026-03-20', 'REAL', 600.00, null),
+  ('d94-4', '4', '9402', '94002', '2026-03-20', 'REAL', 50.00, '2026-04-01 00:00-03'),
+  ('d94-5', '5', '9402', '94002', '2026-02-28', 'REAL', 70.00, null),
+  ('d94-6', '6', '9403', '94002', '2026-03-15', null, 300.00, null);
+insert into staging.folha (chave_folha, referencia, tipfolha, codfunc, codcencus, departamento, salario_bruto) values
+  ('f94-1', '2026-03-01', 'Mensal', 1, '9402', 'Departamento 94', 1000.00),
+  ('f94-2', '2026-03-01', 'Mensal', 2, '9402', 'Departamento 94', 1500.00),
+  ('f94-3', '2026-03-01', 'Férias', 2, '9402', 'Departamento 94', 200.00),
+  ('f94-4', '2026-02-01', 'Mensal', 3, '9402', 'Departamento 94', 900.00);
+
+-- O gestor de frota ainda não tem Operações no seed; os testes do escopo por carteira dão a ele a
+-- permissão só dentro da transação (a regra da função vale quando a permissão existir).
+create function pg_temp.dar_operacoes_ao_gestor() returns void language sql as $$
+  insert into config.permissao_do_perfil (perfil, modulo, acao, escopo)
+  values ('gestor_de_frota', 'operacoes', 'ver', 'minha_carteira') on conflict do nothing;
+$$;
