@@ -69,8 +69,10 @@ const gatilho = (nome, tabela) => [
 const MUTACOES = [
   {
     nome: "busca sem escapar o %",
-    de: "replace(replace(replace(nucleo.texto_simples(btrim(coalesce(p_busca, ''))), '\\', '\\\\'), '%', '\\%'), '_', '\\_')",
-    para: "nucleo.texto_simples(btrim(coalesce(p_busca, '')))",
+    // Com o começo da linha: a grade do Acompanhamento (20261110200000) repete o escape em outra função
+    // (placas_da_grade), depois de um "select ", e não pode tornar esta mutação inválida.
+    de: "\n      replace(replace(replace(nucleo.texto_simples(btrim(coalesce(p_busca, ''))), '\\', '\\\\'), '%', '\\%'), '_', '\\_')",
+    para: "\n      nucleo.texto_simples(btrim(coalesce(p_busca, '')))",
     arquivo: GRAVAR,
     objeto: funcao("nucleo.placas_filtradas"),
   },
