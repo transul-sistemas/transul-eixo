@@ -8,6 +8,15 @@ Modelo de entrada:
 
 ---
 
+## 10/11/2026 — Permissões, segurança e a ligação dos dados (lotes 1 a 3)
+
+- **Decisões (Alexandre, 10/11/2026):** só o Administrador muda acesso de usuários e permissões (a Diretoria só lê a Administração: saem `admin.criar` e `admin.editar`); o Gestor de frota não vê Operações; o Operacional vê a Escala só da filial dele (`pessoas.ver` com escopo filial). Migration `20261112200000_permissoes_de_10_11`, pgTAP 103.
+- **Segurança:** troca de senha com reautenticação (`secure_password_change`, código de 6 dígitos por e-mail); a guarda do Sankhya barra CPF/CNPJ no modo resumo (só dentro de `COUNT(...)`) e recusa `FOR UPDATE`; nenhum log imprime placa nem mensagem crua do Postgres (só o código, por `lib/log/erro.ts`; teste `lib/qualidade/logs-seguros.test.ts`); nenhuma migration carrega dado no staging (`lib/qualidade/staging-sem-dados.test.ts`).
+- **Dados:** os CRs de serviço com operação no CSV da auditoria foram ligados por montagem (65); os 60 agrupadores de acionista viraram parceiros acionistas pendentes, sem documento (migration `20261112100000_parceiro_pendente`); Operações passou a usar `nucleo.competencia_gerencial` e o valor líquido, como a Visão geral (`20261112100100_operacoes_pela_competencia`; as duas telas dão o mesmo total). A receita de out/2026 em alguma operação ficou em 40,8%: os 76 CRs de serviço restantes não têm operação no CSV nem em outra fonte — **pendente de Alexandre** dizer a operação de cada um.
+- **Hipóteses:** a Diretoria perdeu também `admin.excluir`; o Operacional marca a escala pela permissão de editar do módulo Operacional; a montagem criada pela carga começa no 1º dia do mês do lançamento mais antigo do CR, com origem "derivada"; o parceiro pendente leva o nome do agrupador; completar o CPF é recusado se o documento for de outra pessoa (juntar cadastros fica para depois).
+- **Roteiro de revisão visual:** `docs/revisao-visual.md`.
+- **Quem decidiu:** Alexandre (permissões e rumo); as hipóteses, o Claude.
+
 ## 10/11/2026 — Semana 2 (Operacional, Operações, Pessoas, Parceiros, Resultados) e a carga provisória da v1: hipóteses tomadas
 
 - **Contexto:** primeira versão de cada módulo, no ritmo "largura antes de profundidade" (09/11/2026). Números reais vêm da carga provisória da v1 no schema `staging` do banco local (só no localhost; nunca na nuvem), até a ponte do Sankhya funcionar.
