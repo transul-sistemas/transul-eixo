@@ -299,6 +299,7 @@ export const CATALOGO: readonly ModuloDoCatalogo[] = [
       icone: "IconLayoutDashboard",
       dispositivos: DESKTOP,
       descricao: "Mostra o resultado do mês e de onde ele vem.",
+      estado: "pronto",
     },
     {
       slug: "por-operacao",

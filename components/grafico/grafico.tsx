@@ -6,6 +6,7 @@ import * as echarts from "echarts/core";
 import { CanvasRenderer } from "echarts/renderers";
 import { useTheme } from "next-themes";
 import { useEffect, useRef } from "react";
+import { formatarMoeda, formatarMoedaAbreviada } from "@/components/formato/moeda-valor";
 import { formatarInteiro, formatarPercentual } from "@/components/formato/numero";
 import { type Modulo, type Status, variavelDoModulo, variavelDoStatus } from "@/lib/visual/tons";
 
@@ -23,7 +24,8 @@ echarts.use([
 ]);
 
 export type CorDoGrafico = { status: Status } | { modulo: Modulo } | "acao";
-export type FormatoDoGrafico = "inteiro" | "percentual";
+/** `moeda`: os valores vêm em centavos; o eixo abrevia ("R$ 1,3 mi") e o tooltip mostra o valor completo. */
+export type FormatoDoGrafico = "inteiro" | "percentual" | "moeda";
 
 export interface SerieDoGrafico {
   readonly nome: string;
@@ -51,6 +53,12 @@ export interface PropsDoGrafico {
 const FORMATADORES: Record<FormatoDoGrafico, (n: number | null) => string> = {
   inteiro: formatarInteiro,
   percentual: formatarPercentual,
+  moeda: formatarMoeda,
+};
+
+const FORMATADORES_DO_EIXO: Record<FormatoDoGrafico, (n: number | null) => string> = {
+  ...FORMATADORES,
+  moeda: formatarMoedaAbreviada,
 };
 
 function variavel(nome: string): string {
@@ -87,7 +95,12 @@ export function Grafico({
       type: "value" as const,
       position: (deitado ? "bottom" : i === 0 ? "left" : "right") as "left",
       max: f === "percentual" ? 100 : undefined,
-      axisLabel: { color: primeiro, formatter: (v: number) => FORMATADORES[f](v) },
+      axisLabel: {
+        color: primeiro,
+        hideOverlap: true,
+        formatter: (v: number) => FORMATADORES_DO_EIXO[f](v),
+      },
+      splitNumber: deitado ? 3 : undefined,
       splitLine: { show: i === 0, lineStyle: { color: linha } },
     }));
     const eixoDeCategoria = {

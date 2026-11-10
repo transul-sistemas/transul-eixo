@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { centavosDoTextoColado, formatarMoeda, proximoValorDoCampo } from "./moeda-valor";
+import {
+  centavosDoTextoColado,
+  formatarMoeda,
+  formatarMoedaAbreviada,
+  proximoValorDoCampo,
+} from "./moeda-valor";
 
 const E = " "; // espaço sem quebra entre R$ e o número
 
@@ -59,5 +64,22 @@ describe("centavosDoTextoColado", () => {
   });
   it("limita a 15 dígitos", () => {
     expect(centavosDoTextoColado("1234567890123456789")).toBe(123456789012345);
+  });
+});
+
+describe("formatarMoedaAbreviada (só no eixo de gráfico; o tooltip mostra o valor completo)", () => {
+  it("abrevia milhões e bilhões com uma casa, milhares sem casas", () => {
+    expect(formatarMoedaAbreviada(128430000000)).toBe(`R$${E}1,3${E}bi`);
+    expect(formatarMoedaAbreviada(128430000)).toBe(`R$${E}1,3${E}mi`);
+    expect(formatarMoedaAbreviada(35049900)).toBe(`R$${E}350${E}mil`);
+    expect(formatarMoedaAbreviada(99900)).toBe(`R$${E}999`);
+    expect(formatarMoedaAbreviada(0)).toBe(`R$${E}0`);
+  });
+  it("negativo leva o sinal na frente", () => {
+    expect(formatarMoedaAbreviada(-250000000)).toBe(`-R$${E}2,5${E}mi`);
+  });
+  it("valor ausente ou inválido vira travessão", () => {
+    expect(formatarMoedaAbreviada(null)).toBe("—");
+    expect(formatarMoedaAbreviada(Number.NaN)).toBe("—");
   });
 });
