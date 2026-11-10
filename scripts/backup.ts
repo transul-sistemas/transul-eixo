@@ -5,6 +5,7 @@
 //    com a senha do banco passada por variável de ambiente ao contêiner (nunca na linha de comando).
 //  * Restaurar é só no banco local (substitui as áreas do Eixo de lá) e só depois de conferir o arquivo
 //    inteiro (senha e integridade) antes de mandar o primeiro byte ao pg_restore.
+//  * O staging (cópia provisória da v1 e lançamentos manuais) entra: volta junto na restauração.
 //  * Os logins (auth.users) não entram: são do Supabase Auth (o Pro tem o backup do projeto inteiro).
 //  * Nada de senha, chave ou endereço na tela: só o caminho e o tamanho do arquivo.
 import { spawn } from "node:child_process";
@@ -34,6 +35,7 @@ export const ESQUEMAS_DO_BACKUP = [
   "sync",
   "config",
   "auditoria",
+  "staging",
   "supabase_migrations",
 ] as const;
 

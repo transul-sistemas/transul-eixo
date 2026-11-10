@@ -99,6 +99,10 @@ describe("o que entra no backup", () => {
     }
   });
 
+  it("o staging (cópia da v1 e lançamentos manuais) entra no backup e, por isso, volta na restauração", () => {
+    expect(ESQUEMAS_DO_BACKUP).toContain("staging");
+  });
+
   it("o nome do arquivo diz a origem e a hora, sem endereço", () => {
     const nome = nomeDoArquivo("nuvem", new Date("2026-11-06T15:30:00Z"));
     expect(nome).toBe("eixo-nuvem-2026-11-06T15-30-00.dump.enc");
