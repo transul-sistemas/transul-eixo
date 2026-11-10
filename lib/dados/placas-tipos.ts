@@ -153,7 +153,7 @@ export const NOMES_DOS_TIPOS: Record<TipoDeAtivo, string> = {
 };
 
 /** Padrões da lista de placas: 25 linhas por página, ordenada por placa. */
-export const PADRAO_DA_LISTA_DE_PLACAS = { tam: 25, ordem: "placa" } as const;
+export const PADRAO_DA_LISTA_DE_PLACAS = { tam: 20, ordem: "placa" } as const;
 
 /** As colunas da lista no modo dos dados: no banco, sem KM nem motorista (ainda sem fonte). */
 const COLUNAS_NO_BANCO: readonly DefinicaoDeColuna[] = DEFINICOES_DAS_COLUNAS_DE_PLACAS.filter(

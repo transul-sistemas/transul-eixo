@@ -1,3 +1,4 @@
+import { cookies } from "next/headers";
 import { connection } from "next/server";
 import { formatarInteiro } from "@/components/formato/numero";
 import {
@@ -10,6 +11,10 @@ import { EsqueletoDaTabela, ListaVazia } from "@/components/tabela/estados";
 import { Paginador } from "@/components/tabela/paginador";
 import { modoDosDados } from "@/lib/dados/fonte";
 import { lerPessoasDaLista, type OperacaoParaEscolher } from "@/lib/dados/pessoas";
+import {
+  lerTamanhoLembrado,
+  NOME_DO_COOKIE_DO_TAMANHO,
+} from "@/lib/navegacao/preferencias-da-tabela";
 import { acharTela } from "@/lib/navegacao/catalogo";
 import {
   CAMPOS_DAS_PESSOAS,
@@ -105,7 +110,11 @@ export function PaginaDePessoasCarregando() {
 
 async function Conteudo({ parametros }: { parametros: URLSearchParams }) {
   const sessao = await exigirSessao();
-  const estado = lerPessoas(parametros);
+  const tam = lerTamanhoLembrado(
+    (await cookies()).get(NOME_DO_COOKIE_DO_TAMANHO)?.value,
+    PADRAO_DAS_PESSOAS.tam,
+  );
+  const estado = lerPessoas(parametros, tam);
   const dados = await lerPessoasDaLista(estado);
   const filtrando =
     estado.consulta.busca !== "" || estado.consulta.chips.length > 0 || estado.operacao !== null;
@@ -166,7 +175,7 @@ async function Conteudo({ parametros }: { parametros: URLSearchParams }) {
         total={dados.filtradas}
         tam={dados.tam}
         itens="pessoas"
-        padrao={PADRAO_DAS_PESSOAS}
+        padrao={{ ...PADRAO_DAS_PESSOAS, tam }}
         campos={CAMPOS_DAS_PESSOAS}
       />
     </PaginaDeLeitura>

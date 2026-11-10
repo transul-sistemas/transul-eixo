@@ -64,7 +64,7 @@ describe("lerPessoasDaLista", () => {
           p_operacao: OPERACAO,
           p_ordem: "-desde",
           p_pagina: 2,
-          p_tam: 50,
+          p_tam: 20,
         },
       },
     ]);

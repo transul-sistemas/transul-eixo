@@ -84,10 +84,8 @@ interface LinhaDaGradeDoBanco {
   dias: CelulaDaGrade[];
 }
 
-export const TAMANHO_DA_GRADE = 50;
-
 export async function lerGrade(
-  filtros: { mes: string; busca: string; tipo: TipoDeAtivo | null; pagina: number },
+  filtros: { mes: string; busca: string; tipo: TipoDeAtivo | null; pagina: number; tam: number },
   cliente: () => Promise<ClienteDoAcompanhamento> = clienteDaSessao,
 ): Promise<GradeDoMes> {
   const c = await cliente();
@@ -99,7 +97,7 @@ export async function lerGrade(
       p_busca: filtros.busca,
       p_tipos: filtros.tipo ? [filtros.tipo] : [],
       p_pagina: filtros.pagina,
-      p_tam: TAMANHO_DA_GRADE,
+      p_tam: filtros.tam,
     },
   );
   return {

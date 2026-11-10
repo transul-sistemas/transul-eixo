@@ -40,7 +40,7 @@ test.describe("lista de placas e ficha em tablet e celular", () => {
     page,
   }) => {
     await abrirHidratada(page, `${LISTA}${CONSULTA}`);
-    await expect(page.getByTestId("resumo-da-pagina")).toContainText("Mostrando 26–");
+    await expect(page.getByTestId("resumo-da-pagina")).toContainText("Mostrando 21–");
     const placa = (await linhas(page)
       .nth(2)
       .locator("[data-espiar-placa]")
@@ -49,7 +49,7 @@ test.describe("lista de placas e ficha em tablet e celular", () => {
     await expect(page.getByRole("heading", { level: 1, name: placa })).toBeVisible();
     await page.goBack();
     await expect(page).toHaveURL(/\/frota\/placas\?chip=em-atividade&ordem=-gestor&pagina=2/);
-    await expect(page.getByTestId("resumo-da-pagina")).toContainText("Mostrando 26–");
+    await expect(page.getByTestId("resumo-da-pagina")).toContainText("Mostrando 21–");
     await expect(linkDaFicha(page, placa)).toBeFocused();
   });
 

@@ -6,7 +6,10 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { MouseEvent, ReactNode } from "react";
 import { formatarInteiro } from "@/components/formato/numero";
 import { mudarConsulta, type PadraoDaTabela } from "@/lib/navegacao/tabela";
-import { TAMANHOS_DE_PAGINA } from "@/lib/navegacao/preferencias-da-tabela";
+import {
+  NOME_DO_COOKIE_DO_TAMANHO,
+  TAMANHOS_DE_PAGINA,
+} from "@/lib/navegacao/preferencias-da-tabela";
 import { cn } from "@/lib/utils";
 import { useLista } from "./pendencia-da-lista";
 
@@ -90,8 +93,11 @@ export function Paginador({
   }
 
   function aoMudarTamanho(novo: number) {
-    if (!lista || novo === tam) return;
-    lista.atualizarPreferencias({ tam: novo as (typeof TAMANHOS_DE_PAGINA)[number] });
+    if (novo === tam) return;
+    lista?.atualizarPreferencias({ tam: novo as (typeof TAMANHOS_DE_PAGINA)[number] });
+    // O tamanho vale para todas as listas: um cookie só, lido pelo servidor de cada tela.
+    const seguro = window.location.protocol === "https:" ? "; Secure" : "";
+    document.cookie = `${NOME_DO_COOKIE_DO_TAMANHO}=${novo}; Path=/; Max-Age=31536000; SameSite=Lax${seguro}`;
     // Mudar o tamanho volta à página 1; o novo tamanho passa a ser o padrão, então sai da URL.
     const novos = mudarConsulta(
       new URLSearchParams(parametros.toString()),
@@ -131,7 +137,7 @@ export function Paginador({
           <select
             aria-label="Linhas por página"
             value={tam}
-            aria-disabled={ocupado || !lista ? true : undefined}
+            aria-disabled={ocupado ? true : undefined}
             onChange={(evento) => {
               if (!ocupado) aoMudarTamanho(Number(evento.target.value));
             }}

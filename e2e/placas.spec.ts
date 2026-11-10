@@ -28,7 +28,7 @@ test.describe("lista de placas", () => {
     await expect(page.getByRole("heading", { level: 1, name: "Placas" })).toBeVisible();
     await expect(tabela(page)).toBeVisible();
     await expect(linhas(page).first()).toContainText("AAA0A00");
-    await expect(linhas(page)).toHaveCount(25);
+    await expect(linhas(page)).toHaveCount(20);
   });
 
   test("as colunas padrão estão no cabeçalho, e KM, CR e Valor FIPE não", async ({ page }) => {
@@ -123,10 +123,10 @@ test.describe("lista de placas", () => {
   test("a segunda página mostra outras linhas e o resumo certo", async ({ page }) => {
     await abrirHidratada(page, ROTA);
     const primeira = await linhas(page).first().textContent();
-    await expect(resumo(page)).toContainText("Mostrando 1–25 de");
+    await expect(resumo(page)).toContainText("Mostrando 1–20 de");
     await page.getByRole("link", { name: "Próxima página" }).click();
     await expect(page).toHaveURL(/pagina=2/);
-    await expect(resumo(page)).toContainText("Mostrando 26–50 de");
+    await expect(resumo(page)).toContainText("Mostrando 21–40 de");
     await expect(linhas(page).first()).not.toHaveText(primeira ?? "");
   });
 
@@ -221,7 +221,7 @@ test.describe("lista de placas: estados", () => {
 
   test("atualizar a página mantém filtro, ordem e página (armadilha 2)", async ({ page }) => {
     await abrirHidratada(page, `${ROTA}?chip=impedida&ordem=-gestor&pagina=2`);
-    await expect(resumo(page)).toContainText("Mostrando 26–50 de");
+    await expect(resumo(page)).toContainText("Mostrando 21–40 de");
     await page.reload();
     await expect(page).toHaveURL(/chip=impedida&ordem=-gestor&pagina=2/);
     await expect(chip(page, "Impedida")).toHaveAttribute("aria-pressed", "true");
@@ -229,7 +229,7 @@ test.describe("lista de placas: estados", () => {
       "aria-sort",
       "descending",
     );
-    await expect(resumo(page)).toContainText("Mostrando 26–50 de");
+    await expect(resumo(page)).toContainText("Mostrando 21–40 de");
   });
 
   test("chip com zero fica apagado; o ligado com zero continua clicável", async ({ page }) => {
@@ -260,9 +260,9 @@ test.describe("lista de placas: preferências em cookie", () => {
       .addCookies([{ name: NOME, value: valor, url: baseURL ?? "http://localhost:3000" }]);
   }
 
-  test("o padrão é 25 linhas e densidade compacta", async ({ page }) => {
+  test("o padrão é 20 linhas e densidade compacta", async ({ page }) => {
     await abrirHidratada(page, ROTA);
-    await expect(tamanho(page)).toHaveValue("25");
+    await expect(tamanho(page)).toHaveValue("20");
     await expect(densidade(page, "Compacta")).toHaveAttribute("aria-pressed", "true");
     await expect(densidade(page, "Confortável")).toHaveAttribute("aria-pressed", "false");
   });
@@ -322,7 +322,7 @@ test.describe("lista de placas: preferências em cookie", () => {
     await abrirHidratada(page, `${ROTA}?chip=impedida&ordem=-gestor&pagina=2`);
     await densidade(page, "Confortável").click();
     await expect(page).toHaveURL(/chip=impedida&ordem=-gestor&pagina=2/);
-    await expect(resumo(page)).toContainText("Mostrando 26–50 de");
+    await expect(resumo(page)).toContainText("Mostrando 21–40 de");
   });
 
   test("cookie corrompido ou adulterado cai no padrão, sem erro", async ({ page, baseURL }) => {
@@ -337,7 +337,7 @@ test.describe("lista de placas: preferências em cookie", () => {
       await semeiaCookie(page, valor, baseURL);
       await abrirHidratada(page, ROTA);
       await expect(page.getByRole("main").getByRole("alert")).toHaveCount(0);
-      await expect(linhas(page)).toHaveCount(25);
+      await expect(linhas(page)).toHaveCount(20);
       await expect(densidade(page, "Compacta")).toHaveAttribute("aria-pressed", "true");
     }
   });
@@ -383,7 +383,7 @@ test.describe("lista de placas: feedback de carregando", () => {
     await expect(tabela(page)).toHaveAttribute("aria-busy", "false", { timeout: 10_000 });
     await expect(page).toHaveURL(/pagina=2/);
     await expect(page).not.toHaveURL(/pagina=3/);
-    await expect(resumo(page)).toContainText("Mostrando 26–50 de");
+    await expect(resumo(page)).toContainText("Mostrando 21–40 de");
   });
 
   test("ordenar por cabeçalho também bloqueia chips enquanto carrega", async ({ page }) => {

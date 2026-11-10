@@ -32,7 +32,12 @@ import { NOMES_DOS_CHIPS } from "@/lib/dominio/status";
 import { acharTela } from "@/lib/navegacao/catalogo";
 import { lerEspiar } from "@/lib/navegacao/espiar";
 import { dicaDoChipDeSituacao } from "@/lib/navegacao/filtros-avancados";
-import { lerPreferencias, NOME_DO_COOKIE_DE_PLACAS } from "@/lib/navegacao/preferencias-da-tabela";
+import {
+  lerPreferencias,
+  lerTamanhoLembrado,
+  NOME_DO_COOKIE_DE_PLACAS,
+  NOME_DO_COOKIE_DO_TAMANHO,
+} from "@/lib/navegacao/preferencias-da-tabela";
 import {
   type ConsultaDeTabela,
   escreverTabela,
@@ -185,7 +190,13 @@ export async function PaginaDePlacas({ searchParams }: { searchParams: Parametro
     (await cookies()).get(NOME_DO_COOKIE_DE_PLACAS)?.value,
     IDS_DAS_COLUNAS_DE_PLACAS,
   );
-  const padrao = { tam: preferencias.tam, ordem: PADRAO_DA_LISTA_DE_PLACAS.ordem };
+  const padrao = {
+    tam: lerTamanhoLembrado(
+      (await cookies()).get(NOME_DO_COOKIE_DO_TAMANHO)?.value,
+      preferencias.tam,
+    ),
+    ordem: PADRAO_DA_LISTA_DE_PLACAS.ordem,
+  };
   // No modo banco, KM, motorista e CRLV ainda não têm fonte: somem as colunas e a ordem por eles.
   const modo = modoDosDados();
   const campos = camposOrdenaveisDePlacas(modo);

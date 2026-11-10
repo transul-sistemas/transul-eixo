@@ -15,7 +15,7 @@ export const CAMPOS_DO_ABASTECIMENTO = [
   "valor",
 ] as const;
 
-export const PADRAO_DO_ABASTECIMENTO: PadraoDaTabela = { tam: 50, ordem: "placa" };
+export const PADRAO_DO_ABASTECIMENTO: PadraoDaTabela = { tam: 20, ordem: "placa" };
 
 const MES = /^\d{4}-(0[1-9]|1[0-2])$/;
 
@@ -25,11 +25,18 @@ export interface EstadoDoAbastecimento {
   consulta: ConsultaDeTabela;
 }
 
-export function lerAbastecimento(parametros: URLSearchParams): EstadoDoAbastecimento {
+export function lerAbastecimento(
+  parametros: URLSearchParams,
+  tamLembrado: number = PADRAO_DO_ABASTECIMENTO.tam,
+): EstadoDoAbastecimento {
   const mes = parametros.get("mes");
   return {
     mes: mes !== null && MES.test(mes) ? mes : null,
-    consulta: lerTabela(parametros, PADRAO_DO_ABASTECIMENTO, CAMPOS_DO_ABASTECIMENTO),
+    consulta: lerTabela(
+      parametros,
+      { ...PADRAO_DO_ABASTECIMENTO, tam: tamLembrado },
+      CAMPOS_DO_ABASTECIMENTO,
+    ),
   };
 }
 

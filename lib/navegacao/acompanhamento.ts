@@ -1,3 +1,4 @@
+import { TAMANHOS_DE_PAGINA } from "./preferencias-da-tabela";
 import { TIPOS_DE_ATIVO, type TipoDeAtivo } from "@/lib/dados/placas-tipos";
 import { siglaValidaNoContexto } from "@/lib/dominio/situacao";
 import { REGRAS_DAS_SIGLAS, type Sigla, SIGLAS } from "@/lib/dominio/status";
@@ -29,6 +30,8 @@ export interface EstadoDoAcompanhamento {
   busca: string;
   tipo: TipoDeAtivo | null;
   pagina: number;
+  /** Linhas por página da grade: 20, 50 ou 100. */
+  tam: number;
 }
 
 export const FILTROS_DA_CARTEIRA = ["todas", "pendentes", "conferem", "nao_conferem"] as const;
@@ -64,10 +67,14 @@ export function mesVizinho(mes: string, passo: -1 | 1): string {
   return `${Math.floor(total / 12)}-${String((total % 12) + 1).padStart(2, "0")}`;
 }
 
+export const TAMANHO_PADRAO_DA_GRADE = 20;
+
 export function lerAcompanhamento(
   parametros: URLSearchParams,
   hoje: string,
+  tamLembrado: number = TAMANHO_PADRAO_DA_GRADE,
 ): EstadoDoAcompanhamento {
+  const tamDaUrl = Number(parametros.get("tam"));
   const dia = parametros.get("dia");
   return {
     modo: umDe(MODOS_DO_ACOMPANHAMENTO, parametros.get("modo"), "grade"),
@@ -79,6 +86,7 @@ export function lerAcompanhamento(
       ? (parametros.get("tipo") as TipoDeAtivo)
       : null,
     pagina: pagina(parametros.get("pagina")),
+    tam: (TAMANHOS_DE_PAGINA as readonly number[]).includes(tamDaUrl) ? tamDaUrl : tamLembrado,
   };
 }
 
@@ -91,6 +99,7 @@ export function enderecoDoAcompanhamento(e: EstadoDoAcompanhamento, hoje: string
   if (e.busca !== "") q.set("busca", e.busca);
   if (e.tipo !== null) q.set("tipo", e.tipo);
   if (e.pagina !== 1) q.set("pagina", String(e.pagina));
+  if (e.tam !== TAMANHO_PADRAO_DA_GRADE) q.set("tam", String(e.tam));
   const texto = q.toString();
   return texto ? `/frota/acompanhamento?${texto}` : "/frota/acompanhamento";
 }

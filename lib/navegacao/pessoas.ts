@@ -11,7 +11,7 @@ export const ROTA_DA_ESCALA = "/pessoas/escala";
 /** Os campos de ordem que nucleo.pessoas_da_lista aceita (o desempate é o nome e o id). */
 export const CAMPOS_DAS_PESSOAS = ["nome", "funcao", "operacao", "desde"] as const;
 
-export const PADRAO_DAS_PESSOAS: PadraoDaTabela = { tam: 50, ordem: "nome" };
+export const PADRAO_DAS_PESSOAS: PadraoDaTabela = { tam: 20, ordem: "nome" };
 
 export const CHIPS_DE_SITUACAO = [
   { id: "com_vinculo", nome: "Com vínculo" },
@@ -34,9 +34,16 @@ export interface EstadoDasPessoas {
   consulta: ConsultaDeTabela;
 }
 
-export function lerPessoas(parametros: URLSearchParams): EstadoDasPessoas {
+export function lerPessoas(
+  parametros: URLSearchParams,
+  tamLembrado: number = PADRAO_DAS_PESSOAS.tam,
+): EstadoDasPessoas {
   const conhecidos: readonly string[] = [...CHIPS_DE_SITUACAO, ...CHIPS_DE_FUNCAO].map((c) => c.id);
-  const consulta = lerTabela(parametros, PADRAO_DAS_PESSOAS, CAMPOS_DAS_PESSOAS);
+  const consulta = lerTabela(
+    parametros,
+    { ...PADRAO_DAS_PESSOAS, tam: tamLembrado },
+    CAMPOS_DAS_PESSOAS,
+  );
   const operacao = parametros.get("operacao");
   return {
     operacao: idValido(operacao) ? operacao : null,

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  lerTamanhoLembrado,
   lerPreferencias,
   montarCookie,
   NOME_DO_COOKIE_DE_PLACAS,
@@ -12,14 +13,14 @@ const COLUNAS = ["placa", "tipo", "modelo", "gestor", "situacao", "alertas"];
 const ler = (valor: string | undefined) => lerPreferencias(valor, COLUNAS);
 
 describe("preferências da tabela (cookie validado na leitura)", () => {
-  it("o padrão: 25 linhas, densidade compacta, colunas do padrão da tela", () => {
+  it("o padrão: 20 linhas, densidade compacta, colunas do padrão da tela", () => {
     expect(PREFERENCIAS_PADRAO).toEqual({
-      tam: 25,
+      tam: 20,
       densidade: "compacta",
       colunas: null,
       ordemDasColunas: null,
     });
-    expect([...TAMANHOS_DE_PAGINA]).toEqual([25, 50, 100]);
+    expect([...TAMANHOS_DE_PAGINA]).toEqual([20, 50, 100]);
     expect(NOME_DO_COOKIE_DE_PLACAS).toBe("eixo-tabela-placas");
   });
 
@@ -45,13 +46,13 @@ describe("preferências da tabela (cookie validado na leitura)", () => {
     });
   });
 
-  it.each([7, "x", 9999, 50.5, null, "50", true, [], {}, -25, 0])(
-    "tamanho de página fora da lista (%j) volta a 25",
+  it.each([7, "x", 9999, 50.5, null, "50", true, [], {}, -20, 0])(
+    "tamanho de página fora da lista (%j) volta a 20",
     (tam) => {
-      expect(ler(JSON.stringify({ tam })).tam).toBe(25);
+      expect(ler(JSON.stringify({ tam })).tam).toBe(20);
     },
   );
-  it.each([25, 50, 100])("tamanho %i é aceito", (tam) => {
+  it.each([20, 50, 100])("tamanho %i é aceito", (tam) => {
     expect(ler(JSON.stringify({ tam })).tam).toBe(tam);
   });
 
@@ -65,7 +66,7 @@ describe("preferências da tabela (cookie validado na leitura)", () => {
   it("um campo inválido não derruba os vizinhos válidos", () => {
     const lida = ler(JSON.stringify({ tam: 7, densidade: "confortavel", colunas: ["placa"] }));
     expect(lida).toEqual({
-      tam: 25,
+      tam: 20,
       densidade: "confortavel",
       colunas: ["placa"],
       ordemDasColunas: null,
@@ -112,7 +113,7 @@ describe("preferências da tabela (cookie validado na leitura)", () => {
     const lida = ler('{"__proto__":{"tam":100},"constructor":{"tam":100},"tam":50}');
     expect(lida.tam).toBe(50);
     expect(({} as Record<string, unknown>).tam).toBeUndefined();
-    expect(ler('{"__proto__":{"tam":100}}').tam).toBe(25);
+    expect(ler('{"__proto__":{"tam":100}}').tam).toBe(20);
   });
 
   it("ida e volta: o que se grava é o que se lê (cookie codificado)", () => {
@@ -151,5 +152,16 @@ describe("montarCookie", () => {
   it("o valor gravado é o que a leitura entende", () => {
     const valor = montarCookie(prefs, "x", "https:").split(";")[0]!.slice("x=".length);
     expect(lerPreferencias(valor, []).tam).toBe(50);
+  });
+});
+
+describe("tamanho de página lembrado (cookie único das listas)", () => {
+  it("aceita 20, 50 e 100; o resto volta ao padrão da tela", () => {
+    expect(lerTamanhoLembrado("50", 20)).toBe(50);
+    expect(lerTamanhoLembrado("100", 20)).toBe(100);
+    expect(lerTamanhoLembrado("20", 50)).toBe(20);
+    for (const ruim of [undefined, "", "25", "7", "9999", "x", "50.5", "-20"]) {
+      expect(lerTamanhoLembrado(ruim, 20)).toBe(20);
+    }
   });
 });

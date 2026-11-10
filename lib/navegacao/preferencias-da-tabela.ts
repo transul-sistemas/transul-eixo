@@ -5,7 +5,7 @@
 
 export const NOME_DO_COOKIE_DE_PLACAS = "eixo-tabela-placas";
 
-export const TAMANHOS_DE_PAGINA = [25, 50, 100] as const;
+export const TAMANHOS_DE_PAGINA = [20, 50, 100] as const;
 export type TamanhoDePagina = (typeof TAMANHOS_DE_PAGINA)[number];
 
 export const DENSIDADES = ["compacta", "confortavel"] as const;
@@ -21,7 +21,7 @@ export interface PreferenciasDaTabela {
 }
 
 export const PREFERENCIAS_PADRAO: PreferenciasDaTabela = {
-  tam: 25,
+  tam: 20,
   densidade: "compacta",
   colunas: null,
   ordemDasColunas: null,
@@ -102,4 +102,14 @@ export function montarCookie(
   ];
   if (protocolo === "https:") partes.push("Secure");
   return partes.join("; ");
+}
+
+// O tamanho da página escolhido vale para todas as listas (20, 50 ou 100), lembrado por pessoa neste
+// navegador num cookie próprio; no login (Fase 3) passa para o banco, junto com o resto.
+export const NOME_DO_COOKIE_DO_TAMANHO = "eixo-tam-pagina";
+
+/** Nunca lança: cookie ausente ou adulterado devolve o padrão da tela. */
+export function lerTamanhoLembrado(valor: string | undefined, padrao: number): number {
+  const tam = Number(valor);
+  return (TAMANHOS_DE_PAGINA as readonly number[]).includes(tam) ? tam : padrao;
 }

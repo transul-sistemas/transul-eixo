@@ -1,3 +1,10 @@
+import { cookies } from "next/headers";
+import { SeletorDeTamanho } from "@/components/tabela/seletor-de-tamanho";
+import {
+  lerTamanhoLembrado,
+  NOME_DO_COOKIE_DO_TAMANHO,
+  TAMANHOS_DE_PAGINA,
+} from "@/lib/navegacao/preferencias-da-tabela";
 import Link from "next/link";
 import { connection } from "next/server";
 import type { ReactNode } from "react";
@@ -17,6 +24,7 @@ import {
   enderecoDoAcompanhamento,
   type EstadoDoAcompanhamento,
   lerAcompanhamento,
+  TAMANHO_PADRAO_DA_GRADE,
   mesVizinho,
   NOMES_DOS_AGRUPAMENTOS,
 } from "@/lib/navegacao/acompanhamento";
@@ -188,6 +196,15 @@ async function ModoGrade({ estado, hoje }: { estado: EstadoDoAcompanhamento; hoj
           {formatarInteiro(grade.total)} placas · página {formatarInteiro(grade.pagina)} de{" "}
           {formatarInteiro(grade.paginas)}
         </span>
+        <SeletorDeTamanho
+          tam={estado.tam}
+          enderecos={Object.fromEntries(
+            TAMANHOS_DE_PAGINA.map((t) => [
+              t,
+              enderecoDoAcompanhamento({ ...estado, tam: t, pagina: 1 }, hoje),
+            ]),
+          )}
+        />
         {grade.pagina > 1 ? (
           <Link
             className={classeDoLink}
@@ -255,7 +272,7 @@ async function ModoAgora({ estado, hoje }: { estado: EstadoDoAcompanhamento; hoj
           descricao="Quando houver placas na sua carteira, operação ou filial, a situação de agora aparece aqui, agrupada."
         />
       ) : (
-        <div className="border-border bg-card overflow-x-auto rounded-xl border">
+        <div className="border-border bg-card relative overflow-x-auto rounded-xl border">
           <table className="w-full text-sm" data-testid="tabela-do-agora">
             <thead className="bg-muted/40 text-muted-foreground">
               <tr>
@@ -350,7 +367,7 @@ async function ModoCenso({ estado, hoje }: { estado: EstadoDoAcompanhamento; hoj
           descricao="Neste dia não havia placa na sua visão. Escolha outro dia ou outro tipo de ativo."
         />
       ) : (
-        <div className="border-border bg-card overflow-x-auto rounded-xl border">
+        <div className="border-border bg-card relative overflow-x-auto rounded-xl border">
           <table className="w-full text-sm" data-testid="tabela-do-censo">
             <thead className="bg-muted/40 text-muted-foreground">
               <tr>
@@ -409,7 +426,11 @@ export async function PaginaDoAcompanhamento({
 }) {
   await connection();
   const hoje = hojeEmSaoPaulo(new Date());
-  const estado = lerAcompanhamento(paraParametros(await searchParams), hoje);
+  const tamLembrado = lerTamanhoLembrado(
+    (await cookies()).get(NOME_DO_COOKIE_DO_TAMANHO)?.value,
+    TAMANHO_PADRAO_DA_GRADE,
+  );
+  const estado = lerAcompanhamento(paraParametros(await searchParams), hoje, tamLembrado);
   const { titulo, descricao } = cabecalho();
   let conteudo: ReactNode;
   if (modoDosDados() !== "banco") {

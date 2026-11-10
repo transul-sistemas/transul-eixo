@@ -12,6 +12,16 @@ const HOJE = "2026-11-09";
 const p = (texto: string) => new URLSearchParams(texto);
 
 describe("estado do Acompanhamento na URL", () => {
+  it("o tamanho da página: 20 por padrão, o lembrado, e a URL vale mais; valor fora de 20/50/100 é ignorado", () => {
+    expect(lerAcompanhamento(p(""), HOJE).tam).toBe(20);
+    expect(lerAcompanhamento(p(""), HOJE, 50).tam).toBe(50);
+    expect(lerAcompanhamento(p("tam=100"), HOJE, 50).tam).toBe(100);
+    expect(lerAcompanhamento(p("tam=7"), HOJE, 50).tam).toBe(50);
+    expect(lerAcompanhamento(p("tam=100000"), HOJE).tam).toBe(20);
+    const e = lerAcompanhamento(p("tam=50&pagina=2"), HOJE);
+    expect(enderecoDoAcompanhamento(e, HOJE)).toBe("/frota/acompanhamento?pagina=2&tam=50");
+  });
+
   it("sem nada, abre a grade do mês de hoje, página 1", () => {
     expect(lerAcompanhamento(p(""), HOJE)).toEqual({
       modo: "grade",
@@ -21,6 +31,7 @@ describe("estado do Acompanhamento na URL", () => {
       busca: "",
       tipo: null,
       pagina: 1,
+      tam: 20,
     });
   });
 
@@ -38,6 +49,7 @@ describe("estado do Acompanhamento na URL", () => {
       busca: "abc",
       tipo: "cavalo",
       pagina: 3,
+      tam: 20,
     });
   });
 

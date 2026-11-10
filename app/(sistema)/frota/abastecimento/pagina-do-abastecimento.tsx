@@ -1,3 +1,4 @@
+import { cookies } from "next/headers";
 import Link from "next/link";
 import { connection } from "next/server";
 import { formatarMes } from "@/components/formato/data";
@@ -23,6 +24,10 @@ import {
   ROTA_DO_ABASTECIMENTO,
 } from "@/lib/navegacao/abastecimento";
 import { acharTela } from "@/lib/navegacao/catalogo";
+import {
+  lerTamanhoLembrado,
+  NOME_DO_COOKIE_DO_TAMANHO,
+} from "@/lib/navegacao/preferencias-da-tabela";
 import { escreverTabela } from "@/lib/navegacao/tabela";
 import { cn } from "@/lib/utils";
 import { TabelaDoAbastecimento } from "./tabela-do-abastecimento";
@@ -64,14 +69,18 @@ export function PaginaDoAbastecimentoCarregando() {
 }
 
 async function Conteudo({ parametros }: { parametros: URLSearchParams }) {
-  const estado = lerAbastecimento(parametros);
+  const tam = lerTamanhoLembrado(
+    (await cookies()).get(NOME_DO_COOKIE_DO_TAMANHO)?.value,
+    PADRAO_DO_ABASTECIMENTO.tam,
+  );
+  const estado = lerAbastecimento(parametros, tam);
   const dados = await lerAbastecimentoDoMes(estado);
   const { totais } = dados;
   const semBusca = (() => {
     const limpa = escreverTabela(
       parametros,
       { ...estado.consulta, busca: "", pagina: 1 },
-      PADRAO_DO_ABASTECIMENTO,
+      { ...PADRAO_DO_ABASTECIMENTO, tam },
     ).toString();
     return limpa ? `${ROTA_DO_ABASTECIMENTO}?${limpa}` : ROTA_DO_ABASTECIMENTO;
   })();
@@ -136,7 +145,7 @@ async function Conteudo({ parametros }: { parametros: URLSearchParams }) {
         total={dados.filtradas}
         tam={dados.tam}
         itens="placas"
-        padrao={PADRAO_DO_ABASTECIMENTO}
+        padrao={{ ...PADRAO_DO_ABASTECIMENTO, tam }}
         campos={CAMPOS_DO_ABASTECIMENTO}
       />
     </>

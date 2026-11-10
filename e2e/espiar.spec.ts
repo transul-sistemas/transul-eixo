@@ -194,7 +194,7 @@ test.describe("painel de espiar: abrir e fechar sem perder nada", () => {
       },
     ]);
     await abrirHidratada(page, `${ROTA}?chip=em-atividade&ordem=-gestor&pagina=2`);
-    await expect(page.getByTestId("resumo-da-pagina")).toContainText("Mostrando 26–");
+    await expect(page.getByTestId("resumo-da-pagina")).toContainText("Mostrando 21–");
     await caixaDaTabela(page).evaluate((c) => {
       c.scrollTop = 150;
       c.scrollLeft = 220;

@@ -55,7 +55,7 @@ async function listaRolada(page: Page, baseURL: string | undefined) {
     },
   ]);
   await abrirHidratada(page, `${LISTA}${CONSULTA}`);
-  await expect(page.getByTestId("resumo-da-pagina")).toContainText("Mostrando 26–");
+  await expect(page.getByTestId("resumo-da-pagina")).toContainText("Mostrando 21–");
   await caixa(page).evaluate((c) => {
     c.scrollTop = 150;
     c.scrollLeft = 220;
@@ -81,7 +81,7 @@ async function conferirRetorno(
   await expect(page).toHaveURL(
     new RegExp(`/frota/placas\\?chip=em-atividade&ordem=-gestor&pagina=2`),
   );
-  await expect(page.getByTestId("resumo-da-pagina")).toContainText("Mostrando 26–");
+  await expect(page.getByTestId("resumo-da-pagina")).toContainText("Mostrando 21–");
   await expect
     .poll(async () => caixa(page).evaluate((c) => Math.round(c.scrollTop)), { timeout: 10_000 })
     .toBeGreaterThanOrEqual(Math.round(rolagem.topo) - 2);
@@ -282,7 +282,7 @@ test.describe("voltar da ficha devolve a lista ao mesmo ponto", () => {
       sessionStorage.setItem("eixo-retorno-da-lista", JSON.stringify(r));
     }, `${LISTA}${CONSULTA}`);
     await page.goBack();
-    await expect(page.getByTestId("resumo-da-pagina")).toContainText("Mostrando 26–");
+    await expect(page.getByTestId("resumo-da-pagina")).toContainText("Mostrando 21–");
     await expect(caixa(page)).toBeFocused({ timeout: 10_000 });
   });
 });
