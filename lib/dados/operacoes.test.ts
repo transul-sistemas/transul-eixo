@@ -58,6 +58,10 @@ const LISTA = {
       margem_percentual: 75,
     },
   ],
+  pagina: 1,
+  paginas: 1,
+  tam: 20,
+  total: 1,
   totais: {
     operacoes: 1,
     placas: 3,
@@ -71,10 +75,12 @@ const LISTA = {
 };
 
 describe("lerOperacoesDoMes", () => {
-  it("passa mês, busca, chips e ordem da URL ao banco", async () => {
+  it("passa mês, busca, chips, ordem, página e tamanho da URL ao banco", async () => {
     const { cliente, chamadas } = clienteCom(LISTA);
     await lerOperacoesDoMes(
-      lerOperacoes(new URLSearchParams("mes=2026-03&q=fic&chip=parada&chip=x&ordem=-margem")),
+      lerOperacoes(
+        new URLSearchParams("mes=2026-03&q=fic&chip=parada&chip=x&ordem=-margem&pagina=3&tam=50"),
+      ),
       cliente,
     );
     expect(chamadas).toEqual([
@@ -85,11 +91,13 @@ describe("lerOperacoesDoMes", () => {
           p_busca: "fic",
           p_chips: ["parada"],
           p_ordem: "-margem",
+          p_pagina: 3,
+          p_tam: 50,
         },
       },
     ]);
   });
-  it("sem filtros, manda nulos e a ordem pelo nome", async () => {
+  it("sem filtros, manda nulos, a ordem pelo nome e a página 1 com 20", async () => {
     const { cliente, chamadas } = clienteCom(LISTA);
     await lerOperacoesDoMes(lerOperacoes(new URLSearchParams("")), cliente);
     expect(chamadas[0]?.argumentos).toEqual({
@@ -97,7 +105,20 @@ describe("lerOperacoesDoMes", () => {
       p_busca: null,
       p_chips: null,
       p_ordem: "nome",
+      p_pagina: 1,
+      p_tam: 20,
     });
+  });
+  it("sem tamanho na URL, usa o lembrado; o teto é 100", async () => {
+    const { cliente, chamadas } = clienteCom(LISTA);
+    await lerOperacoesDoMes(lerOperacoes(new URLSearchParams(""), 50), cliente);
+    await lerOperacoesDoMes(lerOperacoes(new URLSearchParams("tam=500"), 50), cliente);
+    expect(chamadas.map((c) => c.argumentos?.p_tam)).toEqual([50, 100]);
+  });
+  it("devolve a página, as páginas, o tamanho e o total do banco", async () => {
+    const { cliente } = clienteCom({ ...LISTA, pagina: 2, paginas: 6, tam: 20, total: 105 });
+    const r = await lerOperacoesDoMes(lerOperacoes(new URLSearchParams("pagina=2")), cliente);
+    expect([r.pagina, r.paginas, r.tam, r.total]).toEqual([2, 6, 20, 105]);
   });
   it("converte reais em centavos e o mês em aaaa-mm", async () => {
     const { cliente } = clienteCom(LISTA);

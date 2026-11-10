@@ -27,7 +27,13 @@ export interface LinhaDeParceiro {
 export interface ParceirosDoMes {
   mes: string;
   meses: string[];
+  /** A página que o banco entregou (20 por padrão, até 100); além do fim, a última. */
   linhas: LinhaDeParceiro[];
+  pagina: number;
+  paginas: number;
+  tam: number;
+  /** Os parceiros do filtro inteiro (não só da página). */
+  total: number;
   totais: {
     parceiros: number;
     placas: number;

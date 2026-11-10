@@ -48,6 +48,8 @@ test.describe("Operações (Administrador)", () => {
     await expect(linha).toHaveCount(1);
     await expect(linha).toContainText("Cordeirópolis");
     await expect(linha).toContainText("R$ 0,00");
+    // A página vem do banco: o resumo conta o filtro inteiro.
+    await expect(page.getByTestId("resumo-da-pagina")).toHaveText("Mostrando 1–1 de 1 operações");
 
     await linha.getByRole("link", { name: `Abrir a ficha da operação ${NOME}` }).click();
     await expect(page.getByRole("heading", { level: 1, name: NOME })).toBeVisible();

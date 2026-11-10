@@ -1,3 +1,4 @@
+import { cookies } from "next/headers";
 import Link from "next/link";
 import { connection } from "next/server";
 import { formatarMes } from "@/components/formato/data";
@@ -10,16 +11,23 @@ import {
 import { FaixaDeKpis, type Kpi } from "@/components/layout/faixa-de-kpis";
 import { PaginaDeLeitura } from "@/components/layout/pagina-de-leitura";
 import { EsqueletoDaTabela, ListaVazia } from "@/components/tabela/estados";
+import { Paginador } from "@/components/tabela/paginador";
 import { modoDosDados } from "@/lib/dados/fonte";
 import { lerOperacoesDoMes, type OperacoesDoMes } from "@/lib/dados/operacoes";
 import { acharTela } from "@/lib/navegacao/catalogo";
 import {
+  CAMPOS_DAS_OPERACOES,
   CHIPS_DE_FILIAL,
   CHIPS_DE_TIPO,
   enderecoDoMes,
   lerOperacoes,
+  PADRAO_DAS_OPERACOES,
   ROTA_DAS_OPERACOES,
 } from "@/lib/navegacao/operacoes";
+import {
+  lerTamanhoLembrado,
+  NOME_DO_COOKIE_DO_TAMANHO,
+} from "@/lib/navegacao/preferencias-da-tabela";
 import { cn } from "@/lib/utils";
 import { TabelaDeOperacoes } from "./tabela-de-operacoes";
 
@@ -27,7 +35,8 @@ export type ParametrosDaBusca = Promise<Record<string, string | string[] | undef
 
 // Operações › lista (primeira versão): cada operação com filial, CRs, placas vinculadas agora e a
 // cascata do mês (receita, custo da Frota, custo de Serviço e margem), prontas no banco. Os números
-// vêm do staging provisório (a cópia da v1) até a ponte do Sankhya.
+// vêm do staging provisório (a cópia da v1) até a ponte do Sankhya. O banco filtra, ordena e pagina
+// (20 por página por padrão, com 20, 50 e 100 lembrado por pessoa); os KPIs são do filtro inteiro.
 
 function cabecalho() {
   const tela = acharTela(ROTA_DAS_OPERACOES)?.tela;
@@ -157,7 +166,11 @@ export function PaginaDeOperacoesCarregando() {
 }
 
 async function Conteudo({ parametros }: { parametros: URLSearchParams }) {
-  const estado = lerOperacoes(parametros);
+  const tam = lerTamanhoLembrado(
+    (await cookies()).get(NOME_DO_COOKIE_DO_TAMANHO)?.value,
+    PADRAO_DAS_OPERACOES.tam,
+  );
+  const estado = lerOperacoes(parametros, tam);
   const dados = await lerOperacoesDoMes(estado);
   const filtrando = estado.consulta.busca !== "" || estado.consulta.chips.length > 0;
   const { titulo, descricao } = cabecalho();
@@ -180,7 +193,7 @@ async function Conteudo({ parametros }: { parametros: URLSearchParams }) {
           O resultado em R$ aparece para quem tem acesso a Resultados.
         </p>
       ) : null}
-      {dados.linhas.length === 0 ? (
+      {dados.total === 0 ? (
         filtrando ? (
           <ListaVazia
             titulo="Nenhuma operação encontrada"
@@ -194,16 +207,17 @@ async function Conteudo({ parametros }: { parametros: URLSearchParams }) {
           />
         )
       ) : (
-        <>
-          <TabelaDeOperacoes linhas={dados.linhas} veResultado={dados.veResultado} />
-          <p className="text-muted-foreground text-sm" aria-live="polite">
-            {dados.linhas.length === 1
-              ? "1 operação"
-              : `${formatarInteiro(dados.linhas.length)} operações`}{" "}
-            em {formatarMes(dados.mes)}
-          </p>
-        </>
+        <TabelaDeOperacoes linhas={dados.linhas} veResultado={dados.veResultado} />
       )}
+      <Paginador
+        pagina={dados.pagina}
+        paginas={dados.paginas}
+        total={dados.total}
+        tam={dados.tam}
+        itens="operações"
+        padrao={{ ...PADRAO_DAS_OPERACOES, tam }}
+        campos={CAMPOS_DAS_OPERACOES}
+      />
     </PaginaDeLeitura>
   );
 }

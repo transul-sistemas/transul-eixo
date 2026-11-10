@@ -1,7 +1,8 @@
 import { lerMes } from "./operacoes";
 import { type ConsultaDeTabela, lerTabela, type PadraoDaTabela } from "./tabela";
 
-// O estado de Parceiros na URL. Lista: o mês (`mes=aaaa-mm`), a busca `q` e os chips de tipo.
+// O estado de Parceiros na URL. Lista: o mês (`mes=aaaa-mm`), a busca `q`, os chips de tipo, a página
+// e o tamanho (o banco pagina; o tamanho lembrado vem do cookie).
 // Conciliação: o mês, o parceiro (`agrupador=`, o CR pai do Sankhya) e a situação. Locação: a
 // situação. Valor desconhecido volta ao padrão; recarregar ou compartilhar devolve a mesma visão.
 
@@ -9,7 +10,10 @@ export const ROTA_DOS_PARCEIROS = "/parceiros/lista";
 export const ROTA_DA_CONCILIACAO = "/parceiros/conciliacao";
 export const ROTA_DA_LOCACAO = "/parceiros/locacao";
 
-export const PADRAO_DOS_PARCEIROS: PadraoDaTabela = { tam: 100, ordem: "nome" };
+export const PADRAO_DOS_PARCEIROS: PadraoDaTabela = { tam: 20, ordem: "nome" };
+
+/** A lista de parceiros tem uma ordem só: o nome (o desempate é o id). */
+export const CAMPOS_DOS_PARCEIROS = ["nome"] as const;
 
 export const CHIPS_DE_TIPO_DE_PARCEIRO = [
   { id: "acionista", nome: "Acionista" },
@@ -22,9 +26,16 @@ export interface EstadoDosParceiros {
   consulta: ConsultaDeTabela;
 }
 
-export function lerParceiros(parametros: URLSearchParams): EstadoDosParceiros {
+export function lerParceiros(
+  parametros: URLSearchParams,
+  tamLembrado: number = PADRAO_DOS_PARCEIROS.tam,
+): EstadoDosParceiros {
   const conhecidos: readonly string[] = CHIPS_DE_TIPO_DE_PARCEIRO.map((c) => c.id);
-  const consulta = lerTabela(parametros, PADRAO_DOS_PARCEIROS, ["nome"]);
+  const consulta = lerTabela(
+    parametros,
+    { ...PADRAO_DOS_PARCEIROS, tam: tamLembrado },
+    CAMPOS_DOS_PARCEIROS,
+  );
   return {
     mes: lerMes(parametros),
     consulta: { ...consulta, chips: consulta.chips.filter((c) => conhecidos.includes(c)) },

@@ -52,8 +52,11 @@ test.describe("Parceiros (Administrador)", () => {
   }) => {
     const placa = await umaPlacaLivre();
 
-    await page.goto("/parceiros/lista");
+    // A lista é paginada no banco (20 por página): a busca deixa o parceiro do e2e na primeira, e a
+    // lista (vazia antes) precisa atualizar sozinha depois de gravar.
+    await page.goto(`/parceiros/lista?q=${encodeURIComponent("do e2e")}`);
     await expect(page.getByRole("heading", { level: 1, name: "Parceiros" })).toBeVisible();
+    await expect(page.getByText("Nenhum parceiro encontrado")).toBeVisible();
     await page.getByRole("button", { name: "Cadastrar parceiro" }).click();
     const cadastro = dialogo(page, "Cadastrar parceiro");
     await cadastro.getByLabel("CPF ou CNPJ").fill(CNPJ);
@@ -70,6 +73,7 @@ test.describe("Parceiros (Administrador)", () => {
     const linha = tabela.getByRole("row").filter({ hasText: NOME });
     await expect(linha).toHaveCount(1);
     await expect(linha).toContainText("/0001-");
+    await expect(page.getByTestId("resumo-da-pagina")).toHaveText("Mostrando 1–1 de 1 parceiros");
     await linha.getByRole("link", { name: `Abrir a ficha do parceiro ${NOME}` }).click();
     await expect(page.getByRole("tab", { name: "Resumo" })).toHaveAttribute(
       "aria-selected",

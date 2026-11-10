@@ -29,7 +29,7 @@ import type {
 export type * from "./parceiros-tipos";
 
 // A leitura e a escrita de Parceiros (primeira versão): só o banco, com a sessão de quem usa (a RLS e
-// a permissão ficam no banco). Quem filtra, soma e conta é o banco (nucleo.parceiros_do_mes,
+// a permissão ficam no banco). Quem filtra, pagina, soma e conta é o banco (nucleo.parceiros_do_mes,
 // ficha_do_parceiro, conciliacao_do_mes e locacoes, sobre o staging provisório da v1 até a ponte do
 // Sankhya); aqui só se converte o formato. A escrita passa a chave de envio e devolve a linha ou um
 // erro tipado.
@@ -102,6 +102,10 @@ interface ListaDoBanco {
     receita: Numero;
     locacao_mensal: Numero;
   })[];
+  pagina: number;
+  paginas: number;
+  tam: number;
+  total: number;
   totais: {
     parceiros: number;
     placas: number;
@@ -121,6 +125,8 @@ export async function lerParceirosDoMes(
     p_mes: mesDoBanco(estado.mes),
     p_busca: estado.consulta.busca === "" ? null : estado.consulta.busca,
     p_chips: estado.consulta.chips.length === 0 ? null : estado.consulta.chips,
+    p_pagina: estado.consulta.pagina,
+    p_tam: estado.consulta.tam,
   });
   return {
     mes: mesDe(d.mes),
@@ -132,6 +138,10 @@ export async function lerParceirosDoMes(
       receitaCentavos: centavos(l.receita),
       locacaoMensalCentavos: centavos(l.locacao_mensal),
     })),
+    pagina: d.pagina,
+    paginas: d.paginas,
+    tam: d.tam,
+    total: d.total,
     totais: {
       parceiros: d.totais.parceiros,
       placas: d.totais.placas,
