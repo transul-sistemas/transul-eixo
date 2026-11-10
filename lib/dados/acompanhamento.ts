@@ -1,3 +1,4 @@
+import { textoDoErro } from "@/lib/log/erro";
 import type {
   EntradaConfirmarCarteira,
   EntradaLancarSituacao,
@@ -67,7 +68,7 @@ async function ler<T>(
 /** Antes de ler a linha mantida, recalcula as que venceram (plano B do recálculo, 3.9a). */
 async function atualizarVencidas(c: ClienteDoAcompanhamento): Promise<void> {
   const { error } = await c.schema("nucleo").rpc("atualizar_leitura_vencida");
-  if (error) console.error("atualizar_leitura_vencida falhou:", error.message);
+  if (error) console.error("atualizar_leitura_vencida falhou:", textoDoErro(error));
 }
 
 // ---------- Grade ----------

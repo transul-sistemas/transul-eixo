@@ -1,9 +1,20 @@
 import { CATALOGO, type IdDoModulo, type ModuloDoCatalogo, type Tela } from "./catalogo";
-import { MODULOS_POR_PERFIL, PERFIS_QUE_VEEM_EM_BREVE, type Perfil } from "./perfis";
+import {
+  MODULOS_POR_PERFIL,
+  PERFIS_QUE_VEEM_EM_BREVE,
+  type Perfil,
+  TELAS_POR_PERFIL,
+} from "./perfis";
 
 export function temOModulo(perfil: Perfil, modulo: IdDoModulo): boolean {
   const permitidos = MODULOS_POR_PERFIL[perfil];
   return permitidos === "todos" || permitidos.includes(modulo);
+}
+
+/** A tela não está fora do recorte do perfil no módulo (TELAS_POR_PERFIL). */
+export function telaLiberada(perfil: Perfil, tela: Pick<Tela, "id" | "permissao">): boolean {
+  const recorte = TELAS_POR_PERFIL[perfil]?.[tela.permissao.modulo];
+  return recorte === undefined || recorte.includes(tela.id);
 }
 
 export function veEmBreve(perfil: Perfil): boolean {
@@ -12,7 +23,7 @@ export function veEmBreve(perfil: Perfil): boolean {
 
 /** Pode abrir: tem o módulo e a tela está pronta (ou em breve, para quem acompanha a obra). */
 export function podeAbrir(perfil: Perfil, tela: Tela): boolean {
-  if (!temOModulo(perfil, tela.permissao.modulo)) return false;
+  if (!temOModulo(perfil, tela.permissao.modulo) || !telaLiberada(perfil, tela)) return false;
   if (tela.estado === "pronto") return true;
   if (tela.estado === "em-breve") return veEmBreve(perfil);
   return false;
@@ -22,7 +33,9 @@ export function podeAbrir(perfil: Perfil, tela: Tela): boolean {
 function apareceNoMenu(perfil: Perfil, tela: Tela): boolean {
   return (
     podeAbrir(perfil, tela) ||
-    (tela.estado === "restrito" && temOModulo(perfil, tela.permissao.modulo))
+    (tela.estado === "restrito" &&
+      temOModulo(perfil, tela.permissao.modulo) &&
+      telaLiberada(perfil, tela))
   );
 }
 

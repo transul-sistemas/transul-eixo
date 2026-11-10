@@ -1,3 +1,4 @@
+import { textoDoErro } from "@/lib/log/erro";
 import { z } from "zod";
 import type { PedidoDeTransferencia } from "@/lib/dominio/custodia";
 import {
@@ -70,7 +71,7 @@ async function gravando<T>(gravar: () => Promise<Resultado<T>>): Promise<Resulta
   try {
     return await gravar();
   } catch (erro) {
-    console.error("escrita falhou:", erro);
+    console.error("escrita falhou:", textoDoErro(erro));
     return erroDaAcao("falha");
   }
 }

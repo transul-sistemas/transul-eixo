@@ -4,7 +4,9 @@
 //  * só uma consulta, que começa com SELECT ou WITH; nada de comando de escrita, DDL ou pacote do Oracle;
 //  * nenhum comentário de bloco; comentário de linha só se não citar comando (e sai antes do envio);
 //  * nenhum campo proibido (senhas, PIX, dados bancários, RG, filiação, estado civil, raça, sexo e os
-//    sensíveis do dicionário); CPF e CNPJ só em contagem, nunca na consulta de linhas;
+//    sensíveis do dicionário); CPF e CNPJ só dentro de COUNT(...) no resumo (o mínimo e o máximo do
+//    resumo mostrariam o documento) e nunca na consulta de linhas;
+//  * nada de FOR UPDATE (trava linhas no Sankhya), nem com o UPDATE entre aspas;
 //  * nunca SELECT * (nem T.*); só tabelas do dicionário (docs/sankhya), com JOIN explícito;
 //  * a consulta de linhas só em tabela sem dado pessoal;
 //  * sempre com limite de linhas (o tempo máximo fica no cliente).
@@ -18,6 +20,8 @@ export type RegraDaGuarda =
   | "comentario"
   | "campo_proibido"
   | "documento_em_linhas"
+  | "documento_na_saida"
+  | "trava"
   | "select_asterisco"
   | "tabela_fora_do_dicionario"
   | "juncao_por_virgula"
@@ -307,6 +311,20 @@ function tabelasConsultadas(tokens: Token[]): string[] {
   return tabelas;
 }
 
+/** Para cada token, se ele está dentro dos parênteses de uma chamada da função (em qualquer nível). */
+function dentroDe(tokens: Token[], funcao: string): boolean[] {
+  const pilha: boolean[] = [];
+  return tokens.map((t, i) => {
+    if (simbolo(t, "(")) {
+      pilha.push(nome(tokens[i - 1]) === funcao && tokens[i - 1]?.tipo === "palavra");
+      return pilha.includes(true);
+    }
+    const dentro = pilha.includes(true);
+    if (simbolo(t, ")")) pilha.pop();
+    return dentro;
+  });
+}
+
 /**
  * Confere a consulta e devolve o SQL que pode sair (sem comentários de linha nem o ponto e vírgula final).
  * Lança ErroDaGuarda com a regra que recusou.
@@ -341,6 +359,12 @@ export function conferirConsulta(sql: string, { modo }: { modo: ModoDaConsulta }
     throw new ErroDaGuarda("comeco", "A consulta tem de começar com SELECT ou WITH.");
   }
 
+  uteis.forEach((t, i) => {
+    if (nome(t) === "FOR" && t.tipo === "palavra" && nome(uteis[i + 1]) === "UPDATE") {
+      throw new ErroDaGuarda("trava", "FOR UPDATE trava linhas no Sankhya: a ponte só lê.");
+    }
+  });
+
   for (const t of uteis) {
     if (
       t.tipo === "palavra" &&
@@ -350,7 +374,8 @@ export function conferirConsulta(sql: string, { modo }: { modo: ModoDaConsulta }
     }
   }
 
-  for (const t of uteis) {
+  const dentroDeCount = dentroDe(uteis, "COUNT");
+  uteis.forEach((t, i) => {
     const n = nome(t);
     if (n && (CAMPOS_PROIBIDOS.has(n) || CAMPO_DE_SENHA.test(n))) {
       throw new ErroDaGuarda("campo_proibido", `O campo ${n} é proibido (dado sensível).`);
@@ -361,7 +386,13 @@ export function conferirConsulta(sql: string, { modo }: { modo: ModoDaConsulta }
         `CPF e CNPJ (${n}) só em contagem, nunca na consulta de linhas.`,
       );
     }
-  }
+    if (n && CAMPO_DE_DOCUMENTO.test(n) && !dentroDeCount[i]) {
+      throw new ErroDaGuarda(
+        "documento_na_saida",
+        `CPF e CNPJ (${n}) só dentro de COUNT(...): fora dele, o resumo mostraria o documento.`,
+      );
+    }
+  });
 
   uteis.forEach((t, i) => {
     if (!simbolo(t, "*")) return;

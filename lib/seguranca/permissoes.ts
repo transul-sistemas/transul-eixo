@@ -42,7 +42,8 @@ const tudoEmTodos: PermissaoDoPerfil[] = MODULOS.flatMap((modulo) =>
 /** As permissões provisórias de cada perfil (o seed de produção). */
 export const PERMISSOES_DOS_PERFIS: Record<Perfil, readonly PermissaoDoPerfil[]> = {
   Administrador: [...tudoEmTodos, { modulo: "pessoas", acao: "ver_documento", escopo: "tudo" }],
-  Diretoria: tudoEmTodos,
+  // Só o Administrador muda acesso e permissões (10/11/2026): a Diretoria só lê a Administração.
+  Diretoria: tudoEmTodos.filter((p) => p.modulo !== "admin" || p.acao === "ver"),
   "Gestor de frota": [
     { modulo: "inicio", acao: "ver", escopo: "tudo" },
     ...ACOES_BASICAS.map((acao) => ({
@@ -58,6 +59,8 @@ export const PERMISSOES_DOS_PERFIS: Record<Perfil, readonly PermissaoDoPerfil[]>
       acao,
       escopo: "filial" as const,
     })),
+    // A Escala só da filial dele (10/11/2026); a lista e a ficha de Pessoas pedem o escopo tudo.
+    { modulo: "pessoas", acao: "ver", escopo: "filial" },
   ],
 };
 
@@ -74,4 +77,4 @@ export function assinaturaDasPermissoes(): string {
 }
 
 /** O md5 de `assinaturaDasPermissoes()`: a mesma constante que o pgTAP confere no banco. */
-export const ASSINATURA_DAS_PERMISSOES = "57ad0676d56af6d5e66e8b5be07e9396";
+export const ASSINATURA_DAS_PERMISSOES = "d343d54d27c68753725c5309d7f09da1";

@@ -1,3 +1,4 @@
+import { textoDoErro } from "@/lib/log/erro";
 import { alertaDoBanco } from "@/lib/dominio/alertas";
 import { SIGLAS, type Sigla } from "@/lib/dominio/status";
 import type { ConsultaDeTabela } from "@/lib/navegacao/tabela";
@@ -77,7 +78,7 @@ async function chamar<T>(cliente: ClienteDeLeitura, funcao: string, argumentos: 
  */
 async function atualizarVencidas(cliente: ClienteDeLeitura): Promise<void> {
   const { error } = await cliente.schema("nucleo").rpc("atualizar_leitura_vencida");
-  if (error) console.error("atualizar_leitura_vencida falhou:", error.message);
+  if (error) console.error("atualizar_leitura_vencida falhou:", textoDoErro(error));
 }
 
 function sigla(valor: string): Sigla {

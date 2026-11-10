@@ -7,6 +7,7 @@ import { pathToFileURL } from "node:url";
 import pg from "pg";
 
 import { bancoLocal, enderecoDoBancoLocal } from "./banco-local.ts";
+import { ErroDoEixo, textoDoErro } from "../lib/log/erro.ts";
 
 export { bancoLocal };
 
@@ -18,7 +19,7 @@ export function lerArgumentos(argv: readonly string[]): {
   const i = argv.indexOf("--quantidade");
   const quantidade = Number(i >= 0 ? (argv[i + 1] ?? "") : "200");
   if (!Number.isInteger(quantidade) || quantidade < 1 || quantidade > 20000) {
-    throw new Error("--quantidade vai de 1 a 20000.");
+    throw new ErroDoEixo("--quantidade vai de 1 a 20000.");
   }
   return { quantidade, semGatilhos: argv.includes("--sem-gatilhos") };
 }
@@ -42,7 +43,7 @@ async function principal() {
   const argumentos = lerArgumentos(process.argv.slice(2));
   const endereco = enderecoDoBancoLocal();
   if (!bancoLocal(endereco)) {
-    throw new Error("Recusado: os dados de desenvolvimento só rodam no Supabase local.");
+    throw new ErroDoEixo("Recusado: os dados de desenvolvimento só rodam no Supabase local.");
   }
   const cliente = new pg.Client({ connectionString: endereco });
   await cliente.connect();
@@ -92,7 +93,7 @@ async function principal() {
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   principal().catch((erro: unknown) => {
-    console.error(erro instanceof Error ? erro.message : erro);
+    console.error(textoDoErro(erro));
     process.exit(1);
   });
 }

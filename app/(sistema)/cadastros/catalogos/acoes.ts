@@ -1,5 +1,6 @@
 "use server";
 
+import { textoDoErro } from "@/lib/log/erro";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import {
@@ -66,7 +67,7 @@ async function executar<E>(
     const cliente = (await criarClienteDoServidor()) as unknown as ClienteDeCadastros;
     resultado = await gravar(cliente, dados.data);
   } catch (erro) {
-    console.error("gravação do catálogo falhou:", erro);
+    console.error("gravação do catálogo falhou:", textoDoErro(erro));
     return erroDaAcao("falha");
   }
   if (resultado.ok) {

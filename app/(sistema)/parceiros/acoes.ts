@@ -1,5 +1,6 @@
 "use server";
 
+import { textoDoErro } from "@/lib/log/erro";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { modoDosDados } from "@/lib/dados/fonte";
@@ -68,7 +69,7 @@ export async function cadastrarParceiroAcao(
   try {
     resultado = await gravarParceiro(dados.data, envelope.data.chaveDeEnvio);
   } catch (erro) {
-    console.error("cadastrar o parceiro falhou:", erro);
+    console.error("cadastrar o parceiro falhou:", textoDoErro(erro));
     return erroDaAcao("falha");
   }
   if (resultado.ok) invalidarParceiros();
@@ -91,7 +92,7 @@ export async function justificarDiferencaAcao(
   try {
     resultado = await gravarJustificativa(dados.data, envelope.data.chaveDeEnvio);
   } catch (erro) {
-    console.error("justificar a diferença falhou:", erro);
+    console.error("justificar a diferença falhou:", textoDoErro(erro));
     return erroDaAcao("falha");
   }
   if (resultado.ok) invalidarParceiros();
@@ -114,7 +115,7 @@ export async function cadastrarLocacaoAcao(
   try {
     resultado = await gravarLocacao(dados.data, envelope.data.chaveDeEnvio);
   } catch (erro) {
-    console.error("cadastrar a locação falhou:", erro);
+    console.error("cadastrar a locação falhou:", textoDoErro(erro));
     return erroDaAcao("falha");
   }
   if (resultado.ok) invalidarParceiros();
@@ -137,7 +138,7 @@ export async function encerrarLocacaoAcao(
   try {
     resultado = await gravarEncerramento(dados.data, envelope.data.chaveDeEnvio);
   } catch (erro) {
-    console.error("encerrar a locação falhou:", erro);
+    console.error("encerrar a locação falhou:", textoDoErro(erro));
     return erroDaAcao("falha");
   }
   if (resultado.ok) invalidarParceiros();

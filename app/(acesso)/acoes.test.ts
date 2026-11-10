@@ -11,6 +11,7 @@ const simulado = vi.hoisted(() => ({
   perfil: "administrador" as string | null,
   pode: true,
   atualizar: vi.fn(),
+  reautenticar: vi.fn(),
   redirecionado: [] as string[],
   cookies: [] as { nome: string; valor: string }[],
 }));
@@ -23,6 +24,7 @@ vi.mock("@/lib/supabase/servidor", () => ({
       resetPasswordForEmail: simulado.recuperar,
       getUser: async () => ({ data: { user: simulado.usuario } }),
       updateUser: simulado.atualizar,
+      reauthenticate: simulado.reautenticar,
     },
     schema: () => ({
       rpc: async (funcao: string) => ({
@@ -182,6 +184,72 @@ describe("definirNovaSenha", () => {
     ).rejects.toThrow();
     expect(simulado.atualizar).toHaveBeenCalledWith({ password: "senha-longa-123" });
     expect(simulado.redirecionado).toEqual(["/inicio/tarefas"]);
+  });
+});
+
+// Troca de senha com secure_password_change (Lote 2, 10/11/2026): sem login recente, o Supabase recusa
+// com reauthentication_needed; o Eixo manda o código (nonce) ao e-mail e troca com ele.
+describe("definirNovaSenha: reautenticação", () => {
+  const SENHA = { senha: "senha-longa-123", confirmacao: "senha-longa-123" };
+  const PEDE = { error: { code: "reauthentication_needed", status: 400, message: "x" } };
+
+  it("sem login recente, manda o código ao e-mail e pede o código, sem trocar", async () => {
+    simulado.usuario = { id: "u1" };
+    simulado.atualizar.mockResolvedValue(PEDE);
+    simulado.reautenticar.mockResolvedValue({ error: null });
+    const r = await definirNovaSenha({}, formulario(SENHA));
+    expect(simulado.reautenticar).toHaveBeenCalledTimes(1);
+    expect(r.pedirCodigo).toBe(true);
+    expect(r.aviso).toMatch(/código/);
+    expect(r.erro).toBeUndefined();
+    expect(simulado.redirecionado).toEqual([]);
+  });
+
+  it("com o código, troca a senha levando o nonce e entra no sistema", async () => {
+    simulado.usuario = { id: "u1" };
+    simulado.atualizar.mockResolvedValue({ error: null });
+    await expect(
+      definirNovaSenha({ pedirCodigo: true }, formulario({ ...SENHA, codigo: "123456" })),
+    ).rejects.toThrow("NEXT_REDIRECT");
+    expect(simulado.atualizar).toHaveBeenCalledWith({
+      password: "senha-longa-123",
+      nonce: "123456",
+    });
+    expect(simulado.reautenticar).not.toHaveBeenCalled();
+    expect(simulado.redirecionado).toEqual(["/inicio/tarefas"]);
+  });
+
+  it("código errado ou vencido: diz o que aconteceu e continua pedindo o código", async () => {
+    simulado.usuario = { id: "u1" };
+    simulado.atualizar.mockResolvedValue({
+      error: { code: "reauthentication_not_valid", status: 400, message: "x" },
+    });
+    const r = await definirNovaSenha(
+      { pedirCodigo: true },
+      formulario({ ...SENHA, codigo: "000000" }),
+    );
+    expect(r.erro).toMatch(/código/);
+    expect(r.pedirCodigo).toBe(true);
+  });
+
+  it("código fora do formato (6 dígitos) não chega ao Supabase", async () => {
+    simulado.usuario = { id: "u1" };
+    const r = await definirNovaSenha(
+      { pedirCodigo: true },
+      formulario({ ...SENHA, codigo: "12ab" }),
+    );
+    expect(r.erro).toMatch(/6 dígitos/);
+    expect(r.pedirCodigo).toBe(true);
+    expect(simulado.atualizar).not.toHaveBeenCalled();
+  });
+
+  it("falha ao mandar o código: avisa sem trocar a senha", async () => {
+    simulado.usuario = { id: "u1" };
+    simulado.atualizar.mockResolvedValue(PEDE);
+    simulado.reautenticar.mockResolvedValue({ error: { code: "over_email_send_rate_limit" } });
+    const r = await definirNovaSenha({}, formulario(SENHA));
+    expect(r.erro).toMatch(/código/);
+    expect(simulado.redirecionado).toEqual([]);
   });
 });
 

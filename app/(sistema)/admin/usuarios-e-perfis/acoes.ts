@@ -1,5 +1,6 @@
 "use server";
 
+import { textoDoErro } from "@/lib/log/erro";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import type { ClienteDeCadastros } from "@/lib/dados/catalogos-cadastro";
@@ -49,7 +50,7 @@ export async function mudarAcessoAcao(bruto: unknown): Promise<ResultadoDaAcao<A
     const cliente = (await criarClienteDoServidor()) as unknown as ClienteDeCadastros;
     resultado = await mudarAcesso(cliente, dados.data, pessoa.pessoaId);
   } catch (erro) {
-    console.error("mudança de acesso falhou:", erro);
+    console.error("mudança de acesso falhou:", textoDoErro(erro));
     return erroDaAcao("falha");
   }
   if (resultado.ok) {

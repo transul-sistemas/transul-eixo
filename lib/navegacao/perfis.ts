@@ -14,5 +14,16 @@ export const MODULOS_POR_PERFIL: Record<Perfil, "todos" | readonly IdDoModulo[]>
   Administrador: "todos",
   Diretoria: "todos",
   "Gestor de frota": ["inicio", "frota"],
-  Operacional: ["inicio", "operacional"],
+  Operacional: ["inicio", "operacional", "pessoas"],
+};
+
+/**
+ * Telas a que o perfil se limita dentro de um módulo (o resto do módulo não abre nem aparece). O
+ * Operacional tem Pessoas › ver com escopo filial (10/11/2026): só a Escala; a lista e a ficha pedem o
+ * escopo tudo.
+ */
+export const TELAS_POR_PERFIL: Partial<
+  Record<Perfil, Partial<Record<IdDoModulo, readonly string[]>>>
+> = {
+  Operacional: { pessoas: ["pessoas.escala"] },
 };

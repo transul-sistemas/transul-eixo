@@ -1,5 +1,6 @@
 "use server";
 
+import { textoDoErro } from "@/lib/log/erro";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { gravarSituacaoDoDia, type SituacaoLancada } from "@/lib/dados/acompanhamento";
@@ -42,7 +43,7 @@ export async function lancarSituacaoAcao(
   try {
     resultado = await gravarSituacaoDoDia(dados.data, envelope.data.chaveDeEnvio);
   } catch (erro) {
-    console.error("lançar a situação do dia falhou:", erro);
+    console.error("lançar a situação do dia falhou:", textoDoErro(erro));
     return erroDaAcao("falha");
   }
   if (resultado.ok) {

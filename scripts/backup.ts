@@ -15,8 +15,9 @@ import { join } from "node:path";
 import type { Readable } from "node:stream";
 import { pipeline } from "node:stream/promises";
 import { pathToFileURL } from "node:url";
+import { ErroDoEixo, textoDoErro } from "../lib/log/erro.ts";
 
-export class ErroDoBackup extends Error {
+export class ErroDoBackup extends ErroDoEixo {
   constructor(mensagem: string) {
     super(mensagem);
     this.name = "ErroDoBackup";
@@ -314,7 +315,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   (
     tarefa ?? Promise.reject(new ErroDoBackup("Uso: node scripts/backup.ts banco|restaurar ..."))
   ).catch((erro: unknown) => {
-    console.error(erro instanceof Error ? erro.message : String(erro));
+    console.error(textoDoErro(erro));
     process.exit(1);
   });
 }

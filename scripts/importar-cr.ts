@@ -10,8 +10,9 @@ import { readFileSync } from "node:fs";
 import { pathToFileURL } from "node:url";
 import pg from "pg";
 import { bancoLocal, enderecoDoBancoLocal } from "./banco-local.ts";
+import { ErroDoEixo, textoDoErro } from "../lib/log/erro.ts";
 
-export class ErroDaImportacao extends Error {
+export class ErroDaImportacao extends ErroDoEixo {
   constructor(mensagem: string) {
     super(mensagem);
     this.name = "ErroDaImportacao";
@@ -360,11 +361,11 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   principal().catch((erro: unknown) => {
     // Só a mensagem do próprio importador (sem dado) ou o código do Postgres: a mensagem do banco pode
     // citar valor real (reforço de 06/11/2026: na tela, só contagens e códigos).
-    if (erro instanceof ErroDaImportacao) console.error(erro.message);
-    else {
-      const codigo = (erro as { code?: string }).code;
-      console.error(`A importação falhou${codigo ? ` (código ${codigo})` : ""}.`);
-    }
+    console.error(
+      erro instanceof ErroDaImportacao
+        ? textoDoErro(erro)
+        : `A importação falhou (${textoDoErro(erro)}).`,
+    );
     process.exit(1);
   });
 }

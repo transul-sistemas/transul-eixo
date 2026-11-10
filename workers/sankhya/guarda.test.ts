@@ -144,6 +144,38 @@ describe("guarda: campos e tabelas", () => {
     expect(recusa("SELECT C.CODCENCUS, C.CPF FROM TSICUS C", "linhas")).toBe("documento_em_linhas");
   });
 
+  // Lote 2 (10/11/2026): no resumo, o min/máx das colunas numéricas mostraria o documento; por isso CPF
+  // e CNPJ só dentro de COUNT(...), nunca na saída (coluna, agrupamento, MIN/MAX).
+  it.each([
+    "SELECT P.CGC_CPF FROM TGFPAR P",
+    "SELECT P.CGC_CPF, COUNT(*) AS N FROM TGFPAR P GROUP BY P.CGC_CPF",
+    "SELECT MAX(P.CGC_CPF) AS M FROM TGFPAR P",
+    "SELECT SUBSTR(P.CGC_CPF, 1, 3) AS RAIZ, COUNT(*) AS N FROM TGFPAR P GROUP BY SUBSTR(P.CGC_CPF, 1, 3)",
+    'SELECT P."CPF" FROM TGFPAR P',
+  ])("CPF e CNPJ fora de COUNT são recusados também no resumo: %s", (sql) => {
+    expect(recusa(sql, "resumo")).toBe("documento_na_saida");
+  });
+
+  it("CPF e CNPJ dentro de COUNT seguem aceitos no resumo", () => {
+    for (const sql of [
+      "SELECT COUNT(DISTINCT P.CGC_CPF) AS N FROM TGFPAR P",
+      "SELECT COUNT(CASE WHEN LENGTH(P.CGC_CPF) = 11 THEN 1 END) AS PF FROM TGFPAR P",
+    ]) {
+      expect(conferirConsulta(sql, { modo: "resumo" })).toBe(sql);
+    }
+  });
+
+  it.each([
+    "SELECT V.CODVEICULO FROM TGFVEI V FOR UPDATE",
+    "SELECT V.CODVEICULO FROM TGFVEI V for update nowait",
+    "SELECT V.CODVEICULO FROM TGFVEI V FOR UPDATE OF V.CODVEICULO SKIP LOCKED",
+    'SELECT V.CODVEICULO FROM TGFVEI V FOR "UPDATE"',
+    "SELECT COUNT(DISTINCT P.CGC_CPF) AS N FROM TGFPAR P FOR UPDATE",
+  ])("FOR UPDATE (trava linhas no Sankhya) é recusado em qualquer modo: %s", (sql) => {
+    expect(recusa(sql, "resumo")).toBe("trava");
+    expect(recusa(sql, "linhas")).toBe("trava");
+  });
+
   it("nunca SELECT * (nem T.*); COUNT(*) pode", () => {
     expect(recusa("SELECT * FROM TGFVEI")).toBe("select_asterisco");
     expect(recusa("SELECT DISTINCT * FROM TGFVEI")).toBe("select_asterisco");

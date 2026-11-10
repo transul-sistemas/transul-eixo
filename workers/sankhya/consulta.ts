@@ -3,8 +3,9 @@
 // pelo Node (process.loadEnvFile, o mesmo formato do dotenv); nada delas é impresso.
 
 import { existsSync } from "node:fs";
-import { criarClienteSankhya, mascarar } from "./cliente.ts";
-import { executarConsulta, lerArgumentos } from "./executar.ts";
+import { criarClienteSankhya, ErroDoSankhya, mascarar } from "./cliente.ts";
+import { ErroDaExecucao, executarConsulta, lerArgumentos } from "./executar.ts";
+import { ErroDaGuarda } from "./guarda.ts";
 
 const ARQUIVOS_DE_AMBIENTE = [".env.sankhya.local", ".env.local"];
 
@@ -28,6 +29,13 @@ principal().catch((erro: unknown) => {
     process.env.SANKHYA_X_TOKEN,
     process.env.SANKHYA_CLIENT_ID,
   ].filter((s): s is string => Boolean(s));
-  console.error(mascarar(erro instanceof Error ? erro.message : String(erro), segredos));
+  // Só o texto das nossas classes (guarda, execução e cliente, com os segredos mascarados); de qualquer
+  // outro erro, só o nome: a mensagem crua pode trazer dado.
+  const nosso =
+    erro instanceof ErroDaGuarda || erro instanceof ErroDaExecucao || erro instanceof ErroDoSankhya;
+  // log-seguro: a mensagem é das classes da ponte (texto nosso), mascarada.
+  console.error(
+    nosso ? mascarar(erro.message, segredos) : erro instanceof Error ? erro.name : "erro",
+  );
   process.exitCode = 1;
 });

@@ -67,13 +67,16 @@ describe("<BarraLateral>: grupos", () => {
     expect(html).toContain("Nenhuma tela disponível para o seu perfil.");
     expect(html).not.toContain("aria-expanded=");
   });
-  it("o Operacional vê só o grupo Operacional, com Pátio, Totem e Ordens de carregamento", () => {
+  it("o Operacional vê os grupos Operacional (Pátio, Totem e Ordens de carregamento) e Pessoas (só a Escala)", () => {
     const html = barra({ perfil: "Operacional", rotaAtual: "/operacional/patio" });
-    expect(contar(html, "aria-expanded=")).toBe(1);
+    expect(contar(html, "aria-expanded=")).toBe(2);
     expect(html).toContain('href="/operacional/patio"');
     expect(html).toContain('href="/operacional/totem"');
     expect(html).toContain('href="/operacional/ordens-de-carregamento"');
     expect(html).not.toContain('href="/operacional/analise"');
+    const naPessoas = barra({ perfil: "Operacional", rotaAtual: "/pessoas/escala" });
+    expect(naPessoas).toContain('href="/pessoas/escala"');
+    expect(naPessoas).not.toContain('href="/pessoas/lista"');
   });
   it("o menu tem nome acessível, e o da demonstração é outro", () => {
     expect(barra()).toContain('aria-label="Menu principal"');
