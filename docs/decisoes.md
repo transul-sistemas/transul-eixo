@@ -8,6 +8,21 @@ Modelo de entrada:
 
 ---
 
+## 10/11/2026 — Semana 2 (Operacional, Operações, Pessoas, Parceiros, Resultados) e a carga provisória da v1: hipóteses tomadas
+
+- **Contexto:** primeira versão de cada módulo, no ritmo "largura antes de profundidade" (09/11/2026). Números reais vêm da carga provisória da v1 no schema `staging` do banco local (só no localhost; nunca na nuvem), até a ponte do Sankhya funcionar.
+- **Staging da v1:** schema `staging` com despesas, viagens/CT-e, folha (pelo código do funcionário, sem nome nem CPF), eventos da folha, roster, operações, naturezas e abastecimento; carga por script fora do Git (`importacao/`), só para localhost. A v1 só tem 125 abastecimentos com litros (manuais): o Abastecimento mostra pouco até a ponte.
+- **Hipóteses (revisar se Alexandre discordar):**
+  - Abastecimento: km/l = km dos abastecimentos com hodômetro válido ÷ litros desses abastecimentos; o gestor vê as placas da carteira de hoje.
+  - Análise da frota: as quatro camadas são retrato de agora, disponibilidade, onde está a diferença e custo (próxima versão); disponibilidade = placas em atividade ÷ placas na frota pela situação no fim de cada dia, fora o grupo Fora.
+  - Operacional: criar a ordem de carregamento é o próprio CAr; liberar a viagem (ETc) devolve a custódia ao gestor; devolver sem carregar leva a PÁT, com motivo; o totem só aceita placa já entregue à filial de quem está logado.
+  - Operações: receita = frete dos CT-e/NFS-e pela data de negociação; custo = despesa pela competência, sem provisão; Frota = CRs de frota, Serviço = os demais; valor em R$ só para quem tem Resultados; o Gestor de frota não vê Operações (sem `operacoes.ver` na semente). Só ≈41% da receita de out/2026 cai em operação: falta montar os CRs de serviço nas operações.
+  - Resultados: competência gerencial no banco (`nucleo.competencia_gerencial`, corte no dia 10 como parâmetro) é a fonte única; hoje parte da competência já calculada pela v1 — faltam carregar DTNEG, DTENTSAI das receitas e a origem dos renegociados. A ficha da operação deve passar a usar a mesma função (pendente).
+  - Pessoas: 6 funções (motorista, operador, ajudante, mecânico, líder, administrativo); um vínculo por vez; cadastro só com CPF; escala T, F, FE, AT, uma marcação por pessoa e dia; roster e folha da v1 não ligados (sem chave comum). O Operacional ainda não abre a Escala (falta `pessoas.ver` com escopo filial na semente).
+  - Parceiros: parceiro = pessoa com tipo acionista, agregado ou locador; liga-se às placas pelo CR agrupador de acionista (60 agrupadores, nenhum ligado ainda); conciliação por CR × mês; justificativa sem alçada; locação com fim exclusivo; os assistentes com CPF/CNPJ não guardam rascunho.
+- **Incidente (10/11/2026):** um `pnpm build` local embutiu as chaves públicas do projeto na nuvem (lidas do `.env.local` pelo Next) e 6 logins de usuários de teste foram tentados no Auth da nuvem, todos recusados; nenhum outro acesso. Regra: os agentes não rodam `pnpm build` local; o build de produção fica no CI.
+- **Quem decidiu:** Alexandre (rumo); as hipóteses, o Claude, registradas para revisão.
+
 ## 09/11/2026 — Semana 1 da Frota: largura antes de profundidade, e as hipóteses tomadas
 
 - **Decisão (Alexandre, 09/11/2026):** foco no localhost; Supabase remoto, Vercel e publicação ficam para depois. Um módulo está "pronto na primeira versão" quando abre com dados e o assistente principal grava. Testes proporcionais: pgTAP nas regras (TDD), um e2e do caminho principal; sem mutações SQL nem rodadas de auditoria nas fatias novas. Subagentes em paralelo, um por módulo, cada um num worktree e num banco descartável próprio; integração na main com o pgTAP inteiro verde.
