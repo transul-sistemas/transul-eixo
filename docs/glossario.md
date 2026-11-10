@@ -15,7 +15,23 @@ Modelo de entrada:
 
 ---
 
-Nenhuma métrica registrada ainda.
+## Competência gerencial
+
+- **Definição:** o mês a que o título pertence nos Resultados (regra em `docs/projeto-tecnico.md`).
+- **Fórmula:** base = `DTNEG` (renegociado: a menor `DTNEG` de origem); se `DTENTSAI` ≥ dia (corte + 1) do mês seguinte à base, o mês do `DTENTSAI`; senão, o mês da base. Provisão fica fora. Corte em `config.parametro` (`dia_do_corte_da_competencia`, 10).
+- **Fonte:** `nucleo.competencia_gerencial` (fonte única; toda leitura usa esta função). Provisório: o staging da v1 não traz `DTNEG` nem a origem da renegociação; a base é a `dt_competencia` da v1.
+- **Onde aparece:** Resultados › Visão geral (e a ficha da operação, quando ler resultados).
+- **Responsável:** Alexandre.
+- **Data da decisão:** 29/10/2026 (regra); 10/11/2026 (função no banco).
+
+## Receita, custo, resultado e margem (Resultados)
+
+- **Definição:** receita = frete da empresa dos CT-e e NFS-e válidos (status vazio ou A; os que sumiram do Sankhya ficam fora); custo = valor líquido das despesas, sem provisão e sem as invalidadas, com o rateio já dividido por CR; resultado = receita − custo; margem = resultado ÷ receita (vazia sem receita).
+- **Fórmula:** tudo pela competência gerencial do mês; margem em pontos percentuais com uma casa.
+- **Fonte:** `nucleo.visao_geral_dos_resultados` (staging provisório da v1 até a ponte do Sankhya). A folha não entra à parte (hipótese: já vem paga pelos títulos).
+- **Onde aparece:** Resultados › Visão geral.
+- **Responsável:** Alexandre (hipótese da primeira versão, a confirmar).
+- **Data da decisão:** 10/11/2026.
 
 ## Status da placa (siglas)
 
