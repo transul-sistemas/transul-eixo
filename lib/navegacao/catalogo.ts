@@ -193,6 +193,7 @@ export const CATALOGO: readonly ModuloDoCatalogo[] = [
       dispositivos: DESKTOP,
       descricao: "Lista as operações e abre a ficha de cada uma.",
       ficha: true,
+      estado: "pronto",
     },
     {
       slug: "comparativo",

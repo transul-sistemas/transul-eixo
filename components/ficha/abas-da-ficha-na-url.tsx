@@ -12,13 +12,19 @@ import { AbasDaFicha } from "./abas-da-ficha";
  * devolve a mesma aba. O que muda por fora (Voltar e Avançar, outro `?aba=` por link) é lido do
  * endereço de verdade. O resto da URL não muda.
  */
-export function AbasDaFichaNaUrl({
+export function AbasDaFichaNaUrl<Id extends string = AbaId>({
   abaInicial,
   conteudos,
+  abas = ABAS_DA_FICHA as unknown as readonly { id: Id; nome: string }[],
 }: {
-  abaInicial: AbaId;
-  conteudos: Record<AbaId, ReactNode>;
+  abaInicial: Id;
+  conteudos: Record<Id, ReactNode>;
+  /** As abas desta ficha (sem elas, as seis de toda raiz). */
+  abas?: readonly { id: Id; nome: string }[];
 }) {
+  const ids = abas.map((aba) => aba.id);
+  // As abas viram texto para o efeito não renascer a cada render (a lista é a mesma).
+  const chaveDasAbas = ids.join("|");
   const [ativa, setAtiva] = useState(abaInicial);
   const [inicialAnterior, setInicialAnterior] = useState(abaInicial);
   // O servidor entregou outra aba (navegação interna para outro `?aba=`): ela manda.
@@ -31,18 +37,23 @@ export function AbasDaFichaNaUrl({
   useEffect(() => {
     const caminhoDaFicha = window.location.pathname;
     function aoMudarOEndereco() {
-      const aba = abaDoEndereco(caminhoDaFicha, window.location.pathname, window.location.search);
+      const aba = abaDoEndereco(
+        caminhoDaFicha,
+        window.location.pathname,
+        window.location.search,
+        chaveDasAbas.split("|") as Id[],
+      );
       if (aba) setAtiva(aba);
     }
     window.addEventListener("popstate", aoMudarOEndereco);
     return () => window.removeEventListener("popstate", aoMudarOEndereco);
-  }, []);
+  }, [chaveDasAbas]);
 
-  function mudar(aba: AbaId) {
+  function mudar(aba: Id) {
     setAtiva(aba);
-    const texto = comAba(new URLSearchParams(window.location.search), aba).toString();
+    const texto = comAba(new URLSearchParams(window.location.search), aba, ids).toString();
     window.history.replaceState(null, "", `${window.location.pathname}${texto ? `?${texto}` : ""}`);
   }
 
-  return <AbasDaFicha abas={ABAS_DA_FICHA} ativa={ativa} aoMudar={mudar} conteudos={conteudos} />;
+  return <AbasDaFicha abas={abas} ativa={ativa} aoMudar={mudar} conteudos={conteudos} />;
 }
