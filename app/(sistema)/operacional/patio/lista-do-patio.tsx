@@ -1,11 +1,13 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { Etiqueta } from "@/components/etiqueta";
 import { formatarData, formatarDataEHora } from "@/components/formato/data";
 import { formatarInteiro } from "@/components/formato/numero";
 import { Placa } from "@/components/placa";
+import { BotaoDoOlho } from "@/components/tabela/botao-do-olho";
 import { Button } from "@/components/ui/button";
 import type { OperacaoAEscolher, PlacaDoPatio } from "@/lib/dados/operacional-tipos";
 import { NOMES_DOS_TIPOS, type TipoDeAtivo } from "@/lib/dados/placas-tipos";
@@ -78,13 +80,22 @@ export function ListaDoPatio({
               <th scope="col" className="px-3 py-2 text-right font-medium">
                 <span className="sr-only">Ações</span>
               </th>
+              <th scope="col" className="w-14 px-3 py-2 text-right font-medium">
+                Detalhes
+              </th>
             </tr>
           </thead>
           <tbody>
             {linhas.map((l) => (
               <tr key={l.ativoId} className="border-border border-t">
                 <th scope="row" className="bg-card sticky left-0 px-3 py-2 text-left font-normal">
-                  <Placa placa={l.placa} tamanho="p" />
+                  <Link
+                    href={`/frota/placas/${l.placa}`}
+                    aria-label={`Abrir a ficha da placa ${l.placa}`}
+                    className="focus-visible:ring-ring/50 inline-flex rounded outline-none focus-visible:ring-3"
+                  >
+                    <Placa placa={l.placa} tamanho="p" />
+                  </Link>
                 </th>
                 <td className="px-3 py-2 text-right tabular-nums">
                   {l.posicao ? `${formatarInteiro(l.posicao)}º` : "—"}
@@ -130,6 +141,22 @@ export function ListaDoPatio({
                       </Button>
                     ))}
                   </div>
+                </td>
+                <td className="px-3 py-2 text-right">
+                  <BotaoDoOlho
+                    item={l.placa}
+                    hrefDaFicha={`/frota/placas/${l.placa}`}
+                    titulo={<Placa placa={l.placa} tamanho="m" />}
+                    detalhes={[
+                      { rotulo: "Situação", valor: l.nomeDaSituacao ?? l.sigla },
+                      { rotulo: "Fila", valor: l.posicao ? `${formatarInteiro(l.posicao)}º` : "—" },
+                      { rotulo: "Tipo", valor: NOMES_DOS_TIPOS[l.tipo as TipoDeAtivo] ?? l.tipo },
+                      { rotulo: "Implementos", valor: l.implementos.join(", ") || "—" },
+                      { rotulo: "Filial", valor: l.filial },
+                      { rotulo: "No pátio desde", valor: formatarDataEHora(l.desde) },
+                      { rotulo: "Chegou", valor: formatarDataEHora(l.chegouEm) },
+                    ]}
+                  />
                 </td>
               </tr>
             ))}
