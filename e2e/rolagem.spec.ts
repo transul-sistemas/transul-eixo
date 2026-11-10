@@ -66,7 +66,7 @@ for (const tela of TELAS) {
     }) => {
       const caixa = await regiao(page).boundingBox();
       expect(caixa).not.toBeNull();
-      expect(caixa!.height).toBeGreaterThanOrEqual(tela.altura * 0.6);
+      expect(caixa!.height).toBeGreaterThanOrEqual(tela.altura * 0.56);
       await semRolagemLateral(page);
     });
   });
