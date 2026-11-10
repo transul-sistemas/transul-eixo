@@ -390,6 +390,9 @@ isOneToOne: false
 "pode_algum":
 { Args: { "p_acao": string,"p_modulos": (string)[] }; Returns: boolean
                            },
+"pode_em_tudo":
+{ Args: { "p_acao": string,"p_modulo": string }; Returns: boolean
+                           },
 "pode_na_operacao":
 { Args: { "p_acao": string,"p_operacao_id": string }; Returns: boolean
                            },
