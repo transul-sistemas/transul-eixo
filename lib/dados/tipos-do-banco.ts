@@ -399,6 +399,9 @@ isOneToOne: false
 "ve_ativo":
 { Args: { "p_acao": string,"p_ativo_id": string,"p_modulos": (string)[] }; Returns: boolean
                            },
+"ve_filial":
+{ Args: { "p_acao": string,"p_filial_id": string,"p_modulo": string }; Returns: boolean
+                           },
 "ve_todas_as_placas":
 { Args: Record<PropertyKey, never>; Returns: boolean
                            }
@@ -1709,6 +1712,9 @@ isOneToOne: false
 "atualizar_leitura_vencida":
 { Args: Record<PropertyKey, never>; Returns: number
                            },
+"avancar_no_patio":
+{ Args: { "p_acao": string,"p_ativo_id": string,"p_chave"?: string,"p_em"?: string,"p_motivo"?: string }; Returns: Json
+                           },
 "cadastrar_ativo":
 { Args: { "p_ano_fabricacao"?: number,"p_carroceria_id"?: string,"p_chassi"?: string,"p_chave"?: string,"p_codigo_fipe"?: string,"p_cr_id": string,"p_eixos"?: number,"p_em"?: string,"p_funcao"?: Database["nucleo"]['Enums']["funcao_do_implemento"],"p_gestor_id": string,"p_modelo_id"?: string,"p_numero_de_serie"?: string,"p_operacao_id": string,"p_pessoa_dona_id"?: string,"p_placa": string,"p_regime"?: Database["nucleo"]['Enums']["regime_de_posse"],"p_renavam": string,"p_situacao_inicial"?: string,"p_tipo": Database["nucleo"]['Enums']["tipo_de_ativo"],"p_valor_fipe"?: number,"p_valor_fipe_referencia"?: string,"p_valor_manual"?: number,"p_valor_manual_em"?: string,"p_valor_manual_fonte"?: string }; Returns: string
                            },
@@ -1765,6 +1771,9 @@ isOneToOne: false
 "criar_cr":
 { Args: { "p_chave"?: string,"p_codcencus": number,"p_codigo": string,"p_nome": string }; Returns: string
                            },
+"criar_ordem_de_carregamento":
+{ Args: { "p_ativo_id": string,"p_chave"?: string,"p_data_prevista": string,"p_destino": string,"p_em"?: string,"p_operacao_id": string }; Returns: Json
+                           },
 "crs_ocupados":
 { Args: Record<PropertyKey, never>; Returns: string[]
                            },
@@ -1773,6 +1782,9 @@ isOneToOne: false
                            },
 "detalhe_da_placa":
 { Args: { "p_placa": string }; Returns: Json
+                           },
+"devolver_custodia_ao_gestor":
+{ Args: { "p_ativo_id": string,"p_custodia_id": string,"p_em": string }; Returns: undefined
                            },
 "devolver_placa":
 { Args: { "p_chave"?: string,"p_em"?: string,"p_motivo": string,"p_transferencia_id": string,"p_versao": number }; Returns: string
@@ -1917,6 +1929,12 @@ isOneToOne: false
 "operacoes_que_vejo":
 { Args: Record<PropertyKey, never>; Returns: (string)[]
                            },
+"ordens_de_carregamento":
+{ Args: { "p_pagina"?: number,"p_situacao"?: string,"p_tam"?: number }; Returns: Json
+                           },
+"patio_da_filial":
+{ Args: { "p_pagina"?: number,"p_situacao"?: string,"p_tam"?: number }; Returns: Json
+                           },
 "pedido_aberto_da_placa":
 { Args: { "p_placa": string }; Returns: Json
                            },
@@ -1931,6 +1949,9 @@ isOneToOne: false
                            },
 "periodo_do_mes":
 { Args: { "p_mes": string }; Returns: unknown
+                           },
+"placa_no_patio_para_agir":
+{ Args: { "p_acao": string,"p_ativo_id": string,"p_em": string }; Returns: Record<string, unknown>
                            },
 "placa_para_assistente":
 { Args: { "p_placa": string }; Returns: Json
@@ -1981,6 +2002,11 @@ isOneToOne: false
         isOneToOne: false
         isSetofReturn: true
       } },
+"placas_do_patio":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "ativo_id": string,"chegou_em": string,"desde": string,"filial": string,"grupo": string,"implementos": (string)[],"modelo": string,"nome_da_situacao": string,"ordem_data": string,"ordem_destino": string,"ordem_numero": number,"ordem_operacao": string,"placa": string,"posicao": number,"sigla": string,"tipo": string
+            }[]
+                           },
 "placas_filtradas":
 { Args: { "p_baixadas": boolean,"p_busca": string,"p_grupos": (string)[],"p_para_receber"?: boolean,"p_siglas": (string)[],"p_tipos": (string)[] }; Returns: {
               "alertas": (string)[] | null,
@@ -2012,6 +2038,9 @@ isOneToOne: false
         isOneToOne: false
         isSetofReturn: true
       } },
+"posicao_na_fila":
+{ Args: { "p_chegada_id": string }; Returns: number
+                           },
 "proximo_recalculo_do_ativo":
 { Args: { "p_ativo_id": string,"p_em"?: string }; Returns: string
                            },
@@ -2038,6 +2067,9 @@ isOneToOne: false
                            },
 "registrar_baixa":
 { Args: { "p_ativo_id": string,"p_em": string,"p_motivo": string,"p_sigla": string }; Returns: undefined
+                           },
+"registrar_chegada":
+{ Args: { "p_chave"?: string,"p_em"?: string,"p_placa": string }; Returns: Json
                            },
 "registrar_evento":
 { Args: { "p_ativo_id": string,"p_camada"?: string,"p_em": string,"p_em_origem"?: Database["config"]['Enums']["origem_da_data"],"p_justificativa"?: string,"p_origem"?: string,"p_sigla": string }; Returns: string

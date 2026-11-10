@@ -1,7 +1,36 @@
-import { metadataDaTela, TelaEmBreve } from "@/components/navegacao/tela-em-breve";
+import { connection } from "next/server";
+import { Suspense } from "react";
+import { PaginaDeLeitura } from "@/components/layout/pagina-de-leitura";
+import { metadataDaTela } from "@/components/navegacao/tela-em-breve";
+import { ListaVazia } from "@/components/tabela/estados";
+import { modoDosDados } from "@/lib/dados/fonte";
+import { acharTela } from "@/lib/navegacao/catalogo";
+import { RegistrarChegada } from "./registrar-chegada";
 
 export const metadata = metadataDaTela("/operacional/totem");
 
+async function Conteudo() {
+  // O modo dos dados é lido a cada pedido (sem pré-renderizar a tela com o modo do build).
+  await connection();
+  return modoDosDados() !== "banco" ? (
+    <ListaVazia
+      titulo="O Totem grava só no banco"
+      descricao="Esta tela não tem dados de exemplo. Rode o sistema com os dados do banco para registrar a chegada na fila."
+    />
+  ) : (
+    <RegistrarChegada />
+  );
+}
+
 export default function Pagina() {
-  return <TelaEmBreve rota="/operacional/totem" />;
+  const tela = acharTela("/operacional/totem")?.tela;
+  return (
+    <PaginaDeLeitura titulo={tela?.nome ?? "Totem"} descricao={tela?.descricao}>
+      <div className="mx-auto flex w-full max-w-2xl flex-col">
+        <Suspense fallback={null}>
+          <Conteudo />
+        </Suspense>
+      </div>
+    </PaginaDeLeitura>
+  );
 }

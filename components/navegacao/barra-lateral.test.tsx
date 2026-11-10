@@ -1,6 +1,14 @@
 import { renderToStaticMarkup } from "react-dom/server";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+import * as visibilidade from "@/lib/navegacao/visibilidade";
 import { BarraLateral } from "./barra-lateral";
+
+// Com o Operacional pronto, todo perfil do catálogo real vê alguma tela; o aviso de "nenhuma tela" é
+// conferido com a lista de módulos visíveis vazia.
+vi.mock("@/lib/navegacao/visibilidade", async (original) => {
+  const m = await original<typeof import("@/lib/navegacao/visibilidade")>();
+  return { ...m, modulosVisiveis: vi.fn(m.modulosVisiveis) };
+});
 
 const contar = (html: string, trecho: string) => html.split(trecho).length - 1;
 
@@ -54,9 +62,18 @@ describe("<BarraLateral>: grupos", () => {
     expect(contar(html, "Em breve")).toBe(1);
   });
   it("quem não vê nenhuma tela recebe um aviso, não uma barra vazia", () => {
+    vi.mocked(visibilidade.modulosVisiveis).mockReturnValueOnce([]);
     const html = barra({ perfil: "Operacional", rotaAtual: "/" });
     expect(html).toContain("Nenhuma tela disponível para o seu perfil.");
     expect(html).not.toContain("aria-expanded=");
+  });
+  it("o Operacional vê só o grupo Operacional, com Pátio, Totem e Ordens de carregamento", () => {
+    const html = barra({ perfil: "Operacional", rotaAtual: "/operacional/patio" });
+    expect(contar(html, "aria-expanded=")).toBe(1);
+    expect(html).toContain('href="/operacional/patio"');
+    expect(html).toContain('href="/operacional/totem"');
+    expect(html).toContain('href="/operacional/ordens-de-carregamento"');
+    expect(html).not.toContain('href="/operacional/analise"');
   });
   it("o menu tem nome acessível, e o da demonstração é outro", () => {
     expect(barra()).toContain('aria-label="Menu principal"');

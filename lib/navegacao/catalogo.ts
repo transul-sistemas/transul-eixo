@@ -162,6 +162,7 @@ export const CATALOGO: readonly ModuloDoCatalogo[] = [
       icone: "IconParking",
       dispositivos: TODOS,
       descricao: "Mostra as placas no pátio e a fila por ordem de chegada.",
+      estado: "pronto",
     },
     {
       slug: "totem",
@@ -169,6 +170,7 @@ export const CATALOGO: readonly ModuloDoCatalogo[] = [
       icone: "IconTicket",
       dispositivos: TABLET_E_CELULAR,
       descricao: "Registra a chegada do motorista no totem e o coloca na fila.",
+      estado: "pronto",
     },
     {
       slug: "ordens-de-carregamento",
@@ -176,6 +178,7 @@ export const CATALOGO: readonly ModuloDoCatalogo[] = [
       icone: "IconClipboardList",
       dispositivos: DESKTOP_E_TABLET,
       descricao: "Acompanha cada ordem de carregamento de ponta a ponta.",
+      estado: "pronto",
     },
     {
       slug: "analise",
