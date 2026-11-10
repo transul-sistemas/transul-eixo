@@ -13,7 +13,7 @@ const TELAS = [
 ];
 
 test.describe("lista de placas: 20 por página, troca para 50", () => {
-  test("abre com 20 linhas e o resumo 1–20; escolher 50 mostra 50 e fica lembrado nas outras listas", async ({
+  test("abre com 20 linhas e o resumo 1–20; escolher 50 mostra 50 e fica lembrado ao sair e voltar", async ({
     page,
   }) => {
     await abrirHidratada(page, "/frota/placas");
@@ -24,7 +24,8 @@ test.describe("lista de placas: 20 por página, troca para 50", () => {
     await expect(linhasDasPlacas(page)).toHaveCount(50);
     await expect(page.getByTestId("resumo-da-pagina")).toContainText("Mostrando 1–50 de");
     await expect(page).not.toHaveURL(/tam=/);
-    await abrirHidratada(page, "/frota/abastecimento");
+    await abrirHidratada(page, "/frota/carteira");
+    await abrirHidratada(page, "/frota/placas");
     await expect(tamanho(page)).toHaveValue("50");
   });
 });

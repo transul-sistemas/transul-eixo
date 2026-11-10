@@ -27,7 +27,7 @@ export function GradeDoMes({ grade }: { grade: Grade }) {
   return (
     <>
       <div
-        className="border-border bg-card max-h-[max(24rem,calc(100dvh-9rem))] overflow-auto rounded-xl border"
+        className="border-border bg-card max-h-[max(24rem,calc(100dvh-18rem))] overflow-auto rounded-xl border"
         data-testid="grade-do-mes"
       >
         <table className="border-separate border-spacing-0 text-xs">

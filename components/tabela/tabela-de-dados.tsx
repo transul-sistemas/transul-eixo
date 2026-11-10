@@ -99,7 +99,7 @@ export function TabelaDeDados<T extends object>({
       // da página, `min-h-0` deixa a caixa encolher e ela ocupa o que sobra. Com poucas linhas acompanha o conteúdo.
       tabIndex={0}
       // O padding de rolagem evita que o foco do teclado pare atrás da coluna Placa e do cabeçalho fixos.
-      className="border-border bg-card focus-visible:ring-ring/50 relative max-h-[max(24rem,calc(100dvh-9rem))] min-h-0 scroll-pt-12 scroll-pl-36 overflow-auto rounded-xl border outline-none group-has-[[data-modo-foco]]/casca:max-h-none focus-visible:ring-3"
+      className="border-border bg-card focus-visible:ring-ring/50 relative max-h-[max(24rem,calc(100dvh-18rem))] min-h-0 scroll-pt-12 scroll-pl-36 overflow-auto rounded-xl border outline-none group-has-[[data-modo-foco]]/casca:max-h-none focus-visible:ring-3"
     >
       <SinalDeHidratacao regiao="lista" />
       <table

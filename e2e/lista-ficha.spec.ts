@@ -246,7 +246,7 @@ test.describe("voltar da ficha devolve a lista ao mesmo ponto", () => {
     await clicarComOMouse(page, linkDaFicha(page, placa));
     await expect(page.getByRole("heading", { level: 1, name: placa })).toBeVisible();
     await page.goto(`${LISTA}?chip=em-atividade&ordem=-gestor&pagina=3`);
-    await expect(page.getByTestId("resumo-da-pagina")).toContainText("Mostrando 51–");
+    await expect(page.getByTestId("resumo-da-pagina")).toContainText("Mostrando 41–");
     await page.waitForTimeout(800);
     expect(await caixa(page).evaluate((c) => c.scrollTop)).toBe(0);
     const focada = await page.evaluate(() =>

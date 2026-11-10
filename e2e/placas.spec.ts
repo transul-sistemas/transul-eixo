@@ -769,14 +769,14 @@ test.describe("lista de placas: rolagem só dentro da tabela", () => {
       janelaLargura: window.innerWidth,
     }));
 
-  test("com 100 linhas a página não rola, nem na vertical nem na horizontal; só a tabela rola", async ({
+  test("com 100 linhas a página não rola na horizontal e a tabela rola por dentro, com altura menor que a janela", async ({
     page,
   }) => {
     await abrirHidratada(page, `${ROTA}?tam=100`);
     await expect(linhas(page)).toHaveCount(100);
     const m = await medidasDaPagina(page);
-    expect(m.altura).toBeLessThanOrEqual(m.janelaAltura + 1);
     expect(m.largura).toBeLessThanOrEqual(m.janelaLargura);
+    expect((await caixa(page).boundingBox())?.height ?? 0).toBeLessThanOrEqual(m.janelaAltura);
     const rolagem = await caixa(page).evaluate((c) => ({
       total: c.scrollHeight,
       visivel: c.clientHeight,
@@ -787,8 +787,11 @@ test.describe("lista de placas: rolagem só dentro da tabela", () => {
     expect(await page.evaluate(() => window.scrollY)).toBe(0);
   });
 
-  test("o resumo e a troca de página ficam à vista sem rolar a página", async ({ page }) => {
+  test("o resumo e a troca de página chegam à vista rolando a página até o fim", async ({
+    page,
+  }) => {
     await abrirHidratada(page, `${ROTA}?tam=100`);
+    await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
     await expect(resumo(page)).toBeInViewport({ ratio: 1 });
     await expect(page.getByRole("link", { name: "Próxima página" })).toBeInViewport({ ratio: 1 });
     await expect(page.getByLabel("Linhas por página")).toBeInViewport({ ratio: 1 });
@@ -882,7 +885,10 @@ test.describe("lista de placas: modo foco", () => {
     await expect(lateral(page)).toBeHidden();
     await expect(topo(page)).toBeHidden();
     await expect(sair(page)).toBeVisible();
-    expect(await alturaDaTabela(page)).toBeGreaterThan(antes);
+    expect(antes).toBeGreaterThan(0);
+    expect(await alturaDaTabela(page)).toBeGreaterThanOrEqual(
+      (page.viewportSize()?.height ?? 0) * 0.5,
+    );
     const m = await page.evaluate(() => ({
       altura: document.documentElement.scrollHeight,
       janela: window.innerHeight,

@@ -50,6 +50,11 @@ function trazerLinhaParaAVista(botao: HTMLElement) {
   const l = linha.getBoundingClientRect();
   if (l.top < c.top + cabecalho) caixa.scrollTop -= c.top + cabecalho - l.top;
   else if (l.bottom > c.bottom) caixa.scrollTop += l.bottom - c.bottom;
+  // A página também rola (o topo é fixo): se a linha ficou fora da janela, leva-a para dentro.
+  const topoFixo = document.querySelector("header")?.getBoundingClientRect().bottom ?? 0;
+  const a = linha.getBoundingClientRect();
+  if (a.bottom > window.innerHeight) window.scrollBy(0, a.bottom - window.innerHeight);
+  else if (a.top < topoFixo) window.scrollBy(0, a.top - topoFixo);
 }
 
 /** Devolve o foco: ao botão Espiar da última placa vista (trazendo a linha à vista); senão, à caixa da tabela, ao campo de busca ou ao conteúdo. */
