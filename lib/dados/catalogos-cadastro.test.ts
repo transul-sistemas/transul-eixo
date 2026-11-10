@@ -234,3 +234,48 @@ describe("gravar item", () => {
     });
   });
 });
+
+describe("configurações de conjunto", () => {
+  // 10/11/2026: a aba pedia as colunas provisórias da 3.1, que a migration de 03/11 tirou (a regra
+  // passou a ser pela estrutura), e a tela dava erro no banco.
+  it("lê as colunas da regra pela estrutura, não as provisórias da 3.1", () => {
+    const definicao = catalogoPorId("configuracao");
+    const campos = definicao.selecao.split(",").map((c) => c.trim());
+    expect(campos).toEqual(
+      expect.arrayContaining([
+        "unidades",
+        "com_dolly",
+        "eixos_dos_semirreboques",
+        "eixos_do_dolly",
+      ]),
+    );
+    for (const antiga of ["quantidade_de_implementos", "eixos_por_implemento"]) {
+      expect(campos).not.toContain(antiga);
+      expect(definicao.colunas.map((c) => c.id)).not.toContain(antiga);
+    }
+  });
+
+  it('mostra a lista de eixos aceitos como "2 ou 3", nunca "2,3" (que se lê como decimal)', async () => {
+    const s = simulado({
+      configuracao_de_conjunto: {
+        data: [
+          {
+            codigo: "simples",
+            nome: "Simples",
+            unidades: 1,
+            com_dolly: false,
+            eixos_dos_semirreboques: [2, 3],
+            eixos_do_dolly: null,
+          },
+        ],
+        count: 1,
+      },
+    });
+    const r = await listarCatalogo(s.cliente, catalogoPorId("configuracao"), {
+      busca: "",
+      pagina: 1,
+      arquivados: false,
+    });
+    expect(r.linhas[0]!.celulas.eixos_dos_semirreboques).toBe("2 ou 3");
+  });
+});

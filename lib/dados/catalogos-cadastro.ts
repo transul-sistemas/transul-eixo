@@ -85,7 +85,8 @@ function celulaDe(
     case "referencia":
       return nomes.get(coluna.id)?.get(String(bruto)) ?? "";
     default:
-      return String(bruto);
+      // Lista (ex.: eixos aceitos {2,3}) vira "2 ou 3": "2,3" se leria como decimal.
+      return Array.isArray(bruto) ? bruto.map(String).join(" ou ") : String(bruto);
   }
 }
 

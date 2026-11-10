@@ -218,7 +218,7 @@ export const CATALOGOS: readonly DefinicaoDoCatalogo[] = [
     descricao: "Simples, bi, bitrezão e rodo, com a estrutura que cada uma pede.",
     esquema: "config",
     tabela: "configuracao_de_conjunto",
-    selecao: "codigo, nome, quantidade_de_implementos, com_dolly, eixos_por_implemento",
+    selecao: "codigo, nome, unidades, com_dolly, eixos_dos_semirreboques, eixos_do_dolly",
     chave: ["codigo"],
     busca: "nome",
     ordem: "nome",
@@ -228,9 +228,10 @@ export const CATALOGOS: readonly DefinicaoDoCatalogo[] = [
     colunas: [
       { id: "codigo", titulo: "Código" },
       { id: "nome", titulo: "Nome" },
-      { id: "quantidade_de_implementos", titulo: "Implementos", formato: "numero" },
+      { id: "unidades", titulo: "Unidades engatadas", formato: "numero" },
       { id: "com_dolly", titulo: "Com dolly", formato: "sim_nao" },
-      { id: "eixos_por_implemento", titulo: "Eixos por implemento", formato: "numero" },
+      { id: "eixos_dos_semirreboques", titulo: "Eixos dos semirreboques" },
+      { id: "eixos_do_dolly", titulo: "Eixos do dolly", formato: "numero" },
     ],
   },
   {
