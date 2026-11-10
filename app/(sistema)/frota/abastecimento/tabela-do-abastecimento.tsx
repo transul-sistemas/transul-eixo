@@ -11,6 +11,7 @@ import {
   formatarLitros,
 } from "@/components/formato/numero";
 import { Placa } from "@/components/placa";
+import { BotaoDoOlho } from "@/components/tabela/botao-do-olho";
 import { type ColunaDeTabela, TabelaDeDados } from "@/components/tabela/tabela-de-dados";
 import type { LinhaDoAbastecimento } from "@/lib/dados/abastecimento-tipos";
 import { NOMES_DOS_TIPOS } from "@/lib/dados/placas-tipos";
@@ -90,6 +91,27 @@ const COLUNAS: readonly ColunaDeTabela<LinhaDoAbastecimento>[] = [
     titulo: "Sem hodômetro válido",
     classe: DIREITA,
     celula: (l) => (l.semHodometro > 0 ? formatarInteiro(l.semHodometro) : SEM_VALOR),
+  },
+  {
+    id: "olho",
+    titulo: "Detalhes",
+    classe: "w-14 text-right",
+    celula: (l) => (
+      <BotaoDoOlho
+        item={l.placa}
+        hrefDaFicha={l.ativoId ? `/frota/placas/${l.placa}` : undefined}
+        titulo={<Placa placa={l.placa} tamanho="m" />}
+        detalhes={[
+          { rotulo: "Tipo", valor: l.tipo ? (NOMES_DOS_TIPOS[l.tipo] ?? l.tipo) : "—" },
+          { rotulo: "Modelo", valor: l.modelo ?? "—" },
+          { rotulo: "Abastecimentos", valor: formatarInteiro(l.abastecimentos) },
+          { rotulo: "Litros", valor: formatarLitros(l.litros) },
+          { rotulo: "Km rodado", valor: formatarKm(l.km) },
+          { rotulo: "Km/l", valor: formatarKmPorLitro(l.kmPorLitro) },
+          { rotulo: "Valor", valor: <Moeda valor={l.valorCentavos} /> },
+        ]}
+      />
+    ),
   },
 ];
 
