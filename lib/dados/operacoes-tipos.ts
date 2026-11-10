@@ -106,3 +106,106 @@ export interface FichaDaOperacao {
   placas: PlacaDaOperacao[];
   pessoas: PessoasDaOperacao | null;
 }
+
+// ---- Ficha completa (período, contexto) ----
+
+/** Os totais de um período (mês ou acumulado). Dinheiro em centavos. */
+export interface TotaisDoPeriodo {
+  receitaCentavos: number;
+  documentos: number;
+  custoFrotaCentavos: number;
+  custoServicoCentavos: number;
+  margemCentavos: number;
+  /** Margem ÷ receita, em pontos com uma casa; nulo sem receita. */
+  margemPercentual: number | null;
+  /** Placas distintas montadas na operação em algum momento do período. */
+  placas: number;
+  /** Receita ÷ placas do período, em centavos; nulo sem placa. */
+  receitaPorPlacaCentavos: number | null;
+}
+
+export interface PontoMensal {
+  /** `aaaa-mm` */
+  mes: string;
+  receitaCentavos: number;
+  custoFrotaCentavos: number;
+  custoServicoCentavos: number;
+  margemCentavos: number;
+}
+
+export interface PontoDiario {
+  /** `aaaa-mm-dd` */
+  dia: string;
+  receitaCentavos: number;
+  custoCentavos: number;
+}
+
+/** O resultado da operação no período; nulo para quem não vê Resultados. */
+export interface ResultadoDoPeriodo {
+  inicio: string;
+  fim: string;
+  atual: TotaisDoPeriodo;
+  anterior: TotaisDoPeriodo;
+  /** Doze meses terminando no último mês do período. */
+  serie: PontoMensal[];
+  mesesDoPeriodo: PontoMensal[];
+  /** A curva dia a dia (só quando o período é um mês). */
+  dias: PontoDiario[];
+  frotaPorNatureza: ValorPorNatureza[];
+  servicoPorNatureza: ValorPorNatureza[];
+}
+
+export interface PessoasPorFuncao {
+  funcao: string;
+  nomeDaFuncao: string;
+  pessoas: number;
+  /** Marcações da escala no mês, por sigla (T, F, FE, AT). */
+  escala: Record<string, number>;
+  /** Só para quem vê Pessoas; nulo para os demais. */
+  nomes: string[] | null;
+}
+
+export type TipoDeEventoDaOperacao =
+  | "placa_entrou"
+  | "placa_saiu"
+  | "cr_montado"
+  | "cr_desmontado"
+  | "pessoa_vinculada"
+  | "pessoa_desvinculada";
+
+export interface EventoDaOperacao {
+  /** ISO com fuso. */
+  quando: string;
+  tipo: TipoDeEventoDaOperacao;
+  objeto: string;
+  detalhe: string | null;
+}
+
+export interface FilialDoMapa {
+  filial: string;
+  cidade: string | null;
+  uf: string | null;
+  placas: number;
+  emAtividade: number;
+  impedidas: number;
+}
+
+export interface CrDaArvore {
+  codigo: string | null;
+  nome: string | null;
+  frota: boolean;
+  placas: string[];
+  totalDePlacas: number;
+}
+
+export interface ContextoDaOperacao {
+  mes: string;
+  vePessoas: boolean;
+  pessoas: PessoasPorFuncao[];
+  linhaDoTempo: EventoDaOperacao[];
+  mapa: {
+    base: { cidade: string | null; uf: string | null; filial: string | null };
+    filiais: FilialDoMapa[];
+  };
+  arvore: { crs: CrDaArvore[]; placasSemCr: number };
+}
