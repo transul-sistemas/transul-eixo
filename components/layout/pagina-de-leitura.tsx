@@ -12,8 +12,8 @@ interface Props {
   kpis?: ReactNode;
   children: ReactNode;
   /**
-   * Tela de lista: a partir de 1024 px a página tem a altura da janela e só a tabela rola
-   * (cabeçalho e primeira coluna fixos). Abaixo disso a página rola como as outras.
+   * Tela de lista: a descrição sai da vista e a tabela guarda a própria rolagem (cabeçalho e primeira
+   * coluna fixos). A página rola como as outras; só no modo foco ela tem a altura da janela.
    */
   lista?: boolean;
   /** Modo foco: esconde a barra lateral e o topo para a tabela ocupar a tela. */

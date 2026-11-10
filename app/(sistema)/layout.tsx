@@ -61,11 +61,11 @@ function BarraLateralReservada() {
   );
 }
 
-// Telas de lista: a partir de 1024 px de largura e 640 px de altura a página tem a altura da janela e
-// só a tabela rola. Em janela baixa, a página rola como as outras (senão a tabela some).
+// A página rola sozinha (o menu e o topo ficam fixos). Só o modo foco, que esconde menu e topo para a
+// tabela ocupar a tela, trava a altura na da janela: aí a tabela é o que rola (10/11/2026).
 export default function LayoutDoSistema({ children }: { children: ReactNode }) {
   return (
-    <div className="group/casca flex min-h-screen flex-1 [@media(min-width:1024px)_and_(min-height:640px)]:has-[[data-tela-de-lista]]:h-dvh [@media(min-width:1024px)_and_(min-height:640px)]:has-[[data-tela-de-lista]]:min-h-0 [@media(min-width:1024px)_and_(min-height:640px)]:has-[[data-tela-de-lista]]:flex-none [@media(min-width:1024px)_and_(min-height:640px)]:has-[[data-tela-de-lista]]:overflow-hidden">
+    <div className="group/casca flex min-h-screen flex-1 has-[[data-modo-foco]]:h-dvh has-[[data-modo-foco]]:min-h-0 has-[[data-modo-foco]]:flex-none has-[[data-modo-foco]]:overflow-hidden">
       <a
         href="#conteudo"
         className="focus:bg-primary focus:text-primary-foreground focus:ring-ring/50 sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:rounded-lg focus:px-3 focus:py-2 focus:text-sm focus:ring-3 focus:outline-none"

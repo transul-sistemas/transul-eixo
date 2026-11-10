@@ -164,7 +164,7 @@ function Retrato({ a }: { a: AnaliseDaFrota }) {
             descricao="Quando uma placa entrar em PÁT, ela aparece aqui com os dias parada."
           />
         ) : (
-          <div className="overflow-x-auto">
+          <div className="relative overflow-x-auto">
             <table className="w-full text-sm" data-testid="tabela-do-pat">
               <caption className="text-muted-foreground pb-2 text-left text-sm">
                 Há mais tempo no pátio
@@ -304,7 +304,7 @@ function Onde({ a, estado, hoje }: { a: AnaliseDaFrota; estado: EstadoDaAnalise;
             },
           ]}
         />
-        <div className="overflow-x-auto">
+        <div className="relative overflow-x-auto">
           <table className="w-full text-sm" data-testid="tabela-por-grupo">
             <thead className="bg-muted/40 text-muted-foreground">
               <tr>

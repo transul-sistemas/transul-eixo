@@ -94,11 +94,12 @@ export function TabelaDeDados<T extends object>({
     <div
       role="region"
       aria-label={`${rotulo}, área rolável`}
-      // Focável para rolar com o teclado. `min-h-0` deixa a caixa encolher dentro de uma tela de
-      // lista de altura fixa; com poucas linhas ela acompanha o conteúdo.
+      // Focável para rolar com o teclado. O teto de altura (a janela menos o topo) faz a tabela rolar por dentro, com
+      // cabeçalho e primeira coluna fixos, e a página rolar até o paginador; no modo foco, que trava a altura
+      // da página, `min-h-0` deixa a caixa encolher e ela ocupa o que sobra. Com poucas linhas acompanha o conteúdo.
       tabIndex={0}
       // O padding de rolagem evita que o foco do teclado pare atrás da coluna Placa e do cabeçalho fixos.
-      className="border-border bg-card focus-visible:ring-ring/50 relative min-h-0 scroll-pt-12 scroll-pl-36 overflow-auto rounded-xl border outline-none focus-visible:ring-3"
+      className="border-border bg-card focus-visible:ring-ring/50 relative max-h-[max(24rem,calc(100dvh-9rem))] min-h-0 scroll-pt-12 scroll-pl-36 overflow-auto rounded-xl border outline-none group-has-[[data-modo-foco]]/casca:max-h-none focus-visible:ring-3"
     >
       <SinalDeHidratacao regiao="lista" />
       <table

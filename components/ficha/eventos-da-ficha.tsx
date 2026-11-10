@@ -18,7 +18,7 @@ export function EventosDaFicha({
     );
   }
   return (
-    <div className="border-border overflow-x-auto rounded-xl border">
+    <div className="border-border relative overflow-x-auto rounded-xl border">
       <table className="w-full border-separate border-spacing-0 text-sm">
         <caption className="sr-only">Situações, da mais recente à mais antiga</caption>
         <thead>

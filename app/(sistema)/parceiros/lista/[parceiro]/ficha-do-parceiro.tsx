@@ -96,7 +96,7 @@ function Placas({ ficha }: { ficha: FichaDoParceiro }) {
     );
   }
   return (
-    <div className="border-border bg-card overflow-x-auto rounded-xl border">
+    <div className="border-border bg-card relative overflow-x-auto rounded-xl border">
       <table className="w-full text-sm" aria-label="Placas do parceiro">
         <thead className="bg-muted/40 text-muted-foreground">
           <tr>
@@ -141,7 +141,7 @@ function Locacoes({ ficha }: { ficha: FichaDoParceiro }) {
     );
   }
   return (
-    <div className="border-border bg-card overflow-x-auto rounded-xl border">
+    <div className="border-border bg-card relative overflow-x-auto rounded-xl border">
       <table className="w-full text-sm" aria-label="Locações do parceiro">
         <thead className="bg-muted/40 text-muted-foreground">
           <tr>

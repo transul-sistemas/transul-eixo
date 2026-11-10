@@ -44,7 +44,7 @@ export function ListaDoPatio({
 
   return (
     <>
-      <div className="border-border bg-card overflow-x-auto rounded-xl border">
+      <div className="border-border bg-card relative overflow-x-auto rounded-xl border">
         <table className="w-full text-sm" data-testid="tabela-do-patio">
           <thead className="bg-muted/40 text-muted-foreground">
             <tr>

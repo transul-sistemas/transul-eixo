@@ -55,7 +55,7 @@ export function ListaDasLocacoes({
         </div>
       ) : null}
       {dados.linhas.length > 0 ? (
-        <div className="border-border bg-card overflow-x-auto rounded-xl border">
+        <div className="border-border bg-card relative overflow-x-auto rounded-xl border">
           <table className="w-full text-sm" aria-label="Contratos de locação">
             <thead className="bg-muted/40 text-muted-foreground">
               <tr>

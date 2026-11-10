@@ -214,7 +214,7 @@ function PorGrupo({ v, estado }: { v: VisaoGeralDosResultados; estado: EstadoDaV
           </Link>
         ))}
       </nav>
-      <div className="overflow-x-auto">
+      <div className="relative overflow-x-auto">
         <table className="w-full text-sm" data-testid="tabela-por-grupo">
           <caption className="sr-only">Resultado do mês por {nome.toLowerCase()}</caption>
           <thead className="bg-muted/40 text-muted-foreground">
@@ -286,7 +286,7 @@ function PorNatureza({ v }: { v: VisaoGeralDosResultados }) {
               },
             ]}
           />
-          <div className="overflow-x-auto">
+          <div className="relative overflow-x-auto">
             <table className="w-full text-sm" data-testid="tabela-por-natureza">
               <caption className="sr-only">Custo do mês por natureza</caption>
               <thead className="bg-muted/40 text-muted-foreground">
