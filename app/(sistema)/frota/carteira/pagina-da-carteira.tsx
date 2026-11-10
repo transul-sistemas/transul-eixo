@@ -1,3 +1,4 @@
+import { cookies } from "next/headers";
 import Link from "next/link";
 import { connection } from "next/server";
 import type { ReactNode } from "react";
@@ -7,6 +8,7 @@ import { FaixaDeKpis } from "@/components/layout/faixa-de-kpis";
 import { PaginaDeLeitura } from "@/components/layout/pagina-de-leitura";
 import { ProvedorDoUsuario } from "@/components/navegacao/usuario-da-sessao";
 import { EsqueletoDaTabela, ListaVazia } from "@/components/tabela/estados";
+import { SeletorDeTamanho } from "@/components/tabela/seletor-de-tamanho";
 import { lerCarteiraDoMes } from "@/lib/dados/acompanhamento";
 import { modoDosDados } from "@/lib/dados/fonte";
 import {
@@ -18,6 +20,11 @@ import {
   mesVizinho,
 } from "@/lib/navegacao/acompanhamento";
 import { acharTela } from "@/lib/navegacao/catalogo";
+import {
+  lerTamanhoLembrado,
+  NOME_DO_COOKIE_DO_TAMANHO,
+  TAMANHOS_DE_PAGINA,
+} from "@/lib/navegacao/preferencias-da-tabela";
 import { exigirSessao } from "@/lib/seguranca/sessao-do-servidor";
 import { cn } from "@/lib/utils";
 import { ListaDaCarteira } from "./lista-da-carteira";
@@ -161,6 +168,15 @@ async function Conteudo({ estado, hoje }: { estado: EstadoDaCarteira; hoje: stri
             {formatarInteiro(carteira.filtradas)} placas · página {formatarInteiro(carteira.pagina)}{" "}
             de {formatarInteiro(carteira.paginas)}
           </span>
+          <SeletorDeTamanho
+            tam={estado.tam}
+            enderecos={Object.fromEntries(
+              TAMANHOS_DE_PAGINA.map((t) => [
+                t,
+                enderecoDaCarteira({ ...estado, tam: t, pagina: 1 }, hoje),
+              ]),
+            )}
+          />
           {carteira.pagina > 1 ? (
             <Link
               className={classeDoLink}
@@ -186,7 +202,11 @@ async function Conteudo({ estado, hoje }: { estado: EstadoDaCarteira; hoje: stri
 export async function PaginaDaCarteira({ searchParams }: { searchParams: ParametrosDaBusca }) {
   await connection();
   const hoje = hojeEmSaoPaulo(new Date());
-  const estado = lerCarteira(paraParametros(await searchParams), hoje);
+  const tamLembrado = lerTamanhoLembrado(
+    (await cookies()).get(NOME_DO_COOKIE_DO_TAMANHO)?.value,
+    20,
+  );
+  const estado = lerCarteira(paraParametros(await searchParams), hoje, tamLembrado);
   const { titulo, descricao } = cabecalho();
   return (
     <PaginaDeLeitura titulo={titulo} descricao={descricao}>

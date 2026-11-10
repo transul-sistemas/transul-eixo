@@ -41,6 +41,7 @@ export interface EstadoDaCarteira {
   mes: string;
   filtro: FiltroDaCarteira;
   pagina: number;
+  tam: number;
 }
 
 const MES = /^\d{4}-(0[1-9]|1[0-2])$/;
@@ -104,11 +105,17 @@ export function enderecoDoAcompanhamento(e: EstadoDoAcompanhamento, hoje: string
   return texto ? `/frota/acompanhamento?${texto}` : "/frota/acompanhamento";
 }
 
-export function lerCarteira(parametros: URLSearchParams, hoje: string): EstadoDaCarteira {
+export function lerCarteira(
+  parametros: URLSearchParams,
+  hoje: string,
+  tamLembrado: number = TAMANHO_PADRAO_DA_GRADE,
+): EstadoDaCarteira {
+  const tamDaUrl = Number(parametros.get("tam"));
   return {
     mes: mesAteHoje(parametros.get("mes"), hoje),
     filtro: umDe(FILTROS_DA_CARTEIRA, parametros.get("filtro"), "todas"),
     pagina: pagina(parametros.get("pagina")),
+    tam: (TAMANHOS_DE_PAGINA as readonly number[]).includes(tamDaUrl) ? tamDaUrl : tamLembrado,
   };
 }
 
@@ -117,6 +124,7 @@ export function enderecoDaCarteira(e: EstadoDaCarteira, hoje: string): string {
   if (e.mes !== hoje.slice(0, 7)) q.set("mes", e.mes);
   if (e.filtro !== "todas") q.set("filtro", e.filtro);
   if (e.pagina !== 1) q.set("pagina", String(e.pagina));
+  if (e.tam !== TAMANHO_PADRAO_DA_GRADE) q.set("tam", String(e.tam));
   const texto = q.toString();
   return texto ? `/frota/carteira?${texto}` : "/frota/carteira";
 }

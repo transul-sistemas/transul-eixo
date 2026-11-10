@@ -92,14 +92,27 @@ describe("estado do Acompanhamento na URL", () => {
 });
 
 describe("estado da Carteira na URL", () => {
+  it("20 linhas por padrão; o tamanho lembrado e o da URL (20, 50 ou 100) valem", () => {
+    expect(lerCarteira(p(""), HOJE).tam).toBe(20);
+    expect(lerCarteira(p(""), HOJE, 50).tam).toBe(50);
+    expect(lerCarteira(p("tam=100"), HOJE, 50).tam).toBe(100);
+    expect(lerCarteira(p("tam=33"), HOJE).tam).toBe(20);
+    expect(enderecoDaCarteira(lerCarteira(p("tam=50"), HOJE), HOJE)).toBe("/frota/carteira?tam=50");
+  });
+
   it("padrão: mês de hoje, todas, página 1", () => {
-    expect(lerCarteira(p(""), HOJE)).toEqual({ mes: "2026-11", filtro: "todas", pagina: 1 });
+    expect(lerCarteira(p(""), HOJE)).toEqual({
+      mes: "2026-11",
+      filtro: "todas",
+      pagina: 1,
+      tam: 20,
+    });
     expect(enderecoDaCarteira(lerCarteira(p(""), HOJE), HOJE)).toBe("/frota/carteira");
   });
 
   it("lê e escreve mês, filtro e página; mês futuro volta a hoje", () => {
     const e = lerCarteira(p("mes=2026-10&filtro=pendentes&pagina=2"), HOJE);
-    expect(e).toEqual({ mes: "2026-10", filtro: "pendentes", pagina: 2 });
+    expect(e).toEqual({ mes: "2026-10", filtro: "pendentes", pagina: 2, tam: 20 });
     expect(enderecoDaCarteira(e, HOJE)).toBe(
       "/frota/carteira?mes=2026-10&filtro=pendentes&pagina=2",
     );
