@@ -8,6 +8,7 @@ import {
   ESQUEMAS_DO_BACKUP,
   argumentosDoBackup,
   argumentosDaRestauracao,
+  argumentosDoRecarregarApi,
   conferirSenha,
   criptografar,
   descriptografar,
@@ -106,5 +107,34 @@ describe("o que entra no backup", () => {
   it("o nome do arquivo diz a origem e a hora, sem endereço", () => {
     const nome = nomeDoArquivo("nuvem", new Date("2026-11-06T15:30:00Z"));
     expect(nome).toBe("eixo-nuvem-2026-11-06T15-30-00.dump.enc");
+  });
+});
+
+describe("depois da restauração", () => {
+  // 10/11/2026: o pg_restore recria as funções e a API (PostgREST) fica com o cache velho: as telas
+  // davam "O banco não respondeu" (PGRST202) até recarregar o esquema. A restauração recarrega sozinha.
+  it("recarrega o esquema da API no banco local, sem alterar dado", () => {
+    expect(argumentosDoRecarregarApi()).toEqual([
+      "exec",
+      "supabase_db_TranSul_Eixo",
+      "psql",
+      "-U",
+      "postgres",
+      "-d",
+      "postgres",
+      "-v",
+      "ON_ERROR_STOP=1",
+      "-c",
+      "notify pgrst, 'reload schema'",
+    ]);
+  });
+
+  it("a restauração chama o recarregamento depois do pg_restore", () => {
+    const codigo = readFileSync(new URL("./backup.ts", import.meta.url), "utf8");
+    const corpo = codigo.slice(codigo.indexOf("async function restaurar("));
+    const fimDoRestore = corpo.indexOf("await fim;");
+    const recarga = corpo.indexOf("argumentosDoRecarregarApi()");
+    expect(fimDoRestore).toBeGreaterThan(-1);
+    expect(recarga).toBeGreaterThan(fimDoRestore);
   });
 });

@@ -95,6 +95,24 @@ export function argumentosDaRestauracao(argv: readonly string[]): { arquivo: str
   return { arquivo: resto[0] as string };
 }
 
+/** Recarrega o esquema da API (PostgREST) no banco local: o pg_restore recria as funções e, sem isso,
+ * a API responde PGRST202 ("função não achada no cache") até reiniciar. Não altera dado. */
+export function argumentosDoRecarregarApi(): string[] {
+  return [
+    "exec",
+    CONTEINER_LOCAL,
+    "psql",
+    "-U",
+    "postgres",
+    "-d",
+    "postgres",
+    "-v",
+    "ON_ERROR_STOP=1",
+    "-c",
+    "notify pgrst, 'reload schema'",
+  ];
+}
+
 export function nomeDoArquivo(origem: "local" | "nuvem", agora: Date): string {
   return `eixo-${origem}-${agora.toISOString().slice(0, 19).replace(/:/g, "-")}.dump.enc`;
 }
@@ -308,6 +326,7 @@ async function restaurar(argv: string[]) {
   const fim = esperar(restore, "O pg_restore");
   await pipeline(passada(arquivo, senha, true), restore.stdin as NodeJS.WritableStream);
   await fim;
+  await esperar(rodar("docker", argumentosDoRecarregarApi()), "O recarregamento do esquema da API");
   console.log("Backup restaurado no banco local (áreas do Eixo e histórico das migrations).");
 }
 
