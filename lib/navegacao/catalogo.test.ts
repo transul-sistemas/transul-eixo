@@ -82,7 +82,7 @@ describe("catálogo: telas", () => {
       expect(tela.descricao.endsWith("."), tela.id).toBe(true);
     }
   });
-  it("tudo está em-breve, menos as cinco telas da Frota (Acompanhamento, Placas, Abastecimento, Carteira e Análise), Pátio, Totem e Ordens de carregamento do Operacional, a lista de Operações, Catálogos e parâmetros, Usuários e perfis e a Demonstração, que estão prontas", () => {
+  it("tudo está em-breve, menos as telas desta lista, que estão prontas", () => {
     const prontas = telas.filter((t) => t.estado === "pronto").map((t) => t.id);
     expect(prontas).toEqual([
       "frota.acompanhamento",
@@ -94,6 +94,7 @@ describe("catálogo: telas", () => {
       "operacional.totem",
       "operacional.ordens-de-carregamento",
       "operacoes.lista",
+      "resultados.visao-geral",
       "cadastros.catalogos",
       "admin.usuarios-e-perfis",
       "admin.demonstracao",
