@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Etiqueta } from "@/components/etiqueta";
 import { Moeda } from "@/components/formato/moeda";
 import { formatarInteiro } from "@/components/formato/numero";
+import { BotaoDoOlho } from "@/components/tabela/botao-do-olho";
 import { type ColunaDeTabela, TabelaDeDados } from "@/components/tabela/tabela-de-dados";
 import type { LinhaDeParceiro } from "@/lib/dados/parceiros-tipos";
 import { NOMES_DOS_TIPOS_DE_PARCEIRO } from "@/lib/dominio/esquemas/parceiros";
@@ -99,6 +100,26 @@ function colunas(mes: string): ColunaDeTabela<LinhaDeParceiro>[] {
         ) : (
           SEM_VALOR
         ),
+    },
+    {
+      id: "olho",
+      titulo: "Detalhes",
+      classe: "w-14 text-right",
+      celula: (l) => (
+        <BotaoDoOlho
+          item={l.nome}
+          hrefDaFicha={enderecoDaFichaDoParceiro(l.id, mes)}
+          detalhes={[
+            { rotulo: "Tipo", valor: l.tipos.map((t) => NOMES_DOS_TIPOS_DE_PARCEIRO[t]).join(", ") },
+            { rotulo: "CPF/CNPJ", valor: l.documentoMascarado ?? "—" },
+            { rotulo: "CODPARC", valor: l.codparc === null ? "—" : String(l.codparc) },
+            { rotulo: "Placas agora", valor: formatarInteiro(l.placas) },
+            { rotulo: "Despesa do mês", valor: <Moeda valor={l.despesaCentavos} /> },
+            { rotulo: "Receita do mês", valor: <Moeda valor={l.receitaCentavos} /> },
+            { rotulo: "Locação mensal", valor: <Moeda valor={l.locacaoMensalCentavos} /> },
+          ]}
+        />
+      ),
     },
   ];
 }

@@ -1,17 +1,20 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { Etiqueta } from "@/components/etiqueta";
 import { Moeda } from "@/components/formato/moeda";
 import { formatarInteiro } from "@/components/formato/numero";
 import { Placa } from "@/components/placa";
+import { BotaoDoOlho } from "@/components/tabela/botao-do-olho";
 import { Button } from "@/components/ui/button";
 import {
   type LinhaDaConciliacao,
   NOMES_DAS_SITUACOES_DA_CONCILIACAO,
   type SituacaoDaConciliacao,
 } from "@/lib/dados/parceiros-tipos";
+import { enderecoDaFichaDoParceiro } from "@/lib/navegacao/parceiros";
 import type { Status } from "@/lib/visual/tons";
 import { JustificarDiferenca } from "./justificar-diferenca";
 
@@ -77,6 +80,9 @@ export function ListaDaConciliacao({
               <th scope="col" className={TH}>
                 <span className="sr-only">Ações</span>
               </th>
+              <th scope="col" className={`${THD} w-14`}>
+                Detalhes
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -102,7 +108,14 @@ export function ListaDaConciliacao({
                   ) : (
                     <span className="flex flex-wrap gap-1">
                       {l.placas.map((p) => (
-                        <Placa key={p} placa={p} tamanho="p" />
+                        <Link
+                          key={p}
+                          href={`/frota/placas/${p}`}
+                          aria-label={`Abrir a ficha da placa ${p}`}
+                          className="focus-visible:ring-ring/50 inline-flex rounded outline-none focus-visible:ring-3"
+                        >
+                          <Placa placa={p} tamanho="p" />
+                        </Link>
                       ))}
                     </span>
                   )}
@@ -146,6 +159,22 @@ export function ListaDaConciliacao({
                       Justificar diferença
                     </Button>
                   ) : null}
+                </td>
+                <td className="px-3 py-2 text-right">
+                  <BotaoDoOlho
+                    item={`CR ${l.crCodigo}`}
+                    hrefDaFicha={l.parceiroId ? enderecoDaFichaDoParceiro(l.parceiroId, mes) : undefined}
+                    detalhes={[
+                      { rotulo: "Parceiro", valor: l.parceiroNome ?? l.agrupadorNome ?? l.agrupadorCodigo },
+                      { rotulo: "Placas esperadas", valor: formatarInteiro(l.placas.length) },
+                      { rotulo: "Dias", valor: formatarInteiro(l.dias) },
+                      { rotulo: "Despesa", valor: <Moeda valor={l.despesaCentavos} /> },
+                      { rotulo: "Receita", valor: <Moeda valor={l.receitaCentavos} /> },
+                      { rotulo: "Lançamentos", valor: formatarInteiro(l.lancamentos) },
+                      { rotulo: "Com outra placa", valor: <Moeda valor={l.foraDaPlacaCentavos} /> },
+                      { rotulo: "Situação", valor: NOMES_DAS_SITUACOES_DA_CONCILIACAO[l.situacao] },
+                    ]}
+                  />
                 </td>
               </tr>
             ))}
