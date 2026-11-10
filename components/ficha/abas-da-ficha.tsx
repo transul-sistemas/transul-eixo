@@ -10,28 +10,32 @@ import { cn } from "@/lib/utils";
  * Todos os painéis existem e só o ativo aparece, então trocar de aba é instantâneo. Controlada: quem
  * usa diz qual é a ativa e o que fazer ao mudar (`AbasDaFichaNaUrl` põe isso na URL).
  */
-export function AbasDaFicha({
+export function AbasDaFicha<Id extends string = AbaId>({
   abas,
   ativa,
   aoMudar,
   conteudos,
 }: {
-  abas: readonly { id: AbaId; nome: string }[];
-  ativa: AbaId;
-  aoMudar: (aba: AbaId) => void;
-  conteudos: Record<AbaId, ReactNode>;
+  abas: readonly { id: Id; nome: string }[];
+  ativa: Id;
+  aoMudar: (aba: Id) => void;
+  conteudos: Record<Id, ReactNode>;
 }) {
   // A tecla vale para a aba que tem o foco (a que recebeu o evento), não para a `ativa`: a ativa vem
   // da URL e atrasa em relação ao foco quando as setas são apertadas em sequência rápida.
   // Ids únicos por instância: o Next mantém a página anterior escondida no documento depois de uma
   // navegação interna, e dois `aba-resumo` iguais quebram `aria-controls` e o foco por id.
   const base = useId();
-  const botoes = useRef(new Map<AbaId, HTMLButtonElement>());
-  const idDaAba = (id: AbaId) => `${base}-aba-${id}`;
-  const idDoPainel = (id: AbaId) => `${base}-painel-${id}`;
+  const botoes = useRef(new Map<Id, HTMLButtonElement>());
+  const idDaAba = (id: Id) => `${base}-aba-${id}`;
+  const idDoPainel = (id: Id) => `${base}-painel-${id}`;
 
-  function aoTeclar(evento: KeyboardEvent<HTMLButtonElement>, atual: AbaId) {
-    const proxima = abaPorTecla(atual, evento.key);
+  function aoTeclar(evento: KeyboardEvent<HTMLButtonElement>, atual: Id) {
+    const proxima = abaPorTecla(
+      atual,
+      evento.key,
+      abas.map((aba) => aba.id),
+    );
     if (proxima === null) return;
     evento.preventDefault();
     aoMudar(proxima);
