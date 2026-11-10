@@ -14,6 +14,8 @@ import { EsqueletoDaTabela, ListaVazia } from "@/components/tabela/estados";
 import { Paginador } from "@/components/tabela/paginador";
 import { modoDosDados } from "@/lib/dados/fonte";
 import { lerOperacoesDoMes, type OperacoesDoMes } from "@/lib/dados/operacoes";
+import { lerMesFechado } from "@/lib/dados/operacoes-ficha";
+import { chipsDeMes, somarMeses, variacaoPercentual } from "@/lib/dominio/periodo";
 import { acharTela } from "@/lib/navegacao/catalogo";
 import {
   CAMPOS_DAS_OPERACOES,
@@ -122,31 +124,74 @@ export function SeletorDeMes({
   );
 }
 
-function kpisDe(dados: OperacoesDoMes): Kpi[] {
+export const SEM_DADOS_DE_RESULTADO =
+  "Sem dados ainda: depende da ponte do Sankhya (viagens e despesas).";
+
+/** Sem receita nem custo no filtro inteiro: não é resultado, é falta de fonte. */
+function semLancamentosNaLista(dados: OperacoesDoMes): boolean {
+  const c = dados.totais.cascata;
+  return (
+    c !== null &&
+    c.receitaCentavos === 0 &&
+    c.custoFrotaCentavos === 0 &&
+    c.custoServicoCentavos === 0
+  );
+}
+
+function kpisDe(dados: OperacoesDoMes, anterior: OperacoesDoMes | null): Kpi[] {
   const { totais } = dados;
+  const contra = "o mês anterior";
+  const a = anterior?.totais.cascata ?? null;
   const contagem: Kpi[] = [
     { id: "operacoes", rotulo: "Operações", valor: formatarInteiro(totais.operacoes) },
     { id: "placas", rotulo: "Placas agora", valor: formatarInteiro(totais.placas) },
   ];
-  if (!totais.cascata) return contagem;
+  const c = totais.cascata;
+  if (!c) return contagem;
+  if (semLancamentosNaLista(dados)) {
+    return [
+      ...contagem,
+      { id: "receita", rotulo: "Receita", valor: null, semDados: SEM_DADOS_DE_RESULTADO },
+      {
+        id: "custos",
+        rotulo: "Custo Frota + Serviço",
+        valor: null,
+        semDados: SEM_DADOS_DE_RESULTADO,
+      },
+      { id: "margem", rotulo: "Margem", valor: null, semDados: SEM_DADOS_DE_RESULTADO },
+    ];
+  }
+  const custos = c.custoFrotaCentavos + c.custoServicoCentavos;
   return [
     ...contagem,
-    { id: "receita", rotulo: "Receita", valor: <Moeda valor={totais.cascata.receitaCentavos} /> },
+    {
+      id: "receita",
+      rotulo: "Receita",
+      valor: <Moeda valor={c.receitaCentavos} />,
+      variacao: { pontos: variacaoPercentual(c.receitaCentavos, a?.receitaCentavos), contra },
+    },
     {
       id: "custos",
       rotulo: "Custo Frota + Serviço",
-      valor: (
-        <Moeda valor={totais.cascata.custoFrotaCentavos + totais.cascata.custoServicoCentavos} />
-      ),
+      valor: <Moeda valor={custos} />,
+      variacao: {
+        pontos: variacaoPercentual(
+          custos,
+          a ? a.custoFrotaCentavos + a.custoServicoCentavos : null,
+        ),
+        bomQuando: "cair",
+        contra,
+      },
     },
     {
       id: "margem",
       rotulo: "Margem",
-      valor: <Moeda valor={totais.cascata.margemCentavos} />,
+      valor: <Moeda valor={c.margemCentavos} />,
+      variacao: { pontos: variacaoPercentual(c.margemCentavos, a?.margemCentavos), contra },
       apoio:
-        totais.cascata.margemPercentual === null
+        c.margemPercentual === null
           ? undefined
-          : `${formatarPercentual(totais.cascata.margemPercentual)} da receita`,
+          : `${formatarPercentual(c.margemPercentual)} da receita`,
     },
   ];
 }
@@ -170,8 +215,18 @@ async function Conteudo({ parametros }: { parametros: URLSearchParams }) {
     (await cookies()).get(NOME_DO_COOKIE_DO_TAMANHO)?.value,
     PADRAO_DAS_OPERACOES.tam,
   );
-  const estado = lerOperacoes(parametros, tam);
-  const dados = await lerOperacoesDoMes(estado);
+  const estadoDaUrl = lerOperacoes(parametros, tam);
+  // O mês padrão é o mês fechado mais recente (e não o último com viagem no staging da v1).
+  const mesFechado = await lerMesFechado();
+  const mes = estadoDaUrl.mes ?? mesFechado;
+  const estado = { ...estadoDaUrl, mes };
+  const [dados, anterior] = await Promise.all([
+    lerOperacoesDoMes(estado),
+    lerOperacoesDoMes({
+      mes: somarMeses(mes, -1),
+      consulta: { ...estado.consulta, pagina: 1, tam: 20 },
+    }),
+  ]);
   const filtrando = estado.consulta.busca !== "" || estado.consulta.chips.length > 0;
   const { titulo, descricao } = cabecalho();
   return (
@@ -184,10 +239,10 @@ async function Conteudo({ parametros }: { parametros: URLSearchParams }) {
       <SeletorDeMes
         rota={ROTA_DAS_OPERACOES}
         parametros={parametros}
-        meses={dados.meses}
+        meses={chipsDeMes(mesFechado).reverse()}
         atual={dados.mes}
       />
-      <FaixaDeKpis kpis={kpisDe(dados)} />
+      <FaixaDeKpis kpis={kpisDe(dados, anterior)} />
       {!dados.veResultado ? (
         <p className="text-muted-foreground text-sm" data-testid="sem-resultado">
           O resultado em R$ aparece para quem tem acesso a Resultados.
@@ -207,7 +262,11 @@ async function Conteudo({ parametros }: { parametros: URLSearchParams }) {
           />
         )
       ) : (
-        <TabelaDeOperacoes linhas={dados.linhas} veResultado={dados.veResultado} />
+        <TabelaDeOperacoes
+          linhas={dados.linhas}
+          veResultado={dados.veResultado}
+          semDados={semLancamentosNaLista(dados)}
+        />
       )}
       <Paginador
         pagina={dados.pagina}

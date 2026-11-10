@@ -5,6 +5,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTransition } from "react";
 import { Moeda } from "@/components/formato/moeda";
 import { formatarInteiro, formatarPercentual } from "@/components/formato/numero";
+import { BotaoDoOlho } from "@/components/tabela/botao-do-olho";
 import { type ColunaDeTabela, TabelaDeDados } from "@/components/tabela/tabela-de-dados";
 import { type LinhaDeOperacao, NOMES_DOS_TIPOS_DE_OPERACAO } from "@/lib/dados/operacoes-tipos";
 import {
@@ -21,7 +22,11 @@ import { lerTabela, mudarConsulta } from "@/lib/navegacao/tabela";
 const SEM_VALOR = <span className="text-muted-foreground">—</span>;
 const DIREITA = "text-right tabular-nums";
 
-function colunas(mes: string | null, veResultado: boolean): ColunaDeTabela<LinhaDeOperacao>[] {
+function colunas(
+  mes: string | null,
+  veResultado: boolean,
+  semDados: boolean,
+): ColunaDeTabela<LinhaDeOperacao>[] {
   const dinheiro = (
     id: string,
     titulo: string,
@@ -33,7 +38,7 @@ function colunas(mes: string | null, veResultado: boolean): ColunaDeTabela<Linha
     classe: DIREITA,
     celula: (l) => {
       const v = valor(l);
-      return v === undefined ? SEM_VALOR : <Moeda valor={v} />;
+      return v === undefined || semDados ? SEM_VALOR : <Moeda valor={v} />;
     },
   });
   const base: ColunaDeTabela<LinhaDeOperacao>[] = [
@@ -75,7 +80,35 @@ function colunas(mes: string | null, veResultado: boolean): ColunaDeTabela<Linha
       celula: (l) => formatarInteiro(l.placas),
     },
   ];
-  if (!veResultado) return base;
+  const olho: ColunaDeTabela<LinhaDeOperacao> = {
+    id: "olho",
+    titulo: "Detalhes",
+    classe: "w-14 text-right",
+    celula: (l) => (
+      <BotaoDoOlho
+        item={l.nome}
+        hrefDaFicha={enderecoDaFicha(l.id, mes)}
+        detalhes={[
+          { rotulo: "Tipo", valor: NOMES_DOS_TIPOS_DE_OPERACAO[l.tipo] ?? l.tipo },
+          { rotulo: "Filial", valor: l.filial ?? "—" },
+          { rotulo: "CRs", valor: formatarInteiro(l.crs) },
+          { rotulo: "Placas agora", valor: formatarInteiro(l.placas) },
+          ...(l.cascata && !semDados
+            ? [
+                { rotulo: "Receita", valor: <Moeda valor={l.cascata.receitaCentavos} /> },
+                { rotulo: "Custo Frota", valor: <Moeda valor={l.cascata.custoFrotaCentavos} /> },
+                {
+                  rotulo: "Custo Serviço",
+                  valor: <Moeda valor={l.cascata.custoServicoCentavos} />,
+                },
+                { rotulo: "Margem", valor: <Moeda valor={l.cascata.margemCentavos} /> },
+              ]
+            : []),
+        ]}
+      />
+    ),
+  };
+  if (!veResultado) return [...base, olho];
   return [
     ...base,
     dinheiro("receita", "Receita", (l) => l.cascata?.receitaCentavos),
@@ -88,19 +121,23 @@ function colunas(mes: string | null, veResultado: boolean): ColunaDeTabela<Linha
       campoDeOrdem: "margem_percentual",
       classe: DIREITA,
       celula: (l) =>
-        l.cascata?.margemPercentual == null
+        l.cascata?.margemPercentual == null || semDados
           ? SEM_VALOR
           : formatarPercentual(l.cascata.margemPercentual),
     },
+    olho,
   ];
 }
 
 export function TabelaDeOperacoes({
   linhas,
   veResultado,
+  semDados = false,
 }: {
   linhas: readonly LinhaDeOperacao[];
   veResultado: boolean;
+  /** Sem receita nem custo em nenhum mês: o dinheiro vira traço, nunca R$ 0,00. */
+  semDados?: boolean;
 }) {
   const rota = usePathname();
   const parametros = useSearchParams();
@@ -124,7 +161,7 @@ export function TabelaDeOperacoes({
   return (
     <TabelaDeDados
       rotulo="Operações do mês"
-      colunas={colunas(lerMes(atuais), veResultado)}
+      colunas={colunas(lerMes(atuais), veResultado, semDados)}
       linhas={linhas}
       idDaLinha={(l) => l.id}
       ordem={consulta.ordem}

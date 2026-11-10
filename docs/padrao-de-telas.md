@@ -39,3 +39,21 @@ Onde não há fonte de dados: "Sem dados ainda: depende de <fonte>". Nunca um n�
   `lib/dominio/periodo.ts`): o mês M fecha quando passa o dia do corte do mês seguinte. Em 10/11 com
   corte 10 é setembro; em 11/11, outubro. Os dados pararem em outro mês não muda o padrão.
 - A variação dos KPIs compara com o período de mesma duração logo antes.
+
+## Componentes-base
+
+- `CartaoDeKpi` (dentro da `FaixaDeKpis`): rótulo, valor, variação contra o período anterior (seta e
+  percentual; o custo que sobe fica em tom negativo) e `semDados` ("Sem dados ainda: depende de ...").
+- `PainelDeGrafico`: o painel de um gráfico ou tabela, com os estados `ok`, `carregando`, `vazio` e `erro`.
+- `GradeDePaineis` e `CelulaDaGrade`: a grade de 12 colunas; `linhasFecham` confere que cada linha soma 12.
+- Gráficos (ECharts, cores dos tokens): `Grafico` (barras e linhas), `GraficoDeCascata`, `GraficoDeRosca`,
+  `GraficoDeArvore`.
+- `BotaoDoOlho`: o olho de fim de linha, com tooltip, `aria-label` "Ver detalhes de <item>" e o painel lateral.
+- `SeletorDePeriodo`: chips de mês e o acumulado (`mes=` ou `acum=` na URL).
+
+## Falta de dado nunca vira R$ 0,00
+
+Sem nenhuma receita e nenhum custo na janela (o staging do Sankhya ainda vazio), os KPIs e os painéis
+mostram "Sem dados ainda: depende da ponte do Sankhya (viagens e despesas)" e as colunas de dinheiro da lista
+mostram traço. O teste `lib/dominio/resultado-da-operacao.test.ts` e o e2e `e2e-banco/operacoes-ficha.spec.ts`
+guardam a regra.
