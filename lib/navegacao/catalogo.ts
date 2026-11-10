@@ -221,6 +221,7 @@ export const CATALOGO: readonly ModuloDoCatalogo[] = [
       dispositivos: DESKTOP_E_TABLET,
       descricao: "Lista as pessoas e abre a ficha de cada uma.",
       ficha: true,
+      estado: "pronto",
     },
     {
       slug: "escala",
@@ -228,6 +229,7 @@ export const CATALOGO: readonly ModuloDoCatalogo[] = [
       icone: "IconCalendarWeek",
       dispositivos: DESKTOP_E_TABLET,
       descricao: "Monta e acompanha a escala do mês.",
+      estado: "pronto",
     },
     {
       slug: "status-diario",

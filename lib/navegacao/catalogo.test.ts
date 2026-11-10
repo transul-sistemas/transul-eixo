@@ -94,6 +94,8 @@ describe("catálogo: telas", () => {
       "operacional.totem",
       "operacional.ordens-de-carregamento",
       "operacoes.lista",
+      "pessoas.lista",
+      "pessoas.escala",
       "parceiros.lista",
       "parceiros.conciliacao",
       "parceiros.locacao",
