@@ -66,7 +66,12 @@ test.describe("Operações (Administrador)", () => {
     await expect(d).toContainText("Parauapebas/PA");
     await d.getByRole("button", { name: "Editar operação" }).click();
     await expect(d.getByTestId("assistente-concluido")).toHaveText("Operação editada.");
+    // A ficha por trás já recebeu a gravação (revalidada, com a versão nova) e o assistente continua
+    // na tela de concluído: a versão nova não pode remontá-lo de volta ao primeiro passo.
+    await expect(page.getByText("filial Parauapebas")).toBeAttached();
+    await expect(d.getByTestId("assistente-concluido")).toHaveText("Operação editada.");
     await d.getByRole("button", { name: "Fechar", exact: true }).click();
+    await expect(d).toBeHidden();
 
     await page.reload();
     await expect(page.getByText("filial Parauapebas")).toBeVisible();

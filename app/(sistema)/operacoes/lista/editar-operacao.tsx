@@ -170,18 +170,20 @@ export function EditarOperacao({
   /** Quem usa: a chave dos rascunhos. */
   usuario: string;
 }) {
-  const [aberto, setAberto] = useState(false);
+  // A operação como a pessoa a viu ao abrir: a gravação revalida a ficha (versão nova), mas o
+  // assistente aberto não remonta nem troca de versão; volta ao primeiro passo só ao abrir de novo.
+  const [aberta, setAberta] = useState<FichaDaOperacao["operacao"] | null>(null);
   const botao = useRef<HTMLButtonElement>(null);
   return (
     <ProvedorDoUsuario usuario={usuario}>
-      <Button ref={botao} onClick={() => setAberto(true)} aria-haspopup="dialog">
+      <Button ref={botao} onClick={() => setAberta(operacao)} aria-haspopup="dialog">
         Editar operação
       </Button>
-      {aberto ? (
+      {aberta ? (
         <AssistenteEditarOperacao
-          key={`${operacao.id}-${operacao.versao}`}
-          operacao={operacao}
-          aoFechar={() => setAberto(false)}
+          key={aberta.id}
+          operacao={aberta}
+          aoFechar={() => setAberta(null)}
           focoFinal={botao}
         />
       ) : null}
