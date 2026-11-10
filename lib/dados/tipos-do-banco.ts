@@ -1737,6 +1737,9 @@ isOneToOne: false
               "grupo": string,"nome": string,"quantidade": number,"sigla": string
             }[]
                            },
+"competencia_gerencial":
+{ Args: { "p_dia_corte": number,"p_dtentsai": string,"p_dtneg": string,"p_menor_dtneg_de_origem"?: string,"p_provisao"?: boolean }; Returns: string
+                           },
 "concluir_recebimento":
 { Args: { "p_chave"?: string,"p_em"?: string,"p_respostas": Json,"p_transferencia_id": string,"p_versao": number }; Returns: string
                            },
@@ -1788,6 +1791,9 @@ isOneToOne: false
                            },
 "devolver_placa":
 { Args: { "p_chave"?: string,"p_em"?: string,"p_motivo": string,"p_transferencia_id": string,"p_versao": number }; Returns: string
+                           },
+"dia_do_corte_da_competencia":
+{ Args: Record<PropertyKey, never>; Returns: number
                            },
 "disponibilizar_placa":
 { Args: { "p_ativo_id": string,"p_chave"?: string,"p_em"?: string,"p_motivo": string,"p_para_gestor_id": string,"p_pendencias": (string)[],"p_versao": number }; Returns: string
@@ -2126,6 +2132,9 @@ isOneToOne: false
                            },
 "vincular_usuario":
 { Args: { "p_email": string,"p_perfil": string,"p_pessoa_id": string }; Returns: undefined
+                           },
+"visao_geral_dos_resultados":
+{ Args: { "p_agrupamento"?: string,"p_garagem_id"?: string,"p_mes"?: string,"p_operacao_id"?: string,"p_top"?: number }; Returns: Json
                            }
           }
           Enums: {
