@@ -273,6 +273,7 @@ export const CATALOGO: readonly ModuloDoCatalogo[] = [
       dispositivos: DESKTOP,
       descricao: "Lista os parceiros e abre a ficha de cada um.",
       ficha: true,
+      estado: "pronto",
     },
     {
       slug: "conciliacao",
@@ -280,6 +281,7 @@ export const CATALOGO: readonly ModuloDoCatalogo[] = [
       icone: "IconArrowsExchange",
       dispositivos: DESKTOP,
       descricao: "Confere os valores dos parceiros com o Sankhya.",
+      estado: "pronto",
     },
     {
       slug: "livro-do-acionista",
@@ -294,6 +296,7 @@ export const CATALOGO: readonly ModuloDoCatalogo[] = [
       icone: "IconKey",
       dispositivos: DESKTOP,
       descricao: "Acompanha os contratos de locação.",
+      estado: "pronto",
     },
   ]),
   modulo("resultados", "Resultados", "IconChartBar", "resultados", [
