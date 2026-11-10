@@ -21,6 +21,11 @@ export const ESQUEMA_DE_NOVA_SENHA = z
       })
       .max(200),
     confirmacao: z.string(),
+    /** O código (nonce) que o Supabase manda ao e-mail quando a troca pede reautenticação. */
+    codigo: z
+      .string()
+      .regex(/^\d{6}$/, { error: "O código tem 6 dígitos. Confira no e-mail e digite de novo." })
+      .optional(),
   })
   .refine((d) => d.senha === d.confirmacao, {
     error: "A confirmação não é igual à senha.",

@@ -53,6 +53,9 @@ describe("configuração do Auth (supabase/config.toml)", () => {
     expect(limites).toMatch(/^token_verifications = 30$/m);
     expect(limites).toMatch(/^email_sent = 30$/m);
   });
+  it("trocar a senha pede reautenticação (ou login recente): secure_password_change ligado", () => {
+    expect(secao(toml, "auth.email")).toMatch(/^secure_password_change = true$/m);
+  });
   it("senha com no mínimo 12 caracteres", () => {
     expect(secao(toml, "auth")).toMatch(/^minimum_password_length = 12$/m);
   });

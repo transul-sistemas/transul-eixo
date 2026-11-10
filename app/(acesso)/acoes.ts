@@ -16,6 +16,8 @@ import { ESQUEMA_DE_ENTRADA, ESQUEMA_DE_NOVA_SENHA, ESQUEMA_DE_RECUPERACAO } fro
 export interface EstadoDoFormulario {
   erro?: string;
   aviso?: string;
+  /** A troca de senha pediu reautenticação: o formulário mostra o campo do código do e-mail. */
+  pedirCodigo?: boolean;
 }
 
 /** Um único erro, nunca revela se o e-mail existe. */
@@ -95,23 +97,57 @@ export async function pedirRecuperacao(
 }
 
 export async function definirNovaSenha(
-  _anterior: EstadoDoFormulario,
+  anterior: EstadoDoFormulario,
   formulario: FormData,
 ): Promise<EstadoDoFormulario> {
+  const pedirCodigo = anterior.pedirCodigo === true;
+  const codigo = formulario.get("codigo");
   const dados = ESQUEMA_DE_NOVA_SENHA.safeParse({
     senha: formulario.get("senha"),
     confirmacao: formulario.get("confirmacao"),
+    codigo: typeof codigo === "string" && codigo.trim() !== "" ? codigo.trim() : undefined,
   });
-  if (!dados.success) return { erro: dados.error.issues[0]?.message ?? "Confira a senha." };
+  if (!dados.success)
+    return { erro: dados.error.issues[0]?.message ?? "Confira a senha.", pedirCodigo };
 
   const supabase = await criarClienteDoServidor();
   const { data } = await supabase.auth.getUser();
   if (!data.user)
     return { erro: 'O link expirou ou já foi usado. Peça um novo em "Esqueci a senha".' };
-  const { error } = await supabase.auth.updateUser({ password: dados.data.senha });
+  const { error } = await supabase.auth.updateUser(
+    dados.data.codigo
+      ? { password: dados.data.senha, nonce: dados.data.codigo }
+      : { password: dados.data.senha },
+  );
+  if (error?.code === "reauthentication_needed") return await mandarCodigo(supabase);
+  if (error?.code === "reauthentication_not_valid")
+    return {
+      erro: "O código não confere ou venceu. Confira o último e-mail que mandamos e digite de novo.",
+      pedirCodigo: true,
+    };
   if (error)
     return {
       erro: "Não foi possível trocar a senha. Escolha outra (no mínimo 12 caracteres) e tente de novo.",
+      pedirCodigo,
     };
   redirect(await destinoDepoisDeEntrar(supabase, undefined));
+}
+
+/**
+ * Sem login recente, o Supabase (secure_password_change) só troca a senha com o código que manda ao
+ * e-mail de quem está logado. A recuperação por e-mail não passa por aqui: o link já é um login recente.
+ */
+async function mandarCodigo(
+  supabase: Awaited<ReturnType<typeof criarClienteDoServidor>>,
+): Promise<EstadoDoFormulario> {
+  const { error } = await supabase.auth.reauthenticate();
+  if (error)
+    return {
+      erro: "Não foi possível mandar o código ao seu e-mail agora. Espere um minuto e tente de novo.",
+    };
+  return {
+    aviso:
+      "Para confirmar que é você, mandamos um código de 6 dígitos ao seu e-mail. Digite a senha nova de novo e o código.",
+    pedirCodigo: true,
+  };
 }

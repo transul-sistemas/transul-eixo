@@ -145,6 +145,22 @@ export function FormularioDeNovaSenha() {
           />
         )}
       </Campo>
+      {estado.pedirCodigo ? (
+        <Campo rotulo="Código do e-mail" ajuda="Os 6 dígitos que mandamos ao seu e-mail.">
+          {(p) => (
+            <input
+              {...p}
+              name="codigo"
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              pattern="[0-9]{6}"
+              maxLength={6}
+              required
+              className={CLASSE_DO_CAMPO}
+            />
+          )}
+        </Campo>
+      ) : null}
       <Button type="submit" disabled={enviando} className="h-10">
         {enviando ? "Salvando…" : "Salvar a senha nova"}
       </Button>
