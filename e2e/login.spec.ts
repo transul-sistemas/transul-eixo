@@ -226,11 +226,11 @@ for (const caso of [
     naoVe: ["Operacional", "Pessoas", "Administração"],
     proibida: "/pessoas",
   },
-  // As telas do Operacional ainda estão "em breve" (só Administrador e Diretoria as veem): o grupo não aparece.
+  // Desde 10/11/2026 o Operacional vê Pessoas (a Escala só da sua filial); Frota e Administração seguem fora.
   {
     codigo: "operacional",
-    ve: [],
-    naoVe: ["Frota", "Pessoas", "Administração"],
+    ve: ["Pessoas"],
+    naoVe: ["Frota", "Administração"],
     proibida: "/frota/placas",
   },
   { codigo: "diretoria", ve: ["Frota", "Operacional", "Pessoas"], naoVe: [], proibida: null },
