@@ -1,0 +1,131 @@
+-- Dados fictícios do teste 99 (Parceiros: lista, ficha, conciliação e locação). Incluído logo depois
+-- do `\ir apoio/como_usuario.psql`; vive na transação do teste e some no `rollback`.
+--
+-- Dois agrupadores do Sankhya (o CR pai das placas de um acionista ou agregado):
+--   K99P (9900), com quatro CRs de acionista:
+--     9901 placa PPP9A01 desde 10/01/2026: despesas de março 500,00 (com a placa) + 200,00 (sem placa),
+--          CT-e de 1.000,00 com a placa → confere;
+--     9902 placa PPP9A02 desde 15/03/2026, nada lançado → sem lançamento (17 dias no mês);
+--     9903 sem placa no Eixo, despesa de 300,00 → diferença (lançado onde o Eixo não espera placa);
+--     9904 placa PPP9A03 desde 01/02/2026: 100,00 com a placa + 50,00 com outra placa → diferença.
+--   K99Q (9910), com o CR 9911 sem placa e sem lançamento (fica fora da conciliação).
+-- Março de 2026 no K99P: despesa 1.150,00, receita 1.000,00. Fora da conta: despesa de abril,
+-- provisão, despesa invalidada e CT-e que sumiu do Sankhya.
+
+create function pg_temp.id(p_nome text) returns uuid language sql as $$
+  select nullif(current_setting('t.' || lower(regexp_replace(p_nome, '[^A-Za-z0-9]', '_', 'g')), true), '')::uuid
+$$;
+create function pg_temp.guardar(p_nome text, p_id uuid) returns uuid language sql as $$
+  select set_config('t.' || lower(regexp_replace(p_nome, '[^A-Za-z0-9]', '_', 'g')), p_id::text, true)::uuid
+$$;
+create function pg_temp.renavam(p_n bigint) returns text language plpgsql as $$
+declare
+  v_prefixo text := lpad(p_n::text, 10, '0');
+begin
+  for v_dv in 0..9 loop
+    if nucleo.renavam_valido(v_prefixo || v_dv::text) then
+      return v_prefixo || v_dv::text;
+    end if;
+  end loop;
+  raise exception 'sem dígito verificador para %', v_prefixo;
+end;
+$$;
+-- Um documento válido a partir da base (9 dígitos para CPF, 12 para CNPJ).
+create function pg_temp.documento(p_base text) returns text language plpgsql as $$
+begin
+  for v_a in 0..9 loop
+    for v_b in 0..9 loop
+      if nucleo.documento_valido(p_base || v_a::text || v_b::text) then
+        return p_base || v_a::text || v_b::text;
+      end if;
+    end loop;
+  end loop;
+  raise exception 'sem documento para %', p_base;
+end;
+$$;
+create function pg_temp.pessoa(p_nome text, p_n bigint, p_perfil text, p_gestor boolean) returns uuid language plpgsql as $$
+declare
+  v_pessoa uuid;
+  v_auth uuid;
+begin
+  insert into nucleo.pessoa (nome) values (p_nome) returning id into v_pessoa;
+  insert into nucleo.pessoa_documento (pessoa_id, documento) values (v_pessoa, pg_temp.documento(lpad(p_n::text, 9, '0')));
+  if p_gestor then
+    insert into nucleo.papel_da_pessoa (pessoa_id, papel) values (v_pessoa, 'gestor_de_frota');
+  end if;
+  v_auth := tests.criar_usuario(lower(replace(p_nome, ' ', '.')) || '.99@exemplo.local');
+  insert into nucleo.usuario (pessoa_id, auth_user_id, perfil) values (v_pessoa, v_auth, p_perfil);
+  perform pg_temp.guardar('auth_' || p_nome, v_auth);
+  return pg_temp.guardar(p_nome, v_pessoa);
+end;
+$$;
+create function pg_temp.erro_de(p_sql text) returns text language plpgsql as $$
+begin
+  begin
+    execute p_sql;
+    raise exception 'a tentativa executou' using errcode = 'ZZ999';
+  exception when others then
+    return case when sqlstate = 'ZZ999' then 'executou' else sqlstate end;
+  end;
+end;
+$$;
+grant execute on function pg_temp.id(text), pg_temp.guardar(text, uuid), pg_temp.erro_de(text) to authenticated;
+
+select pg_temp.pessoa('Gestor A', 990000001, 'gestor_de_frota', true);
+select pg_temp.pessoa('Adm', 990000002, 'administrador', false);
+select pg_temp.pessoa('Dir', 990000003, 'diretoria', false);
+select pg_temp.pessoa('Oper', 990000004, 'operacional', false);
+
+-- Os CRs de frota das placas (o cadastro pede um, e cada CR de frota é de um ativo só) e os agrupadores com os CRs de acionista.
+insert into nucleo.cr (codcencus, codigo, nome, unidade_gerencial, veiculo_obrigatorio, operacao_id)
+select x.cod, x.codigo, 'Frota ' || x.codigo, 'frota', true, (select id from nucleo.operacao where nome = 'Operação Matriz')
+  from (values (9990, 'K99F'), (9991, 'K99G'), (9992, 'K99H')) x (cod, codigo);
+insert into nucleo.cr (codcencus, codigo, nome, unidade_gerencial, analitico) values
+  (9900, 'K99P', 'Acionista 99 P', 'servico', false),
+  (9910, 'K99Q', 'Acionista 99 Q', 'servico', false);
+insert into nucleo.cr (codcencus, codigo, nome, unidade_gerencial, analitico, cr_pai_id)
+select x.cod, x.codigo, x.nome, 'acionista', true, (select id from nucleo.cr where codcencus = x.pai)
+  from (values (9901, 'K99A', 'Placa A 99', 9900), (9902, 'K99B', 'Placa B 99', 9900),
+               (9903, 'K99C', 'Placa C 99', 9900), (9904, 'K99D', 'Placa D 99', 9900),
+               (9911, 'K99E', 'Placa E 99', 9910)) x (cod, codigo, nome, pai);
+select pg_temp.guardar('agrupador_p', (select id from nucleo.cr where codcencus = 9900));
+select pg_temp.guardar('agrupador_q', (select id from nucleo.cr where codcencus = 9910));
+select pg_temp.guardar('cr_frota', (select id from nucleo.cr where codcencus = 9990));
+select pg_temp.guardar('cr_9901', (select id from nucleo.cr where codcencus = 9901));
+select pg_temp.guardar('cr_9902', (select id from nucleo.cr where codcencus = 9902));
+select pg_temp.guardar('cr_9903', (select id from nucleo.cr where codcencus = 9903));
+select pg_temp.guardar('cr_9904', (select id from nucleo.cr where codcencus = 9904));
+
+select pg_temp.guardar('p1', nucleo.cadastrar_ativo(
+  p_tipo => 'cavalo', p_renavam => pg_temp.renavam(9901), p_placa => 'PPP9A01',
+  p_gestor_id => pg_temp.id('Gestor A'), p_cr_id => pg_temp.id('cr_frota'),
+  p_operacao_id => (select id from nucleo.operacao where nome = 'Operação Matriz'), p_em => '2026-01-05 08:00-03'));
+select pg_temp.guardar('p2', nucleo.cadastrar_ativo(
+  p_tipo => 'cavalo', p_renavam => pg_temp.renavam(9902), p_placa => 'PPP9A02',
+  p_gestor_id => pg_temp.id('Gestor A'), p_cr_id => (select id from nucleo.cr where codcencus = 9991),
+  p_operacao_id => (select id from nucleo.operacao where nome = 'Operação Matriz'), p_em => '2026-01-05 08:00-03'));
+select pg_temp.guardar('p3', nucleo.cadastrar_ativo(
+  p_tipo => 'cavalo', p_renavam => pg_temp.renavam(9903), p_placa => 'PPP9A03',
+  p_gestor_id => pg_temp.id('Gestor A'), p_cr_id => (select id from nucleo.cr where codcencus = 9992),
+  p_operacao_id => (select id from nucleo.operacao where nome = 'Operação Matriz'), p_em => '2026-01-05 08:00-03'));
+set constraints all immediate;
+set constraints all deferred;
+
+-- O CR de acionista de cada placa (ao lado do de frota: a regra 1 permite os dois ao mesmo tempo).
+insert into nucleo.cr_do_ativo (ativo_id, cr_id, inicio, inicio_origem) values
+  (pg_temp.id('p1'), pg_temp.id('cr_9901'), '2026-01-10 00:00-03', 'informada'),
+  (pg_temp.id('p2'), pg_temp.id('cr_9902'), '2026-03-15 00:00-03', 'informada'),
+  (pg_temp.id('p3'), pg_temp.id('cr_9904'), '2026-02-01 00:00-03', 'informada');
+
+insert into staging.despesa (origem_id, nufin, codcencus, placa, dt_competencia, provisao, valor_desdobramento, invalidado_em) values
+  ('d99-1', '1', '9901', 'PPP9A01', '2026-03-05', 'REAL', 500.00, null),
+  ('d99-2', '2', '9901', null, '2026-03-31', null, 200.00, null),
+  ('d99-3', '3', '9901', 'PPP9A01', '2026-04-01', 'REAL', 900.00, null),
+  ('d99-4', '4', '9901', 'PPP9A01', '2026-03-10', 'PROVISAO', 80.00, null),
+  ('d99-5', '5', '9902', 'PPP9A02', '2026-03-20', 'REAL', 60.00, '2026-04-01 00:00-03'),
+  ('d99-6', '6', '9903', null, '2026-03-12', 'REAL', 300.00, null),
+  ('d99-7', '7', '9904', 'PPP9A03', '2026-03-12', 'REAL', 100.00, null),
+  ('d99-8', '8', '9904', 'ZZZ9Z99', '2026-03-13', 'REAL', 50.00, null);
+insert into staging.viagem (nunota, codcencus, placa, dt_negociacao, status_cte, frete_empresa, sumiu_do_sankhya_em) values
+  (990001, '9901', 'PPP9A01', '2026-03-05', 'A', 1000.00, null),
+  (990002, '9902', 'PPP9A02', '2026-03-20', 'A', 400.00, '2026-04-02 10:00-03');
