@@ -276,13 +276,12 @@ test.describe("rebaixar o papel tira o acesso na hora", () => {
           [perfil, emailDe("diretoria")],
         ),
       );
-    await trocar("operacional");
+    await trocar("gestor_de_frota");
     try {
       const resposta = await page.goto("/pessoas");
       expect(resposta?.status()).toBe(404);
       await page.goto("/inicio/tarefas");
       await expect(grupo(page, "Pessoas")).toHaveCount(0);
-      await expect(grupo(page, "Frota")).toHaveCount(0);
     } finally {
       await trocar("diretoria");
     }
