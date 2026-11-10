@@ -1,3 +1,4 @@
+import { cookies } from "next/headers";
 import { connection } from "next/server";
 import { hojeEmSaoPaulo } from "@/components/formato/data";
 import { formatarInteiro } from "@/components/formato/numero";
@@ -9,6 +10,10 @@ import { modoDosDados } from "@/lib/dados/fonte";
 import { lerOperacoes, lerPatio } from "@/lib/dados/operacional";
 import { FILTROS_DO_PATIO, type FiltroDoPatio } from "@/lib/dados/operacional-tipos";
 import { acharTela } from "@/lib/navegacao/catalogo";
+import {
+  lerTamanhoLembrado,
+  NOME_DO_COOKIE_DO_TAMANHO,
+} from "@/lib/navegacao/preferencias-da-tabela";
 import { enderecoDoPatio, type EstadoDaLista, lerPatioDaUrl } from "@/lib/navegacao/operacional";
 import { exigirSessao } from "@/lib/seguranca/sessao-do-servidor";
 import {
@@ -48,7 +53,7 @@ async function Conteudo({ estado, hoje }: { estado: EstadoDaLista<FiltroDoPatio>
   // Os assistentes do pátio guardam a chave pelo usuário da sessão (ProvedorDoUsuario).
   const [patio, aguardando, operacoes, sessao] = await Promise.all([
     lerPatio(estado),
-    lerPatio({ filtro: "ACe", pagina: 1 }),
+    lerPatio({ filtro: "ACe", pagina: 1, tam: 100 }),
     lerOperacoes(),
     exigirSessao(),
   ]);
@@ -61,7 +66,7 @@ async function Conteudo({ estado, hoje }: { estado: EstadoDaLista<FiltroDoPatio>
         nomes={NOMES}
         contagens={c}
         atual={estado.filtro}
-        endereco={(filtro) => enderecoDoPatio({ filtro, pagina: 1 })}
+        endereco={(filtro) => enderecoDoPatio({ filtro, pagina: 1, tam: estado.tam })}
       />
       <FaixaDeKpis
         kpis={[
@@ -81,7 +86,7 @@ async function Conteudo({ estado, hoje }: { estado: EstadoDaLista<FiltroDoPatio>
           <ListaVazia
             titulo={`Nenhuma placa em "${NOMES[estado.filtro]}"`}
             descricao="Tire o filtro para ver o pátio inteiro."
-            hrefLimpar={enderecoDoPatio({ filtro: "todas", pagina: 1 })}
+            hrefLimpar={enderecoDoPatio({ filtro: "todas", pagina: 1, tam: estado.tam })}
           />
         )
       ) : (
@@ -101,6 +106,8 @@ async function Conteudo({ estado, hoje }: { estado: EstadoDaLista<FiltroDoPatio>
             pagina={patio.pagina}
             paginas={patio.paginas}
             endereco={(pagina) => enderecoDoPatio({ ...estado, pagina })}
+            tam={estado.tam}
+            enderecoDoTamanho={(tam) => enderecoDoPatio({ ...estado, tam, pagina: 1 })}
             testId="total-do-patio"
           />
         </>
@@ -112,7 +119,11 @@ async function Conteudo({ estado, hoje }: { estado: EstadoDaLista<FiltroDoPatio>
 export async function PaginaDoPatio({ searchParams }: { searchParams: ParametrosDaBusca }) {
   await connection();
   const hoje = hojeEmSaoPaulo(new Date());
-  const estado = lerPatioDaUrl(paraParametros(await searchParams));
+  const tamLembrado = lerTamanhoLembrado(
+    (await cookies()).get(NOME_DO_COOKIE_DO_TAMANHO)?.value,
+    20,
+  );
+  const estado = lerPatioDaUrl(paraParametros(await searchParams), tamLembrado);
   const { titulo, descricao } = cabecalho();
   return (
     <PaginaDeLeitura titulo={titulo} descricao={descricao}>

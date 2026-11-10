@@ -182,8 +182,6 @@ export async function lerCenso(
 
 // ---------- Carteira ----------
 
-export const TAMANHO_DA_CARTEIRA = 50;
-
 export async function lerCarteiraDoMes(
   estado: EstadoDaCarteira,
   cliente: () => Promise<ClienteDoAcompanhamento> = clienteDaSessao,
@@ -217,7 +215,7 @@ export async function lerCarteiraDoMes(
     p_mes: `${estado.mes}-01`,
     p_filtro: estado.filtro satisfies FiltroDaCarteira,
     p_pagina: estado.pagina,
-    p_tam: TAMANHO_DA_CARTEIRA,
+    p_tam: estado.tam,
   });
   return {
     mes: d.mes,

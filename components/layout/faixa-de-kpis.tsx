@@ -1,12 +1,17 @@
 import type { ReactNode } from "react";
+import { CartaoDeKpi, type VariacaoDoKpi } from "./cartao-de-kpi";
 
 export interface Kpi {
   readonly id: string;
   readonly rotulo: string;
   /** O valor já formatado: use os componentes de components/formato/ (moeda, km, percentual...). */
   readonly valor: ReactNode;
-  /** Uma linha de apoio, como a variação sobre o período anterior. */
+  /** Uma linha de apoio. */
   readonly apoio?: string;
+  /** A variação contra o período anterior (setas e tom; nunca inventa número sem base). */
+  readonly variacao?: VariacaoDoKpi;
+  /** Falta a fonte: mostra este texto no lugar do valor ("Sem dados ainda: depende de ..."). */
+  readonly semDados?: string;
 }
 
 /** A faixa de indicadores de uma tela de leitura. Sem indicadores, não desenha nada. */
@@ -18,13 +23,14 @@ export function FaixaDeKpis({ kpis }: { kpis: readonly Kpi[] }) {
       className="grid [grid-template-columns:repeat(auto-fit,minmax(13rem,1fr))] gap-3"
     >
       {kpis.map((kpi) => (
-        <li
-          key={kpi.id}
-          className="border-border bg-card flex flex-col gap-1 rounded-xl border px-4 py-3"
-        >
-          <span className="text-muted-foreground text-sm">{kpi.rotulo}</span>
-          <span className="text-2xl font-semibold tracking-tight tabular-nums">{kpi.valor}</span>
-          {kpi.apoio ? <span className="text-muted-foreground text-sm">{kpi.apoio}</span> : null}
+        <li key={kpi.id}>
+          <CartaoDeKpi
+            rotulo={kpi.rotulo}
+            valor={kpi.valor}
+            apoio={kpi.apoio}
+            variacao={kpi.variacao}
+            semDados={kpi.semDados}
+          />
         </li>
       ))}
     </ul>

@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { formatarInteiro } from "@/components/formato/numero";
+import { SeletorDeTamanho } from "@/components/tabela/seletor-de-tamanho";
+import { TAMANHOS_DE_PAGINA } from "@/lib/navegacao/preferencias-da-tabela";
 import { cn } from "@/lib/utils";
 
 // Os chips de filtro (com a contagem pronta do banco) e a paginação do Pátio e das Ordens: tudo por
@@ -51,6 +53,8 @@ export function PaginasDaLista({
   paginas,
   endereco,
   testId,
+  tam,
+  enderecoDoTamanho,
 }: {
   rotulo: string;
   total: number;
@@ -59,6 +63,10 @@ export function PaginasDaLista({
   paginas: number;
   endereco: (pagina: number) => string;
   testId: string;
+  /** Linhas por página (20, 50 ou 100), lembrado por pessoa no cookie único. */
+  tam: number;
+  /** O endereço da mesma visão com outro tamanho, na página 1. */
+  enderecoDoTamanho: (tam: number) => string;
 }) {
   return (
     <nav aria-label={rotulo} className="flex flex-wrap items-center gap-3 text-sm">
@@ -66,6 +74,10 @@ export function PaginasDaLista({
         {formatarInteiro(total)} {unidade} · página {formatarInteiro(pagina)} de{" "}
         {formatarInteiro(paginas)}
       </span>
+      <SeletorDeTamanho
+        tam={tam}
+        enderecos={Object.fromEntries(TAMANHOS_DE_PAGINA.map((t) => [t, enderecoDoTamanho(t)]))}
+      />
       {pagina > 1 ? (
         <Link className={classeDoLink} href={endereco(pagina - 1)}>
           Página anterior

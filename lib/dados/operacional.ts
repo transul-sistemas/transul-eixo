@@ -61,9 +61,6 @@ async function ler<T>(
   return data as T;
 }
 
-export const TAMANHO_DO_PATIO = 50;
-export const TAMANHO_DAS_ORDENS = 50;
-
 // ---------- Leitura ----------
 
 interface PlacaDoPatioDoBanco {
@@ -86,7 +83,7 @@ interface PlacaDoPatioDoBanco {
 }
 
 export async function lerPatio(
-  filtros: { filtro: FiltroDoPatio; pagina: number },
+  filtros: { filtro: FiltroDoPatio; pagina: number; tam: number },
   cliente: () => Promise<ClienteDoOperacional> = clienteDaSessao,
 ): Promise<PatioDaFilial> {
   const c = await cliente();
@@ -99,7 +96,7 @@ export async function lerPatio(
   }>(c, "patio_da_filial", {
     p_situacao: filtros.filtro,
     p_pagina: filtros.pagina,
-    p_tam: TAMANHO_DO_PATIO,
+    p_tam: filtros.tam,
   });
   return {
     linhas: d.linhas.map((l) => ({
@@ -143,7 +140,7 @@ interface OrdemDoBanco {
 }
 
 export async function lerOrdens(
-  filtros: { filtro: FiltroDasOrdens; pagina: number },
+  filtros: { filtro: FiltroDasOrdens; pagina: number; tam: number },
   cliente: () => Promise<ClienteDoOperacional> = clienteDaSessao,
 ): Promise<ListaDeOrdens> {
   const c = await cliente();
@@ -156,7 +153,7 @@ export async function lerOrdens(
   }>(c, "ordens_de_carregamento", {
     p_situacao: filtros.filtro,
     p_pagina: filtros.pagina,
-    p_tam: TAMANHO_DAS_ORDENS,
+    p_tam: filtros.tam,
   });
   return {
     linhas: d.linhas.map((o) => ({

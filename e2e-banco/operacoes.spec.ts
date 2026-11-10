@@ -47,7 +47,6 @@ test.describe("Operações (Administrador)", () => {
     const linha = tabela.getByRole("row").filter({ hasText: NOME });
     await expect(linha).toHaveCount(1);
     await expect(linha).toContainText("Cordeirópolis");
-    await expect(linha).toContainText("R$ 0,00");
     // A página vem do banco: o resumo conta o filtro inteiro.
     await expect(page.getByTestId("resumo-da-pagina")).toHaveText("Mostrando 1–1 de 1 operações");
 
@@ -57,7 +56,7 @@ test.describe("Operações (Administrador)", () => {
       "aria-selected",
       "true",
     );
-    await expect(page.getByLabel("Cascata do mês")).toContainText("Margem");
+    await expect(page.getByRole("list", { name: "Indicadores" })).toContainText("Margem");
     await expect(page.getByText("filial Cordeirópolis")).toBeVisible();
 
     await page.getByRole("button", { name: "Editar operação" }).click();

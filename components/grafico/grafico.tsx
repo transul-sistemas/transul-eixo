@@ -5,7 +5,7 @@ import { GridComponent, LegendComponent, TooltipComponent } from "echarts/compon
 import * as echarts from "echarts/core";
 import { CanvasRenderer } from "echarts/renderers";
 import { useTheme } from "next-themes";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { formatarMoeda, formatarMoedaAbreviada } from "@/components/formato/moeda-valor";
 import { formatarInteiro, formatarPercentual } from "@/components/formato/numero";
 import { type Modulo, type Status, variavelDoModulo, variavelDoStatus } from "@/lib/visual/tons";
@@ -23,7 +23,7 @@ echarts.use([
   CanvasRenderer,
 ]);
 
-export type CorDoGrafico = { status: Status } | { modulo: Modulo } | "acao";
+export type CorDoGrafico = { status: Status } | { modulo: Modulo } | "acao" | "negativo";
 /** `moeda`: os valores vêm em centavos; o eixo abrevia ("R$ 1,3 mi") e o tooltip mostra o valor completo. */
 export type FormatoDoGrafico = "inteiro" | "percentual" | "moeda";
 
@@ -36,6 +36,8 @@ export interface SerieDoGrafico {
   readonly pilha?: string;
   /** 0 = eixo da esquerda (padrão); 1 = eixo da direita. */
   readonly eixo?: 0 | 1;
+  /** Linha com a área abaixo suavemente preenchida. */
+  readonly area?: boolean;
 }
 
 export interface PropsDoGrafico {
@@ -67,6 +69,7 @@ function variavel(nome: string): string {
 
 function corDaSerie(cor: CorDoGrafico): string {
   if (cor === "acao") return variavel("--acao");
+  if (cor === "negativo") return variavel("--texto-negativo");
   return "status" in cor
     ? variavel(variavelDoStatus(cor.status))
     : variavel(variavelDoModulo(cor.modulo));
@@ -82,10 +85,22 @@ export function Grafico({
 }: PropsDoGrafico) {
   const elemento = useRef<HTMLDivElement>(null);
   const { resolvedTheme } = useTheme();
+  const [visivel, setVisivel] = useState(0);
 
   useEffect(() => {
     const no = elemento.current;
     if (!no) return;
+    // Numa aba escondida o elemento tem tamanho zero: espera aparecer para criar o gráfico.
+    if (no.clientWidth === 0) {
+      const espera = new ResizeObserver(() => {
+        if (no.clientWidth > 0) {
+          espera.disconnect();
+          setVisivel((v) => v + 1);
+        }
+      });
+      espera.observe(no);
+      return () => espera.disconnect();
+    }
     const grafico = echarts.init(no, undefined, { renderer: "canvas" });
     const texto = variavel("--muted-foreground");
     const linha = variavel("--border");
@@ -134,6 +149,7 @@ export function Grafico({
           data: [...s.valores],
           itemStyle: { color: corDaSerie(s.cor) },
           lineStyle: s.tipo === "linha" ? { width: 2 } : undefined,
+          areaStyle: s.area ? { opacity: 0.12 } : undefined,
           symbol: "none",
           connectNulls: false,
           barMaxWidth: 28,
@@ -149,7 +165,7 @@ export function Grafico({
       observador.disconnect();
       grafico.dispose();
     };
-  }, [rotulo, categorias, series, formatos, deitado, resolvedTheme]);
+  }, [rotulo, categorias, series, formatos, deitado, resolvedTheme, visivel]);
 
   return (
     <div

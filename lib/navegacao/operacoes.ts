@@ -1,3 +1,4 @@
+import type { Periodo } from "@/lib/dominio/periodo";
 import { type ConsultaDeTabela, lerTabela, type PadraoDaTabela } from "./tabela";
 
 // O estado de Operações › lista na URL: o mês (`mes=aaaa-mm`; sem ele, o banco abre o mês mais
@@ -100,4 +101,19 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 /** O identificador da operação na rota é o id (uuid, minúsculo). O resto é 404. */
 export function idDeOperacaoValido(id: string): boolean {
   return UUID.test(id);
+}
+
+/** O endereço da mesma visão em outro período (mês ou acumulado): troca `mes`/`acum`, mantém o resto. */
+export function enderecoDoPeriodo(
+  rota: string,
+  parametros: URLSearchParams,
+  periodo: Periodo,
+): string {
+  const novos = new URLSearchParams(parametros.toString());
+  novos.delete("pagina");
+  novos.delete("mes");
+  novos.delete("acum");
+  if (periodo.tipo === "mes") novos.set("mes", periodo.mes);
+  else novos.set("acum", periodo.modo);
+  return `${rota}?${novos.toString()}`;
 }
