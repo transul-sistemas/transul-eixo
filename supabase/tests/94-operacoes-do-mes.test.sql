@@ -19,13 +19,13 @@ create function pg_temp.linha(p_resultado jsonb, p_nome text) returns jsonb lang
 $$;
 
 -- ---- Estrutura e privilégios ----
-select has_function('nucleo', 'operacoes_do_mes', array['date', 'text', 'text[]', 'text'],
-  'existe nucleo.operacoes_do_mes(mês, busca, chips, ordem)');
-select ok(not (select prosecdef from pg_proc where oid = 'nucleo.operacoes_do_mes(date,text,text[],text)'::regprocedure),
+select has_function('nucleo', 'operacoes_do_mes', array['date', 'text', 'text[]', 'text', 'integer', 'integer'],
+  'existe nucleo.operacoes_do_mes(mês, busca, chips, ordem, página, tamanho)');
+select ok(not (select prosecdef from pg_proc where oid = 'nucleo.operacoes_do_mes(date,text,text[],text,integer,integer)'::regprocedure),
   'a lista roda com a permissão de quem chama (security invoker)');
-select ok(not has_function_privilege('anon', 'nucleo.operacoes_do_mes(date,text,text[],text)', 'execute'),
+select ok(not has_function_privilege('anon', 'nucleo.operacoes_do_mes(date,text,text[],text,integer,integer)', 'execute'),
   'anon não executa a lista');
-select ok(exists (select 1 from config.funcao_executavel where assinatura = 'nucleo.operacoes_do_mes(date,text,text[],text)'),
+select ok(exists (select 1 from config.funcao_executavel where assinatura = 'nucleo.operacoes_do_mes(date,text,text[],text,integer,integer)'),
   'a lista está na relação de funções que o app executa, com a justificativa');
 
 -- ---- Administrador ----

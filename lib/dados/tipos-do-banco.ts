@@ -1988,7 +1988,7 @@ isOneToOne: false
 { Args: { "p_acao": string }; Returns: (string)[]
                            },
 "operacoes_do_mes":
-{ Args: { "p_busca"?: string,"p_chips"?: (string)[],"p_mes"?: string,"p_ordem"?: string }; Returns: Json
+{ Args: { "p_busca"?: string,"p_chips"?: (string)[],"p_mes"?: string,"p_ordem"?: string,"p_pagina"?: number,"p_tam"?: number }; Returns: Json
                            },
 "operacoes_que_vejo":
 { Args: Record<PropertyKey, never>; Returns: (string)[]
@@ -1997,7 +1997,7 @@ isOneToOne: false
 { Args: { "p_pagina"?: number,"p_situacao"?: string,"p_tam"?: number }; Returns: Json
                            },
 "parceiros_do_mes":
-{ Args: { "p_busca"?: string,"p_chips"?: (string)[],"p_mes"?: string }; Returns: Json
+{ Args: { "p_busca"?: string,"p_chips"?: (string)[],"p_mes"?: string,"p_pagina"?: number,"p_tam"?: number }; Returns: Json
                            },
 "patio_da_filial":
 { Args: { "p_pagina"?: number,"p_situacao"?: string,"p_tam"?: number }; Returns: Json
