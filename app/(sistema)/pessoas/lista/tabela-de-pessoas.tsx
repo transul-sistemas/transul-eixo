@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTransition } from "react";
 import { formatarData } from "@/components/formato/data";
+import { BotaoDoOlho } from "@/components/tabela/botao-do-olho";
 import { type ColunaDeTabela, TabelaDeDados } from "@/components/tabela/tabela-de-dados";
 import { type LinhaDePessoa, NOMES_DAS_SITUACOES } from "@/lib/dados/pessoas-tipos";
 import {
@@ -63,6 +64,24 @@ const COLUNAS: ColunaDeTabela<LinhaDePessoa>[] = [
     campoDeOrdem: "desde",
     classe: "tabular-nums",
     celula: (l) => (l.desde ? formatarData(l.desde) : SEM_VALOR),
+  },
+  {
+    id: "olho",
+    titulo: "Detalhes",
+    classe: "w-14 text-right",
+    celula: (l) => (
+      <BotaoDoOlho
+        item={l.nome}
+        hrefDaFicha={enderecoDaFichaDaPessoa(l.id)}
+        detalhes={[
+          { rotulo: "CPF", valor: l.documentoMascarado ?? "—" },
+          { rotulo: "Situação", valor: NOMES_DAS_SITUACOES[l.situacao] ?? l.situacao },
+          { rotulo: "Função", valor: l.funcaoNome ?? "—" },
+          { rotulo: "Operação", valor: l.operacao ?? "—" },
+          { rotulo: "Desde", valor: l.desde ? formatarData(l.desde) : "—" },
+        ]}
+      />
+    ),
   },
 ];
 
