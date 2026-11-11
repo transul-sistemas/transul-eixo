@@ -134,6 +134,37 @@ No Eixo:
 - **Sem indexação** (`noindex`) e sem o token em log, URL de terceiros ou mensagem de erro.
 - O link nunca dá acesso ao resto do sistema: não abre sessão.
 
+## A tarefa abre um assistente (regra)
+
+**Cada passo de processo aponta para um assistente (wizard), e a tarefa abre direto nele, com o contexto
+preenchido.** A tarefa **nunca abre uma tela avulsa**: nada de "ir para a lista e procurar a placa". O cartão
+da tarefa diz por que a pessoa a vê e o que acontece depois; o botão do cartão é o verbo do assistente
+("Receber placa", "Lançar o dia", "Indicar substituto", "Corrigir placa"). Na definição do processo
+(`processos.passo`), o passo guarda **qual assistente** abre e **quais campos já vão preenchidos** (a placa, o
+mês, o gestor). Quando o passo termina, o assistente grava o evento e a tarefa seguinte nasce (ou a fila
+guiada abre a próxima sozinha).
+
+## Modos de interação (quando usar cada um)
+
+| Modo | Quando usar | Como é |
+| --- | --- | --- |
+| **Wizard em popup central** | Toda inclusão, edição, exclusão e lançamento; todo passo de tarefa | Diálogo centralizado, stepper horizontal, resumo ao vivo, rascunho salvo, "fechar é fechar" |
+| **Popup obrigatório (porta)** | Algo que **precisa** ser feito antes de seguir, e que vale a rotina do dia (a Posição do dia) | Popup que **não fecha** até a resposta; o Esc não fecha; só o líder libera, com motivo registrado |
+| **Barra lateral** | **Só para ler o detalhe** de um item, sem formulário de gravação | Painel à direita, com abas; fecha e devolve o foco à linha |
+| **Fila guiada** | Uma sequência de tarefas da mesma pessoa, em ordem (o Meu dia) | Cada conclusão abre o próximo assistente; sem passo vazio |
+| **Aviso na linha** | Algo que **pede atenção**, mas não bloqueia (conjunto parado há N dias, prazo vencendo, distância improvável) | Selo com rótulo e ícone na própria linha, sem popup; clicar leva ao assistente |
+
+Regra de escolha: se **bloqueia** o dia, é popup obrigatório; se **muda dado**, é wizard em popup; se **só
+mostra**, é barra lateral; se **é uma rotina em ordem**, é fila guiada; se **só avisa**, é aviso na linha.
+
+## O Meu dia (a fila guiada do gestor de frota)
+
+Ao entrar, o **gestor de frota** cai numa **fila guiada**, nesta ordem: **receber placas**, **posição do
+dia**, **confirmar carteira**, e **depois as outras tarefas** da caixa. **Cada conclusão abre a próxima
+sozinha.** Passo sem nada a fazer não aparece. Detalhe em `docs/meu-dia.md` (Receber placas em lote) e
+`docs/posicao-do-dia.md` (o popup obrigatório). Fatias **M1** e **M2** do plano
+`docs/superpowers/plans/2026-11-11-processos-e-vinculos.md`.
+
 ## Regras
 
 1. A tarefa cai para o **dono do objeto** (carteira, destino).
