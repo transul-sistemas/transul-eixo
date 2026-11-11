@@ -145,11 +145,51 @@ Conferido nas migrations em 11/11/2026:
    mês) e `despesa_na_competencia` (CR → valor no mês), mas a placa de um lançamento vem do campo `placa`
    do staging, sem passar pela vigência do vínculo.
 5. **A receita da cascata filtra `coalesce(status_cte, 'A') = 'A'`**, que não é a regra de série e status
-   registrada em `docs/v1-frutos-e-licoes.md` (série V entra mesmo sem status; NFS-e só pelas TOPs
-   cadastradas). Conferir contra o staging antes de a ponte chegar.
-6. **A base da competência no staging precisa de conferência.** A função recebe `dt_competencia` como base
-   (`DTNEG`), mas o comentário da migration do staging diz que a v1 já calculou a competência. É preciso
-   confirmar se o campo é `DTNEG` puro ou a competência já aplicada; se for a segunda, o corte estaria sendo
-   aplicado duas vezes.
+   registrada em `docs/v1-frutos-e-licoes.md`. **Conferido em 11/11/2026 no staging local, só em
+   agregados** (receita = `frete_empresa`, sem os documentos que sumiram do Sankhya):
+   - **Em CT-e as duas regras coincidem:** status `I` e `R` ficam fora das duas; série V sem status entra
+     nas duas. A **única diferença são as NFS-e** (`tipo_documento = 'NFSE'`), que têm status vazio e por
+     isso passam pelo `coalesce(..., 'A')`; a regra da v1 as tira da receita de CT-e.
+   - **Set/2026 (mês fechado):** regra atual 9.230 documentos, R$ 45.919.374,89; regra da v1 (CT-e) 9.055,
+     R$ 43.601.969,36; **diferença 175 documentos, R$ 2.317.405,53**, todos NFS-e.
+   - **Out/2026 (o staging vai só até 28/10, mês incompleto):** regra atual 7.738, R$ 40.372.666,60; regra da
+     v1 7.620, R$ 38.646.963,71; **diferença 118 documentos, R$ 1.725.702,89**, todos NFS-e.
+   - **Por série, em out/2026 (valor nas duas regras):** série 1 com 4.039 CT-e (R$ 17,14 mi), série 2 com
+     2.716 (R$ 12,07 mi), série 10 com 271 (R$ 3,31 mi), série 50 com 562 (R$ 5,32 mi), série V com 32
+     (R$ 0,80 mi). Três CT-e da série 2 com status `I` (2) e `R` (1), somando R$ 10.392,40, ficam fora das
+     duas.
+   - **As NFS-e do staging são só das TOPs cadastradas** (1100, 1106, 1128 e 1136); não há a 1124 (Gestão
+     Portuária), então **não há dupla contagem com ela**. Em out/2026, 29 das 118 NFS-e estão sem placa ou na
+     placa genérica e iriam para a operação pelo centro da nota.
+   - **Conclusão:** a regra atual não erra em CT-e; ela **mistura NFS-e na receita de CT-e**. Isso não é erro
+     de valor (a v1 também decidiu levar a NFS-e como receita, de 13/10), e sim de **classificação**: a NFS-e
+     precisa de caminho próprio (placa ou operação) e de linha própria na cascata.
+   - **Menor conserto (não aplicado):** separar a receita da cascata em duas linhas pelo
+     `tipo_documento` (CT-e: status `A` nas séries com SEFAZ e série V sem status; NFS-e: TOPs cadastradas),
+     mantendo o total de hoje, com um teste que prova a diferença acima em set/2026.
+6. **A base da competência no staging: o corte da v1 já veio aplicado.** **Conferido em 11/11/2026 no
+   staging local, só em agregados.** `staging.despesa` **não tem a data de negociação (`DTNEG`)**: só
+   `dt_competencia` e `dtentsai`. Por isso não dá contar "competência em mês diferente da `DTNEG`"; o que dá
+   é medir a relação entre as duas datas que existem. São 165.504 lançamentos (140.080 com `dtentsai`,
+   1.673 de provisão, 3 com data absurda no ano 2926, que precisam de saneamento).
+   - **Dia do mês da `dt_competencia`:** dia 01, 9.568; dias 02 a 10, 44.695; dias 11 a 31, 111.238. É
+     distribuição livre (cerca de 33% nos dias 1 a 10), logo o campo **não é o "primeiro dia do mês"**: é
+     uma data.
+   - **`dtentsai` contra a `dt_competencia`:** 129.237 no mesmo mês; 5.440 com a `dtentsai` no mês seguinte
+     e **todos nos dias 1 a 10** (de 364 a 760 por dia; **nenhum no dia 11 ou depois**); 5.400 com a
+     `dtentsai` antes (entrada antecipada). **Nenhum lançamento tem a `dtentsai` dois meses depois**, e
+     112.551 (80% dos que têm `dtentsai`) têm as duas datas **idênticas**.
+   - **Assinatura do corte:** se a `dt_competencia` fosse a `DTNEG` bruta, haveria lançamentos com a entrada
+     a partir do dia 11 do mês seguinte (é para eles que a regra existe). **Há zero.** Ou seja, **o corte do
+     dia 10 foi aplicado uma vez, pela v1**, e a `dt_competencia` já é a competência (como diz o comentário
+     da migration do staging).
+   - **O que isso faz com `nucleo.competencia_gerencial`:** reaplicá-la à `dt_competencia` **não muda o mês
+     de nenhum dos 163.828 lançamentos** (sem provisão e sem a data absurda): **0 diferenças**. Não há
+     contagem em dobro, mas a função fica **inerte**: mudar o parâmetro do dia do corte **não muda nenhuma
+     despesa do staging**. A função **não pode partir da `DTNEG`**, porque o staging não a tem, e também não
+     recebe a menor `DTNEG` de origem dos renegociados.
+   - **Menor conserto (não aplicado):** a ponte do Sankhya passa a gravar a `DTNEG` bruta (e a menor `DTNEG`
+     de origem) ao lado de `dt_competencia`, e `despesa_na_competencia` parte da `DTNEG`; até lá, tratar a
+     `dt_competencia` como competência pronta e registrar que o parâmetro de corte não age no staging.
 7. **Os 10 tipos e a fila com dono e prazo** ainda não existem: a fila atual (`fila_de_excecoes`) cobre
    placa, pessoa e CR cadastrais, não despesa sem destino.
