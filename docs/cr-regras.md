@@ -124,7 +124,7 @@ arquitetura lê o código.
 | I7 | Nada é apagado: CR e vínculos só se encerram com data de fim | pgTAP: o `DELETE` é recusado; encerrar exige fim |
 | I8 | A competência segue o corte do dia 10, sem provisão, com renegociado na menor `DTNEG` | `lib/dominio/` com limites (dias 10 e 11) e pgTAP da função |
 | I9 | Frete de terceiro e impostos não contam duas vezes | Reconciliação: o total com e sem os dois tipos difere só do que a regra neutraliza |
-| I10 | Só entra receita pela regra de série e status do CT-e | `lib/dominio/` com um caso por série e por status |
+| I10 | Só entra receita pela regra única `nucleo.linha_de_receita` (CT-e por série e status; NFS-e só das TOPs cadastradas) | pgTAP 107, um caso por série, status e TOP, e o total igual ao da regra antiga onde coincidem |
 | I11 | Trocar CR é atômico e sem buraco | pgTAP da V0 |
 | I12 | Todo CR na tela mostra o código do Sankhya e o "porquê" | Teste de componente e e2e do caminho principal |
 
@@ -144,8 +144,15 @@ Conferido nas migrations em 11/11/2026:
 4. **Não há uma função "CR > placa > operação em D".** Existem `cr_da_operacao_no_mes` (CR → operação no
    mês) e `despesa_na_competencia` (CR → valor no mês), mas a placa de um lançamento vem do campo `placa`
    do staging, sem passar pela vigência do vínculo.
-5. **A receita da cascata filtra `coalesce(status_cte, 'A') = 'A'`**, que não é a regra de série e status
-   registrada em `docs/v1-frutos-e-licoes.md`. **Conferido em 11/11/2026 no staging local, só em
+5. **RESOLVIDA POR CLASSIFICAÇÃO, não por valor (migration `20261116100000_receita_por_tipo_de_documento.sql`).**
+   A função única `nucleo.linha_de_receita` substituiu o filtro `coalesce(status_cte, 'A') = 'A'` nos seis
+   lugares onde ele estava, a cascata passou a devolver `receita_cte` e `receita_nfse` (o total segue em
+   `receita`) e as TOPs de NFS-e ficam em `config.receita_top` (a 1124 inativa). **O total de set/2026
+   (R$ 45.919.374,89; 9.230 documentos) e o de out/2026 (R$ 40.372.666,60; 7.738) não mudou**, conferido
+   em agregados no banco local: set = 9.055 CT-e (R$ 43.601.969,36) + 175 NFS-e (R$ 2.317.405,53); out =
+   7.620 CT-e (R$ 38.646.963,71) + 118 NFS-e (R$ 1.725.702,89). A única diferença nos 12 meses é 1 CT-e de
+   nov/2025 sem status fora da série V (R$ 7.262,50), hipótese H10. Descrição original: o filtro **não era** a
+   regra de série e status registrada em `docs/v1-frutos-e-licoes.md`. **Conferido em 11/11/2026 no staging local, só em
    agregados** (receita = `frete_empresa`, sem os documentos que sumiram do Sankhya):
    - **Em CT-e as duas regras coincidem:** status `I` e `R` ficam fora das duas; série V sem status entra
      nas duas. A **única diferença são as NFS-e** (`tipo_documento = 'NFSE'`), que têm status vazio e por
@@ -191,5 +198,13 @@ Conferido nas migrations em 11/11/2026:
    - **Menor conserto (não aplicado):** a ponte do Sankhya passa a gravar a `DTNEG` bruta (e a menor `DTNEG`
      de origem) ao lado de `dt_competencia`, e `despesa_na_competencia` parte da `DTNEG`; até lá, tratar a
      `dt_competencia` como competência pronta e registrar que o parâmetro de corte não age no staging.
+   - **Situação (11/11/2026): corte já aplicado na origem; função inerte até a DTNEG.** O lote fez: o aviso
+     "Corte do dia 10 já aplicado na origem (v1)" ao lado do parâmetro em Cadastros › Catálogos e
+     parâmetros (o número vem do parâmetro); a **trava** da edição no servidor (Server Action) e no banco
+     (gatilho `t10_corte_travado`, enquanto `nucleo.staging_tem_dtneg()` for falso); o aviso "dados até"
+     (`nucleo.dados_do_staging_ate()`), com o mês incompleto rotulado e o mês fechado padrão limitado ao
+     último mês completo; e a **data fora de faixa** (`nucleo.data_na_faixa`: de 01/01/2020 até hoje + 1
+     ano), que tira o lançamento do resultado e o leva à fila de exceções (`data_fora_de_faixa`). A trava
+     cai sozinha quando a ponte do Sankhya gravar a `dtneg` em `staging.despesa`.
 7. **Os 10 tipos e a fila com dono e prazo** ainda não existem: a fila atual (`fila_de_excecoes`) cobre
    placa, pessoa e CR cadastrais, não despesa sem destino.
