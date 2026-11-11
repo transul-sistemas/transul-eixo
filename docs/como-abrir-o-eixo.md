@@ -58,6 +58,8 @@ pnpm db:dev-dados
 - Exemplo: `pnpm dev`
 - Banco (PowerShell): `$env:EIXO_DADOS = "banco"; pnpm dev`
 - Banco (Git Bash): `EIXO_DADOS=banco pnpm dev`
+- Banco, jeito curto: `pnpm dev:banco`. Ignora o `EIXO_DADOS` do terminal e do `.env.local`, sobe só em modo
+  banco, na porta 3000, com o Node limitado a 1536 MB.
 
 Endereços:
 
@@ -78,3 +80,18 @@ pnpm start
 - No `pnpm start` o padrão é o banco (a variável de exemplo só existe no `pnpm dev`). Para ver os dados
   de exemplo com o `pnpm start`: `$env:EIXO_DADOS = "exemplo"; pnpm start` (PowerShell).
 - Um servidor por vez. Ao terminar: Ctrl+C no servidor e `pnpm exec supabase stop`.
+
+## 7. Com muito pouca memória (menos de 2,5 GB livres)
+
+Subir só o que o Eixo usa (banco, auth, rest, kong e mailpit). Sem `--no-backup`: o volume fica.
+O `supabase/config.toml` não muda (o CI usa o mesmo).
+
+```
+pnpm exec supabase stop
+pnpm exec supabase start -x logflare,vector,edge-runtime,imgproxy,storage-api,realtime,supavisor,studio,postgres-meta
+```
+
+- Depois de subir, recarregue a API: `NOTIFY pgrst, 'reload schema'` no banco (sinal ao PostgREST).
+- Sem o Studio e sem o Storage/Realtime: telas que dependem deles não funcionam nesse modo.
+- Ao subir, só a contagem de placas vale como conferência (978 na cópia real de 10/11/2026).
+- Depois, `pnpm dev:banco`. Pare abaixo de 1,5 GB livres.

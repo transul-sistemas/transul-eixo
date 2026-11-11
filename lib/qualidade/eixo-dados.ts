@@ -8,6 +8,7 @@ const LISTA_FIXA: readonly string[] = [
   ".env.example",
   "playwright.config.ts",
   "playwright.banco.config.ts",
+  "scripts/dev-banco.mjs",
   "docs/decisoes.md",
   "docs/como-abrir-o-eixo.md",
 ];
