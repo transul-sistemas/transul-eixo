@@ -13,6 +13,20 @@ operação.
 - Da data da troca em diante, tudo vai para o **CR009** e para a **operação dele**.
 - O CR001 **continua existindo**, com histórico, e **fica gravado na operação** onde esteve.
 
+```mermaid
+gantt
+  dateFormat YYYY-MM-DD
+  title Placa AAA0000: CR001 encerrado, CR009 vigente
+  section CR
+  CR001 encerrado em 12/10 (Operação A) :done, 2026-01-05, 2026-10-12
+  CR009 vigente desde 12/10 (Operação B) :active, 2026-10-12, 2026-12-31
+  section Operação
+  Operação A guarda a placa :done, 2026-01-05, 2026-10-12
+  Operação B conta a placa :active, 2026-10-12, 2026-12-31
+```
+
+Exemplo ilustrativo: placa, CRs e datas são inventados para mostrar a regra; não são dados reais.
+
 ## As cinco regras
 
 1. **Encerrar não é excluir.** CR, vínculo placa-CR e vínculo CR-operação só se fecham com **data de

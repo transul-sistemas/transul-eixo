@@ -40,6 +40,24 @@ Perfil abre a porta; papel diz a função; vínculo diz o escopo. A tarefa usa o
 
 ## Camada por cima do que existe
 
+```mermaid
+flowchart TD
+  subgraph Quem
+    P["Perfil: áreas que abre"]
+    PA["Papel: função no negócio (novo)"]
+    V["Vínculo: carteira, operação, filial"]
+    S["Substituição: com data de fim (novo)"]
+  end
+  P & PA & V & S --> T["Caixa de tarefas: dono, prazo, fila do papel (novo)"]
+  T --> W["Assistente guiado: rosto da tarefa"]
+  W --> I["Instância do processo (novo)"]
+  W --> N["Tabelas de negócio: a verdade do negócio"]
+  W --> L["Log de eventos: imutável, com autor (novo)"]
+  I -. "nova tarefa" .-> T
+```
+
+Legenda: o que leva **(novo)** ainda não existe e nasce nas fatias P1 a P5; o que não leva a marca **já existe** (perfil, vínculo, assistente guiado e as tabelas de negócio).
+
 As tabelas de negócio continuam a verdade do fato: `transferencia`, `custodia`, `chegada`,
 `ordem_de_carregamento`, `confirmacao_da_carteira` e `fila_de_excecoes`. As tarefas **nascem dos estados
 delas**, sem reescrevê-las. O gerenciador não vira uma segunda fonte do mesmo fato.
@@ -91,6 +109,21 @@ Sem motor BPMN externo agora: o desenho cabe em tabelas e funções do próprio 
 7. Trocar CR (ver `docs/vinculos-com-historia.md`).
 8. Fechamento mensal da operação.
 9. Depois: acerto de acionista (depende da ponte do Sankhya).
+
+Primeiro processo do catálogo, a transferência de placa, desenhada com os estados de
+`nucleo.transferencia` (a tarefa nasce de cada estado, sem reescrevê-lo):
+
+```mermaid
+stateDiagram-v2
+  [*] --> Pendente
+  Pendente --> EmConferencia: receber (destino, 5 dias)
+  EmConferencia --> Concluida: concluir (destino)
+  Pendente --> Cancelada: cancelar (origem)
+  EmConferencia --> Devolvida: devolver (destino, com motivo)
+  Concluida --> [*]
+```
+
+Entre parênteses, quem age em cada transição: a origem é o gestor que entrega; o destino, o que recebe.
 
 Prazos iniciais (hipótese H4): receber placa em 5 dias; confirmar a carteira até o dia 5 do mês seguinte;
 lançar o dia até as 10h do dia seguinte.
