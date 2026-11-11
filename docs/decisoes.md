@@ -65,8 +65,28 @@ Modelo de entrada:
     `lib/qualidade/workflow-verificacao.test.ts`). **Commit que toca código espera o CI verde.** Nota:
     `supabase/**` também pula o e2e, mas não faz parte desta regra (migration segue esperando o verde).
 - **Motivo:** o e2e passava de 20 minutos e a fila serializada de execuções da `main` multiplicava a espera.
-- **Medição:** tempo antes (um job): cerca de 19 a 24 min só no e2e (execuções 43033461321 e 43070484928 de
-  11/11/2026); o tempo depois entra aqui quando a primeira execução com shards terminar.
+- **Medição (execução 43091604749, 11/11/2026, a primeira com shards):**
+  - **Antes:** o e2e dentro do `app` levava de 19 a 24 min, e a execução inteira de 24 a 28 min (execuções
+    43033461321 e 43070484928).
+  - **Depois:** cada shard fecha em cerca de **8 min** (`supabase start` 1,5 min, `pnpm build` **20 s**, Chromium
+    15 s, testes ~4,5 min); o `e2e-resultado` leva 26 s; o `app` (lint, tipos e unitários) 1 min; o `banco` 2,6 min.
+    **A execução inteira caiu para 18,2 min.**
+  - **Novo gargalo:** o job `modo-banco` (18 min), por causa do passo `node scripts/ci/mutacoes-sql.mjs`
+    (**13,5 min**); o e2e do modo banco leva 1 min. Próxima melhoria possível: dividir as mutações de SQL em
+    partes paralelas.
+  - **Build compartilhado entre os shards: não vale a pena.** O build leva só 20 s por shard; o custo de repetir
+    é o `supabase start` (1,5 min), que cada shard precisa de qualquer jeito.
+- **Consumo de minutos (API do `gh`, sem token novo, 11/11/2026):** no mês de novembro, até o dia 11, as
+  Actions somaram **4.387 minutos de Linux** (cerca de 400 por dia, com picos de 1.000 nos dias de mais
+  execuções) e 27,9 GB-hora de armazenamento. O repositório é **público**, e por isso o uso de runner padrão sai
+  com desconto integral: bruto US$ 26,32, desconto US$ 26,51, **a pagar US$ 0,00**. **Se o repositório virar
+  privado** (antes da produção: Vercel Pro e GitHub Team), os minutos passam a contar contra a franquia do plano
+  (a organização está no plano Free hoje) e o desenho em shards, que gasta mais minutos para ganhar tempo,
+  precisa ser reavaliado.
+- **Atenção, repositório público:** tudo o que está em `docs/` (inclusive totais agregados de receita de
+  meses, a estrutura das operações e o desenho do sistema) é visível a qualquer pessoa. Dado de pessoa, placa
+  real e CSV do Sankhya nunca entram no repositório (regra do `CLAUDE.md`); os documentos citam só agregados.
+  Avaliar se os totais de receita nos documentos devem ficar ou sair antes de publicar mais.
 - **Quem decidiu:** Alexandre.
 
 ## 11/11/2026 — Modo terminar: decisões fechadas, segurança da integração e ordem dos blocos
