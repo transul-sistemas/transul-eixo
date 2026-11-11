@@ -32,9 +32,17 @@ insert into pessoas.marcacao_da_escala (pessoa_id, operacao_id, dia, sigla)
   values (pg_temp.id('Dir'), pg_temp.id('graos'), '2026-03-02', 'T'), (pg_temp.id('Dir'), pg_temp.id('graos'), '2026-03-03', 'T');
 
 -- ---- O mês fechado (limites do corte no dia 10) ----
+-- A regra do calendário (corte) sem o limite dos dados: com o staging fictício parado em março, o mês
+-- fechado nunca passa de fevereiro (108-dados-fora-de-faixa-e-corte.test.sql prova esse limite).
+savepoint sem_staging;
+delete from staging.viagem;
+delete from staging.despesa;
 select tests.como(pg_temp.id('auth_Adm'));
 select is(nucleo.mes_fechado_mais_recente('2026-11-10'), '2026-09-01'::date, 'no dia do corte (10), o mês passado ainda não fechou');
 select is(nucleo.mes_fechado_mais_recente('2026-11-11'), '2026-10-01'::date, 'no dia seguinte ao corte, o mês passado fechou');
+reset role;
+rollback to savepoint sem_staging;
+select tests.como(pg_temp.id('auth_Adm'));
 select is(nucleo.mes_fechado_mais_recente('2026-01-10'), '2025-11-01'::date, 'a virada do ano no dia do corte');
 select is(nucleo.mes_fechado_mais_recente('2026-01-11'), '2025-12-01'::date, 'a virada do ano depois do corte');
 select is(nucleo.mes_fechado_mais_recente(), nucleo.mes_fechado_mais_recente(nucleo.hoje_em_sao_paulo()), 'sem data, usa hoje (São Paulo)');
