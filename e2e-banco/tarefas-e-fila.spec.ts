@@ -1,6 +1,6 @@
 import { randomInt } from "node:crypto";
 import { expect, test } from "@playwright/test";
-import { comBanco } from "../e2e/apoio/usuarios-de-teste";
+import { comBanco, emailDe } from "../e2e/apoio/usuarios-de-teste";
 
 // Início › Tarefas e Frota › Exceções (Parte B), o caminho principal no modo banco: uma placa com cadastro
 // pendente vira tarefa, a tarefa leva à fila filtrada, e "Completar dado" abre o assistente Corrigir
@@ -13,15 +13,42 @@ const placaNova = () => `ZQ${letra()}${randomInt(10)}${letra()}${randomInt(10)}$
 
 async function criarPlacaPendente(): Promise<string> {
   const placa = placaNova();
+  // Uma transação só: o banco confere, ao fim dela, que o ativo tem posse, gestor da carteira (sem
+  // buraco) e a situação inicial. O gestor é o do e2e, para a placa também aparecer na carteira dele.
   await comBanco(async (banco) => {
-    const { rows } = await banco.query<{ id: string }>(
-      `insert into nucleo.ativo (tipo, cadastro_pendente) values ('cavalo', true) returning id`,
-    );
-    await banco.query(
-      `insert into nucleo.placa_do_ativo (ativo_id, placa, inicio, inicio_origem)
-       values ($1, $2, now() - interval '1 day', 'informada')`,
-      [rows[0]?.id, placa],
-    );
+    await banco.query("begin");
+    try {
+      const { rows } = await banco.query<{ id: string }>(
+        `insert into nucleo.ativo (tipo, cadastro_pendente) values ('cavalo', true) returning id`,
+      );
+      const ativo = rows[0]?.id;
+      await banco.query(
+        `insert into nucleo.placa_do_ativo (ativo_id, placa, inicio, inicio_origem)
+         values ($1, $2, now() - interval '1 day', 'informada')`,
+        [ativo, placa],
+      );
+      await banco.query(
+        `insert into nucleo.posse_do_ativo (ativo_id, regime, inicio, inicio_origem)
+         values ($1, 'propria', now() - interval '1 day', 'informada')`,
+        [ativo],
+      );
+      await banco.query(
+        `insert into nucleo.evento_de_status (ativo_id, sigla, em, em_origem, origem)
+         values ($1, 'PÁT', now() - interval '1 day', 'informada', 'manual')`,
+        [ativo],
+      );
+      await banco.query(
+        `insert into nucleo.gestor_da_carteira (ativo_id, gestor_id, inicio, inicio_origem)
+         select $1, u.pessoa_id, now() - interval '1 day', 'informada'
+           from nucleo.usuario u join auth.users au on au.id = u.auth_user_id
+          where au.email = $2`,
+        [ativo, emailDe("gestor_de_frota")],
+      );
+      await banco.query("commit");
+    } catch (erro) {
+      await banco.query("rollback");
+      throw erro;
+    }
   });
   return placa;
 }
