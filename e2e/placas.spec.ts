@@ -199,6 +199,18 @@ test.describe("lista de placas: estados", () => {
     await expect(page.getByRole("main").getByRole("alert")).toHaveCount(0);
   });
 
+  test("função ausente no banco: diz para aplicar as migrations e oferece Tentar de novo", async ({
+    page,
+  }) => {
+    await abrirHidratada(page, `${ROTA}?falha=funcao-ausente`, "header");
+    const alerta = page.getByRole("main").getByRole("alert");
+    await expect(alerta).toContainText("Aplique as migrations");
+    await expect(alerta).toContainText("Não foi possível carregar as placas");
+    await expect(alerta.getByRole("button", { name: "Tentar de novo" })).toBeVisible();
+    // Perfil comum nunca vê função nem código do erro; só o Administrador e a Diretoria (pela Server Action).
+    await expect(alerta).not.toContainText("PGRST202");
+  });
+
   test("busca digitada cancela a resposta anterior (só vale a última)", async ({ page }) => {
     await abrirHidratada(page, ROTA);
     // A resposta da primeira busca demora e chega depois da segunda: não pode trocar a lista.

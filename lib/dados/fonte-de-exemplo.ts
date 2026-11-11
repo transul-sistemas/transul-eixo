@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import { falhaDeLeitura } from "@/lib/erros/leitura";
 import { normalizarPlaca } from "@/lib/dominio/placa";
 import { alertasDaPlaca } from "@/lib/dominio/alertas";
 import { diasEntre } from "@/lib/dominio/dias";
@@ -260,6 +261,13 @@ export const fonteDeExemplo: FonteDePlacas = {
     if (process.env.EIXO_DADOS !== "exemplo") throw new Error(MENSAGEM_SO_COM_EXEMPLO);
     const { lentoMs, falha } = opcoes.simulacao ?? {};
     if (lentoMs && lentoMs > 0) await new Promise((r) => setTimeout(r, Math.min(lentoMs, 10_000)));
+    // ?falha=funcao-ausente: a mesma falha de uma migration que não foi aplicada (PGRST202).
+    if (falha === "funcao-ausente") {
+      throw falhaDeLeitura("listar_placas", {
+        code: "PGRST202",
+        message: "Could not find the function nucleo.listar_placas in the schema cache",
+      });
+    }
     if (falha) throw new Error("Falha simulada pela fonte de exemplo.");
     return consultar(consulta, hoje, armazemDoProcesso(hoje, await sessaoDeExemplo()));
   },

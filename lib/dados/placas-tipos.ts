@@ -140,7 +140,7 @@ export interface PaginaDePlacas {
 
 export interface OpcoesDaConsulta {
   /** Só para testar os estados da tela, e só na fonte de exemplo. */
-  simulacao?: { lentoMs?: number; falha?: boolean; falhaNoPainel?: boolean };
+  simulacao?: { lentoMs?: number; falha?: boolean | "funcao-ausente"; falhaNoPainel?: boolean };
 }
 
 /** Nomes para a tela. */
