@@ -8,6 +8,22 @@ Modelo de entrada:
 
 ---
 
+## 11/11/2026 — Acompanhamento v2: legenda gerada, tons de cor e status do motorista
+
+- **Decisões que Alexandre assume:** Programado **sim**; os códigos do motorista da v1 (TBV, TBE, FOL, FÉR,
+  ATS, FRD, FLT, TBX), **a confirmar**; **dois motoristas por conjunto fora da primeira versão**. **H1, H6
+  e H8 continuam pendentes**: V0, C0 e qualquer vínculo com história não são implementados.
+- **Legenda:** gerada da régua (nome, grupo, tom e um campo novo de significado), nunca digitada; teste de
+  completude; a sigla sempre escrita e a cor só reforça. Tela "Legenda e siglas" com busca e impressão.
+- **Tons:** cinco degraus de verde em "em atividade" (do mais perto da receita ao mais longe), com tokens
+  `--status-atividade-1` a `-5` e contraste de 4,5:1 nos dois temas; mesmo princípio proposto para âmbar
+  (2 tons), vermelho (3) e cinza (2). Os valores do tema escuro e dos outros grupos são **hipótese**.
+- **Motorista:** o realizado do dia é diferente da escala (o planejado); linha fina sob o conjunto, só para
+  quem vê Pessoas; remuneração, diária e premiação só para quem vê Pessoas e Resultados.
+- **Causa e efeito:** motorista de folga ou férias sem substituto gera FOg ou FEr no conjunto; férias
+  programadas sem substituto geram a tarefa "indicar substituto" para o líder da operação.
+- **Hipótese de premiação com dois motoristas** (fora da v1): rateio por turno, soma igual a 100%.
+- **Quem decidiu:** Alexandre.
 ## 11/11/2026 — Receita em duas linhas, corte já aplicado na origem, dados congelados e data fora de faixa
 
 Lote de conferência de `docs/cr-regras.md` (divergências 5 e 6). Decisões e hipóteses, por assunto.
@@ -21,6 +37,7 @@ Lote de conferência de `docs/cr-regras.md` (divergências 5 e 6). Decisões e h
 - **"Dados até" por fonte:** Abastecimento (`nucleo.abastecimento_ate()`, por dia) e folha (`nucleo.folha_ate()`, por mês de referência: o aviso mostra o último mês carregado, sem inventar dia) têm a data limite da própria tabela e usam o mesmo componente `AvisoDeDadosCongelados`. A folha aparece na aba Pessoas da ficha da operação.
 - **Cascata da ficha:** o gráfico passou a ter duas barras de receita empilhadas, CT-e e NFS-e (cores de módulo e de ação, tooltip com o valor completo); se as duas não somam a receita total, volta à barra única.
 - **Quem decidiu:** Alexandre (travas e o escopo do lote, 11/11/2026); as hipóteses H9, H10 e H11 foram aprovadas por ele em 11/11/2026 (H10 e H11 com os ajustes acima).
+
 
 ## 11/11/2026 — Decisões sobre o lote de número, a ordem do banco local e o Acompanhamento v2
 
