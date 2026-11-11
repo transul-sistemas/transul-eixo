@@ -14,7 +14,7 @@ const noturno = readFileSync(".github/workflows/e2e-noturno.yml", "utf-8");
 const jobDe = (fonte: string, nome: string) => {
   const inicio = fonte.indexOf(`\n  ${nome}:\n`);
   const resto = fonte.slice(inicio + 1);
-  const proximo = resto.slice(1).search(/\n  [a-z-]+:\n/);
+  const proximo = resto.slice(1).search(/\n  [a-z0-9-]+:\n/);
   return proximo === -1 ? resto : resto.slice(0, proximo + 1);
 };
 const job = (nome: string) => jobDe(texto, nome);
@@ -54,15 +54,30 @@ describe("workflow de verificação: gatilhos, nomes e concorrência", () => {
   it("cancela a execução anterior só em pull request; na main cada push termina a sua", () => {
     expect(texto).toContain("cancel-in-progress: ${{ github.event_name == 'pull_request' }}");
   });
+
+  it("na main cada execução tem o seu grupo: nenhuma espera nem cancela a outra (só o pull request agrupa por ramo)", () => {
+    expect(texto).toContain(
+      "group: verificacao-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}",
+    );
+    expect(texto).not.toContain("group: verificacao-${{ github.ref }}");
+  });
 });
 
 describe("workflow de verificação: quais arquivos mudaram", () => {
-  it("o checkout traz o histórico inteiro (fetch-depth 0)", () => {
-    expect(passoCom("app", "actions/checkout")).toMatch(/fetch-depth:\s*0/);
+  it("o job mudancas é pequeno e entrega pula_e2e como saída para os outros jobs", () => {
+    expect(job("mudancas")).toMatch(
+      /outputs:\s*\n\s*pula_e2e: \$\{\{ steps\.mudancas\.outputs\.pula_e2e \}\}/,
+    );
+    expect(job("mudancas")).not.toContain("pnpm install");
+    expect(job("mudancas")).not.toContain("supabase start");
+  });
+
+  it("o checkout do mudancas traz o histórico inteiro (fetch-depth 0)", () => {
+    expect(passoCom("mudancas", "actions/checkout")).toMatch(/fetch-depth:\s*0/);
   });
 
   it("no push compara github.event.before com github.sha; antes zerado ou ausente roda tudo", () => {
-    const passo = passoCom("app", "id: mudancas");
+    const passo = passoCom("mudancas", "id: mudancas");
     expect(passo).toContain("github.event.before");
     expect(passo).toContain("github.sha");
     expect(passo).toContain("0000000000000000000000000000000000000000");
@@ -70,15 +85,23 @@ describe("workflow de verificação: quais arquivos mudaram", () => {
   });
 
   it("no pull request compara o merge com a base (HEAD^1)", () => {
-    expect(passoCom("app", "id: mudancas")).toContain("git diff --name-only HEAD^1 HEAD");
+    expect(passoCom("mudancas", "id: mudancas")).toContain("git diff --name-only HEAD^1 HEAD");
   });
 
   it("a decisão de pular vem de um script único, testado abaixo", () => {
-    expect(passoCom("app", "id: mudancas")).toContain("scripts/ci/pula-e2e.sh");
+    expect(passoCom("mudancas", "id: mudancas")).toContain("scripts/ci/pula-e2e.sh");
   });
 });
 
-describe("scripts/ci/pula-e2e.sh: pula só quando tudo é docs/**, supabase/** ou *.md", () => {
+describe("scripts/ci/pula-e2e.sh: pula só quando tudo é docs/**, supabase/**, importacao/** ou *.md", () => {
+  it("commit só de documentação (docs/**, *.md ou importacao/) pode subir direto: o e2e é pulado", () => {
+    expect(pulaE2e(["docs/fichas-de-tela/inicio-tarefas.md"])).toBe("true");
+    expect(pulaE2e(["CLAUDE.md"])).toBe("true");
+    expect(pulaE2e(["importacao/README.md"])).toBe("true");
+    expect(pulaE2e(["importacao/datas.csv"])).toBe("true");
+    expect(pulaE2e(["docs/decisoes.md", "importacao/README.md", "CLAUDE.md"])).toBe("true");
+  });
+
   it("só docs, só supabase, só .md ou a mistura dos três: pula", () => {
     expect(pulaE2e(["docs/decisoes.md"])).toBe("true");
     expect(pulaE2e(["supabase/migrations/1_x.sql", "supabase/tests/x.test.sql"])).toBe("true");
@@ -88,6 +111,7 @@ describe("scripts/ci/pula-e2e.sh: pula só quando tudo é docs/**, supabase/** o
 
   it("qualquer outro arquivo (tela, componente, regra, workflow): roda tudo", () => {
     expect(pulaE2e(["docs/decisoes.md", "app/(sistema)/frota/placas/page.tsx"])).toBe("false");
+    expect(pulaE2e(["importacao/README.md", "lib/dominio/composicao.ts"])).toBe("false");
     expect(pulaE2e(["components/tabela/tabela-de-placas.tsx"])).toBe("false");
     expect(pulaE2e(["lib/dominio/composicao.ts"])).toBe("false");
     expect(pulaE2e([".github/workflows/verificacao.yml"])).toBe("false");
@@ -98,6 +122,8 @@ describe("scripts/ci/pula-e2e.sh: pula só quando tudo é docs/**, supabase/** o
     expect(pulaE2e(["lib/docs/x.ts"])).toBe("false");
     expect(pulaE2e(["lib/supabase/cliente.ts"])).toBe("false");
     expect(pulaE2e(["lib/md.ts"])).toBe("false");
+    expect(pulaE2e(["lib/importacao/x.ts"])).toBe("false");
+    expect(pulaE2e(["app/importacao/page.tsx"])).toBe("false");
   });
 
   it("sem arquivos mudados, ou sem como saber: roda tudo", () => {
@@ -114,26 +140,44 @@ describe("workflow de verificação: o que nunca se pula e o que se pula", () =>
     }
   });
 
-  it("build, navegador do Playwright e e2e só rodam quando não é pulado", () => {
+  it("o app só tem lint, tipos e testes unitários: o build, o navegador e o e2e saíram para o job e2e", () => {
+    for (const trecho of [
+      "pnpm build",
+      "playwright",
+      "test:e2e",
+      "supabase start",
+      "instalar-chromium",
+    ]) {
+      expect(job("app"), trecho).not.toContain(trecho);
+    }
+    expect(job("app")).not.toMatch(/\n    needs:/);
+    expect(job("app")).not.toContain("pula_e2e");
+  });
+
+  it("o job e2e só roda quando não é pulado (condição no job) e tem build, navegador e e2e", () => {
+    expect(job("e2e")).toMatch(/\n    needs: mudancas\n/);
+    expect(job("e2e")).toMatch(/\n    if: needs\.mudancas\.outputs\.pula_e2e != 'true'\n/);
     for (const trecho of [
       "run: pnpm build",
       "id: playwright",
       "actions/cache@",
       "instalar-chromium.sh",
-      "run: pnpm test:e2e",
+      "pnpm test:e2e",
+      "supabase start",
     ]) {
-      const passo = passoCom("app", trecho);
+      const passo = passoCom("e2e", trecho);
       expect(passo, trecho).not.toBe("");
-      expect(passo, trecho).toMatch(/if: steps\.mudancas\.outputs\.pula_e2e != 'true'/);
+      expect(passo, trecho).not.toMatch(/\bif:/);
     }
   });
 
-  it("quando pula, avisa no resumo da execução", () => {
-    expect(passoCom("app", "pula_e2e == 'true'")).toContain("GITHUB_STEP_SUMMARY");
+  it("quando pula, o mudancas avisa no resumo da execução", () => {
+    expect(passoCom("mudancas", "pula_e2e == 'true'")).toContain("GITHUB_STEP_SUMMARY");
   });
 
-  it("o prazo de 70 minutos (rede de segurança desde a aprovação da 3.8) e não usa workers: 2", () => {
-    expect(job("app")).toContain("timeout-minutes: 70");
+  it("os prazos continuam como rede de segurança e nenhum teste usa workers: 2", () => {
+    expect(job("app")).toContain("timeout-minutes: 30");
+    expect(job("e2e")).toContain("timeout-minutes: 45");
     expect(texto).not.toMatch(/workers[:=]\s*2/);
   });
 
@@ -311,5 +355,56 @@ describe("instalação do Chromium com nova tentativa", () => {
   it("o script tem sintaxe de bash válida", () => {
     const r = spawnSync("bash", ["-n", "scripts/ci/instalar-chromium.sh"], { encoding: "utf-8" });
     expect(r.status, r.stderr).toBe(0);
+  });
+});
+
+// Frente 1 do "arrochar" (11/11/2026): o e2e do job app, que passava de 20 min, virou 4 shards em paralelo.
+describe("e2e em shards: quatro partes em paralelo, com os relatórios juntados no fim", () => {
+  it("o job e2e é uma matriz de 4 shards, sem fail-fast, e cada shard roda a sua fatia", () => {
+    expect(job("e2e")).toMatch(/strategy:\s*\n\s*fail-fast: false/);
+    expect(job("e2e")).toMatch(/matrix:\s*\n\s*shard: \[1, 2, 3, 4\]/);
+    const execucao = passoCom("e2e", "pnpm test:e2e");
+    expect(execucao).toContain("--shard=${{ matrix.shard }}/4");
+    expect(execucao).toContain("--reporter=github,blob");
+  });
+
+  it("o total de shards da execução é o mesmo número de itens da matriz", () => {
+    const itens = /shard: \[([\d, ]+)\]/.exec(job("e2e"))?.[1]?.split(",").length ?? 0;
+    const total = Number(/--shard=\$\{\{ matrix\.shard \}\}\/(\d+)/.exec(job("e2e"))?.[1]);
+    expect(itens).toBeGreaterThan(1);
+    expect(total).toBe(itens);
+  });
+
+  it("cada shard sobe o seu relatório em blob (sempre), com nome próprio", () => {
+    const envio = passoCom("e2e", "blob-report");
+    expect(envio).toContain("actions/upload-artifact@v4");
+    expect(envio).toContain("if: always()");
+    expect(envio).toContain("name: blob-report-${{ matrix.shard }}");
+    expect(envio).toContain("path: blob-report/");
+    expect(envio).toContain("retention-days: 7");
+  });
+
+  it("o e2e-resultado junta os relatórios, publica o HTML e decide o resultado do e2e", () => {
+    expect(job("e2e-resultado")).toMatch(/\n    needs: \[mudancas, e2e\]\n/);
+    expect(job("e2e-resultado")).toMatch(/\n    if: always\(\)\n/);
+    const baixar = passoCom("e2e-resultado", "actions/download-artifact");
+    expect(baixar).toContain("pattern: blob-report-*");
+    expect(baixar).toContain("merge-multiple: true");
+    expect(passoCom("e2e-resultado", "merge-reports")).toContain("--reporter html");
+    expect(passoCom("e2e-resultado", "name: playwright-report")).toContain(
+      "path: playwright-report/",
+    );
+  });
+
+  it("o resultado só passa se o e2e passou, ou se foi pulado por só mudar docs; falhar ou cancelar reprova", () => {
+    const decisao = passoCom("e2e-resultado", "exit 1");
+    expect(decisao).toContain("needs.mudancas.outputs.pula_e2e");
+    expect(decisao).toContain("exit 1");
+    expect(decisao).toMatch(/if: always\(\)/);
+  });
+
+  it("o e2e-resultado é o último passo do job (a decisão não depende dos passos de relatório)", () => {
+    const passos = passosDe(texto, "e2e-resultado");
+    expect(passos.at(-1) ?? "").toContain("needs.e2e.result");
   });
 });

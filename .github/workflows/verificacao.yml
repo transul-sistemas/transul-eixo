@@ -12,17 +12,18 @@ permissions:
   contents: read
 
 concurrency:
-  group: verificacao-${{ github.ref }}
-  # Em pull request, a execução nova substitui a anterior; na main, cada push termina a sua.
+  # Em pull request, o grupo é o ramo e a execução nova substitui a anterior. Na main cada execução
+  # tem o seu grupo (o run_id): nenhuma espera na fila nem cancela a outra (11/11/2026).
+  group: verificacao-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  app:
+  # Quais arquivos mudaram? Só docs/**, supabase/**, importacao/** e *.md: o e2e é pulado.
+  mudancas:
     runs-on: ubuntu-latest
-    # A suíte de tela (1002 testes, 1 worker no CI) passou de 20 min: ver docs/decisoes.md. Desde a 3.8
-    # o job também sobe o Supabase local (o login dos e2e). O CI do PR #31 levou 52 min: o prazo subiu
-    # para 70 como rede de segurança (aprovação da 3.8, 04/11/2026).
-    timeout-minutes: 70
+    timeout-minutes: 5
+    outputs:
+      pula_e2e: ${{ steps.mudancas.outputs.pula_e2e }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -52,7 +53,14 @@ jobs:
           echo "$arquivos"
       - if: steps.mudancas.outputs.pula_e2e == 'true'
         run: |
-          echo "Só docs/, supabase/ ou *.md mudaram. Build e e2e pulados; lint, tipos e testes unitários rodaram." >> "$GITHUB_STEP_SUMMARY"
+          echo "Só docs/, supabase/ ou *.md mudaram. Build e e2e pulados; lint, tipos e testes unitários rodam no job app." >> "$GITHUB_STEP_SUMMARY"
+
+  # Lint, tipos e testes unitários: rodam sempre. O e2e tem job próprio (abaixo), em paralelo.
+  app:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
@@ -62,11 +70,30 @@ jobs:
       - run: pnpm lint
       - run: pnpm typecheck
       - run: pnpm test
+
+  # O e2e em 4 shards, em paralelo. Antes (um job só) passava de 20 min (ver docs/decisoes.md). Desde a
+  # 3.8 cada shard sobe o Supabase local (o login dos e2e).
+  e2e:
+    needs: mudancas
+    if: needs.mudancas.outputs.pula_e2e != 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
       # O login (fatia 3.8): o build e os e2e precisam do Supabase local. Só o endereço e a chave
       # publicável (do Supabase local, sem segredo) vão para o app; a chave secreta fica no preparo dos
       # e2e (e2e/apoio/usuarios-de-teste.ts), lida do `supabase status`.
-      - if: steps.mudancas.outputs.pula_e2e != 'true'
-        run: |
+      - run: |
           # Hipótese (09/11/2026): a porta 54322 ocupada por uma conexão de saída (faixa efêmera do Linux,
           # 32768-60999) durante o download das imagens. Reserva 54320-54329 fora dessa faixa, mantendo as
           # reservas que o runner já tiver, e registra quem usa essas portas enquanto o Supabase sobe.
@@ -90,32 +117,75 @@ jobs:
             echo "::endgroup::"
           fi
           exit "$status"
-      - if: steps.mudancas.outputs.pula_e2e != 'true'
-        run: |
+      - run: |
           pnpm exec supabase status -o env \
             | sed -nE 's/^API_URL="?([^"]*)"?$/NEXT_PUBLIC_SUPABASE_URL=\1/p; s/^PUBLISHABLE_KEY="?([^"]*)"?$/NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=\1/p' \
             >> "$GITHUB_ENV"
       - id: build
-        if: steps.mudancas.outputs.pula_e2e != 'true'
         run: pnpm build
       - id: playwright
-        if: steps.mudancas.outputs.pula_e2e != 'true'
         run: echo "versao=$(pnpm exec playwright --version | awk '{print $2}')" >> "$GITHUB_OUTPUT"
       - uses: actions/cache@v4
-        if: steps.mudancas.outputs.pula_e2e != 'true'
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.versao }}-${{ hashFiles('pnpm-lock.yaml') }}
-      - if: steps.mudancas.outputs.pula_e2e != 'true'
-        run: bash scripts/ci/instalar-chromium.sh
-      - if: steps.mudancas.outputs.pula_e2e != 'true'
-        run: pnpm test:e2e
+      - run: bash scripts/ci/instalar-chromium.sh
+      # Quatro fatias em paralelo (cada uma com o seu Supabase e o seu build). Os projetos de dependência
+      # (o "preparar", que faz o login) entram em TODO shard: o Playwright os reinclui depois de dividir.
+      - run: pnpm test:e2e --shard=${{ matrix.shard }}/4 --reporter=github,blob
       - uses: actions/upload-artifact@v4
-        if: failure()
+        if: always()
+        with:
+          name: blob-report-${{ matrix.shard }}
+          path: blob-report/
+          retention-days: 7
+
+  # Junta os relatórios dos shards e decide o resultado do e2e. Este é o job a exigir no lugar do e2e
+  # que ficava dentro do app (a regra de proteção da main só vale com o GitHub Team).
+  e2e-resultado:
+    needs: [mudancas, e2e]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - if: needs.e2e.result != 'skipped'
+        uses: actions/checkout@v4
+      - if: needs.e2e.result != 'skipped'
+        uses: pnpm/action-setup@v4
+      - if: needs.e2e.result != 'skipped'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - if: needs.e2e.result != 'skipped'
+        run: pnpm install --frozen-lockfile
+      - if: needs.e2e.result != 'skipped'
+        uses: actions/download-artifact@v4
+        with:
+          pattern: blob-report-*
+          path: all-blob-reports
+          merge-multiple: true
+      - if: needs.e2e.result != 'skipped'
+        run: pnpm exec playwright merge-reports --reporter html ./all-blob-reports
+      - if: needs.e2e.result != 'skipped'
+        uses: actions/upload-artifact@v4
         with:
           name: playwright-report
           path: playwright-report/
           retention-days: 7
+      - if: always()
+        run: |
+          # Passa se o e2e passou, ou se foi pulado porque só docs, supabase, importacao ou .md mudaram.
+          # Falhar, cancelar ou não rodar quando devia reprova.
+          if [ "${{ needs.mudancas.outputs.pula_e2e }}" = "true" ] && [ "${{ needs.e2e.result }}" = "skipped" ]; then
+            echo "e2e pulado: só docs, supabase, importacao ou .md mudaram."
+            exit 0
+          fi
+          if [ "${{ needs.e2e.result }}" = "success" ]; then
+            exit 0
+          fi
+          echo "O e2e terminou como: ${{ needs.e2e.result }}"
+          exit 1
 
   banco:
     # Só Docker no runner: sem token, sem link e sem segredo (ver docs/decisoes.md).
