@@ -78,7 +78,7 @@ Regra de Alexandre (11/11/2026): **o wizard abre em popup central; a barra later
 | Lançar situação | `app/(sistema)/frota/acompanhamento/lancar-situacao.tsx` | Vira o wizard em popup central (fatia A2 de `docs/superpowers/plans/2026-11-11-acompanhamento-v2.md`) |
 | Avançar placa | `app/(sistema)/operacional/patio/avancar-placa.tsx` | Popup central |
 | Marcar dia | `app/(sistema)/pessoas/escala/marcar-dia.tsx` | Popup central |
-| Mini-cadastro de catálogo (o "+" do campo de seleção) | `app/(sistema)/frota/placas/assistentes/mini-cadastro-de-catalogo.tsx` | **Decisão de Alexandre:** hoje o `CLAUDE.md` diz "mini-wizard lateral" para o "+". Proposta: popup central **menor e empilhado** sobre o assistente de baixo, sem rascunho próprio |
+| Mini-cadastro de catálogo (o "+" do campo de seleção) | `app/(sistema)/frota/placas/assistentes/mini-cadastro-de-catalogo.tsx` | **Aprovado por Alexandre (11/11/2026):** popup central **menor e empilhado** sobre o assistente de baixo, sem rascunho próprio; a regra 2 do `CLAUDE.md` foi ajustada |
 | Assistente de teste (demonstração) | `app/(sistema)/admin/demonstracao/assistente-de-teste.tsx` | Acompanha o mini-cadastro (é a vitrine da variante) |
 
 Os demais assistentes (cadastrar, receber, entregar, devolver, corrigir e os de Operações, Pessoas,
