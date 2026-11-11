@@ -163,9 +163,14 @@ export function ListaDaConciliacao({
                 <td className="px-3 py-2 text-right">
                   <BotaoDoOlho
                     item={`CR ${l.crCodigo}`}
-                    hrefDaFicha={l.parceiroId ? enderecoDaFichaDoParceiro(l.parceiroId, mes) : undefined}
+                    hrefDaFicha={
+                      l.parceiroId ? enderecoDaFichaDoParceiro(l.parceiroId, mes) : undefined
+                    }
                     detalhes={[
-                      { rotulo: "Parceiro", valor: l.parceiroNome ?? l.agrupadorNome ?? l.agrupadorCodigo },
+                      {
+                        rotulo: "Parceiro",
+                        valor: l.parceiroNome ?? l.agrupadorNome ?? l.agrupadorCodigo,
+                      },
                       { rotulo: "Placas esperadas", valor: formatarInteiro(l.placas.length) },
                       { rotulo: "Dias", valor: formatarInteiro(l.dias) },
                       { rotulo: "Despesa", valor: <Moeda valor={l.despesaCentavos} /> },

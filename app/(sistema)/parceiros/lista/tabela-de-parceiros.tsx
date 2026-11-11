@@ -110,7 +110,10 @@ function colunas(mes: string): ColunaDeTabela<LinhaDeParceiro>[] {
           item={l.nome}
           hrefDaFicha={enderecoDaFichaDoParceiro(l.id, mes)}
           detalhes={[
-            { rotulo: "Tipo", valor: l.tipos.map((t) => NOMES_DOS_TIPOS_DE_PARCEIRO[t]).join(", ") },
+            {
+              rotulo: "Tipo",
+              valor: l.tipos.map((t) => NOMES_DOS_TIPOS_DE_PARCEIRO[t]).join(", "),
+            },
             { rotulo: "CPF/CNPJ", valor: l.documentoMascarado ?? "—" },
             { rotulo: "CODPARC", valor: l.codparc === null ? "—" : String(l.codparc) },
             { rotulo: "Placas agora", valor: formatarInteiro(l.placas) },
