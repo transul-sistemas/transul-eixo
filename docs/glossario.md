@@ -117,3 +117,16 @@ Definições do desenho de 11/11/2026 (`docs/acompanhamento-v2.md`). Ainda não 
 | Escala | O planejado do motorista: turno, horário e a marcação de cada dia (hoje T, F, FE e AT em `pessoas.marcacao_da_escala`). Diferente do realizado. |
 | Status do dia do motorista | O código do realizado de um dia. Alimenta a linha do motorista sob o conjunto, a contagem da faixa e o calendário da aba Motorista. |
 | Tom de status | O degrau de clareza de uma cor de status (`--status-atividade-1` a `-5`, e os do âmbar, do vermelho e do cinza). A sigla é sempre escrita; o tom só reforça. |
+
+## Meu dia e posição do dia
+
+Definições de 11/11/2026 (`docs/meu-dia.md`, `docs/posicao-do-dia.md`). Ainda não construído.
+
+| Termo | O que é |
+| --- | --- |
+| Porta | Popup obrigatório: não fecha até a resposta, o Esc não fecha, e só o líder libera, com motivo registrado. A Posição do dia é uma porta. |
+| Fila guiada | Sequência de assistentes da mesma pessoa, em ordem, em que cada conclusão abre o próximo sozinha. O Meu dia é uma fila guiada. |
+| Meu dia | A fila guiada do gestor de frota ao entrar: receber placas, posição do dia, confirmar carteira e depois as outras tarefas. |
+| Posição do dia | A cidade (e a UF) em que cada conjunto da carteira está no dia, informada pelo gestor. É da placa, em nível de cidade, nunca de pessoa. |
+| Pendência de posição | A resposta "Sem sinal" (com motivo) ou a que ficou sem resposta por liberação: vira tarefa, nunca some. |
+| Aviso na linha | Selo com rótulo e ícone na própria linha, que pede atenção sem bloquear. |
