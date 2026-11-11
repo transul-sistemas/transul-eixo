@@ -4,8 +4,9 @@ import { comBanco } from "../e2e/apoio/usuarios-de-teste";
 
 // Resultados › Visão geral (primeira versão), o caminho principal no modo banco: o mês abre com os KPIs
 // calculados pelo banco (nucleo.visao_geral_dos_resultados), a tabela por operação traz a linha de
-// total e trocar o agrupamento fica na URL. Dados fictícios em janeiro de 2019 (antes de qualquer dado
-// real), num CR que o Eixo não conhece, gravados no staging e apagados no fim:
+// total e trocar o agrupamento fica na URL. Dados fictícios em janeiro de 2020, a primeira data dentro da
+// faixa válida do resultado (a partir de 01/01/2020; antes dela a despesa fica fora e vai para a fila) e
+// antes de qualquer dado real, num CR que o Eixo não conhece, gravados no staging e apagados no fim:
 // receita 12.345,67; custo 2.345,67 → resultado 10.000,00 e margem 81,0%.
 
 const ORIGEM = "e2e-visao-geral-";
@@ -29,12 +30,12 @@ test.describe("Visão geral de Resultados (Administrador)", () => {
       );
       await banco.query(
         `insert into staging.viagem (nunota, tipo_documento, status_cte, dt_negociacao, codcencus, frete_empresa)
-         values ($1, 'CTE', 'A', '2019-01-10', '1', 12345.67)`,
+         values ($1, 'CTE', 'A', '2020-01-10', '1', 12345.67)`,
         [NUNOTA],
       );
       await banco.query(
         `insert into staging.despesa (origem_id, nufin, codcencus, codnat, dt_competencia, dtentsai, provisao, valor_liquido)
-         values ($1, 'e2e', '1', $2, '2019-01-05', '2019-01-05', 'REAL', 2345.67)`,
+         values ($1, 'e2e', '1', $2, '2020-01-05', '2020-01-05', 'REAL', 2345.67)`,
         [`${ORIGEM}1`, `${ORIGEM}nat`],
       );
     });
@@ -44,7 +45,7 @@ test.describe("Visão geral de Resultados (Administrador)", () => {
   test("o mês mostra receita, custo, resultado e margem do banco, com o total por operação", async ({
     page,
   }) => {
-    await page.goto("/resultados/visao-geral?periodo=2019-01");
+    await page.goto("/resultados/visao-geral?periodo=2020-01");
     await expect(page.getByRole("heading", { level: 1, name: "Visão geral" })).toBeVisible();
 
     const kpis = page.getByRole("list", { name: "Indicadores" });
@@ -70,7 +71,7 @@ test.describe("Visão geral de Resultados (Administrador)", () => {
       .getByRole("navigation", { name: "Agrupar por" })
       .getByRole("link", { name: "Unidade" })
       .click();
-    await expect(page).toHaveURL(/periodo=2019-01.*por=unidade/);
+    await expect(page).toHaveURL(/periodo=2020-01.*por=unidade/);
     await expect(porGrupo.locator("tbody")).toContainText("Sem unidade");
   });
 });
