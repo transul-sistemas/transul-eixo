@@ -1575,3 +1575,11 @@ Registro de direção, só em texto: nenhum código nem migration. Não muda a f
 - **Link nos códigos de placa:** Pátio, Ordens, Carteira, Locação e Conciliação passam a abrir `/frota/placas/<placa>`; a Conciliação e a Locação levam também à ficha do parceiro (pelo olho).
 - **Teste de consistência:** `lib/qualidade/esqueleto-global.test.ts` (toda tela do catálogo tem página, esqueleto só para Administrador e Diretoria, toda estrutura fecha a grade e toda tabela tem o olho), junto do critério (i) de `lista-de-vinte.test.ts`.
 - **Parado:** a busca de placas e fichas dentro do Ctrl+K (precisa de leitura própria com RLS e de teste de cancelamento da resposta anterior, armadilha 4); fica para a próxima fatia.
+
+## 11/11/2026 — Erros honestos, paridade do banco e cobertura de dados (hipótese)
+
+- **Causa no digest.** A falha de leitura é classificada no servidor (`lib/erros/leitura.ts`: banco fora, função ausente, consulta lenta, sem permissão, inesperado) e a causa vai no `digest` do erro (`eixo-leitura:<causa>:<id>`); o Next respeita um digest já existente. Limite: se alguém capturar e relançar outro `Error`, o digest se perde e a tela cai em "inesperado". Função e código só por Server Action (`lib/erros/detalhe-do-erro.ts`) para Administrador e Diretoria; o registro é em memória, por instância.
+- **Componente único** `components/estados/erro-de-leitura.tsx`: 21 `error.tsx` viraram uma linha (inclusive as 3 fichas, com o voltar em `topo`) e há um `error.tsx` de último recurso em `app/(sistema)`.
+- **`pnpm db:paridade`** (`lib/paridade`): funções que o app chama (`.rpc`, também pelos embrulhos com o parâmetro `funcao`) contra os tipos (teste estático) e o banco local. Roda antes do Next no `dev:banco` (só avisa) e no job `modo-banco` do CI.
+- **Simulação:** `?falha=funcao-ausente` (só com `EIXO_DADOS=exemplo`) reproduz a migration não aplicada, para o e2e.
+- **Cobertura:** `docs/cobertura-de-dados.md`. A tela de Cobertura de dados fica como proposta (exige função de leitura nova).
