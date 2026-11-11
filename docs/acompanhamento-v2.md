@@ -165,10 +165,16 @@ fica toda em PÁT e nada de interessante aparece. A demonstração precisa de **
 caminhos legítimos do banco: é o cenário 4 (Movimento) de `docs/demonstracao.md`. Enquanto isso, o
 Acompanhamento v2 só se valida com o banco em demonstração.
 
-## Hipóteses a confirmar
+## Decisões de Alexandre (11/11/2026)
 
-- **(H)** Os cinco grupos de situação e a distribuição das siglas entre eles.
-- **(H)** Esperado até a data = meta × dias decorridos ÷ dias do mês.
-- **(H)** Programado: aprovar ou não (e a tabela `situacao_programada`).
-- **(H)** "Movimento" como a lista de eventos do dia (a definir na fatia dedicada).
+- **Aprovadas:** os cinco grupos de situação e a distribuição das siglas; o esperado até a data
+  proporcional aos dias do mês; o **Programado em tabela própria** (`nucleo.situacao_programada`); o
+  **Movimento como lista** de eventos do dia.
+- **Aprovado:** o "+" dos campos de seleção abre um **popup central menor e empilhado** sobre o assistente
+  de baixo; a regra 2 do `CLAUDE.md` foi ajustada para ficar coerente.
+- **Rota:** depende **só dos 165 veículos que têm posição** (o dump da v1); as demais placas mostram
+  **"Sem dados ainda: depende de posição do veículo"**, nunca uma rota inventada.
+
+## Ainda em hipótese
+
 - **(H)** O par origem-destino do trecho, até a ponte, é o das duas cidades consecutivas da posição diária.
