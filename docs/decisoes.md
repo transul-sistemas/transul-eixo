@@ -8,6 +8,32 @@ Modelo de entrada:
 
 ---
 
+## 11/11/2026 — Auditoria de exposição e a regra da documentação sem dado sensível
+
+- **Decisão (Alexandre):** o repositório **continua público**; **não vira privado** e o **histórico não é
+  reescrito**. Auditoria **só de leitura** (`docs/auditoria-de-exposicao.md`): histórico inteiro, 562 commits, 52
+  referências (17 tags e 24 branches `worktree-agent-*`), 2.791 arquivos distintos de todas as versões; saída só
+  com contagem, caminho e commit, **nunca os valores**.
+- **Resultado:** **nenhum segredo** (0 chaves JWT, 0 `sb_`, 0 chaves privadas, 0 tokens conhecidos, 0 `Client Secret` ou
+  `X-Token` com valor); nada precisa ser rotacionado por causa deste repositório. As strings de conexão têm
+  marcador no lugar da senha (mas mostram o endereço do banco da nuvem). A única senha "literal" é de teste, com 11
+  caracteres de propósito (prova o mínimo de 12). **Dado pessoal:** CPF e CNPJ só em fixtures de teste, 0
+  telefones, 9 e-mails do domínio da empresa em texto, e o e-mail real do autor em todos os commits (1 autor).
+  **Nomes:** 4 de pessoa em 5 arquivos, 2 primeiros nomes no backlog, 16 de cliente ou operação em 22 arquivos.
+  **Dinheiro real:** em `docs/cr-regras.md`, `docs/v1-frutos-e-licoes.md` e (possível falso positivo)
+  `docs/projeto-tecnico.md`. A planilha do Sankhya no repositório é só catálogo de campos.
+- **Regra nova:** a documentação **não leva CPF, CNPJ, chave, nome de pessoa, de acionista nem de cliente**, e **valores
+  reais de receita, despesa ou margem só em percentual ou fictício**. Teste de qualidade
+  (`lib/qualidade/documentos-sem-dado-sensivel.test.ts`) falha se um documento tiver padrão de CPF, de CNPJ ou de
+  chave, ou valor monetário grande; os documentos de hoje com valor grande ficam numa **lista de pendências de
+  sanitização que só encolhe**.
+- **Sanitização dos números reais: proposta, NÃO aplicada** (opção de Alexandre: A percentual, B faixa, C fictício
+  ou D manter; recomendação A para as comparações e B para a escala). Pendências de decisão dele: o e-mail do autor
+  dos commits (usar `noreply` daqui em diante), os e-mails da empresa em texto, os nomes de operação e cliente na migration
+  e no seed, os endereços de banco da nuvem em um documento e dois testes (e a rotação da senha, se alguma foi colada
+  fora do `.env.local`), os CPFs e CNPJs de fixture e a planilha do catálogo.
+- **Quem decidiu:** Alexandre.
+
 ## 11/11/2026 — Meu dia, Posição do dia, decisões das fichas e fidelidade ao protótipo
 
 - **Meu dia e Posição do dia (Alexandre):**
