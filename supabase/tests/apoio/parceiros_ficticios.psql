@@ -126,6 +126,6 @@ insert into staging.despesa (origem_id, nufin, codcencus, placa, dt_competencia,
   ('d99-6', '6', '9903', null, '2026-03-12', 'REAL', 300.00, null),
   ('d99-7', '7', '9904', 'PPP9A03', '2026-03-12', 'REAL', 100.00, null),
   ('d99-8', '8', '9904', 'ZZZ9Z99', '2026-03-13', 'REAL', 50.00, null);
-insert into staging.viagem (nunota, codcencus, placa, dt_negociacao, status_cte, frete_empresa, sumiu_do_sankhya_em) values
-  (990001, '9901', 'PPP9A01', '2026-03-05', 'A', 1000.00, null),
-  (990002, '9902', 'PPP9A02', '2026-03-20', 'A', 400.00, '2026-04-02 10:00-03');
+insert into staging.viagem (nunota, codcencus, placa, dt_negociacao, tipo_documento, status_cte, frete_empresa, sumiu_do_sankhya_em) values
+  (990001, '9901', 'PPP9A01', '2026-03-05', 'CTE', 'A', 1000.00, null),
+  (990002, '9902', 'PPP9A02', '2026-03-20', 'CTE', 'A', 400.00, '2026-04-02 10:00-03');

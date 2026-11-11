@@ -320,6 +320,20 @@ isOneToOne: false
       referencedColumns: ["codigo"]
     }
                   ]
+                },"receita_top": {
+                  Row: {
+                    "ativa": boolean,"codtipoper": number,"motivo": string,"tipo": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "ativa"?: boolean,"codtipoper": number,"motivo": string,"tipo": string
+                  }
+                  Update: {
+                    "ativa"?: boolean,"codtipoper"?: number,"motivo"?: string,"tipo"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
                 },"status": {
                   Row: {
                     "aplica_a": string,"baixada": boolean,"camada": string,"chip": string,"nome": string,"ordem": number,"sigla": string,"tipos_validos": (Database["nucleo"]['Enums']["tipo_de_ativo"])[],"versao": number
@@ -1741,7 +1755,7 @@ isOneToOne: false
                            },
 "cascata_das_operacoes":
 { Args: { "p_mes": string }; Returns: {
-              "crs": number,"custo_frota": number,"custo_servico": number,"documentos": number,"operacao_id": string,"receita": number
+              "crs": number,"custo_frota": number,"custo_servico": number,"documentos": number,"documentos_cte": number,"documentos_nfse": number,"operacao_id": string,"receita": number,"receita_cte": number,"receita_nfse": number
             }[]
                            },
 "catalogos_dos_assistentes":
@@ -1938,6 +1952,9 @@ isOneToOne: false
         isOneToOne: true
         isSetofReturn: false
       } },
+"linha_de_receita":
+{ Args: { "p_codtipoper": number,"p_serie": string,"p_status_cte": string,"p_tipo_documento": string }; Returns: string
+                           },
 "linhas_divergentes":
 { Args: Record<PropertyKey, never>; Returns: {
               "ativo_id": string,"motivo": string
