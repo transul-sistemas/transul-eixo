@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { type ClienteDasTarefas, lerExcecoes, lerTarefas } from "./tarefas";
 
-function cliente(resposta: unknown, chamadas: [string, unknown][] = [], erro: string | null = null) {
+function cliente(
+  resposta: unknown,
+  chamadas: [string, unknown][] = [],
+  erro: string | null = null,
+) {
   const c: ClienteDasTarefas = {
     schema: () => ({
       rpc: (funcao: string, argumentos?: Record<string, unknown>) => {

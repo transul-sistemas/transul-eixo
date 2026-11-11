@@ -38,7 +38,10 @@ describe("montarTarefas", () => {
   it("pedidos abertos de outros gestores aparecem como panorama, sem contar os que são para mim", () => {
     const tarefas = montarTarefas({ ...zerado, paraReceber: 2, pedidosAbertos: 5 });
     expect(tarefas.map((t) => t.id)).toEqual(["para-receber", "pedidos-abertos"]);
-    expect(tarefas[1]).toMatchObject({ quantidade: 3, texto: "3 pedidos de transferência abertos" });
+    expect(tarefas[1]).toMatchObject({
+      quantidade: 3,
+      texto: "3 pedidos de transferência abertos",
+    });
   });
 
   it("se todos os pedidos abertos são para mim, não repete", () => {
