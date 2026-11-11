@@ -7,7 +7,7 @@ nas entradas de 05/11/2026.
 
 - O Eixo agora usa o Supabase na nuvem (projeto `kbyhojdrpzdylexmlsip`, região us-east-2).
 - Foram aplicadas no projeto as 26 migrações e o seed de catálogos. Os schemas `nucleo` e `config` estão expostos na API.
-- O login `alexandre@transultransporte.com.br` foi ligado ao perfil **Administrador** e já entra no sistema.
+- O login `pessoa@eixo.teste` foi ligado ao perfil **Administrador** e já entra no sistema.
 - A regra 8 do `CLAUDE.md` (Supabase só local) foi cancelada; continua proibido usar o projeto da v1.
 - O SQL avulso passou de `supabase/sql/` para `querys/`.
 - Todo commit agora vai direto na `main`, com push na hora. O ruleset do GitHub foi afrouxado para isso.
@@ -26,7 +26,7 @@ nas entradas de 05/11/2026.
 
 - O conector MCP do Supabase **não tem permissão** nesse projeto: ele pertence a uma conta ou organização que o conector não enxerga.
 - Com autorização de Alexandre, um script temporário usou a `service_role` do `.env.local`, sem imprimir a chave. O script foi apagado logo depois.
-- Resultado: **1 usuário** em `auth.users` (`alexandre@transultransporte.com.br`, sem 2FA) e banco vazio, sem nenhum schema do Eixo.
+- Resultado: **1 usuário** em `auth.users` (`pessoa@eixo.teste`, sem 2FA) e banco vazio, sem nenhum schema do Eixo.
 - Causa do "não autorizado": o app busca o perfil em `config.perfil_atual()` (`lib/seguranca/sessao.ts`), e essa função ainda não existia.
 
 ## 3. Banco do Eixo aplicado na nuvem
