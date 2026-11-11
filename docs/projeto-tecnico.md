@@ -324,6 +324,14 @@ A infraestrutura fixa fica em torno de US$ 45 por mês, mais o uso da IA com tet
 
 O plano gratuito da Vercel não permite uso comercial, e o gratuito do Supabase não tem backup e já restringiu a v1 por tráfego. Por isso os dois entram no Pro desde o primeiro dia.
 
+## Processos e vínculos com história (desenho de 11/11/2026)
+
+Só desenho; construção nas fatias V0 e P1 a P5 de `docs/superpowers/plans/2026-11-11-processos-e-vinculos.md`.
+
+- **Gerenciador de processos** (`docs/gerenciador-de-processos.md`): camada por cima das tabelas de negócio (que seguem a verdade do fato), no schema novo `processos` (`processo`, `passo`, `transicao`, `instancia`, `tarefa`, `evento`, `delegacao`), com RLS pelo escopo e funções atômicas com chave de envio e versão. Sem motor BPMN externo agora. O wizard é a face da tarefa, com rascunho no banco.
+- **Vínculos com história** (`docs/vinculos-com-historia.md`): encerrar não é excluir; a placa segue o CR; Trocar CR é atômico; a história pertence à operação. Caminho de menor risco: generalizar `cr_de_servico_na_operacao` para todo CR com vigência.
+- **Glossário:** Processo, Instância, Tarefa, Responsável, Substituição, Vigente, Encerrado e Trocar CR estão em `docs/glossario.md`.
+
 ## Backlog da 2.0
 
 O que já está decidido que existe, mas fica fora do primeiro módulo (Acompanhamento da Frota). Cada item entra por ordem de prioridade, com `brainstorming` antes.

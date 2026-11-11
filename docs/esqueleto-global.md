@@ -51,6 +51,7 @@ dentro do Ctrl+K fica para a próxima fatia (precisa de leitura própria com RLS
 | Mapa do sistema | `/inicio/mapa-do-sistema` | Todos (cada um só o que vê) | filtro Todas, Prontas, Estrutura | O que existe, em que estado e quem vê? | **Pronta** |
 
 - **Tarefas** — KPIs: abertas, vencidas, resolvidas no mês, aprovações esperando. Visão principal: fila de tarefas. Painéis: por tipo de alerta (6), por módulo de origem (6). Tabela com o olho: tarefa, origem, aberta em, responsável, situação. Ação: Resolver tarefa. Fonte: `nucleo.fila_de_excecoes` (tabela existe) e aprovação por alçada; falta a função de leitura por perfil (Parte B). Cruza: placa, operação, CR, pessoa.
+- **Tarefas (desenho novo, 11/11/2026)** — vira a caixa do gerenciador de processos (`docs/gerenciador-de-processos.md`): por pessoa e por fila de papel, com prazo e situação; o cartão abre o wizard com o contexto preenchido. Continua esqueleto até a fatia P1.
 - **Resumo do dia** — KPIs: em atividade, impedidas, pátio, fila do totem, pendências. Principal: placas por situação hoje (a régua inteira). Painéis: pátio e fila, carteira do mês, pendências (4+4+4). Tabela: o que pede atenção hoje. Fonte: já existe no banco (leituras do Acompanhamento, Pátio e Carteira); só falta compor e medir se passa de 1 segundo. Cruza: placa, operação.
 - **Mapa do sistema** — pronta: KPIs (telas, prontas, só estrutura, módulos), um cartão por módulo com cada tela, o estado, a descrição e "Quem vê". Tudo vem do catálogo.
 
@@ -150,8 +151,26 @@ Pendência herdada: catálogo com página própria de 50 linhas (`lista-de-vinte
 | Usuários e perfis | `/admin/usuarios-e-perfis` | Quem acessa o quê? | Pronta |
 | Auditoria | `/admin/auditoria` | Quem fez o quê, quando e por quê? | Esqueleto (Parte B vem depois) |
 | Demonstração | `/admin/demonstracao` | Como é a base visual do Eixo? | Pronta |
+| Processos e responsáveis | `/admin/processos-e-responsaveis` | Quem responde por cada passo de cada processo, e quem cobre quem? | Esqueleto (fatia P2) |
+| Painel de processos | `/admin/painel-de-processos` | Onde os processos demoram, vencem ou travam? | Esqueleto (fatia P4) |
 
+- **Processos e responsáveis** — esqueleto: a definição versionada dos processos e a matriz processo × passo × papel × escopo; delegações com período. Só Administrador reatribui (H5).
+- **Painel de processos** — esqueleto: KPIs de tempo por etapa, prazos vencidos e gargalos; leitura sobre eventos e tarefas, com o total vindo do banco.
 - **Auditoria** — KPIs: eventos no período, pessoas ativas, alterações, acessos recusados. Principal: eventos por dia. Painéis: por módulo, por pessoa (6+6). Tabela: quando, pessoa, módulo, ação, registro. Ação: Exportar em CSV. Fonte: `auditoria.evento` (tabela existe); falta a leitura paginada com RLS (Parte B). Cruza: pessoa, placa, operação.
+
+---
+
+## Telas novas do desenho de 11/11/2026 (todas esqueleto até serem construídas)
+
+| Tela | Onde | Responde | Fatia |
+| --- | --- | --- | --- |
+| Tarefas (caixa) | Início › Tarefas | O que espera a minha ação ou a da minha fila? | P1 |
+| Processos e responsáveis | Administração | Quem responde por cada passo e quem cobre quem? | P2 |
+| Painel de processos | Administração | Onde os processos demoram ou travam? | P4 |
+| Ficha do CR | Abre do código do CR, em toda lista e ficha | Que placas e operações este CR teve, e com que vigência? | V0 |
+| Assistente Trocar CR | Ação na ficha da placa e do CR (e Ctrl+K) | Trocar o CR da placa na mesma data, sem buraco, e mover a operação | V0 |
+
+Vigente (verde) e encerrado (vermelho suave) sempre com rótulo e ícone (`docs/vinculos-com-historia.md`).
 
 ---
 

@@ -85,3 +85,18 @@ Quanto o conjunto (o cavalo e os implementos que ele puxa) deve render, em reais
 
 No código: `metaDoConjuntoCentavos` (dinheiro em centavos, positivo, ou vazio), definida no assistente Receber placa e aceita só quando a placa é um cavalo.
 
+
+## Processos e vínculos com história
+
+Definições do desenho de 11/11/2026 (`docs/gerenciador-de-processos.md` e `docs/vinculos-com-historia.md`). Ainda não construído; nenhuma tela calcula isto do seu jeito.
+
+| Termo | O que é |
+| --- | --- |
+| Processo | Definição versionada de um fluxo em várias etapas (passos e transições), guardada como dado. Ex.: transferência de placa, confirmação mensal da carteira. |
+| Instância | Um caso em andamento de um processo. O assunto é uma placa, uma operação ou um mês. |
+| Tarefa | A vez de alguém numa instância: uma pessoa, ou a fila de um papel num escopo, com `vence_em` e situação. Prazo vencido sinaliza e nunca cancela. |
+| Responsável | Quem responde por um passo: a matriz processo × passo × papel × escopo, versionada. |
+| Substituição | Quem cobre quem, de uma data a outra e num âmbito. Fora do período, a tarefa volta ao dono. |
+| Vigente | Vínculo (placa-CR, CR-operação) em vigor na data: começou e ainda não terminou. Verde, com rótulo e ícone: "Vigente desde 12/10". |
+| Encerrado | Vínculo que terminou com data de fim. Continua existindo, com histórico; nunca é apagado. Vermelho suave, com rótulo e ícone: "Encerrado em 12/10". |
+| Trocar CR | Ação atômica que fecha o vínculo antigo da placa e abre o novo na mesma data, sem buraco, com motivo, e move a placa para a operação do novo CR. Troca retroativa vira "correção tardia". |

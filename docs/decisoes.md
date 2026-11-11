@@ -8,6 +8,33 @@ Modelo de entrada:
 
 ---
 
+## 11/11/2026 — Estrutura completa, gerenciador de processos e vínculos com história
+
+- **Contexto (Alexandre, 11/11/2026):** o Eixo é a versão 2 da v1. Não copiamos: a v1 é gabarito de processos e de regras (`docs/propostas`, `DIAGNOSTICO_SISTEMA`, dicionário de indicadores). Portamos **regras**, não tabelas. Corrigimos o que estava errado (uma fonte única por etapa; papel rígido por subsistema; "ajuste manual" fora do sistema) e trazemos boas práticas atuais. Só documentação: nenhum código, migration ou teste de produto entrou com esta entrada.
+- **"Estrutura completa e sem brechas" = 10 critérios, cada um verificável por teste:**
+  - (a) catálogo e inventário não divergem;
+  - (b) nenhuma tela "em breve" para Administrador e Diretoria;
+  - (c) matriz catálogo × 4 perfis, inclusive por endereço digitado, mais pgTAP de RLS;
+  - (d) toda ação tem rota, botão, entrada no Ctrl+K e permissão;
+  - (e) toda rota tem `error.tsx`, carregamento e os estados vazio, sem permissão e sem dados ainda;
+  - (f) 1366, 1092, 820 e 390 sem rolagem lateral da página;
+  - (g) navegação sem beco e links em todo código de placa, operação, CR, parceiro e pessoa;
+  - (h) acessibilidade automática sem falha grave;
+  - (i) consistência de componentes, 20 por página e olho em toda linha;
+  - (j) nada inventado: sem fonte, "Sem dados ainda: depende de X".
+- **Gerenciador de processos** (`docs/gerenciador-de-processos.md`): toda ação em várias etapas é um processo (definição versionada como dado, instância, tarefa com dono, prazo e histórico, evento imutável, delegação e matriz de responsáveis). Camada **por cima** das tabelas de negócio, que seguem a verdade do fato; schema novo `processos`; o wizard é a face da tarefa; perfil, papel e vínculo são três coisas distintas, mais a substituição com período.
+- **Regra dos vínculos com história** (`docs/vinculos-com-historia.md`): **encerrar não é excluir**; CR, vínculo da placa e vínculo da operação só se fecham com data de fim. Um válido por placa e por tipo de CR; a placa segue o CR; **Trocar CR** é uma ação atômica que move a placa de operação na mesma data; a história pertence à operação. Visual: "vigente" em verde e "encerrado" em vermelho suave, sempre com rótulo e ícone.
+- **Hipóteses de Alexandre a confirmar (não implementar ainda):**
+  - **H1 (recomendada):** o CR pertence a uma operação com vigência e a placa segue o CR.
+  - **H2:** um CR válido por placa e por tipo; os 9 casos legados de dois do mesmo tipo seguem como alerta e fila até a equipe resolver.
+  - **H3:** troca retroativa permitida com motivo e marcada "correção tardia"; mês já fechado exige permissão (a definir).
+  - **H4:** prazos iniciais: receber placa 5 dias; confirmar a carteira até o dia 5 do mês seguinte; lançar o dia até as 10h do dia seguinte. Prazo vencido sinaliza e nunca cancela.
+  - **H5:** o Administrador reatribui tarefa, mas não age em nome de ninguém.
+  - **H6:** a escrita da Diretoria passa por tarefa e aprovação. **Ponto a rever:** hoje a semente dá criar, editar e excluir à Diretoria em todos os módulos de negócio.
+  - **H7:** notificação primeiro dentro do sistema; e-mail só depois do SMTP.
+- **Plano:** `docs/superpowers/plans/2026-11-11-processos-e-vinculos.md` (fatias V0, P1 a P5). A fila atual não muda.
+- **Quem decidiu:** Alexandre (critérios, gerenciador e regra dos vínculos); as hipóteses H1 a H7 aguardam a confirmação dele.
+
 ## 10/11/2026 — Permissões, segurança e a ligação dos dados (lotes 1 a 3)
 
 - **Decisões (Alexandre, 10/11/2026):** só o Administrador muda acesso de usuários e permissões (a Diretoria só lê a Administração: saem `admin.criar` e `admin.editar`); o Gestor de frota não vê Operações; o Operacional vê a Escala só da filial dele (`pessoas.ver` com escopo filial). Migration `20261112200000_permissoes_de_10_11`, pgTAP 103.
