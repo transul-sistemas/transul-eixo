@@ -16,12 +16,14 @@ import {
   TAMANHO_DA_PAGINA_DO_CATALOGO,
 } from "@/lib/dados/catalogos-definicoes";
 import { modoDosDados } from "@/lib/dados/fonte";
+import { type ClienteDoCorte, lerDiaDoCorte } from "@/lib/dados/parametro-do-corte";
 import { acharTela } from "@/lib/navegacao/catalogo";
 import { temPermissao } from "@/lib/seguranca/exigir-permissao";
 import { exigirSessao } from "@/lib/seguranca/sessao-do-servidor";
 import { criarClienteDoServidor } from "@/lib/supabase/servidor";
 import { cn } from "@/lib/utils";
 import { CatalogoInterativo } from "./catalogo-interativo";
+import { ParametroDoCorte } from "./parametro-do-corte";
 
 export type ParametrosDaBusca = Promise<Record<string, string | string[] | undefined>>;
 
@@ -132,6 +134,7 @@ export async function PaginaDeCatalogos({ searchParams }: { searchParams: Parame
   }
 
   const cliente = (await criarClienteDoServidor()) as unknown as ClienteDeCadastros;
+  const corte = await lerDiaDoCorte(cliente as unknown as ClienteDoCorte);
   const pagina = await listarCatalogo(cliente, definicao, {
     busca,
     pagina: Number.isFinite(pedida) ? pedida : 1,
@@ -150,6 +153,7 @@ export async function PaginaDeCatalogos({ searchParams }: { searchParams: Parame
 
   return (
     <PaginaDeLeitura lista titulo={titulo} descricao={descricao} consulta={consulta}>
+      <ParametroDoCorte dia={corte.dia} travado={corte.travado} />
       <p data-testid="resumo-da-pagina" className="text-muted-foreground text-sm">
         {pagina.total === 0
           ? `Nenhum item em ${definicao.nome.toLowerCase()}.`
