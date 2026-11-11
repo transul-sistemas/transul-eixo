@@ -178,3 +178,102 @@ Acompanhamento v2 só se valida com o banco em demonstração.
 ## Ainda em hipótese
 
 - **(H)** O par origem-destino do trecho, até a ponte, é o das duas cidades consecutivas da posição diária.
+
+## Complemento de 11/11/2026: legenda, tons, motorista e causa e efeito
+
+Protótipo de referência (**layout, não código**): https://claude.ai/artifact/HEmfCHj64trqeKyXaMsaex, com sete
+pranchas (grade por conjunto, wizard em popup, barra lateral de financeiro e de motorista, rota e legenda).
+Os dados do protótipo são fictícios e o visual não é copiado: o Eixo usa as peças que já tem.
+
+Decisões que Alexandre assume (11/11/2026): **Programado: sim**; os códigos do motorista da v1 (**TBV, TBE,
+FOL, FÉR, ATS, FRD, FLT, TBX**), **a confirmar**; **dois motoristas por conjunto ficam fora da primeira
+versão**. **H1, H6 e H8 continuam pendentes**: nada de vínculos com história (V0 e C0) entra aqui.
+
+### (a) Legenda gerada da régua
+
+- **Botão "Legenda"** no topo da grade e **faixa rápida** ("Legenda rápida") no rodapé da grade, com os
+  grupos de cor e as marcas da célula.
+- **Tela "Legenda e siglas"** (`/frota/acompanhamento/legenda`): todas as siglas, por grupo, com **busca**
+  por sigla ou palavra e **impressão** ("Imprimir ou salvar em PDF", por CSS de impressão).
+- **Nome da sigla ao passar o mouse e ao tocar** em qualquer sigla da grade (no toque, um balão curto que
+  fecha ao tocar fora; teclado: foco mostra o mesmo nome).
+- **A legenda é GERADA, nunca digitada à mão.** Cada linha vem da régua: `NOMES_DAS_SIGLAS`, o **grupo**, o
+  **tom** e um **campo novo, o significado** (uma frase curta, "viajando com carga"). O campo novo vive
+  onde a régua vive (`lib/dominio/status.ts`, espelhado na tabela `config.status` se ela for a fonte do
+  catálogo, com o teste de espelho que já existe).
+- **Teste que falha** se uma sigla da régua não tiver **nome, grupo, tom ou significado**, e se alguma sigla
+  da régua não aparecer na tela da legenda.
+- **A sigla é sempre escrita; a cor só reforça.** Nenhuma célula, chip ou legenda depende só da cor.
+
+### (b) Tons de verde de "em atividade" e o mesmo princípio para os outros
+
+Em atividade usa **cinco degraus** que diferem em **clareza**, não só em matiz: **quanto mais escuro, mais
+perto de gerar receita**. Tokens `--status-atividade-1` a `-5`:
+
+| Token | Siglas | Fundo claro | Texto | Contraste |
+| --- | --- | --- | --- | --- |
+| `--status-atividade-1` | ETc | `#14532d` | `#ffffff` | 9,11:1 |
+| `--status-atividade-2` | DEs, CAr | `#1a7f4b` | `#ffffff` | 5,02:1 |
+| `--status-atividade-3` | ETv | `#7fd6a2` | `#0b3d24` | 7,05:1 |
+| `--status-atividade-4` | ACe, ADe, CAn | `#b6ebcb` | `#0f5c3d` | 6,01:1 |
+| `--status-atividade-5` | DOp | `#dff5e8` (contorno `#22a06b`) | `#0f5c3d` | 7,01:1 |
+
+Os contrastes acima foram **calculados** (fórmula WCAG) em 11/11/2026. O **tema escuro** tem os mesmos cinco
+degraus **(H, a confirmar)**, em clareza decrescente na direção do fundo, com a mesma regra (o mais intenso é
+o mais perto da receita): `#6ee7a0` / `#052e16` (9,65), `#34b872` / `#04210f` (6,71), `#1f7a4d` / `#ffffff`
+(5,32), `#17543a` / `#d6f5e3` (7,62), `#123828` / `#b6ebcb` (9,70, com contorno `#22a06b`). **Teste de
+contraste de 4,5:1 nos dois temas** para todo par fundo e texto de status.
+
+O **mesmo princípio** para os outros grupos **(H)**: no verde a escala mede a **proximidade da receita**; nos
+outros mede a **gravidade e a permanência** (quanto mais escuro, mais grave ou mais definitivo).
+
+| Grupo | Tons | Claro (fundo / texto, contraste) | Escuro (fundo / texto, contraste) |
+| --- | --- | --- | --- |
+| Âmbar (atenção) | 2 | 1: `#92400e` / `#ffffff` (7,09) para SMo, que pede ação; 2: `#fbecc7` / `#7a5200` (5,91) para FOg e FEr, com volta certa | 1: `#fbbf24` / `#2a1a00` (10,09); 2: `#4a3508` / `#fde9b0` (9,68) |
+| Vermelho (impedida) | 3 | 1: `#991b1b` / `#ffffff` (8,31) para SIN, DOC e SDo; 2: `#e5484d` / `#1a0507` (5,02) para MAc, MAt e REF; 3: `#fadadb` / `#8a1f24` (7,00) para MAv e MAN | 1: `#fca5a5` / `#2a0507` (9,85); 2: `#e5484d` / `#1a0507` (5,02); 3: `#4a1518` / `#fadadb` (11,42) |
+| Cinza (fora) | 2 | 1: `#e5e8ee` / `#4a5568` (6,13) para ALU e EMP, que voltam; 2: `#4a5568` / `#ffffff` (7,53) para VEN, SUC e VND, fim de vida | 1: `#2b303b` / `#c9cfdb` (8,45); 2: `#8a94a6` / `#0f1729` (5,85) |
+| Azul (pátio) | 1 | PÁT, `#d5ebfb` / `#0b5688` (do protótipo; a conferir no teste) | a definir |
+
+Cor de módulo diz onde a pessoa está; cor de status diz como está a placa: nunca misturar.
+
+### (c) Status do motorista: o realizado do dia, diferente da escala
+
+| Conceito | O que é | Códigos |
+| --- | --- | --- |
+| **Realizado** | O que o motorista **fez no dia**. Evento do dia, com correção por motivo (como a situação do conjunto) | **TBV** trabalhando em viagem, **TBE** trabalhando em casa, **TBX** trabalho extra, **FOL** folga, **FÉR** férias, **ATS** atestado, **FRD** feriado, **FLT** falta (a confirmar) |
+| **Escala** | O que está **planejado**: turno e horário. É a escala de Pessoas (hoje com T, F, FE e AT) | Os dias futuros da grade vêm daqui |
+
+- **Linha fina do motorista sob cada conjunto**, com **interruptor** "Mostrar a linha do motorista".
+- **Dias futuros** em **itálico e contorno pontilhado**, vindos da escala; o dia de hoje sem lançamento
+  aparece como "sem lançamento" (contorno tracejado), e o realizado, com contorno liso.
+- **Contagem por status na faixa do topo**, ao lado da faixa do veículo ("Motorista: em viagem 8, em casa 2,
+  folga 1, sem lançamento 3").
+- **Aba Motorista** na barra lateral de detalhe, com o **calendário do mês** (liso: realizado; pontilhado:
+  escala), os totais até hoje (dias trabalhados, folgas, faltas e atestados) e o motorista com o turno.
+- **Visibilidade:** a linha e a aba **só para quem vê Pessoas**. **Remuneração, diária e premiação só para
+  quem vê Pessoas e Resultados.** Sem Pessoas, a linha nem existe (não fica vazia).
+- **Dados:** o realizado fica em `pessoas` (nova tabela de status do dia por motorista, com exclusão lógica
+  e motivo), alimentado por Pessoas › Status diário; a escala já existe em `pessoas.marcacao_da_escala` (uma
+  marcação por pessoa e dia, com as siglas T, F, FE e AT, que passam a mapear para os códigos acima); o
+  vínculo do motorista ao conjunto vem de `pessoas.vinculo` (com vigência).
+
+### (d) Causa e efeito entre o motorista e o conjunto
+
+A sigla do motorista é a **causa**; a do conjunto, o **efeito**.
+- **Motorista de folga ou férias sem substituto** faz o conjunto aparecer como **FOg** ou **FEr**
+  (e **SMo** quando não há motorista vinculado).
+- **Férias programadas sem substituto** geram a tarefa **"indicar substituto"** para o **líder da operação**
+  (caixa de Tarefas, `docs/gerenciador-de-processos.md`), com o aviso na aba Motorista: "De 20/11 em diante
+  este conjunto ficará sem motorista". Com substituto indicado, o conjunto segue em operação e a escala do
+  substituto passa a contar.
+- Prazo vencido da tarefa **sinaliza e nunca cancela** (H4).
+
+### (e) Hipótese: dois motoristas por conjunto (fora da primeira versão)
+
+Na v1 (13/10) um conjunto podia ter **dois motoristas, com turno** (dia e noite). **Fica fora da primeira
+versão do Eixo**: cada conjunto tem um motorista vigente. Quando entrar:
+- Os dois aparecem na aba Motorista, cada um com o turno, e a linha fina mostra o do turno do dia.
+- **Regra da premiação para não pagar o faturamento inteiro duas vezes (H):** a base da premiação é o
+  faturamento do **conjunto no dia**, e cada dia é **rateado entre os motoristas pelo turno trabalhado**
+  (TBV ou TBX no dia). A soma das parcelas do dia é **igual a 100%** da base, nunca 200%. O teste prova
+  que a soma dos rateios de cada dia e de cada mês bate com o faturamento do conjunto.
