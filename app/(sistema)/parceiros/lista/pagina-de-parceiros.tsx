@@ -8,6 +8,8 @@ import {
   type ChipDeConsulta,
 } from "@/components/layout/barra-de-consulta";
 import { FaixaDeKpis, type Kpi } from "@/components/layout/faixa-de-kpis";
+import { lerDadosAte } from "@/lib/dados/dados-ate";
+import { mesIncompleto } from "@/lib/dominio/dados-congelados";
 import { PaginaDeLeitura } from "@/components/layout/pagina-de-leitura";
 import { EsqueletoDaTabela, ListaVazia } from "@/components/tabela/estados";
 import { Paginador } from "@/components/tabela/paginador";
@@ -103,7 +105,11 @@ async function Conteudo({ parametros }: { parametros: URLSearchParams }) {
     PADRAO_DOS_PARCEIROS.tam,
   );
   const estado = lerParceiros(parametros, tam);
-  const [dados, sessao] = await Promise.all([lerParceirosDoMes(estado), exigirSessao()]);
+  const [dados, sessao, dadosAte] = await Promise.all([
+    lerParceirosDoMes(estado),
+    exigirSessao(),
+    lerDadosAte(),
+  ]);
   const filtrando = estado.consulta.busca !== "" || estado.consulta.chips.length > 0;
   const podeCadastrar = temPermissao(sessao.perfil, { modulo: "parceiros", acao: "criar" });
   const { titulo, descricao } = cabecalho();
@@ -119,12 +125,14 @@ async function Conteudo({ parametros }: { parametros: URLSearchParams }) {
         ) : undefined
       }
       consulta={<Barra contagens={dados.chips} />}
+      dadosAte={dadosAte}
     >
       <SeletorDeMes
         rota={ROTA_DOS_PARCEIROS}
         parametros={parametros}
         meses={dados.meses}
         atual={dados.mes}
+        mesIncompleto={mesIncompleto(dadosAte)}
       />
       <FaixaDeKpis kpis={kpisDe(dados)} />
       {livres > 0 ? (

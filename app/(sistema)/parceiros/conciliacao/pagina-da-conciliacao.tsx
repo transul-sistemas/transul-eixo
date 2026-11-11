@@ -2,13 +2,16 @@ import { connection } from "next/server";
 import { formatarMes } from "@/components/formato/data";
 import { Moeda } from "@/components/formato/moeda";
 import { formatarInteiro } from "@/components/formato/numero";
+import { AvisoDeDadosCongelados } from "@/components/layout/aviso-de-dados-congelados";
 import { FaixaDeKpis } from "@/components/layout/faixa-de-kpis";
 import { PaginaDeLeitura } from "@/components/layout/pagina-de-leitura";
 import { ProvedorDoUsuario } from "@/components/navegacao/usuario-da-sessao";
 import { Button } from "@/components/ui/button";
 import { EsqueletoDaTabela, ListaVazia } from "@/components/tabela/estados";
 import { CLASSE_DO_CAMPO } from "@/components/wizard/campos";
+import { lerDadosAte } from "@/lib/dados/dados-ate";
 import { modoDosDados } from "@/lib/dados/fonte";
+import { mesIncompleto } from "@/lib/dominio/dados-congelados";
 import { lerConciliacaoDoMes } from "@/lib/dados/parceiros";
 import { NOMES_DAS_SITUACOES_DA_CONCILIACAO } from "@/lib/dados/parceiros-tipos";
 import { acharTela } from "@/lib/navegacao/catalogo";
@@ -96,16 +99,22 @@ function EscolherParceiro({
 
 async function Conteudo({ parametros }: { parametros: URLSearchParams }) {
   const estado = lerConciliacao(parametros);
-  const [dados, sessao] = await Promise.all([lerConciliacaoDoMes(estado), exigirSessao()]);
+  const [dados, sessao, dadosAte] = await Promise.all([
+    lerConciliacaoDoMes(estado),
+    exigirSessao(),
+    lerDadosAte(),
+  ]);
   const podeJustificar = temPermissao(sessao.perfil, { modulo: "parceiros", acao: "criar" });
   const c = dados.contagens;
   return (
     <>
+      <AvisoDeDadosCongelados dadosAte={dadosAte} />
       <SeletorDeMes
         rota={ROTA_DA_CONCILIACAO}
         parametros={parametros}
         meses={dados.meses}
         atual={dados.mes}
+        mesIncompleto={mesIncompleto(dadosAte)}
       />
       <div className="flex flex-wrap items-end justify-between gap-4">
         <EscolherParceiro estado={estado} mes={dados.mes} parceiros={dados.parceiros} />

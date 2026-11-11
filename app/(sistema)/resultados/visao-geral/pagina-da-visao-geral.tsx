@@ -7,9 +7,12 @@ import { formatarMoeda } from "@/components/formato/moeda-valor";
 import { formatarInteiro, formatarPercentual } from "@/components/formato/numero";
 import { Grafico } from "@/components/grafico/grafico";
 import { FaixaDeKpis } from "@/components/layout/faixa-de-kpis";
+import { AvisoDeDadosCongelados } from "@/components/layout/aviso-de-dados-congelados";
 import { PaginaDeLeitura } from "@/components/layout/pagina-de-leitura";
 import { EsqueletoDaTabela, ListaVazia } from "@/components/tabela/estados";
 import { modoDosDados } from "@/lib/dados/fonte";
+import { lerDadosAte } from "@/lib/dados/dados-ate";
+import { mesIncompleto as mesIncompletoDe } from "@/lib/dominio/dados-congelados";
 import { lerVisaoGeral as lerDoBanco } from "@/lib/dados/visao-geral";
 import type { ValoresDoResultado, VisaoGeralDosResultados } from "@/lib/dados/visao-geral-tipos";
 import { acharTela } from "@/lib/navegacao/catalogo";
@@ -46,7 +49,15 @@ const celula = "px-3 py-2";
 const numeroNaCelula = "px-3 py-2 text-right tabular-nums";
 
 /** O contexto global (período, filial, operação): um formulário GET, para ficar na URL. */
-function Contexto({ estado, v }: { estado: EstadoDaVisaoGeral; v: VisaoGeralDosResultados }) {
+function Contexto({
+  estado,
+  v,
+  mesIncompleto,
+}: {
+  estado: EstadoDaVisaoGeral;
+  v: VisaoGeralDosResultados;
+  mesIncompleto: string | null;
+}) {
   const meses = v.meses.includes(v.mes) ? v.meses : [v.mes, ...v.meses];
   return (
     <form
@@ -65,6 +76,7 @@ function Contexto({ estado, v }: { estado: EstadoDaVisaoGeral; v: VisaoGeralDosR
           {meses.map((m) => (
             <option key={m} value={m}>
               {formatarMes(m)}
+              {m.slice(0, 7) === mesIncompleto ? " (mês incompleto)" : ""}
             </option>
           ))}
         </select>
@@ -383,13 +395,14 @@ function Avisos({ v }: { v: VisaoGeralDosResultados }) {
 }
 
 async function Conteudo({ estado }: { estado: EstadoDaVisaoGeral }) {
-  const v = await lerDoBanco(estado);
+  const [v, dadosAte] = await Promise.all([lerDoBanco(estado), lerDadosAte()]);
   const comFiltro = estado.filial !== null || estado.operacao !== null;
   const semNada = v.meses.length === 0;
   const mesVazio = v.total.receita === 0 && v.total.custo === 0;
   return (
     <>
-      <Contexto estado={estado} v={v} />
+      <AvisoDeDadosCongelados dadosAte={dadosAte} />
+      <Contexto estado={estado} v={v} mesIncompleto={mesIncompletoDe(dadosAte)} />
       <FaixaDeKpis
         kpis={[
           {

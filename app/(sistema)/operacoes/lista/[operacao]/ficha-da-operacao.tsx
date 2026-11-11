@@ -2,6 +2,9 @@ import { connection } from "next/server";
 import { AbasDaFichaNaUrl } from "@/components/ficha/abas-da-ficha-na-url";
 import { CabecalhoDaFicha } from "@/components/ficha/cabecalho-da-ficha";
 import { FichaDaRaiz } from "@/components/ficha/ficha-da-raiz";
+import { AvisoDeDadosCongelados } from "@/components/layout/aviso-de-dados-congelados";
+import { lerDadosAte } from "@/lib/dados/dados-ate";
+import { mesIncompleto } from "@/lib/dominio/dados-congelados";
 import { SeletorDePeriodo } from "@/components/ficha/seletor-de-periodo";
 import { formatarData, formatarMes } from "@/components/formato/data";
 import { Moeda } from "@/components/formato/moeda";
@@ -573,7 +576,7 @@ export async function FichaDaOperacaoNaTela({
     );
   }
   // O mês padrão é o mês fechado mais recente (e não o último com viagem no staging da v1).
-  const mesFechado = await lerMesFechado();
+  const [mesFechado, dadosAte] = await Promise.all([lerMesFechado(), lerDadosAte()]);
   const periodo = lerPeriodo(parametros, mesFechado);
   const intervalo = intervaloDoPeriodo(periodo, mesFechado, somarMeses(mesFechado, -23));
   const mesesDoPeriodo = mesesDoIntervalo(intervalo);
@@ -660,12 +663,16 @@ export async function FichaDaOperacaoNaTela({
         />
       }
       linhaDoTempo={
-        <SeletorDePeriodo
-          rota={`/operacoes/lista/${operacao.id}`}
-          parametros={parametros}
-          meses={chipsDeMes(mesFechado)}
-          atual={periodo}
-        />
+        <div className="flex flex-col gap-2">
+          <AvisoDeDadosCongelados dadosAte={dadosAte} />
+          <SeletorDePeriodo
+            rota={`/operacoes/lista/${operacao.id}`}
+            parametros={parametros}
+            meses={chipsDeMes(mesFechado)}
+            atual={periodo}
+            mesIncompleto={mesIncompleto(dadosAte)}
+          />
+        </div>
       }
     >
       <AbasDaFichaNaUrl<AbaDaOperacao>

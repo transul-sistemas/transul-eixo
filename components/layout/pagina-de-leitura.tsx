@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
+import { AvisoDeDadosCongelados } from "./aviso-de-dados-congelados";
 
 interface Props {
   titulo: string;
@@ -11,6 +12,8 @@ interface Props {
   /** A faixa de indicadores. */
   kpis?: ReactNode;
   children: ReactNode;
+  /** A data limite do staging (`aaaa-mm-dd`), nas telas que mostram número dele: vira o aviso "dados até". */
+  dadosAte?: string | null;
   /**
    * Tela de lista: a descrição sai da vista e a tabela guarda a própria rolagem (cabeçalho e primeira
    * coluna fixos). A página rola como as outras; só no modo foco ela tem a altura da janela.
@@ -32,6 +35,7 @@ export function PaginaDeLeitura({
   consulta,
   kpis,
   children,
+  dadosAte,
   lista = false,
   emFoco = false,
 }: Props) {
@@ -60,6 +64,7 @@ export function PaginaDeLeitura({
           </div>
         ) : null}
       </div>
+      <AvisoDeDadosCongelados dadosAte={dadosAte} />
       {consulta}
       {kpis}
       <div className={cn("flex min-w-0 flex-1 flex-col gap-8", lista && "min-h-0 lg:gap-3")}>
