@@ -25,6 +25,8 @@ const PENDENCIAS_DO_OLHO: Record<string, string> = {
     "usa a grade e a TabelaDePlacas",
   "app/(sistema)/frota/analise/pagina-da-analise.tsx": "tabelas das quatro camadas da análise",
   "app/(sistema)/resultados/visao-geral/pagina-da-visao-geral.tsx": "tabela por agrupamento",
+  "app/(sistema)/frota/excecoes/pagina-da-fila.tsx":
+    "fila de exceções: a ação da linha é Completar o dado, que leva ao cadastro; o olho entra com a Parte B completa",
   // Não são lista de itens que se abrem: grade de marcação, matriz de permissões e tabelas curtas de ficha.
   "app/(sistema)/pessoas/escala/grade-da-escala.tsx":
     "grade de marcação do mês, não lista de itens",

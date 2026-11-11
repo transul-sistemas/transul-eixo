@@ -26,7 +26,7 @@ describe("mapa do sistema", () => {
     const placas = telas.find((t) => t.tela.id === "frota.placas");
     expect(placas?.perfisQueVeem).toEqual(["Administrador", "Diretoria", "Gestor de frota"]);
     const tarefas = telas.find((t) => t.tela.id === "inicio.tarefas");
-    expect(tarefas?.perfisQueVeem).toEqual(["Administrador", "Diretoria"]);
+    expect(tarefas?.perfisQueVeem).toHaveLength(4);
     const mapa = telas.find((t) => t.tela.id === "inicio.mapa-do-sistema");
     expect(mapa?.perfisQueVeem).toHaveLength(4);
   });

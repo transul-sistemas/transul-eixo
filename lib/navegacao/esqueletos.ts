@@ -41,34 +41,6 @@ export interface EsqueletoDaTela {
 const k = (id: string, rotulo: string): KpiDoEsqueleto => ({ id, rotulo });
 
 export const ESQUELETOS: Readonly<Record<string, EsqueletoDaTela>> = {
-  "inicio.tarefas": {
-    fonte: "a fila de exceções e a aprovação por alçada (Parte B)",
-    acoes: ["Resolver tarefa"],
-    kpis: [
-      k("abertas", "Tarefas abertas"),
-      k("vencidas", "Vencidas"),
-      k("resolvidas", "Resolvidas no mês"),
-      k("aprovacoes", "Aprovações esperando"),
-    ],
-    principal: {
-      titulo: "Fila de tarefas",
-      descricao: "O que espera a ação de quem entrou, da mais antiga para a mais nova.",
-    },
-    apoio: [
-      {
-        titulo: "Por tipo de alerta",
-        descricao: "Sem CR, buraco em CR, conjunto sem nome e os demais.",
-        colunas: 6,
-      },
-      { titulo: "Por módulo de origem", descricao: "De onde vem cada tarefa.", colunas: 6 },
-    ],
-    tabela: {
-      titulo: "Tarefas",
-      item: "tarefa",
-      colunas: ["Tarefa", "Origem", "Aberta em", "Responsável", "Situação"],
-    },
-    cruzadas: ["placa", "operação", "CR", "pessoa"],
-  },
   "inicio.resumo-do-dia": {
     fonte: "as leituras do Acompanhamento, do Pátio e da Carteira",
     acoes: ["Atualizar o resumo"],

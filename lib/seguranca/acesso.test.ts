@@ -102,7 +102,7 @@ describe("decidirAcesso", () => {
 
   it("tela esqueleto (10/11/2026): só Administrador e Diretoria; os outros perfis recebem 404", () => {
     for (const perfil of ["Gestor de frota", "Operacional"] as const) {
-      for (const rota of ["/inicio/tarefas", "/inicio/resumo-do-dia", "/operacional/analise"]) {
+      for (const rota of ["/inicio/resumo-do-dia", "/operacional/analise"]) {
         expect(decidirAcesso(rota, "", { ...logado, perfil }), `${perfil} ${rota}`).toEqual({
           tipo: "nao-encontrada",
         });
@@ -113,7 +113,10 @@ describe("decidirAcesso", () => {
         tipo: "seguir",
       });
     }
-    // O Mapa do sistema está pronto e todos os perfis o abrem.
+    // Tarefas e o Mapa do sistema estão prontos e todos os perfis os abrem.
+    expect(decidirAcesso("/inicio/tarefas", "", { ...logado, perfil: "Gestor de frota" })).toEqual({
+      tipo: "seguir",
+    });
     expect(
       decidirAcesso("/inicio/mapa-do-sistema", "", { ...logado, perfil: "Operacional" }),
     ).toEqual({ tipo: "seguir" });

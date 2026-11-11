@@ -122,17 +122,17 @@ describe("modulosVisiveis (catálogo de teste)", () => {
 });
 
 describe("modulosVisiveis (catálogo real)", () => {
-  it("Administrador e Diretoria veem os 9 módulos e as 35 telas", () => {
+  it("Administrador e Diretoria veem os 9 módulos e as 36 telas", () => {
     for (const perfil of ["Administrador", "Diretoria"] as const) {
       const visiveis = modulosVisiveis(perfil);
       expect(visiveis).toHaveLength(9);
-      expect(visiveis.flatMap((m) => m.telas)).toHaveLength(35);
+      expect(visiveis.flatMap((m) => m.telas)).toHaveLength(36);
     }
   });
   it("com as cinco telas da Frota prontas, o Gestor de frota vê as cinco; o Operacional vê Pátio, Totem, Ordens de carregamento e a Escala", () => {
     expect(modulosVisiveis("Gestor de frota").map((m) => [m.id, m.telas.map((t) => t.id)])).toEqual(
       [
-        ["inicio", ["inicio.mapa-do-sistema"]],
+        ["inicio", ["inicio.tarefas", "inicio.mapa-do-sistema"]],
         [
           "frota",
           [
@@ -140,13 +140,14 @@ describe("modulosVisiveis (catálogo real)", () => {
             "frota.placas",
             "frota.abastecimento",
             "frota.carteira",
+            "frota.excecoes",
             "frota.analise",
           ],
         ],
       ],
     );
     expect(modulosVisiveis("Operacional").map((m) => [m.id, m.telas.map((t) => t.id)])).toEqual([
-      ["inicio", ["inicio.mapa-do-sistema"]],
+      ["inicio", ["inicio.tarefas", "inicio.mapa-do-sistema"]],
       [
         "operacional",
         ["operacional.patio", "operacional.totem", "operacional.ordens-de-carregamento"],
@@ -215,7 +216,7 @@ describe("rotaInicialDoModulo (para onde /frota, /pessoas etc. redirecionam)", (
     for (const m of CATALOGO) {
       const doOperacional =
         m.id === "inicio"
-          ? "/inicio/mapa-do-sistema"
+          ? "/inicio/tarefas"
           : m.id === "operacional"
             ? "/operacional/patio"
             : m.id === "pessoas"
@@ -226,7 +227,7 @@ describe("rotaInicialDoModulo (para onde /frota, /pessoas etc. redirecionam)", (
         m.id === "frota"
           ? "/frota/acompanhamento"
           : m.id === "inicio"
-            ? "/inicio/mapa-do-sistema"
+            ? "/inicio/tarefas"
             : undefined;
       expect(rotaInicialDoModulo("Gestor de frota", m.id), m.id).toBe(esperado);
     }
