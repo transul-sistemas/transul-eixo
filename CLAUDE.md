@@ -39,6 +39,7 @@ Projeto técnico completo: `docs/projeto-tecnico.md`. Em caso de dúvida, pergun
 - Encerrar vínculo não é excluir: CR, vínculo da placa e da operação só se fecham com data de fim.
 - Ação em várias etapas é um processo: tarefa com dono, prazo e histórico; o wizard é a face da tarefa.
 - Vigente é verde e encerrado é vermelho suave, sempre com rótulo e ícone.
+- Wizard abre em popup central; a barra lateral é só para detalhe.
 - **Validação visual em toda entrega:** ao fim de cada checkpoint, capturas em 1366 e 1920, claro e escuro, e a rota para abrir com `pnpm dev`. Sem aprovação do visual, a entrega não avança. Telas de dados usam `lib/exemplo/` (nunca importado fora de desenvolvimento e testes) até o Acompanhamento da Frota estar pronto.
 
 ## Stack
