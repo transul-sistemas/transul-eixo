@@ -49,6 +49,9 @@ dentro do Ctrl+K fica para a próxima fatia (precisa de leitura própria com RLS
 | Tarefas | `/inicio/tarefas` | Administrador, Diretoria (depois, todos) | nenhuma | O que espera a minha ação? | Esqueleto (Parte B vem depois) |
 | Resumo do dia | `/inicio/resumo-do-dia` | Administrador, Diretoria (depois, todos) | nenhuma | Como a operação está hoje? | Esqueleto |
 | Mapa do sistema | `/inicio/mapa-do-sistema` | Todos (cada um só o que vê) | filtro Todas, Prontas, Estrutura | O que existe, em que estado e quem vê? | **Pronta** |
+| Meu dia | `/inicio/meu-dia` (rota proposta; abre sozinho ao entrar) | Gestor de frota | nenhuma | O que eu faço hoje, e em que ordem? | Esqueleto (fatia M1) |
+| Receber placas | popup do Meu dia (passo 1 de 3) | Gestor de frota (destino) | nenhuma | Quais placas esperam a minha decisão? | Esqueleto (fatia M1) |
+| Posição do dia | popup obrigatório do Meu dia (passo 2 de 3) | Gestor de frota | nenhuma | Onde estão os meus conjuntos hoje? | Esqueleto (fatia M2) |
 
 - **Tarefas** — KPIs: abertas, vencidas, resolvidas no mês, aprovações esperando. Visão principal: fila de tarefas. Painéis: por tipo de alerta (6), por módulo de origem (6). Tabela com o olho: tarefa, origem, aberta em, responsável, situação. Ação: Resolver tarefa. Fonte: `nucleo.fila_de_excecoes` (tabela existe) e aprovação por alçada; falta a função de leitura por perfil (Parte B). Cruza: placa, operação, CR, pessoa.
 - **Tarefas (desenho novo, 11/11/2026)** — vira a caixa do gerenciador de processos (`docs/gerenciador-de-processos.md`): por pessoa e por fila de papel, com prazo e situação; o cartão abre o wizard com o contexto preenchido. Continua esqueleto até a fatia P1.
