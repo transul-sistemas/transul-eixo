@@ -8,6 +8,30 @@ Modelo de entrada:
 
 ---
 
+## 11/11/2026 — Modo terminar: decisões fechadas, segurança da integração e ordem dos blocos
+
+- **Decisões fechadas (Alexandre):** **H1 sim** (o CR pertence a uma operação com vigência e a placa segue o
+  CR); **H6 sim** (a escrita da Diretoria passa por tarefa e aprovação); **H8 sim** (despesa em CR bloqueado ou
+  inativo continua contando); **Programado sim**; os códigos do motorista da v1 (TBV, TBE, FOL, FÉR, ATS, FRD,
+  FLT, TBX); **dois motoristas por conjunto fora da primeira versão**; H9, H10 e H11 como já registradas.
+  Com H1, H6 e H8 fechadas, V0, C0 e os vínculos com história deixam de estar pendentes (bloco B3).
+- **Datas fora de faixa:** os 18 títulos (15 de 2028 e 2029, 3 de 2206 e 2926) vão ao financeiro por um CSV
+  local (número do título, natureza e datas; sem valor, pessoa ou placa) para **corrigir no Sankhya**, para o erro
+  não voltar na próxima carga. Enquanto isso ficam fora do resultado e na fila de exceções. Se algum for
+  legítimo (parcela futura de contrato, por exemplo), o financeiro diz qual e por quê.
+- **Segurança da integração com o Sankhya (pendência):** a integração **antiga ficou exposta e deve ter as
+  credenciais trocadas**. O Eixo terá uma integração **nova e exclusiva**, com usuário **somente de leitura**
+  (Client ID, Client Secret e X-Token novos), entregue por **canal seguro** (gerenciador de senhas ou
+  pessoalmente), **nunca por e-mail ou WhatsApp**. Valor nenhum entra no repositório, no chat, em log ou no
+  CI; vão para o `.env.local` fora do Git e para os segredos dos workers. A ponte do Sankhya continua para o
+  segundo tempo.
+- **Regras do modo terminar:** blocos B1 a B10 em ordem, sem pedir autorização entre eles; antes de construir
+  cada tela, uma ficha em `docs/fichas-de-tela/<rota>.md` (regra anti-genérico); critérios de estrutura (k)
+  "sem beco de ação" e (l) "toda linha de lista tem o olhinho"; Parceiros por último (B9), com a Conciliação
+  ganhando as ações que hoje não tem. Para só se o CI ficar vermelho por código, ou se algo tocar a nuvem ou
+  dado real.
+- **Quem decidiu:** Alexandre.
+
 ## 11/11/2026 — Acompanhamento v2: legenda gerada, tons de cor e status do motorista
 
 - **Decisões que Alexandre assume:** Programado **sim**; os códigos do motorista da v1 (TBV, TBE, FOL, FÉR,
