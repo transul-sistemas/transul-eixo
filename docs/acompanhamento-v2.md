@@ -39,6 +39,16 @@ Companheiros: `docs/padrao-de-telas.md`, `docs/gerenciador-de-processos.md` (o d
 | Medida do dia | **"X de Y conjuntos com lançamento hoje"** |
 | Fora de conjunto | Implemento solto, equipamento, caminhão e apoio aparecem numa seção própria abaixo, uma linha por placa |
 
+**Largura fluida (regra de 11/11/2026).** Hoje as colunas dos dias têm largura fixa e, em tela larga (perto de
+1667 px, no tema escuro), sobra uma faixa vazia depois do dia 30. A grade passa a **preencher a largura do cartão**:
+colunas dos dias com `repeat(var(--dias), minmax(40px, 1fr))` e teto de cerca de 80 px por célula; a primeira coluna
+(o conjunto) é **fixa e sticky**; o número de colunas **segue os dias do mês** (28 a 31). Em tela estreita a grade
+**rola dentro do cartão**, com o cabeçalho dos dias e a primeira coluna fixos, e a **página nunca ganha rolagem
+horizontal**. Seletor de densidade **Compacto ou Confortável**, lembrado por usuário. Dia da semana no
+cabeçalho, fim de semana com fundo levemente diferente e coluna de hoje destacada. **Vale também para a grade do
+Movimento.** Regra geral em `docs/padrao-de-telas.md` ("tabela em grade preenche a largura; só rola por dentro");
+critério de aceite e2e na fatia A1 do plano.
+
 Definição da medida (vai para `docs/glossario.md`): **Y** = conjuntos ativos no dia (cavalo não baixado
 com composição vigente); **X** = os que têm **ao menos um evento de situação com `em` nesse dia** (de
 qualquer origem). Mostra também "sem lançamento hoje: N", que leva ao filtro.

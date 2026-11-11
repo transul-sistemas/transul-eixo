@@ -24,10 +24,18 @@ só agregados); sem nuvem até Alexandre pedir; sem Sankhya e sem API nesta etap
   `docs/glossario.md`.
 - **Telas:** `/frota/acompanhamento` (modo Grade): linha por conjunto, implementos recuados, seção "Fora de
   conjunto", cabeçalho e primeira coluna fixos, 20 por página, olho no fim da linha, estado na URL.
+- **Largura fluida (regra de 11/11/2026, `docs/padrao-de-telas.md`):** as colunas dos dias usam
+  `repeat(var(--dias), minmax(40px, 1fr))` com teto de cerca de 80 px por célula; a primeira coluna (o conjunto)
+  é fixa e sticky; em tela estreita a grade rola **dentro do cartão**, com o cabeçalho dos dias e a primeira
+  coluna fixos, e a **página nunca ganha rolagem horizontal**; as colunas seguem os dias do mês (28 a 31);
+  seletor de densidade **Compacto ou Confortável**, lembrado por usuário; dia da semana no cabeçalho, fim de
+  semana com fundo levemente diferente e coluna de hoje destacada. **Vale também para a grade do Movimento**
+  (A2).
 - **Testes de aceite:** pgTAP (o implemento herda a sigla do cavalo; engatar e desengatar no meio do mês muda
   a linha no dia certo; X de Y bate com a contagem manual numa fixture fictícia; motorista só com Pessoas;
-  RLS por perfil); unitário das regras de herança em `lib/dominio/`; e2e em 1366 e 1920 sem rolagem lateral
-  da página; teste de rótulo e ícone da coluna de hoje (não só cor).
+  RLS por perfil); unitário das regras de herança em `lib/dominio/`; e2e que **mede**, em **1366, 1667 e 1920 px**, que a soma das colunas ocupa a largura do cartão (sem sobra
+  à direita) e que em **1092 px** a rolagem é interna, nos temas claro e escuro, mais o e2e do caminho principal
+  sem rolagem lateral da página; teste de rótulo e ícone da coluna de hoje (não só cor).
 - **Dependências:** a composição vigente (`nucleo.composicao`) e a nomenclatura (já existem). Para ver
   movimento de verdade, os dados de teste da demonstração (cenário 4).
 
@@ -53,7 +61,7 @@ só agregados); sem nuvem até Alexandre pedir; sem Sankhya e sem API nesta etap
   - Movimento: a lista de eventos do dia (quem, o quê, quando, origem), paginada, com filtro por sigla,
     conjunto e origem (**o desenho fino do Movimento é desta fatia**).
 - **Telas:** o popup do assistente (variante central de `components/wizard/`), o modo rápido pelo cabeçalho do
-  dia, o tracejado do Programado na grade, a tela Movimento.
+  dia, o tracejado do Programado na grade, a tela Movimento. A grade do Movimento segue a **largura fluida** (A1).
 - **Testes de aceite:** pgTAP (atômico: tudo ou nada; chave de envio repetida não duplica; só o último evento
   é corrigido; correção tardia marcada; mês fechado recusa sem permissão; programado fora de "X de Y", da
   disponibilidade e do resultado; confirmar no dia grava o evento real; RLS por perfil); unitário dos grupos

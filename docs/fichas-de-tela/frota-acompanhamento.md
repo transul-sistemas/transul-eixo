@@ -82,6 +82,21 @@ contagem de linhas.
 
 ---
 
+## Largura fluida (regra de 11/11/2026)
+
+A grade **preenche a largura do cartão** e só rola por dentro (`docs/padrao-de-telas.md`):
+
+- colunas dos dias com `repeat(var(--dias), minmax(40px, 1fr))` e teto de cerca de 80 px por célula; **o número de
+  colunas segue os dias do mês** (28 a 31; o protótipo mostra 9 dias só para caber no desenho);
+- a **primeira coluna** (conjunto, com os implementos embaixo) tem largura fixa e é **sticky**;
+- em tela estreita (1092 px) a grade **rola dentro do cartão**, com o **cabeçalho dos dias e a primeira coluna
+  fixos**; a **página nunca ganha rolagem horizontal**;
+- **densidade Compacto ou Confortável** lembrada por usuário; **dia da semana** no cabeçalho, **fim de semana** com
+  fundo levemente diferente e **coluna de hoje** destacada (com rótulo);
+- vale também para a grade do **Movimento**;
+- **aceite (e2e):** em 1366, 1667 e 1920 px a soma das colunas ocupa a largura do cartão, sem sobra à direita; em 1092 px
+  a rolagem é interna; nos temas claro e escuro.
+
 ## Rota e estado
 
 - Rota: `/frota/acompanhamento` (modo Grade, `?modo=grade`). Módulo Frota (cor `#4338CA`).
@@ -128,7 +143,8 @@ com o motivo.
 - [ ] **Estados:** vazio ("Sem dados ainda: depende de X"), carregando (esqueleto), erro (mensagem por causa e
   "Tentar de novo"), sem permissão, dado parcial; cada estado que pede algo oferece a ação.
 - [ ] **Tema claro e escuro** (primeira classe), com os tokens e o contraste.
-- [ ] **1366 e 1092:** sem rolagem lateral da página; em 1920 aparecem mais colunas, sem apenas esticar.
+- [ ] **Largura (1366, 1667, 1920 e 1092):** a soma das colunas ocupa a largura do cartão, sem sobra à direita, em
+  1366, 1667 e 1920; em 1092 a rolagem é interna e a página não rola; cabeçalho dos dias e primeira coluna fixos.
 
 **O que sempre difere por natureza (não é desvio):** a placa é o componente da **mini placa Mercosul** em
 **Barlow Semi Condensed** (o protótipo desenha uma placa genérica); os **ícones são Tabler** (o protótipo usa
