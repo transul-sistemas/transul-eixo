@@ -8,6 +8,15 @@ Modelo de entrada:
 
 ---
 
+## 11/11/2026 — Receita em duas linhas, corte já aplicado na origem, dados congelados e data fora de faixa
+
+Lote de conferência de `docs/cr-regras.md` (divergências 5 e 6). Decisões e hipóteses, por assunto.
+
+- **Receita em duas linhas por tipo de documento (divergência 5).** Uma única regra, `nucleo.linha_de_receita(tipo_documento, status_cte, serie, codtipoper)`, devolve `cte`, `nfse` ou nulo, e substitui o filtro `coalesce(status_cte, 'A') = 'A'` que estava repetido em seis lugares (cascata, Visão geral dos Resultados, conciliação de Parceiros, ficha completa e as cópias). CT-e entra com status `A` ou, sem status, na série `V` (frete direto, TOP 1122, sem SEFAZ); status `I`, `R` e demais ficam fora. NFS-e entra só se a TOP estiver ativa em `config.receita_top` (1100, 1106, 1128 e 1136). **A TOP 1124 (Gestão Portuária) fica de fora, cadastrada como inativa: contaria duas vezes (a v1 conferiu).** Migration `20261116100000_receita_por_tipo_de_documento.sql`; a cascata devolve `receita_cte`, `receita_nfse` e os documentos de cada linha, e `receita` e `documentos` seguem como totais.
+- **Hipótese H9 (simples e reversível):** a NFS-e, com ou sem placa, vai para a operação pelo centro da nota (`codcencus`), como o CT-e; a placa não decide a operação. NFS-e sem placa ou na placa genérica já cai certo por isso (provado no pgTAP 107).
+- **Hipótese H10:** CT-e sem status e fora da série `V` não é receita (a regra antiga o contava pelo `coalesce`). No staging local isso é 1 documento em nov/2025 (R$ 7.262,50); set e out/2026 não mudam.
+- **Quem decidiu:** Alexandre (travas e o escopo do lote, 11/11/2026); as hipóteses H9 e H10 aguardam confirmação dele.
+
 ## 11/11/2026 — Estrutura completa, gerenciador de processos e vínculos com história
 
 - **Contexto (Alexandre, 11/11/2026):** o Eixo é a versão 2 da v1. Não copiamos: a v1 é gabarito de processos e de regras (`docs/propostas`, `DIAGNOSTICO_SISTEMA`, dicionário de indicadores). Portamos **regras**, não tabelas. Corrigimos o que estava errado (uma fonte única por etapa; papel rígido por subsistema; "ajuste manual" fora do sistema) e trazemos boas práticas atuais. Só documentação: nenhum código, migration ou teste de produto entrou com esta entrada.
