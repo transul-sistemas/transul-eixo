@@ -1697,7 +1697,10 @@ isOneToOne: false
                 }
           }
           Functions: {
-            "abastecimento_do_mes":
+            "abastecimento_ate":
+{ Args: Record<PropertyKey, never>; Returns: string
+                           },
+"abastecimento_do_mes":
 { Args: { "p_busca"?: string,"p_mes"?: string,"p_ordem"?: string,"p_pagina"?: number,"p_tam"?: number }; Returns: Json
                            },
 "agora_do_acompanhamento":
@@ -1890,6 +1893,9 @@ isOneToOne: false
                            },
 "filial_do_cr_em":
 { Args: { "p_ativo_id": string,"p_em": string }; Returns: string
+                           },
+"folha_ate":
+{ Args: Record<PropertyKey, never>; Returns: string
                            },
 "garagem_em":
 { Args: { "p_ativo_id": string,"p_em": string }; Returns: string
@@ -2181,6 +2187,9 @@ isOneToOne: false
 "registrar_evento":
 { Args: { "p_ativo_id": string,"p_camada"?: string,"p_em": string,"p_em_origem"?: Database["config"]['Enums']["origem_da_data"],"p_justificativa"?: string,"p_origem"?: string,"p_sigla": string }; Returns: string
                            },
+"registrar_excecoes_de_cte_sem_status":
+{ Args: Record<PropertyKey, never>; Returns: number
+                           },
 "registrar_excecoes_de_data":
 { Args: Record<PropertyKey, never>; Returns: number
                            },
@@ -2233,6 +2242,9 @@ isOneToOne: false
                            },
 "texto_simples":
 { Args: { "p_texto": string }; Returns: string
+                           },
+"tipo_da_data":
+{ Args: { "p_data": string }; Returns: string
                            },
 "tipo_do_cr":
 { Args: { "p_participa_da_frota": boolean,"p_veiculo_obrigatorio": boolean }; Returns: Database["nucleo"]['Enums']["tipo_de_cr"]
