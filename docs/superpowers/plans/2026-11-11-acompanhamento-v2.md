@@ -104,3 +104,47 @@ só agregados); sem nuvem até Alexandre pedir; sem Sankhya e sem API nesta etap
 - **Dependências:** A3 (a aba existe); a conferência da política de uso dos tiles do OpenStreetMap; a ponte
   do Sankhya para origem e destino das viagens e para o km faturado (até lá, o par é o das duas cidades
   consecutivas e o km faturado mostra "Sem dados ainda").
+
+## A5. Legenda gerada e tons de cor
+
+- **Modelo e ritmo:** tela e regra pura; uma migration só se `config.status` for a fonte do catálogo.
+  Risco baixo a médio (visual e teste).
+- **Objetivo:** a legenda sai da régua, com os cinco tons de verde e os tons dos outros grupos, e a sigla é
+  sempre escrita (a cor só reforça).
+- **Tabelas e funções:** o campo **significado** em `lib/dominio/status.ts` (e em `config.status`, com o
+  teste de espelho existente, se for a fonte); nenhuma função de leitura nova: a tela da legenda lê o
+  catálogo. Tokens `--status-atividade-1` a `-5` (e os de âmbar, vermelho e cinza) em `app/globals.css`,
+  nos temas claro e escuro, lidos só pelos tokens.
+- **Telas:** botão **"Legenda"** e **faixa rápida** na grade; tela **"Legenda e siglas"**
+  (`/frota/acompanhamento/legenda`) com busca e "Imprimir ou salvar em PDF"; nome da sigla ao passar o mouse
+  e ao tocar (`aria-label` e balão); sem rolagem lateral em 1366, 1092, 820 e 390.
+- **Testes de aceite:** **completude da régua** (falha se faltar nome, grupo, tom ou significado, ou se uma
+  sigla não aparecer na legenda); **contraste de 4,5:1** em todos os pares fundo e texto de status, nos dois
+  temas; teste de que nenhuma cor de status está escrita à mão fora dos tokens; teste de componente da busca
+  e do balão ao toque; e2e: abrir a legenda pelo botão e achar uma sigla pela busca.
+- **Dependências:** nenhuma (independente de A1). Valores do tema escuro e dos outros grupos aguardam
+  confirmação.
+
+## A6. Status do motorista
+
+- **Modelo e ritmo:** banco (tabela nova, RLS por Pessoas) e tela. Risco alto (dado de pessoa, permissão):
+  para no checkpoint.
+- **Objetivo:** a linha fina do motorista sob cada conjunto, a contagem por status na faixa do topo e a aba
+  Motorista com o calendário do mês; o realizado do dia é diferente da escala; causa e efeito entre motorista
+  e conjunto.
+- **Tabelas e funções:** `pessoas.status_do_dia_do_motorista` (pessoa, dia, código, origem, registrado por e
+  quando, exclusão lógica com motivo, versão; único por pessoa e dia vigente), RLS só para quem tem Pessoas ›
+  ver; função `pessoas.motorista_do_conjunto_no_mes(p_conjunto, p_mes)` (realizado, escala e substituto,
+  security invoker, sem remuneração); `pessoas.contagem_de_status_do_dia(p_dia)`; a regra de causa e efeito
+  em `lib/dominio/` (motorista de folga ou férias sem substituto leva o conjunto a FOg ou FEr); a tarefa
+  "indicar substituto" na caixa de Tarefas (P1) quando há férias programadas sem substituto.
+- **Telas:** linha fina com interruptor na grade (dias futuros em itálico e pontilhado), chips de motorista
+  na faixa do topo, aba **Motorista** com o calendário do mês; **só para quem vê Pessoas**; remuneração,
+  diária e premiação só com Pessoas e Resultados.
+- **Testes de aceite:** pgTAP (o realizado é único por pessoa e dia; correção só com motivo; RLS: sem Pessoas
+  não há linha nem aba; função sem coluna de remuneração); unitário da causa e efeito (folga ou férias sem
+  substituto vira FOg ou FEr; com substituto não); a tarefa nasce uma vez (idempotente); e2e do caminho
+  principal e teste de que perfil sem Pessoas não enxerga o motorista.
+- **Dependências:** A1 (grade por conjunto), P1 (caixa de Tarefas), os códigos do motorista confirmados e o
+  mapeamento de T, F, FE e AT da escala atual para os códigos novos. **Dois motoristas por conjunto ficam
+  fora desta fatia.**
