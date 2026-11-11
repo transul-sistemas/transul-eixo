@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Wizard em popup: situação</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:'Barlow',sans-serif;color:#0f1729;background:#f6f7fb}
+.opt{display:inline-flex;align-items:center;gap:8px;padding:9px 14px;border-radius:10px;border:1px solid #d9dde8;background:#fff;font-size:14px;font-weight:500;color:#0f1729;font-family:'Barlow',sans-serif;cursor:pointer}
+.opt b{font-weight:700;font-size:13px;color:#0f5c3d}
+.opt.sel{background:#3355ff;border-color:#3355ff;color:#fff}
+.opt.sel b{color:#fff}
+.grp{font-size:12px;font-weight:700;letter-spacing:.06em;color:#5a6478;margin:14px 0 8px}
+.step{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:500;color:#5a6478}
+.dot{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;background:#eceef4;color:#5a6478}
+.dot.ok{background:#22a06b;color:#fff}
+.dot.on{background:#3355ff;color:#fff}
+.btn{padding:10px 18px;border-radius:10px;font-size:15px;font-weight:600;font-family:'Barlow',sans-serif;cursor:pointer;border:1px solid #d9dde8;background:#fff;color:#0f1729}
+.btn.pri{background:#3355ff;border-color:#3355ff;color:#fff}
+.sk{background:#e9ecf3;border-radius:8px}
+</style>
+</helmet>
+<div style="position:relative;box-sizing:border-box;min-height:880px;background:#f6f7fb;overflow:hidden">
+  <div style="padding:20px 24px;display:flex;flex-direction:column;gap:12px">
+    <div class="sk" style="height:22px;width:220px"></div>
+    <div class="sk" style="height:34px;width:300px"></div>
+    <div class="sk" style="height:90px"></div>
+    <div class="sk" style="height:70px"></div><div class="sk" style="height:70px"></div><div class="sk" style="height:70px"></div><div class="sk" style="height:70px"></div>
+  </div>
+  <div style="position:absolute;left:0;top:0;right:0;bottom:0;background:rgba(15,23,41,.55)"></div>
+
+  <div role="dialog" aria-label="Lançar situação" style="position:absolute;left:50%;top:36px;transform:translateX(-50%);width:700px;max-width:94%;background:#fff;border-radius:16px;box-shadow:0 24px 64px rgba(15,23,41,.35);box-sizing:border-box;padding:24px 28px;display:flex;flex-direction:column;gap:14px">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
+      <div>
+        <h2 style="margin:0;font-size:22px;font-weight:700">Lançar situação</h2>
+        <div style="font-size:14px;color:#5a6478;margin-top:2px"><b style="color:#0f1729">ZDM1A01</b> · Rodotrem · quarta-feira, 11 de novembro de 2026</div>
+      </div>
+      <button class="btn" aria-label="Fechar" style="padding:6px 12px">×</button>
+    </div>
+
+    <div style="display:flex;gap:18px;flex-wrap:wrap;padding:10px 0;border-top:1px solid #eceef4;border-bottom:1px solid #eceef4">
+      <span class="step"><span class="dot ok">✓</span>Dia e conjunto</span>
+      <span class="step" style="color:#0f1729"><span class="dot on">2</span>Situação</span>
+      <span class="step"><span class="dot">3</span>Hora e observação</span>
+      <span class="step"><span class="dot">4</span>Conferir</span>
+    </div>
+
+    <div>
+      <div class="grp" style="margin-top:0">HISTÓRICO DO DIA · 2 REGISTROS</div>
+      <div style="display:flex;flex-direction:column;gap:8px;font-size:14px">
+        <div style="display:flex;gap:10px;align-items:center"><span style="color:#5a6478;width:44px">09:21</span><span class="opt" style="padding:3px 10px;cursor:default"><b>DEs</b> Descarregando</span><span style="color:#5a6478">Gestor Demo 01</span></div>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span style="color:#5a6478;width:44px">11:13</span><span class="opt" style="padding:3px 10px;cursor:default"><b>ETc</b> Em trânsito carregado</span><span style="color:#5a6478">Gestor Demo 01 · <b style="color:#3355ff">vigente</b></span><button class="btn" style="padding:3px 10px;font-size:13px;margin-left:auto">Corrigir o último evento</button></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="grp" style="margin-top:0">NOVA SITUAÇÃO · SÓ AS VÁLIDAS PARA ESTE CONJUNTO</div>
+      <div class="grp" style="margin-top:6px">EM OPERAÇÃO</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="opt"><b>ETc</b> Em trânsito carregado</button><button class="opt"><b>ETv</b> Em trânsito vazio</button><button class="opt sel"><b>CAr</b> Carregando</button><button class="opt"><b>DEs</b> Descarregando</button></div>
+      <div class="grp">AGUARDANDO</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="opt"><b>ACe</b> Aguardando carregamento</button><button class="opt"><b>ADe</b> Aguardando descarga</button><button class="opt"><b>CAn</b> Carregado aguardando nota</button></div>
+      <div class="grp">MANUTENÇÃO</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="opt"><b style="color:#8a1f24">MAc</b> Manutenção carregado</button><button class="opt"><b style="color:#8a1f24">MAt</b> Manutenção tombado</button><button class="opt"><b style="color:#8a1f24">MAv</b> Manutenção vazio</button></div>
+      <div class="grp">PARADO</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="opt"><b style="color:#7a5200">FOg</b> Folga</button><button class="opt"><b style="color:#7a5200">FEr</b> Férias</button><button class="opt"><b style="color:#7a5200">SMo</b> Sem motorista</button><button class="opt"><b style="color:#8a1f24">SDo</b> Sem documento</button></div>
+      <div class="grp">OPERACIONAL</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="opt"><b>DOp</b> Disponível no Operacional</button></div>
+    </div>
+
+    <div style="font-size:13px;color:#5a6478;background:#f6f7fb;border-radius:10px;padding:10px 12px">Manutenção, sem documento ou problema documental em um implemento engatado deixam o conjunto inteiro impedido. Vendido, sucata e alugado não são lançados aqui: nascem da posse e da baixa.</div>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;border-top:1px solid #eceef4;padding-top:14px">
+      <button class="btn">Cancelar</button>
+      <div style="display:flex;gap:10px"><button class="btn">Voltar</button><button class="btn pri">Continuar</button></div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1360,"height":880}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

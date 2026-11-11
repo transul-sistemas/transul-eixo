@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Meu dia: receber placas</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:'Barlow',sans-serif;color:#0f1729;background:#f6f7fb}
+.sk{background:#e9ecf3;border-radius:8px}
+.btn{padding:10px 18px;border-radius:10px;font-size:15px;font-weight:600;font-family:'Barlow',sans-serif;cursor:pointer;border:1px solid #d9dde8;background:#fff;color:#0f1729}
+.btn.pri{background:#3355ff;border-color:#3355ff;color:#fff}
+.plate{display:inline-block;border:1.5px solid #1d3a8a;border-top:5px solid #1d3a8a;border-radius:4px;background:#fff;font-weight:700;font-size:14px;letter-spacing:1px;padding:0 5px;color:#0f1729}
+.tg{display:inline-block;padding:2px 9px;border-radius:999px;font-size:12px;font-weight:700}
+.vig{background:#d3efe3;color:#0f5c3d}
+.late{background:#fadadb;color:#8a1f24}
+.warn{background:#fbecc7;color:#7a5200}
+.mut{color:#5a6478;font-size:13px}
+.r{display:grid;grid-template-columns:200px 170px 200px 130px 1fr;gap:10px;align-items:center;padding:10px 0;border-top:1px solid #eceef4;font-size:14px}
+.sg{display:flex;gap:0}
+.sg button{padding:7px 10px;font-size:13px;font-weight:600;font-family:'Barlow',sans-serif;cursor:pointer;border:1px solid #d9dde8;background:#fff;color:#0f1729}
+.sg button:first-child{border-radius:8px 0 0 8px}
+.sg button:last-child{border-radius:0 8px 8px 0}
+.sg .a{background:#d3efe3;border-color:#22a06b;color:#0f5c3d}
+.sg .p{background:#fbecc7;border-color:#e8a317;color:#7a5200}
+.sg .x{background:#fadadb;border-color:#e5484d;color:#8a1f24}
+.h{font-size:12px;font-weight:700;letter-spacing:.05em;color:#5a6478}
+.dot{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;background:#eceef4;color:#5a6478}
+.dot.on{background:#3355ff;color:#fff}
+.dot.ok{background:#22a06b;color:#fff}
+</style>
+</helmet>
+<div style="position:relative;box-sizing:border-box;min-height:900px;background:#f6f7fb;overflow:hidden">
+  <div style="padding:20px 24px;display:flex;flex-direction:column;gap:12px">
+    <div class="sk" style="height:22px;width:220px"></div><div class="sk" style="height:34px;width:300px"></div><div class="sk" style="height:90px"></div>
+    <div class="sk" style="height:70px"></div><div class="sk" style="height:70px"></div><div class="sk" style="height:70px"></div><div class="sk" style="height:70px"></div>
+  </div>
+  <div style="position:absolute;left:0;top:0;right:0;bottom:0;background:rgba(15,23,41,.55)"></div>
+
+  <div role="dialog" aria-label="Receber placas" style="position:absolute;left:50%;top:24px;transform:translateX(-50%);width:1100px;max-width:96%;background:#fff;border-radius:16px;box-shadow:0 24px 64px rgba(15,23,41,.35);box-sizing:border-box;padding:22px 28px;display:flex;flex-direction:column;gap:12px">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap">
+      <div><h2 style="margin:0;font-size:22px;font-weight:700">Receber placas</h2>
+      <div style="font-size:14px;color:#5a6478;margin-top:2px">5 pedidos esperando você · quarta-feira, 11 de novembro de 2026</div></div>
+      <div style="display:flex;gap:14px;align-items:center;font-size:13px;color:#5a6478;flex-wrap:wrap">
+        <span style="display:flex;gap:6px;align-items:center"><span class="dot on">1</span><b style="color:#0f1729">Receber placas</b></span><span>›</span>
+        <span style="display:flex;gap:6px;align-items:center"><span class="dot">2</span>Posição do dia</span><span>›</span>
+        <span style="display:flex;gap:6px;align-items:center"><span class="dot">3</span>Confirmar carteira</span>
+      </div>
+    </div>
+    <div style="font-size:13px;color:#5a6478;background:#f6f7fb;border-radius:10px;padding:8px 12px">Tarefa 1 de 3 do seu dia. Ao confirmar, o sistema abre a próxima sozinho. Aceitar passa a placa para a sua carteira; com pendências, ela entra e a pendência vira tarefa; recusar devolve ao gestor de origem, com o motivo.</div>
+
+    <div>
+      <div class="r" style="border-top:0"><span class="h">PLACA</span><span class="h">ENVIADA POR</span><span class="h">CR VIGENTE</span><span class="h">PENDÊNCIAS</span><span class="h">SUA DECISÃO</span></div>
+      <div class="r"><div><span class="plate">ZDM1A02</span><div class="mut">Bitrem · cavalo e 2 implementos</div></div><div>Gestor Demo 03<div><span class="tg late">há 8 dias</span></div></div><div><b>CR011</b> <span class="tg vig">Vigente</span><div class="mut">Operação A</div></div><div>nenhuma</div><div class="sg"><button class="a" aria-pressed="true">Aceitar</button><button>Com pendências</button><button>Recusar</button></div></div>
+      <div class="r"><div><span class="plate">ZDM1B07</span><div class="mut">Semirreboque</div></div><div>Gestor Demo 04<div class="mut">há 2 dias</div></div><div><span class="tg warn">sem CR vigente</span><div class="mut">vira tarefa de cadastro</div></div><div>2 · RENAVAM e carroceria</div><div class="sg"><button>Aceitar</button><button class="p" aria-pressed="true">Com pendências</button><button>Recusar</button></div></div>
+      <div class="r"><div><span class="plate">ZDM1A09</span><div class="mut">Cavalo</div></div><div>Gestor Demo 03<div class="mut">há 1 dia</div></div><div><b>CR009</b> <span class="tg vig">Vigente</span><div class="mut">Operação B</div></div><div>nenhuma</div><div class="sg"><button class="a" aria-pressed="true">Aceitar</button><button>Com pendências</button><button>Recusar</button></div></div>
+      <div class="r"><div><span class="plate">ZDM1C03</span><div class="mut">Caminhão</div></div><div>Gestor Demo 05<div class="mut">hoje</div></div><div><b>CR015</b> <span class="tg vig">Vigente</span><div class="mut">Operação C</div></div><div>nenhuma</div>
+        <div><div class="sg"><button>Aceitar</button><button>Com pendências</button><button class="x" aria-pressed="true">Recusar</button></div>
+        <div style="margin-top:6px;display:flex;gap:8px;align-items:center;flex-wrap:wrap"><label class="mut" for="mot">Motivo (obrigatório)</label><select id="mot" style="padding:6px 8px;border-radius:8px;border:1px solid #e5484d;font-family:'Barlow',sans-serif;font-size:13px"><option>Placa não confere com o combinado</option></select></div></div></div>
+      <div class="r"><div><span class="plate">ZDM1A11</span><div class="mut">Cavalo</div></div><div>Gestor Demo 03<div class="mut">hoje</div></div><div><b>CR004</b> <span class="tg vig">Vigente</span><div class="mut">Operação A</div></div><div>nenhuma</div><div class="sg"><button class="a" aria-pressed="true">Aceitar</button><button>Com pendências</button><button>Recusar</button></div></div>
+    </div>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;border-top:1px solid #eceef4;padding-top:12px;flex-wrap:wrap">
+      <div style="font-size:14px"><b>3 aceitas</b> · <b>1 com pendências</b> · <b>1 recusada</b></div>
+      <div style="display:flex;gap:10px"><button class="btn">Cancelar</button><button class="btn pri">Confirmar as 5 decisões e ir para a Posição do dia</button></div>
+    </div>
+    <div style="font-size:12px;color:#5a6478;margin-top:-4px">Cada placa é um pedido independente: se uma falhar, as outras seguem e a tela mostra qual e por quê. Só o gestor de destino decide; o Administrador não age em nome de ninguém. Dados de exemplo (fictícios).</div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1360,"height":900}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

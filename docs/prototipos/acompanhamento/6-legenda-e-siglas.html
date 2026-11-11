@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Legenda e siglas</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:'Barlow',sans-serif;color:#0f1729;background:#f6f7fb}
+.card{background:#fff;border:1px solid #eceef4;border-radius:12px;padding:14px 16px}
+.k{font-size:12px;font-weight:700;letter-spacing:.06em;color:#5a6478;margin-bottom:6px}
+.li{display:flex;gap:10px;align-items:baseline;padding:5px 0;border-top:1px solid #f1f2f7;font-size:14px}
+.li:first-of-type{border-top:0}
+.sg{flex:none;width:44px;text-align:center;padding:2px 0;border-radius:8px;font-weight:700;font-size:13px}
+.g{background:#d3efe3;color:#0f5c3d}
+.g1{background:#14532d;color:#ffffff}
+.g2{background:#1a7f4b;color:#ffffff}
+.g3{background:#7fd6a2;color:#0b3d24}
+.g4{background:#b6ebcb;color:#0f5c3d}
+.g5{background:#dff5e8;color:#0f5c3d;box-shadow:inset 0 0 0 1.5px #22a06b}
+.a{background:#fbecc7;color:#7a5200}
+.r{background:#fadadb;color:#8a1f24}
+.b{background:#d5ebfb;color:#0b5688}
+.f{background:#e5e8ee;color:#4a5568}
+.m{flex:none;width:44px;text-align:center;padding:0;height:22px;line-height:19px;border-radius:999px;font-weight:700;font-size:11px;border:1.5px solid;background:#fff;box-sizing:border-box}
+.m.v{border-color:#22a06b;color:#0f5c3d}
+.m.c{border-color:#2e9bea;color:#0b5688}
+.m.fl{border-color:#e8a317;color:#7a5200}
+.m.at{border-color:#e5484d;color:#8a1f24}
+.m.fr{border-color:#8a94a6;color:#4a5568}
+.m.x{border-color:#6a2a9a;color:#6a2a9a}
+.nm{font-weight:600}
+.ds{color:#5a6478;font-size:13px}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(300px,1fr));gap:14px}
+.tag{display:inline-block;padding:1px 8px;border-radius:999px;font-size:12px;font-weight:600}
+.btn{padding:8px 14px;border-radius:10px;font-size:14px;font-weight:600;font-family:'Barlow',sans-serif;cursor:pointer;border:1px solid #d9dde8;background:#fff;color:#0f1729}
+</style>
+</helmet>
+<div style="box-sizing:border-box;padding:20px 24px;display:flex;flex-direction:column;gap:14px;min-height:1000px;background:#f6f7fb">
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+    <div>
+      <div style="font-size:13px;color:#5a6478">Frota › Acompanhamento › Legenda</div>
+      <h1 style="margin:2px 0 0;font-size:26px;font-weight:700">Legenda e siglas</h1>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <label style="font-size:14px;color:#5a6478" for="busca">Buscar sigla ou palavra</label>
+      <input id="busca" type="text" placeholder="ex.: ACe, folga" style="padding:9px 12px;border-radius:10px;border:1px solid #d9dde8;font-size:14px;font-family:'Barlow',sans-serif;width:200px">
+      <button class="btn">Imprimir ou salvar em PDF</button>
+    </div>
+  </div>
+  <div style="font-size:13px;color:#5a6478;background:#fff;border:1px solid #eceef4;border-radius:10px;padding:10px 14px">Esta legenda é gerada da régua de status: uma fonte só, nunca digitada à mão. Toda sigla tem nome, grupo e significado, e um teste falha se faltar algum. Também aparece ao passar o mouse ou tocar em qualquer sigla da grade.</div>
+  <div style="background:#fff;border:1px solid #eceef4;border-radius:10px;padding:12px 14px;display:flex;gap:14px;align-items:center;flex-wrap:wrap;font-size:14px">
+    <b>Tons de verde</b>
+    <span style="color:#5a6478">quanto mais escuro, mais perto de gerar receita:</span>
+    <span class="sg g1" style="width:auto;padding:2px 10px">ETc carregado</span>
+    <span class="sg g2" style="width:auto;padding:2px 10px">DEs CAr no ponto</span>
+    <span class="sg g3" style="width:auto;padding:2px 10px">ETv vazio</span>
+    <span class="sg g4" style="width:auto;padding:2px 10px">ACe ADe CAn espera</span>
+    <span class="sg g5" style="width:auto;padding:2px 10px">DOp disponível</span>
+  </div>
+
+  <div class="k" style="margin:6px 0 0;font-size:14px;color:#0f1729">VEÍCULO · O QUE O CONJUNTO ESTAVA FAZENDO NO FIM DO DIA</div>
+  <div class="grid">
+    <div class="card"><div class="k">EM OPERAÇÃO</div>
+      <div class="li"><span class="sg g1">ETc</span><span><span class="nm">Em trânsito carregado</span><br><span class="ds">viajando com carga</span></span></div>
+      <div class="li"><span class="sg g3">ETv</span><span><span class="nm">Em trânsito vazio</span><br><span class="ds">viajando sem carga</span></span></div>
+      <div class="li"><span class="sg g2">CAr</span><span><span class="nm">Carregando</span><br><span class="ds">no ponto de carga, em carregamento</span></span></div>
+      <div class="li"><span class="sg g2">DEs</span><span><span class="nm">Descarregando</span><br><span class="ds">no destino, em descarga</span></span></div>
+    </div>
+    <div class="card"><div class="k">AGUARDANDO</div>
+      <div class="li"><span class="sg g4">ACe</span><span><span class="nm">Aguardando carregamento</span><br><span class="ds">na fila para carregar</span></span></div>
+      <div class="li"><span class="sg g4">ADe</span><span><span class="nm">Aguardando descarga</span><br><span class="ds">na fila para descarregar</span></span></div>
+      <div class="li"><span class="sg g4">CAn</span><span><span class="nm">Carregado aguardando nota</span><br><span class="ds">carregado, esperando a nota fiscal</span></span></div>
+    </div>
+    <div class="card"><div class="k">OPERACIONAL E PÁTIO</div>
+      <div class="li"><span class="sg g5">DOp</span><span><span class="nm">Disponível no Operacional</span><br><span class="ds">entregue à filial, esperando carga</span></span></div>
+      <div class="li"><span class="sg b">PÁT</span><span><span class="nm">Pátio</span><br><span class="ds">parado e inteiro, esperando uso</span></span></div>
+      <div style="font-size:12px;color:#5a6478;margin-top:8px">DOp não é lançada no dia: nasce da entrega ao Operacional.</div>
+    </div>
+    <div class="card" style="grid-column:span 2"><div class="k">MANUTENÇÃO E IMPEDIMENTOS · O CONJUNTO NÃO PODE RODAR</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 18px">
+        <div>
+          <div class="li"><span class="sg r">MAc</span><span><span class="nm">Manutenção carregado</span><br><span class="ds">em manutenção, com carga</span></span></div>
+          <div class="li"><span class="sg r">MAt</span><span><span class="nm">Manutenção tombado</span><br><span class="ds">tombado, em manutenção</span></span></div>
+          <div class="li"><span class="sg r">MAv</span><span><span class="nm">Manutenção vazio</span><br><span class="ds">em manutenção, sem carga</span></span></div>
+          <div class="li"><span class="sg r">MAN</span><span><span class="nm">Em manutenção</span><br><span class="ds">na oficina, serviço curto</span></span></div>
+        </div>
+        <div>
+          <div class="li"><span class="sg r">REF</span><span><span class="nm">Em reforma</span><br><span class="ds">reforma longa: estrutura, pintura</span></span></div>
+          <div class="li"><span class="sg r">SIN</span><span><span class="nm">Sinistro</span><br><span class="ds">acidente ou perda em avaliação</span></span></div>
+          <div class="li"><span class="sg r">DOC</span><span><span class="nm">Problema documental</span><br><span class="ds">gravame, CRLV ou bloqueio</span></span></div>
+          <div class="li"><span class="sg r">SDo</span><span><span class="nm">Sem documento</span><br><span class="ds">sem documento para rodar</span></span></div>
+        </div>
+      </div>
+    </div>
+    <div class="card"><div class="k">PARADO POR FALTA DE MOTORISTA</div>
+      <div class="li"><span class="sg a">FOg</span><span><span class="nm">Folga</span><br><span class="ds">motorista de folga, sem substituto</span></span></div>
+      <div class="li"><span class="sg a">FEr</span><span><span class="nm">Férias</span><br><span class="ds">motorista de férias, sem substituto</span></span></div>
+      <div class="li"><span class="sg a">SMo</span><span><span class="nm">Sem motorista</span><br><span class="ds">nenhum motorista vinculado</span></span></div>
+    </div>
+    <div class="card" style="grid-column:span 3"><div class="k">FORA DA FROTA DISPONÍVEL · NASCEM DA POSSE E DA BAIXA, NÃO DO LANÇAMENTO DO DIA</div>
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:14px;font-size:14px">
+        <div><span class="sg f" style="display:inline-block">ALU</span> <span class="nm">Alugado</span><div class="ds">alugado a terceiro</div></div>
+        <div><span class="sg f" style="display:inline-block">EMP</span> <span class="nm">Emprestado</span><div class="ds">emprestado a terceiro</div></div>
+        <div><span class="sg f" style="display:inline-block">VEN</span> <span class="nm">À venda</span><div class="ds">disponível para venda</div></div>
+        <div><span class="sg f" style="display:inline-block">SUC</span> <span class="nm">Sucata</span><div class="ds">sem uso possível</div></div>
+        <div><span class="sg f" style="display:inline-block">VND</span> <span class="nm">Vendido</span><div class="ds">baixa por venda</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="k" style="margin:10px 0 0;font-size:14px;color:#0f1729">MOTORISTA · O QUE ELE FEZ NO DIA (REALIZADO) E O QUE ESTÁ NA ESCALA (PROGRAMADO)</div>
+  <div class="grid">
+    <div class="card">
+      <div class="li"><span class="m v">TBV</span><span><span class="nm">Trabalhando em viagem</span><br><span class="ds">dia de trabalho na estrada</span></span></div>
+      <div class="li"><span class="m c">TBE</span><span><span class="nm">Trabalhando em casa</span><br><span class="ds">dia de trabalho sem viajar; a diária é outra</span></span></div>
+      <div class="li"><span class="m x">TBX</span><span><span class="nm">Trabalho extra</span><br><span class="ds">dia fora da escala normal</span></span></div>
+    </div>
+    <div class="card">
+      <div class="li"><span class="m fl">FOL</span><span><span class="nm">Folga</span><br><span class="ds">dia de descanso da escala</span></span></div>
+      <div class="li"><span class="m fl">FÉR</span><span><span class="nm">Férias</span><br><span class="ds">período de férias</span></span></div>
+      <div class="li"><span class="m fr">FRD</span><span><span class="nm">Feriado</span><br><span class="ds">dia de feriado</span></span></div>
+    </div>
+    <div class="card">
+      <div class="li"><span class="m at">ATS</span><span><span class="nm">Atestado</span><br><span class="ds">afastamento por atestado</span></span></div>
+      <div class="li"><span class="m at">FLT</span><span><span class="nm">Falta</span><br><span class="ds">ausência sem justificativa</span></span></div>
+      <div style="font-size:12px;color:#5a6478;margin-top:8px">O motorista em folga ou férias, sem substituto, faz o conjunto aparecer como FOg ou FEr. A sigla do veículo é o efeito; a do motorista é a causa.</div>
+    </div>
+  </div>
+
+  <div class="k" style="margin:10px 0 0;font-size:14px;color:#0f1729">CONJUNTOS E MARCAS DA GRADE</div>
+  <div class="grid">
+    <div class="card"><div class="k">NOME DO CONJUNTO · CALCULADO PELA ESTRUTURA</div>
+      <div class="li"><span class="tag" style="background:#eef1ff;color:#1d3a8a">Simples</span><span class="ds">1 semirreboque, de 1 a 6 eixos</span></div>
+      <div class="li"><span class="tag" style="background:#eef1ff;color:#1d3a8a">Bitrem</span><span class="ds">2 semirreboques de 2 eixos</span></div>
+      <div class="li"><span class="tag" style="background:#eef1ff;color:#1d3a8a">Bitrezão</span><span class="ds">2 semirreboques de 3 eixos</span></div>
+      <div class="li"><span class="tag" style="background:#eef1ff;color:#1d3a8a">Rodotrem</span><span class="ds">2 semirreboques e 1 dolly</span></div>
+      <div class="li"><span class="tag" style="background:#e5e8ee;color:#4a5568">Caminhão</span><span class="ds">sem implemento</span></div>
+    </div>
+    <div class="card"><div class="k">MARCAS DA CÉLULA</div>
+      <div class="li"><span class="tag" style="border:1.5px dashed #3355ff;background:#eef1ff;color:#3355ff">lançar</span><span class="ds">hoje, ainda sem lançamento</span></div>
+      <div class="li"><span class="tag" style="border:1.5px dotted #8a94a6;background:#fff;color:#5a6478;font-style:italic">ETc</span><span class="ds">programado: não conta no realizado</span></div>
+      <div class="li"><span style="flex:none;width:18px;height:18px;border-radius:50%;background:#0f1729;color:#fff;font-size:10px;display:flex;align-items:center;justify-content:center">2</span><span class="ds">quantos lançamentos houve no dia</span></div>
+      <div class="li"><span style="flex:none;width:18px;height:18px;border-radius:50%;background:#fff;border:1.5px solid #3355ff;color:#3355ff;font-size:11px;display:flex;align-items:center;justify-content:center;font-weight:700">!</span><span class="ds">a escala pede atenção: sem substituto</span></div>
+    </div>
+    <div class="card"><div class="k">TIPO DE POSSE</div>
+      <div class="li"><span class="tag" style="background:#e4e2fb;color:#2f27a0">Frota</span><span class="ds">da TranSul</span></div>
+      <div class="li"><span class="tag" style="background:#efe3fa;color:#6a2a9a">Acionista</span><span class="ds">de um acionista, administrado pela TranSul</span></div>
+      <div style="font-size:12px;color:#5a6478;margin-top:8px">As cores indicam o grupo, mas a sigla sempre aparece escrita: ninguém precisa distinguir só pela cor.</div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1360,"height":1000}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

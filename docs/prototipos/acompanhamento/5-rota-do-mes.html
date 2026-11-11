@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Rota do mês pela rodovia</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:'Barlow',sans-serif;color:#0f1729;background:#f6f7fb}
+.card{background:#fff;border:1px solid #eceef4;border-radius:12px;padding:16px}
+.k{font-size:12px;font-weight:700;letter-spacing:.06em;color:#5a6478;margin-bottom:8px}
+.tag{display:inline-block;padding:1px 9px;border-radius:999px;font-size:12px;font-weight:600}
+.plate{display:inline-block;border:1.5px solid #1d3a8a;border-top:5px solid #1d3a8a;border-radius:4px;background:#fff;font-weight:700;font-size:15px;letter-spacing:1px;padding:0 6px;color:#0f1729}
+.leg{display:flex;gap:10px;padding:10px 0;border-top:1px solid #eceef4;font-size:14px}
+.sw{width:26px;height:0;margin-top:9px;flex:none}
+.btn{padding:8px 14px;border-radius:10px;font-size:14px;font-weight:600;font-family:'Barlow',sans-serif;cursor:pointer;border:1px solid #d9dde8;background:#fff;color:#0f1729}
+</style>
+</helmet>
+<div style="box-sizing:border-box;padding:20px 24px;display:flex;flex-direction:column;gap:14px;min-height:880px;background:#f6f7fb">
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <span class="plate">ZDM1A01</span><span class="tag" style="background:#e4e2fb;color:#2f27a0">Frota</span><span class="tag" style="background:#eef1ff;color:#1d3a8a">Rodotrem</span>
+      <h1 style="margin:0;font-size:24px;font-weight:700">Rota do mês</h1>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <span class="tag" style="background:#fbecc7;color:#7a5200;font-size:13px">Rota estimada pela rodovia, sem rastreador</span>
+      <button class="btn">‹ outubro</button><b style="font-size:15px">novembro de 2026</b><button class="btn" disabled>dezembro ›</button>
+    </div>
+  </div>
+
+  <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:flex-start">
+    <div class="card" style="flex:1 1 640px;min-width:420px;padding:12px">
+      <svg viewBox="0 0 760 520" width="100%" role="img" aria-label="Mapa esquemático: a placa saiu de São Luís, passou por Imperatriz e Marabá e chegou a Parauapebas, seguindo as rodovias. Trechos carregados em linha azul contínua e trecho vazio em cinza tracejado.">
+        <rect x="0" y="0" width="760" height="520" rx="10" fill="#eef2ea"/>
+        <path d="M0 360 C120 320 200 400 320 360 S560 280 760 320" fill="none" stroke="#cfe3f2" stroke-width="20" stroke-linecap="round"/>
+        <path d="M120 0 C140 120 100 200 160 300 S260 460 240 520" fill="none" stroke="#dde6d5" stroke-width="2" stroke-dasharray="6 5"/>
+        <path d="M560 0 C540 90 600 160 580 260 S640 400 700 520" fill="none" stroke="#dde6d5" stroke-width="2" stroke-dasharray="6 5"/>
+
+        <path d="M640 70 L628 92 C610 118 596 126 580 148 L552 168 C530 180 516 196 500 214 L470 232 C452 240 440 244 430 250" fill="none" stroke="#3355ff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M430 250 C400 262 380 270 358 284 L330 300 C310 312 296 322 284 336 L262 350" fill="none" stroke="#3355ff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M262 350 L240 372 C222 392 204 404 188 420 L160 444 C146 456 138 462 130 470" fill="none" stroke="#8a94a6" stroke-width="4" stroke-dasharray="9 7" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M262 350 L240 372 C222 392 204 404 188 420 L160 444 C146 456 138 462 130 470" transform="translate(9,6)" fill="none" stroke="#22a06b" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+
+        <circle cx="640" cy="70" r="8" fill="#fff" stroke="#0f1729" stroke-width="2.5"/>
+        <rect x="652" y="56" width="92" height="24" rx="6" fill="#fff" stroke="#eceef4"/><text x="698" y="72" text-anchor="middle" font-size="13" font-weight="600" font-family="Barlow" fill="#0f1729">São Luís</text>
+        <circle cx="430" cy="250" r="8" fill="#fff" stroke="#0f1729" stroke-width="2.5"/>
+        <rect x="442" y="226" width="140" height="42" rx="6" fill="#fff" stroke="#eceef4"/><text x="512" y="244" text-anchor="middle" font-size="13" font-weight="600" font-family="Barlow" fill="#0f1729">Imperatriz</text><text x="512" y="260" text-anchor="middle" font-size="12" font-family="Barlow" fill="#7a5200">ACe · parada de 4 h</text>
+        <circle cx="262" cy="350" r="8" fill="#fff" stroke="#0f1729" stroke-width="2.5"/>
+        <rect x="150" y="318" width="150" height="42" rx="6" fill="#fff" stroke="#eceef4"/><text x="225" y="336" text-anchor="middle" font-size="13" font-weight="600" font-family="Barlow" fill="#0f1729">Marabá</text><text x="225" y="352" text-anchor="middle" font-size="12" font-family="Barlow" fill="#0f5c3d">DEs · descarga de 6 h</text>
+        <circle cx="130" cy="470" r="8" fill="#fff" stroke="#0f1729" stroke-width="2.5"/>
+        <rect x="150" y="466" width="160" height="42" rx="6" fill="#fff" stroke="#eceef4"/><text x="230" y="484" text-anchor="middle" font-size="13" font-weight="600" font-family="Barlow" fill="#0f1729">Parauapebas</text><text x="230" y="500" text-anchor="middle" font-size="12" font-family="Barlow" fill="#0f5c3d">CAr · carregamento de 9 h</text>
+
+        <rect x="196" y="392" width="92" height="24" rx="12" fill="#22a06b"/><text x="242" y="408" text-anchor="middle" font-size="12" font-weight="700" font-family="Barlow" fill="#ffffff">ZDM1A01 hoje</text>
+
+        <text x="14" y="506" font-size="11" font-family="Barlow" fill="#5a6478">Esquemático, sem escala. © OpenStreetMap · rotas: OpenRouteService</text>
+      </svg>
+      <div style="display:flex;align-items:center;gap:12px;margin-top:10px;flex-wrap:wrap">
+        <button class="btn" aria-label="Reproduzir o mês dia a dia">▶ Replay</button>
+        <label style="display:flex;align-items:center;gap:10px;flex:1;min-width:220px;font-size:13px;color:#5a6478">Dia <input type="range" min="1" max="30" value="11" style="flex:1"> <b style="color:#0f1729">11</b></label>
+      </div>
+    </div>
+
+    <div style="flex:1 1 360px;min-width:320px;display:flex;flex-direction:column;gap:14px">
+      <div class="card">
+        <div class="k">KM DO MÊS</div>
+        <div style="display:flex;gap:18px;flex-wrap:wrap">
+          <div><div style="font-size:26px;font-weight:700">1.280 km</div><div style="font-size:13px;color:#5a6478">pela estrada</div></div>
+          <div><div style="font-size:26px;font-weight:700;color:#3355ff">1.130 km</div><div style="font-size:13px;color:#5a6478">carregado</div></div>
+          <div><div style="font-size:26px;font-weight:700;color:#5a6478">150 km</div><div style="font-size:13px;color:#5a6478">vazio · 12%</div></div>
+        </div>
+      </div>
+      <div class="card" style="padding:6px 16px">
+        <div class="k" style="margin-top:10px">TRECHOS E PARADAS</div>
+        <div class="leg"><span class="sw" style="border-top:5px solid #3355ff"></span><div><b>03/11 · São Luís → Imperatriz</b><div style="color:#5a6478;font-size:13px">640 km pela estrada · carregado · rodovias: [nomes do serviço de rotas]</div></div></div>
+        <div class="leg"><span class="sw" style="border-top:5px solid #3355ff"></span><div><b>05/11 · Imperatriz → Marabá</b><div style="color:#5a6478;font-size:13px">340 km · carregado · parada de 4 h em Imperatriz (ACe)</div></div></div>
+        <div class="leg"><span class="sw" style="border-top:5px dotted #0f5c3d"></span><div><b>06/11 · Marabá</b><div style="color:#5a6478;font-size:13px">descarga de 6 h (DEs)</div></div></div>
+        <div class="leg"><span class="sw" style="border-top:4px dashed #8a94a6"></span><div><b>07/11 · Marabá → Parauapebas</b><div style="color:#5a6478;font-size:13px">150 km · vazio (ETv)</div></div></div>
+        <div class="leg"><span class="sw" style="border-top:5px dotted #0f5c3d"></span><div><b>09/11 · Parauapebas</b><div style="color:#5a6478;font-size:13px">carregamento de 9 h (CAr)</div></div></div>
+        <div class="leg"><span class="sw" style="border-top:3px solid #22a06b"></span><div><b>11/11 · Parauapebas → Marabá</b><div style="color:#5a6478;font-size:13px">150 km · carregado · em andamento hoje</div></div></div>
+      </div>
+      <div class="card" style="font-size:13px;color:#5a6478;line-height:1.5">A linha segue as rodovias, e não uma reta entre os pontos. Ela é o caminho provável entre as posições diárias de cidade, não o rastro real. Existe posição para parte da frota; as demais placas mostram <b style="color:#0f1729">Sem dados ainda</b>. Valores de exemplo (fictícios).</div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1360,"height":880}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

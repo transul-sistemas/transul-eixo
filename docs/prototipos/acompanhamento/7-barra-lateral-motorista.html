@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Barra lateral: motorista</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:'Barlow',sans-serif;color:#0f1729;background:#f6f7fb}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.t{padding:8px 14px;border-radius:10px;font-size:14px;font-weight:600;border:1px solid #eceef4;background:#fff;color:#5a6478;font-family:'Barlow',sans-serif;cursor:pointer}
+.t.on{background:#4338ca;border-color:#4338ca;color:#fff}
+.k{font-size:12px;font-weight:700;letter-spacing:.06em;color:#5a6478;margin-bottom:8px}
+.sk{background:#e9ecf3;border-radius:8px}
+.plate{display:inline-block;border:1.5px solid #1d3a8a;border-top:5px solid #1d3a8a;border-radius:4px;background:#fff;font-weight:700;font-size:16px;letter-spacing:1px;padding:0 6px;color:#0f1729}
+.tag{display:inline-block;padding:1px 9px;border-radius:999px;font-size:12px;font-weight:600}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+.wd{font-size:11px;font-weight:700;color:#5a6478;text-align:center}
+.d{height:48px;border:1px solid #eceef4;border-radius:8px;padding:3px 4px;box-sizing:border-box;display:flex;flex-direction:column;justify-content:space-between;background:#fff}
+.d i{font-style:normal;font-size:11px;color:#5a6478}
+.dv{height:18px;border-radius:999px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;border:1.5px solid;background:#fff;box-sizing:border-box}
+.dv.v{border-color:#22a06b;color:#0f5c3d}
+.dv.c{border-color:#2e9bea;color:#0b5688}
+.dv.fl{border-color:#e8a317;color:#7a5200}
+.dv.fr{border-color:#8a94a6;color:#4a5568}
+.dv.pl{border-style:dotted;font-style:italic}
+.btn{padding:8px 14px;border-radius:10px;font-size:14px;font-weight:600;font-family:'Barlow',sans-serif;cursor:pointer;border:1px solid #d9dde8;background:#fff;color:#0f1729}
+.btn.pri{background:#3355ff;border-color:#3355ff;color:#fff}
+</style>
+</helmet>
+<div style="position:relative;box-sizing:border-box;min-height:960px;background:#f6f7fb;overflow:hidden">
+  <div style="padding:20px 24px;display:flex;flex-direction:column;gap:12px;width:760px">
+    <div class="sk" style="height:22px;width:220px"></div>
+    <div class="sk" style="height:34px;width:300px"></div>
+    <div class="sk" style="height:90px"></div>
+    <div class="sk" style="height:70px"></div><div class="sk" style="height:70px"></div><div class="sk" style="height:70px"></div><div class="sk" style="height:70px"></div><div class="sk" style="height:70px"></div>
+  </div>
+  <div style="position:absolute;left:0;top:0;right:0;bottom:0;background:rgba(15,23,41,.35)"></div>
+
+  <aside aria-label="Detalhes de ZDM1A01, motorista" style="position:absolute;top:0;right:0;bottom:0;width:600px;max-width:92%;background:#fff;box-shadow:-16px 0 48px rgba(15,23,41,.25);box-sizing:border-box;padding:22px 26px;display:flex;flex-direction:column;gap:14px;overflow:hidden">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
+      <div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span class="plate">ZDM1A01</span><span class="tag" style="background:#e4e2fb;color:#2f27a0">Frota</span><span class="tag" style="background:#eef1ff;color:#1d3a8a">Rodotrem</span><span class="tag" style="background:#d3efe3;color:#0f5c3d">CAr · Carregando</span></div>
+        <div style="font-size:14px;color:#5a6478;margin-top:6px">R540 · 2024 · Filial Matriz · gestor Gestor Demo 01</div>
+      </div>
+      <button class="t" aria-label="Fechar" style="padding:6px 12px">×</button>
+    </div>
+
+    <div class="tabs" role="tablist">
+      <button class="t" role="tab">Visão geral</button>
+      <button class="t" role="tab">Financeiro</button>
+      <button class="t on" role="tab" aria-selected="true">Motorista</button>
+      <button class="t" role="tab">Combustível</button>
+      <button class="t" role="tab">Rota do mês</button>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div style="border:1px solid #eceef4;border-radius:12px;padding:12px">
+        <div style="font-weight:700;font-size:15px">Motorista Demo 01</div>
+        <div style="font-size:13px;color:#5a6478">turno dia · vínculo desde 01/10/2026</div>
+        <div style="margin-top:6px"><span class="dv v" style="display:inline-flex;padding:0 9px;height:20px">TBV</span> <span style="font-size:13px">hoje, em viagem</span></div>
+      </div>
+      <div style="border:1px solid #eceef4;border-radius:12px;padding:12px">
+        <div style="font-weight:700;font-size:15px">Motorista Demo 07</div>
+        <div style="font-size:13px;color:#5a6478">turno noite · vínculo desde 01/10/2026</div>
+        <div style="margin-top:6px"><span class="dv v" style="display:inline-flex;padding:0 9px;height:20px">TBV</span> <span style="font-size:13px">hoje, em viagem</span></div>
+      </div>
+    </div>
+    <div style="font-size:12px;color:#5a6478;margin-top:-6px">Se o conjunto tiver dois motoristas, aparecem os dois, cada um com o turno.</div>
+
+    <div>
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px"><div class="k" style="margin:0">NOVEMBRO DE 2026 · MOTORISTA DEMO 01</div><span style="font-size:12px;color:#5a6478">contorno liso: realizado · pontilhado: escala</span></div>
+      <div class="cal" style="margin-top:8px">
+        <div class="wd">dom</div><div class="wd">seg</div><div class="wd">ter</div><div class="wd">qua</div><div class="wd">qui</div><div class="wd">sex</div><div class="wd">sáb</div>
+        <div class="d"><i>1</i><span class="dv fl">FOL</span></div><div class="d"><i>2</i><span class="dv v">TBV</span></div><div class="d"><i>3</i><span class="dv v">TBV</span></div><div class="d"><i>4</i><span class="dv v">TBV</span></div><div class="d"><i>5</i><span class="dv v">TBV</span></div><div class="d"><i>6</i><span class="dv v">TBV</span></div><div class="d"><i>7</i><span class="dv v">TBV</span></div>
+        <div class="d"><i>8</i><span class="dv v">TBV</span></div><div class="d"><i>9</i><span class="dv v">TBV</span></div><div class="d"><i>10</i><span class="dv v">TBV</span></div><div class="d" style="border:2px solid #3355ff"><i style="color:#3355ff;font-weight:700">11</i><span class="dv v">TBV</span></div><div class="d"><i>12</i><span class="dv fl pl">FOL</span></div><div class="d"><i>13</i><span class="dv fl pl">FOL</span></div><div class="d"><i>14</i><span class="dv v pl">TBV</span></div>
+        <div class="d"><i>15</i><span class="dv fr pl">FRD</span></div><div class="d"><i>16</i><span class="dv v pl">TBV</span></div><div class="d"><i>17</i><span class="dv v pl">TBV</span></div><div class="d"><i>18</i><span class="dv v pl">TBV</span></div><div class="d"><i>19</i><span class="dv v pl">TBV</span></div><div class="d"><i>20</i><span class="dv fl pl">FÉR</span></div><div class="d"><i>21</i><span class="dv fl pl">FÉR</span></div>
+        <div class="d"><i>22</i><span class="dv fl pl">FÉR</span></div><div class="d"><i>23</i><span class="dv fl pl">FÉR</span></div><div class="d"><i>24</i><span class="dv fl pl">FÉR</span></div><div class="d"><i>25</i><span class="dv fl pl">FÉR</span></div><div class="d"><i>26</i><span class="dv fl pl">FÉR</span></div><div class="d"><i>27</i><span class="dv fl pl">FÉR</span></div><div class="d"><i>28</i><span class="dv fl pl">FÉR</span></div>
+        <div class="d"><i>29</i><span class="dv fl pl">FÉR</span></div><div class="d"><i>30</i><span class="dv fl pl">FÉR</span></div>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:8px;flex-wrap:wrap;font-size:13px">
+      <span style="border:1px solid #eceef4;border-radius:999px;padding:4px 10px">Até hoje: <b>10</b> dias trabalhados</span>
+      <span style="border:1px solid #eceef4;border-radius:999px;padding:4px 10px"><b>1</b> folga</span>
+      <span style="border:1px solid #eceef4;border-radius:999px;padding:4px 10px"><b>0</b> faltas · <b>0</b> atestados</span>
+    </div>
+
+    <div style="border:1.5px solid #e8a317;background:#fff8e6;border-radius:12px;padding:12px 14px">
+      <div style="font-weight:700;font-size:14px;color:#7a5200">Férias programadas sem substituto</div>
+      <div style="font-size:13px;margin-top:2px">De 20/11 em diante este conjunto ficará sem motorista (SMo). Indique um substituto ou o conjunto aparecerá parado na grade.</div>
+      <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap"><button class="btn pri">Indicar substituto</button><button class="btn">Criar tarefa para o líder da operação</button></div>
+    </div>
+
+    <div style="display:flex;gap:10px;align-items:center;font-size:12px;color:#5a6478;border-top:1px solid #eceef4;padding-top:10px">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5a6478" stroke-width="2" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+      <span>Remuneração, diárias e premiação ficam ocultas: só quem tem acesso a Pessoas e a Resultados vê. Valores de exemplo (fictícios).</span>
+    </div>
+  </aside>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1360,"height":960}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

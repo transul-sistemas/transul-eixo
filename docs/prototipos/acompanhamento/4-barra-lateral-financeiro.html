@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Barra lateral: detalhes</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:'Barlow',sans-serif;color:#0f1729;background:#f6f7fb}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.t{padding:8px 14px;border-radius:10px;font-size:14px;font-weight:600;border:1px solid #eceef4;background:#fff;color:#5a6478;font-family:'Barlow',sans-serif;cursor:pointer}
+.t.on{background:#4338ca;border-color:#4338ca;color:#fff}
+.k{font-size:12px;font-weight:700;letter-spacing:.06em;color:#5a6478;margin-bottom:8px}
+.sk{background:#e9ecf3;border-radius:8px}
+.plate{display:inline-block;border:1.5px solid #1d3a8a;border-top:5px solid #1d3a8a;border-radius:4px;background:#fff;font-weight:700;font-size:16px;letter-spacing:1px;padding:0 6px;color:#0f1729}
+.tag{display:inline-block;padding:1px 9px;border-radius:999px;font-size:12px;font-weight:600}
+.dre{display:grid;grid-template-columns:1.1fr 1fr 1fr 1fr;gap:0;font-size:14px}
+.dre div{padding:8px 10px;border-top:1px solid #eceef4}
+.dre .h{font-size:12px;font-weight:700;letter-spacing:.05em;color:#5a6478;border-top:0;text-align:right}
+.dre .n{text-align:right;font-weight:600}
+</style>
+</helmet>
+<div style="position:relative;box-sizing:border-box;min-height:880px;background:#f6f7fb;overflow:hidden">
+  <div style="padding:20px 24px;display:flex;flex-direction:column;gap:12px;width:760px">
+    <div class="sk" style="height:22px;width:220px"></div>
+    <div class="sk" style="height:34px;width:300px"></div>
+    <div class="sk" style="height:90px"></div>
+    <div class="sk" style="height:70px"></div><div class="sk" style="height:70px"></div><div class="sk" style="height:70px"></div><div class="sk" style="height:70px"></div><div class="sk" style="height:70px"></div>
+  </div>
+  <div style="position:absolute;left:0;top:0;right:0;bottom:0;background:rgba(15,23,41,.35)"></div>
+
+  <aside aria-label="Detalhes de ZDM1A01" style="position:absolute;top:0;right:0;bottom:0;width:600px;max-width:92%;background:#fff;box-shadow:-16px 0 48px rgba(15,23,41,.25);box-sizing:border-box;padding:22px 26px;display:flex;flex-direction:column;gap:16px;overflow:hidden">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
+      <div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span class="plate">ZDM1A01</span><span class="tag" style="background:#e4e2fb;color:#2f27a0">Frota</span><span class="tag" style="background:#eef1ff;color:#1d3a8a">Rodotrem</span><span class="tag" style="background:#d3efe3;color:#0f5c3d">CAr · Carregando</span></div>
+        <div style="font-size:14px;color:#5a6478;margin-top:6px">R540 · 2024 · Filial Matriz · gestor Gestor Demo 01</div>
+      </div>
+      <button class="t" aria-label="Fechar" style="padding:6px 12px">×</button>
+    </div>
+
+    <div class="tabs" role="tablist">
+      <button class="t" role="tab">Visão geral</button>
+      <button class="t on" role="tab" aria-selected="true">Financeiro</button>
+      <button class="t" role="tab">Motorista</button>
+      <button class="t" role="tab">Combustível</button>
+      <button class="t" role="tab">Rota do mês</button>
+    </div>
+
+    <div style="border:1px solid #eceef4;border-radius:12px;padding:16px">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+        <div class="k" style="margin:0">FATURAMENTO DO MÊS</div>
+        <span class="tag" style="background:#fbecc7;color:#7a5200">Mês em curso · dia 11 de 30</span>
+      </div>
+      <div style="font-size:30px;font-weight:700;margin:6px 0 10px">R$ 41.200</div>
+      <div style="position:relative;height:12px;border-radius:999px;background:#eceef4">
+        <div style="position:absolute;left:0;top:0;bottom:0;width:41.2%;border-radius:999px;background:#22a06b"></div>
+        <div style="position:absolute;left:36.7%;top:-4px;width:3px;height:20px;background:#0f1729"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:13px;color:#5a6478;margin-top:8px;flex-wrap:wrap;gap:6px">
+        <span>Realizado <b style="color:#0f1729">R$ 41.200</b></span>
+        <span>Esperado até hoje <b style="color:#0f1729">R$ 36.667</b></span>
+        <span>Meta do mês <b style="color:#0f1729">R$ 100.000</b></span>
+      </div>
+      <div style="margin-top:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <span class="tag" style="background:#d3efe3;color:#0f5c3d">Acima do ritmo · 112% do esperado</span>
+        <span style="font-size:13px;color:#5a6478">Comparado com o esperado até a data, não com a meta inteira.</span>
+      </div>
+    </div>
+
+    <div>
+      <div class="k">ÚLTIMOS 6 MESES</div>
+      <svg viewBox="0 0 480 136" width="100%" role="img" aria-label="Faturamento dos últimos seis meses em mil reais: junho 70, julho 98, agosto 60, setembro 80, outubro 90, novembro em curso 41">
+        <line x1="8" y1="100" x2="472" y2="100" stroke="#eceef4" stroke-width="1"/>
+        <rect x="14" y="30" width="48" height="70" rx="4" fill="#3355ff"/><text x="38" y="22" text-anchor="middle" font-size="12" fill="#0f1729" font-family="Barlow">70 mil</text><text x="38" y="120" text-anchor="middle" font-size="12" fill="#5a6478" font-family="Barlow">jun</text>
+        <rect x="92" y="2" width="48" height="98" rx="4" fill="#3355ff"/><text x="116" y="120" text-anchor="middle" font-size="12" fill="#5a6478" font-family="Barlow">jul</text><text x="116" y="16" text-anchor="middle" font-size="12" fill="#ffffff" font-family="Barlow">98 mil</text>
+        <rect x="170" y="40" width="48" height="60" rx="4" fill="#3355ff"/><text x="194" y="32" text-anchor="middle" font-size="12" fill="#0f1729" font-family="Barlow">60 mil</text><text x="194" y="120" text-anchor="middle" font-size="12" fill="#5a6478" font-family="Barlow">ago</text>
+        <rect x="248" y="20" width="48" height="80" rx="4" fill="#3355ff"/><text x="272" y="12" text-anchor="middle" font-size="12" fill="#0f1729" font-family="Barlow">80 mil</text><text x="272" y="120" text-anchor="middle" font-size="12" fill="#5a6478" font-family="Barlow">set</text>
+        <rect x="326" y="10" width="48" height="90" rx="4" fill="#3355ff"/><text x="350" y="26" text-anchor="middle" font-size="12" fill="#ffffff" font-family="Barlow">90 mil</text><text x="350" y="120" text-anchor="middle" font-size="12" fill="#5a6478" font-family="Barlow">out</text>
+        <rect x="404" y="59" width="48" height="41" rx="4" fill="#eef1ff" stroke="#3355ff" stroke-width="1.5" stroke-dasharray="4 3"/><text x="428" y="51" text-anchor="middle" font-size="12" fill="#0f1729" font-family="Barlow">41 mil</text><text x="428" y="120" text-anchor="middle" font-size="12" fill="#5a6478" font-family="Barlow">nov · em curso</text>
+      </svg>
+    </div>
+
+    <div>
+      <div class="k">RESULTADO DO MÊS</div>
+      <div class="dre" style="border:1px solid #eceef4;border-radius:12px;overflow:hidden">
+        <div class="h" style="text-align:left"> </div><div class="h">COMPETÊNCIA</div><div class="h">PAGAMENTO</div><div class="h">A PAGAR</div>
+        <div>Receita</div><div class="n">R$ 41.200</div><div style="grid-column:span 2;color:#5a6478;font-size:13px">Sem dados ainda: depende do Sankhya</div>
+        <div>Despesas</div><div class="n" style="color:#8a1f24">R$ 28.900</div><div style="grid-column:span 2;color:#5a6478;font-size:13px">Sem dados ainda: depende do Sankhya</div>
+        <div style="font-weight:700">Resultado</div><div class="n" style="color:#0f5c3d">R$ 12.300</div><div style="grid-column:span 2"></div>
+      </div>
+      <div style="font-size:12px;color:#5a6478;margin-top:8px">Competência pela regra gerencial única. Valores de exemplo (fictícios). Salário e dados do motorista só para quem tem acesso a Pessoas.</div>
+    </div>
+  </aside>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1360,"height":880}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

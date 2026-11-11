@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Wizard em popup: conferir</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:'Barlow',sans-serif;color:#0f1729;background:#f6f7fb}
+.step{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:500;color:#5a6478}
+.dot{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;background:#eceef4;color:#5a6478}
+.dot.ok{background:#22a06b;color:#fff}
+.dot.on{background:#3355ff;color:#fff}
+.btn{padding:10px 18px;border-radius:10px;font-size:15px;font-weight:600;font-family:'Barlow',sans-serif;cursor:pointer;border:1px solid #d9dde8;background:#fff;color:#0f1729}
+.btn.pri{background:#3355ff;border-color:#3355ff;color:#fff}
+.sk{background:#e9ecf3;border-radius:8px}
+.k{font-size:12px;font-weight:700;letter-spacing:.06em;color:#5a6478;margin-bottom:8px}
+.tg{display:inline-block;padding:2px 9px;border-radius:999px;font-size:13px;font-weight:700}
+.li{display:flex;gap:10px;font-size:14px;line-height:1.45;margin:0 0 6px}
+</style>
+</helmet>
+<div style="position:relative;box-sizing:border-box;min-height:880px;background:#f6f7fb;overflow:hidden">
+  <div style="padding:20px 24px;display:flex;flex-direction:column;gap:12px">
+    <div class="sk" style="height:22px;width:220px"></div>
+    <div class="sk" style="height:34px;width:300px"></div>
+    <div class="sk" style="height:90px"></div>
+    <div class="sk" style="height:70px"></div><div class="sk" style="height:70px"></div><div class="sk" style="height:70px"></div><div class="sk" style="height:70px"></div>
+  </div>
+  <div style="position:absolute;left:0;top:0;right:0;bottom:0;background:rgba(15,23,41,.55)"></div>
+
+  <div role="dialog" aria-label="Lançar situação, conferir" style="position:absolute;left:50%;top:36px;transform:translateX(-50%);width:700px;max-width:94%;background:#fff;border-radius:16px;box-shadow:0 24px 64px rgba(15,23,41,.35);box-sizing:border-box;padding:24px 28px;display:flex;flex-direction:column;gap:14px">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
+      <div>
+        <h2 style="margin:0;font-size:22px;font-weight:700">Lançar situação</h2>
+        <div style="font-size:14px;color:#5a6478;margin-top:2px"><b style="color:#0f1729">ZDM1A01</b> · Rodotrem · quarta-feira, 11 de novembro de 2026</div>
+      </div>
+      <button class="btn" aria-label="Fechar" style="padding:6px 12px">×</button>
+    </div>
+
+    <div style="display:flex;gap:18px;flex-wrap:wrap;padding:10px 0;border-top:1px solid #eceef4;border-bottom:1px solid #eceef4">
+      <span class="step"><span class="dot ok">✓</span>Dia e conjunto</span>
+      <span class="step"><span class="dot ok">✓</span>Situação</span>
+      <span class="step"><span class="dot ok">✓</span>Hora e observação</span>
+      <span class="step" style="color:#0f1729"><span class="dot on">4</span>Conferir</span>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+      <div style="border:1px solid #eceef4;border-radius:12px;padding:14px">
+        <div class="k">ANTES</div>
+        <span class="tg" style="background:#d3efe3;color:#0f5c3d">ETc</span> <span style="font-size:14px">Em trânsito carregado</span>
+        <div style="font-size:13px;color:#5a6478;margin-top:6px">desde 11:13 · Gestor Demo 01</div>
+      </div>
+      <div style="border:2px solid #3355ff;border-radius:12px;padding:14px;background:#eef1ff">
+        <div class="k" style="color:#1d3a8a">DEPOIS · 11/11/2026 às 14:30</div>
+        <span class="tg" style="background:#d3efe3;color:#0f5c3d">CAr</span> <span style="font-size:14px">Carregando</span>
+        <div style="font-size:13px;color:#5a6478;margin-top:6px">Observação: carregamento iniciado na Operação Matriz</div>
+      </div>
+    </div>
+
+    <div>
+      <div class="k">O QUE ACONTECE</div>
+      <div class="li"><span style="color:#22a06b;font-weight:700">✓</span><span>O conjunto inteiro (cavalo e 3 implementos) fica em <b>CAr</b> no fim do dia 11/11.</span></div>
+      <div class="li"><span style="color:#22a06b;font-weight:700">✓</span><span>O evento anterior (ETc, 11:13) continua no histórico e se encerra às 14:30. Nada é apagado.</span></div>
+      <div class="li"><span style="color:#22a06b;font-weight:700">✓</span><span>Nenhuma manutenção, folga ou afastamento está aberta; nada se encerra por causa deste lançamento.</span></div>
+    </div>
+
+    <div style="border:1px solid #eceef4;border-radius:12px;padding:14px;background:#f6f7fb">
+      <div class="k">LANÇAR A MAIS CONJUNTOS QUE AINDA ESTÃO SEM LANÇAMENTO HOJE</div>
+      <div style="display:flex;flex-direction:column;gap:8px;font-size:14px">
+        <label style="display:flex;gap:10px;align-items:center"><input type="checkbox" checked> <b>ZDM1A02</b> · Bitrem · Motorista Demo 02</label>
+        <label style="display:flex;gap:10px;align-items:center"><input type="checkbox" checked> <b>ZDM1A04</b> · Bitrem · sem motorista</label>
+        <label style="display:flex;gap:10px;align-items:center"><input type="checkbox" checked> <b>ZDM1A06</b> · Caminhão · Motorista Demo 06</label>
+      </div>
+      <div style="margin-top:10px;font-size:14px"><b>Impacto no dia:</b> conjuntos com lançamento <b>9 → 13 de 14</b> · disponibilidade <b>71% → 79%</b></div>
+    </div>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;border-top:1px solid #eceef4;padding-top:14px">
+      <button class="btn">Cancelar</button>
+      <div style="display:flex;gap:10px"><button class="btn">Voltar</button><button class="btn pri">Lançar para 4 conjuntos</button></div>
+    </div>
+    <div style="font-size:12px;color:#5a6478;margin-top:-6px">Tudo ou nada: se um conjunto for recusado, nenhum é gravado e a mensagem diz qual e por quê. Repetir o clique não duplica.</div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1360,"height":880}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

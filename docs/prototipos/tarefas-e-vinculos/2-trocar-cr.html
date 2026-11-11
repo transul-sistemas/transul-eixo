@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Trocar CR</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:'Barlow',sans-serif;color:#0f1729;background:#f6f7fb}
+.step{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:500;color:#5a6478}
+.dot{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;background:#eceef4;color:#5a6478}
+.dot.ok{background:#22a06b;color:#fff}
+.dot.on{background:#3355ff;color:#fff}
+.btn{padding:10px 18px;border-radius:10px;font-size:15px;font-weight:600;font-family:'Barlow',sans-serif;cursor:pointer;border:1px solid #d9dde8;background:#fff;color:#0f1729}
+.btn.pri{background:#3355ff;border-color:#3355ff;color:#fff}
+.sk{background:#e9ecf3;border-radius:8px}
+.k{font-size:12px;font-weight:700;letter-spacing:.06em;color:#5a6478;margin-bottom:8px}
+.tg{display:inline-block;padding:2px 9px;border-radius:999px;font-size:12px;font-weight:700}
+.li{display:flex;gap:10px;font-size:14px;line-height:1.45;margin:0 0 6px}
+</style>
+</helmet>
+<div style="position:relative;box-sizing:border-box;min-height:900px;background:#f6f7fb;overflow:hidden">
+  <div style="padding:20px 24px;display:flex;flex-direction:column;gap:12px">
+    <div class="sk" style="height:22px;width:220px"></div><div class="sk" style="height:34px;width:300px"></div><div class="sk" style="height:90px"></div>
+    <div class="sk" style="height:70px"></div><div class="sk" style="height:70px"></div><div class="sk" style="height:70px"></div><div class="sk" style="height:70px"></div>
+  </div>
+  <div style="position:absolute;left:0;top:0;right:0;bottom:0;background:rgba(15,23,41,.55)"></div>
+
+  <div role="dialog" aria-label="Trocar CR, conferir" style="position:absolute;left:50%;top:28px;transform:translateX(-50%);width:720px;max-width:94%;background:#fff;border-radius:16px;box-shadow:0 24px 64px rgba(15,23,41,.35);box-sizing:border-box;padding:24px 28px;display:flex;flex-direction:column;gap:14px">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
+      <div><h2 style="margin:0;font-size:22px;font-weight:700">Trocar CR</h2>
+      <div style="font-size:14px;color:#5a6478;margin-top:2px"><b style="color:#0f1729">AAA0000</b> · Frota · quarta-feira, 11 de novembro de 2026</div></div>
+      <button class="btn" aria-label="Fechar" style="padding:6px 12px">×</button>
+    </div>
+
+    <div style="display:flex;gap:18px;flex-wrap:wrap;padding:10px 0;border-top:1px solid #eceef4;border-bottom:1px solid #eceef4">
+      <span class="step"><span class="dot ok">✓</span>Placa</span><span class="step"><span class="dot ok">✓</span>Novo CR</span><span class="step"><span class="dot ok">✓</span>Data e motivo</span><span class="step" style="color:#0f1729"><span class="dot on">4</span>Conferir</span>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+      <div style="border:1.5px solid #f1b5b7;background:#fdf1f1;border-radius:12px;padding:14px">
+        <div class="k" style="color:#8a1f24">ANTES</div>
+        <div style="font-size:18px;font-weight:700">CR001</div>
+        <span class="tg" style="background:#fadadb;color:#8a1f24">Encerrado em 12/10</span>
+        <div style="font-size:14px;margin-top:8px">Operação A · desde 05/01</div>
+        <div style="font-size:13px;color:#5a6478">continua existindo, com histórico</div>
+      </div>
+      <div style="border:2px solid #22a06b;background:#eefaf3;border-radius:12px;padding:14px">
+        <div class="k" style="color:#0f5c3d">DEPOIS</div>
+        <div style="font-size:18px;font-weight:700">CR009</div>
+        <span class="tg" style="background:#d3efe3;color:#0f5c3d">Vigente desde 12/10</span>
+        <div style="font-size:14px;margin-top:8px">Operação B</div>
+        <div style="font-size:13px;color:#5a6478">a placa passa a contar nesta operação</div>
+      </div>
+    </div>
+
+    <div style="font-size:14px"><b>Motivo:</b> mudança de operação, conforme ordem de serviço 123. <b>Data da troca:</b> 12/10/2026 <span class="tg" style="background:#fbecc7;color:#7a5200">retroativa, 30 dias</span></div>
+
+    <div>
+      <div class="k">O QUE ACONTECE</div>
+      <div class="li"><span style="color:#22a06b;font-weight:700">✓</span><span>O CR001 fecha e o CR009 abre <b>na mesma data, sem buraco</b>.</span></div>
+      <div class="li"><span style="color:#22a06b;font-weight:700">✓</span><span>A Operação A guarda a placa de 05/01 a 12/10. A Operação B a conta de 12/10 em diante.</span></div>
+      <div class="li"><span style="color:#22a06b;font-weight:700">✓</span><span>Despesas do CR001 até 11/10 ficam na Operação A. As do CR009, a partir de 12/10, vão para a B.</span></div>
+      <div class="li"><span style="color:#22a06b;font-weight:700">✓</span><span>Nada é apagado: a troca fica no histórico da placa, do CR e das duas operações.</span></div>
+    </div>
+
+    <div style="border:1.5px solid #e8a317;background:#fff8e6;border-radius:12px;padding:12px 14px">
+      <div style="font-weight:700;font-size:14px;color:#7a5200">Impacto de uma troca retroativa</div>
+      <div style="font-size:13px;margin-top:4px">Outubro ainda está aberto. A margem de outubro muda: <b>Operação A −R$ 8.400</b> e <b>Operação B +R$ 8.400</b> (exemplo). Setembro e meses anteriores não são afetados.</div>
+    </div>
+
+    <div style="font-size:13px;color:#5a6478;background:#f6f7fb;border-radius:10px;padding:10px 12px">O líder da Operação B recebe uma tarefa para confirmar a chegada da placa. Se ele recusar, a troca volta para o CR001, com o motivo registrado.</div>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;border-top:1px solid #eceef4;padding-top:14px">
+      <button class="btn">Cancelar</button>
+      <div style="display:flex;gap:10px"><button class="btn">Voltar</button><button class="btn pri">Trocar CR</button></div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1360,"height":900}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

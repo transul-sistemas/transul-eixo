@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Posição do dia</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:'Barlow',sans-serif;color:#0f1729;background:#f6f7fb}
+.sk{background:#e9ecf3;border-radius:8px}
+.btn{padding:10px 18px;border-radius:10px;font-size:15px;font-weight:600;font-family:'Barlow',sans-serif;cursor:pointer;border:1px solid #d9dde8;background:#fff;color:#0f1729}
+.btn.pri{background:#3355ff;border-color:#3355ff;color:#fff}
+.btn.off{background:#e5e8ee;border-color:#e5e8ee;color:#5a6478;cursor:not-allowed}
+.plate{display:inline-block;border:1.5px solid #1d3a8a;border-top:5px solid #1d3a8a;border-radius:4px;background:#fff;font-weight:700;font-size:14px;letter-spacing:1px;padding:0 5px;color:#0f1729}
+.tg{display:inline-block;padding:2px 9px;border-radius:999px;font-size:12px;font-weight:700}
+.vig{background:#d3efe3;color:#0f5c3d}
+.warn{background:#fbecc7;color:#7a5200}
+.mut{color:#5a6478;font-size:13px}
+.r{display:grid;grid-template-columns:210px 150px 1fr 120px;gap:12px;align-items:start;padding:10px 0;border-top:1px solid #eceef4;font-size:14px}
+.sg{display:flex;gap:0;flex-wrap:wrap}
+.sg button{padding:7px 12px;font-size:13px;font-weight:600;font-family:'Barlow',sans-serif;cursor:pointer;border:1px solid #d9dde8;background:#fff;color:#0f1729;border-radius:8px;margin:0 6px 6px 0}
+.sg .on{background:#d3efe3;border-color:#22a06b;color:#0f5c3d}
+.sg .mu{background:#eef1ff;border-color:#3355ff;color:#1d3a8a}
+.h{font-size:12px;font-weight:700;letter-spacing:.05em;color:#5a6478}
+.dot{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;background:#eceef4;color:#5a6478}
+.dot.on{background:#3355ff;color:#fff}
+.dot.ok{background:#22a06b;color:#fff}
+.inp{padding:7px 10px;border-radius:8px;border:1.5px solid #3355ff;font-family:'Barlow',sans-serif;font-size:14px;width:200px;box-sizing:border-box}
+.sel{padding:6px 8px;border-radius:8px;border:1px solid #d9dde8;font-family:'Barlow',sans-serif;font-size:13px}
+</style>
+</helmet>
+<div style="position:relative;box-sizing:border-box;min-height:900px;background:#f6f7fb;overflow:hidden">
+  <div style="padding:20px 24px;display:flex;flex-direction:column;gap:12px">
+    <div class="sk" style="height:22px;width:220px"></div><div class="sk" style="height:34px;width:300px"></div><div class="sk" style="height:90px"></div>
+    <div class="sk" style="height:70px"></div><div class="sk" style="height:70px"></div><div class="sk" style="height:70px"></div><div class="sk" style="height:70px"></div>
+  </div>
+  <div style="position:absolute;left:0;top:0;right:0;bottom:0;background:rgba(15,23,41,.65)"></div>
+
+  <div role="dialog" aria-modal="true" aria-label="Posição do dia, obrigatória" style="position:absolute;left:50%;top:22px;transform:translateX(-50%);width:1040px;max-width:96%;background:#fff;border-radius:16px;box-shadow:0 24px 64px rgba(15,23,41,.4);box-sizing:border-box;padding:22px 28px;display:flex;flex-direction:column;gap:12px">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap">
+      <div><h2 style="margin:0;font-size:22px;font-weight:700">Onde estão os seus conjuntos hoje?</h2>
+      <div style="font-size:14px;color:#5a6478;margin-top:2px">quarta-feira, 11 de novembro de 2026 · 6 conjuntos da sua carteira</div></div>
+      <div style="display:flex;gap:14px;align-items:center;font-size:13px;color:#5a6478;flex-wrap:wrap">
+        <span style="display:flex;gap:6px;align-items:center"><span class="dot ok">✓</span>Receber placas</span><span>›</span>
+        <span style="display:flex;gap:6px;align-items:center"><span class="dot on">2</span><b style="color:#0f1729">Posição do dia</b></span><span>›</span>
+        <span style="display:flex;gap:6px;align-items:center"><span class="dot">3</span>Confirmar carteira</span>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center;background:#f6f7fb;border-radius:10px;padding:8px 12px;font-size:13px;color:#5a6478">
+      <span><b style="color:#0f1729">Obrigatório para continuar.</b> Cria o histórico de posição e alimenta a rota do mês. Já vem com o que você informou ontem: na maioria dos conjuntos é um toque.</span>
+      <b style="color:#0f1729;font-size:14px">5 de 6 preenchidos</b>
+    </div>
+
+    <div>
+      <div class="r" style="border-top:0"><span class="h">CONJUNTO</span><span class="h">ONTEM</span><span class="h">ONDE ESTÁ HOJE</span><span class="h">SITUAÇÃO</span></div>
+
+      <div class="r"><div><span class="plate">ZDM1A01</span> <span class="tg vig">preenchido</span><div class="mut">Rodotrem · 3 implementos</div></div><div>Marabá/PA</div>
+        <div class="sg"><button class="on" aria-pressed="true">✓ Continua em Marabá/PA</button><button>Mudou de cidade</button><button>Sem sinal</button></div><div><select class="sel"><option>CAr</option></select></div></div>
+
+      <div class="r"><div><span class="plate">ZDM1A02</span> <span class="tg vig">preenchido</span><div class="mut">Bitrem · 2 implementos</div></div><div>Imperatriz/MA</div>
+        <div><div class="sg"><button>Continua em Imperatriz/MA</button><button class="mu" aria-pressed="true">Mudou de cidade</button><button>Sem sinal</button></div>
+        <label class="mut" for="c2">Cidade e UF</label><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><input id="c2" class="inp" value="Açailândia/MA"><span class="tg vig">58 km de ontem · plausível</span></div></div>
+        <div><select class="sel"><option>ETc</option></select></div></div>
+
+      <div class="r" style="background:#fffaf0"><div><span class="plate">ZDM1A03</span> <span class="tg warn">confirmar</span><div class="mut">Rodotrem · 3 implementos</div></div><div>Parauapebas/PA</div>
+        <div><div class="sg"><button>Continua em Parauapebas/PA</button><button class="mu" aria-pressed="true">Mudou de cidade</button><button>Sem sinal</button></div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><input class="inp" aria-label="Cidade e UF" value="São Luís/MA" style="border-color:#e8a317">
+        <span class="tg warn">1.100 km de ontem pela estrada: improvável em 1 dia</span></div>
+        <div style="display:flex;gap:8px;margin-top:6px"><button class="btn" style="padding:5px 12px;font-size:13px">Está certo</button><button class="btn" style="padding:5px 12px;font-size:13px">Corrigir</button></div></div>
+        <div><select class="sel"><option>ETc</option></select></div></div>
+
+      <div class="r"><div><span class="plate">ZDM1A04</span> <span class="tg vig">preenchido</span><div class="mut">Bitrem · em manutenção</div></div><div>oficina Matriz</div>
+        <div class="sg"><button class="on" aria-pressed="true">✓ Na oficina da filial Matriz</button><button>Outro lugar</button><button>Sem sinal</button></div><div><select class="sel"><option>MAv</option></select></div></div>
+
+      <div class="r"><div><span class="plate">ZDM1A05</span> <span class="tg vig">preenchido</span><div class="mut">Simples · parado</div></div><div>pátio Matriz</div>
+        <div class="sg"><button class="on" aria-pressed="true">✓ No pátio da filial Matriz</button><button>Outro lugar</button><button>Sem sinal</button></div><div><select class="sel"><option>PÁT</option></select></div></div>
+
+      <div class="r" style="background:#eef1ff"><div><span class="plate">ZDM1A06</span> <span class="tg" style="background:#e5e8ee;color:#4a5568">falta preencher</span><div class="mut">Caminhão</div></div><div>Marabá/PA</div>
+        <div class="sg"><button>Continua em Marabá/PA</button><button>Mudou de cidade</button><button>Sem sinal</button></div><div><select class="sel"><option>escolher</option></select></div></div>
+    </div>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;border-top:1px solid #eceef4;padding-top:12px;flex-wrap:wrap">
+      <div style="display:flex;gap:8px;align-items:center;font-size:12px;color:#5a6478;max-width:520px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5a6478" stroke-width="2" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg><span>Não fecha até confirmar. "Sem sinal" é uma resposta válida, com motivo, e vira pendência de posição. Se algo impedir (queda do sistema), o líder libera, com motivo registrado.</span></div>
+      <div style="display:flex;gap:10px"><button class="btn">Salvar rascunho</button><button class="btn off" aria-disabled="true">Falta 1 conjunto</button></div>
+    </div>
+    <div style="font-size:12px;color:#5a6478;margin-top:-4px">A posição é da placa, em nível de cidade, e não de uma pessoa. Quem pode ver o histórico é definido por perfil. Dados de exemplo (fictícios).</div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1360,"height":900}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>
