@@ -83,3 +83,24 @@ Regra de Alexandre (11/11/2026): **o wizard abre em popup central; a barra later
 
 Os demais assistentes (cadastrar, receber, entregar, devolver, corrigir e os de Operações, Pessoas,
 Parceiros e Cadastros) já usam a variante `modal` e só trocam de tamanho, se for decidido.
+
+## Tabela em grade preenche a largura; só rola por dentro
+
+Regra de Alexandre (11/11/2026). Vale para toda **tabela em grade** (colunas que são dias, meses ou períodos):
+a grade do Acompanhamento, a grade do Movimento, a Escala e qualquer outra que nasça com colunas de tempo.
+
+- **A grade preenche a largura do cartão.** Nenhuma faixa vazia à direita depois da última coluna. Hoje as colunas dos
+  dias têm largura fixa e, em tela larga (por exemplo, perto de 1667 px), sobra uma faixa vazia depois do dia 30.
+- **Colunas de tempo com largura fluida:** `repeat(var(--dias), minmax(40px, 1fr))`, com **teto de cerca de 80 px
+  por célula**. O número de colunas **segue os dias do mês** (28 a 31).
+- **A primeira coluna** (o conjunto, a placa) tem **largura fixa** e fica **sticky**.
+- **Em tela estreita a grade rola por dentro do cartão**, com o **cabeçalho dos dias** e a **primeira coluna fixos**.
+  **A página nunca ganha rolagem horizontal.**
+- **Densidade Compacto ou Confortável**, em um seletor lembrado **por usuário** (como o tamanho de página).
+- **Cabeçalho com o dia da semana**; **fim de semana com fundo levemente diferente** (token próprio, nunca só a cor
+  do texto); **coluna de hoje destacada**, com rótulo e não só pela cor.
+- **Acima do teto** (telas de mais de cerca de 2.500 px, em que 80 px por célula já não preenchem) **(H)** o cartão
+  passa a ter a largura da grade: o cartão encolhe, e não sobra faixa vazia dentro dele.
+- **Critério de aceite (e2e):** em **1366, 1667 e 1920 px**, a soma das colunas ocupa a largura do cartão, sem sobra à
+  direita; em **1092 px** a rolagem é interna e a página não rola; nos temas **claro e escuro**. O teste mede as
+  larguras reais das colunas no navegador.
