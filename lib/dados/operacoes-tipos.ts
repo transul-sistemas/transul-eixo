@@ -16,8 +16,15 @@ export const NOMES_DOS_TIPOS_DE_OPERACAO: Record<TipoDeOperacao, string> = {
 
 /** A cascata do mês: receita → custo da Frota → custo de Serviço → margem. */
 export interface Cascata {
+  /** O total da receita (CT-e + NFS-e). */
   receitaCentavos: number;
   documentos: number;
+  /** A linha de CT-e (status A; série V sem status), pela regra única do banco. */
+  receitaCteCentavos: number;
+  documentosCte: number;
+  /** A linha de NFS-e (TOPs cadastradas em config.receita_top), atribuída pelo centro da nota. */
+  receitaNfseCentavos: number;
+  documentosNfse: number;
   custoFrotaCentavos: number;
   custoServicoCentavos: number;
   margemCentavos: number;
@@ -54,7 +61,7 @@ export interface OperacoesDoMes {
   totais: {
     operacoes: number;
     placas: number;
-    cascata: Omit<Cascata, "documentos"> | null;
+    cascata: Omit<Cascata, "documentos" | "documentosCte" | "documentosNfse"> | null;
   };
   chips: Record<string, number>;
 }
@@ -113,6 +120,10 @@ export interface FichaDaOperacao {
 export interface TotaisDoPeriodo {
   receitaCentavos: number;
   documentos: number;
+  receitaCteCentavos: number;
+  documentosCte: number;
+  receitaNfseCentavos: number;
+  documentosNfse: number;
   custoFrotaCentavos: number;
   custoServicoCentavos: number;
   margemCentavos: number;

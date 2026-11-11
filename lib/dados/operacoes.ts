@@ -56,6 +56,10 @@ type Numero = number | string | null;
 interface CascataDoBanco {
   receita: Numero;
   documentos?: number | null;
+  receita_cte?: Numero;
+  documentos_cte?: number | null;
+  receita_nfse?: Numero;
+  documentos_nfse?: number | null;
   custo_frota: Numero;
   custo_servico: Numero;
   margem: Numero;
@@ -141,6 +145,10 @@ function cascataDe(c: CascataDoBanco): Cascata {
   return {
     receitaCentavos: centavos(c.receita),
     documentos: c.documentos ?? 0,
+    receitaCteCentavos: centavos(c.receita_cte),
+    documentosCte: c.documentos_cte ?? 0,
+    receitaNfseCentavos: centavos(c.receita_nfse),
+    documentosNfse: c.documentos_nfse ?? 0,
     custoFrotaCentavos: centavos(c.custo_frota),
     custoServicoCentavos: centavos(c.custo_servico),
     margemCentavos: centavos(c.margem),

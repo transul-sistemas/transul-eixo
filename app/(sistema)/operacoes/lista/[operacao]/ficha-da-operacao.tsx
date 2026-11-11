@@ -92,6 +92,26 @@ function kpisDoResumo(r: ResultadoDoPeriodo, contra: string, semDados: boolean):
       variacao: { pontos: variacaoPercentual(a.receitaCentavos, b.receitaCentavos), contra },
     },
     {
+      id: "receita-cte",
+      rotulo: "Receita de CT-e",
+      valor: <Moeda valor={a.receitaCteCentavos} />,
+      variacao: {
+        pontos: variacaoPercentual(a.receitaCteCentavos, b.receitaCteCentavos),
+        contra,
+      },
+      apoio: `${formatarInteiro(a.documentosCte)} ${a.documentosCte === 1 ? "documento" : "documentos"}`,
+    },
+    {
+      id: "receita-nfse",
+      rotulo: "Receita de NFS-e",
+      valor: <Moeda valor={a.receitaNfseCentavos} />,
+      variacao: {
+        pontos: variacaoPercentual(a.receitaNfseCentavos, b.receitaNfseCentavos),
+        contra,
+      },
+      apoio: `${formatarInteiro(a.documentosNfse)} ${a.documentosNfse === 1 ? "documento" : "documentos"}`,
+    },
+    {
       id: "frota",
       rotulo: "Custo da frota",
       valor: <Moeda valor={a.custoFrotaCentavos} />,

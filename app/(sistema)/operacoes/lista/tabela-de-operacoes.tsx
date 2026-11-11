@@ -31,10 +31,11 @@ function colunas(
     id: string,
     titulo: string,
     valor: (l: LinhaDeOperacao) => number | undefined,
+    ordenavel = true,
   ): ColunaDeTabela<LinhaDeOperacao> => ({
     id,
     titulo,
-    campoDeOrdem: id,
+    campoDeOrdem: ordenavel ? id : undefined,
     classe: DIREITA,
     celula: (l) => {
       const v = valor(l);
@@ -96,6 +97,14 @@ function colunas(
           ...(l.cascata && !semDados
             ? [
                 { rotulo: "Receita", valor: <Moeda valor={l.cascata.receitaCentavos} /> },
+                {
+                  rotulo: "Receita de CT-e",
+                  valor: <Moeda valor={l.cascata.receitaCteCentavos} />,
+                },
+                {
+                  rotulo: "Receita de NFS-e",
+                  valor: <Moeda valor={l.cascata.receitaNfseCentavos} />,
+                },
                 { rotulo: "Custo Frota", valor: <Moeda valor={l.cascata.custoFrotaCentavos} /> },
                 {
                   rotulo: "Custo Serviço",
@@ -112,6 +121,9 @@ function colunas(
   return [
     ...base,
     dinheiro("receita", "Receita", (l) => l.cascata?.receitaCentavos),
+    // As duas linhas da receita (CT-e e NFS-e); o total é a coluna Receita.
+    dinheiro("receita_cte", "Receita de CT-e", (l) => l.cascata?.receitaCteCentavos, false),
+    dinheiro("receita_nfse", "Receita de NFS-e", (l) => l.cascata?.receitaNfseCentavos, false),
     dinheiro("custo_frota", "Custo Frota", (l) => l.cascata?.custoFrotaCentavos),
     dinheiro("custo_servico", "Custo Serviço", (l) => l.cascata?.custoServicoCentavos),
     dinheiro("margem", "Margem", (l) => l.cascata?.margemCentavos),
