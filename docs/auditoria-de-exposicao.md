@@ -11,7 +11,7 @@ achado, a quantidade, o caminho, o commit em que apareceu e a natureza do dado.
 - **Método:** padrões de segredo (chaves JWT, `sb_secret_`/`sb_publishable_`, chaves privadas, tokens de
   GitHub, AWS, Slack, OpenAI e Google, strings de conexão com senha, atribuições de senha, segredo e `X-Token`
   com valor literal), de dado pessoal (CPF com e sem formatação, com conferência do dígito; CNPJ; telefone;
-  e-mail) e de dinheiro (valores completos a partir de R$ 10.000 e abreviados em mi, mil e bi); **nomes** de pessoa,
+  e-mail) e de dinheiro (valores completos a partir de dez mil reais e abreviados em mi, mil e bi); **nomes** de pessoa,
   motorista, acionista, cliente e operação, por **dicionário tirado do banco local** (sem imprimir). Arquivos
   binários zip e xlsx foram abertos por dentro.
 - **Limites:** nomes só são achados se estiverem no banco local; primeiros nomes isolados e apelidos só por
@@ -91,8 +91,8 @@ e, se for o caso, `docs/projeto-tecnico.md`):
 | Opção | O que faz | Exemplo (sem valor real) | Custo |
 | --- | --- | --- | --- |
 | **A. Percentual** | Troca o valor por proporção | "as NFS-e são cerca de 5% da receita do mês" | Perde a escala, mantém o argumento |
-| **B. Faixa** | Troca o valor por intervalo | "entre R$ 1 mi e R$ 5 mi por mês" | Perde a precisão, dá a ordem de grandeza |
-| **C. Fictício** | Troca por números inventados com a mesma proporção | "R$ 40.000,00 de um total de R$ 800.000,00" | Precisa avisar "valores fictícios" |
+| **B. Faixa** | Troca o valor por intervalo | "entre um e cinco milhões de reais por mês" | Perde a precisão, dá a ordem de grandeza |
+| **C. Fictício** | Troca por números inventados com a mesma proporção | "40 mil de um total de 800 mil, números inventados" | Precisa avisar "valores fictícios" |
 | **D. Manter** | Mantém, e passa a valer a regra nova só para o que for escrito daqui em diante | | O histórico já tem tudo de qualquer jeito |
 
 **Recomendação:** **A** para as comparações de regra (a diferença entre as duas regras de CT-e é 5%, não precisa do
