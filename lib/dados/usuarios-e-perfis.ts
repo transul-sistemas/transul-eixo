@@ -1,3 +1,4 @@
+import { falhaDeLeitura } from "@/lib/erros/leitura";
 import type { EntradaMudarAcesso } from "@/lib/dominio/esquemas/cadastro";
 import { erroDaAcao, type ResultadoDaAcao, sucesso } from "@/lib/wizard/resultado";
 import type { ClienteDeCadastros } from "./catalogos-cadastro";
@@ -26,7 +27,7 @@ async function ler<T>(
   if (ids) consulta = consulta.in(ids.coluna, ids.valores);
   if (ordem) consulta = consulta.order(ordem, { ascending: true });
   const { data, error } = await consulta.range(0, 999);
-  if (error) throw new Error(`Não foi possível ler ${tabela}: ${error.message}`);
+  if (error) throw falhaDeLeitura(tabela, error);
   return (data ?? []) as T[];
 }
 

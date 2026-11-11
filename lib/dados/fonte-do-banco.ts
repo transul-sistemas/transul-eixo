@@ -1,3 +1,4 @@
+import { falhaDeLeitura } from "@/lib/erros/leitura";
 import { textoDoErro } from "@/lib/log/erro";
 import { alertaDoBanco } from "@/lib/dominio/alertas";
 import { SIGLAS, type Sigla } from "@/lib/dominio/status";
@@ -68,7 +69,7 @@ async function chamar<T>(cliente: ClienteDeLeitura, funcao: string, argumentos: 
   const { data, error } = await cliente
     .schema("nucleo")
     .rpc(funcao, argumentos as Record<string, unknown>);
-  if (error) throw new Error(`${funcao}: ${error.message}`);
+  if (error) throw falhaDeLeitura(funcao, error);
   return data as T;
 }
 

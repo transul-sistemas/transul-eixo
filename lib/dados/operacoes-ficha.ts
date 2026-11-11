@@ -1,3 +1,4 @@
+import { falhaDeLeitura } from "@/lib/erros/leitura";
 import { type ClienteDasOperacoes, centavos } from "./operacoes";
 import type {
   ContextoDaOperacao,
@@ -26,7 +27,7 @@ export async function lerMesFechado(
 ): Promise<string> {
   const c = await cliente();
   const { data, error } = await c.schema("nucleo").rpc("mes_fechado_mais_recente", {});
-  if (error) throw new Error(`mes_fechado_mais_recente: ${error.message}`);
+  if (error) throw falhaDeLeitura("mes_fechado_mais_recente", error);
   return mesDe(String(data));
 }
 
@@ -107,7 +108,7 @@ export async function lerResultadoDaOperacao(
     p_inicio: intervalo.inicio,
     p_fim: intervalo.fim,
   });
-  if (error) throw new Error(`resultado_da_operacao: ${error.message}`);
+  if (error) throw falhaDeLeitura("resultado_da_operacao", error);
   const d = data as ResultadoDoBanco | null;
   if (!d || !d.ve_resultado || !d.atual || !d.anterior) return null;
   return {
@@ -172,7 +173,7 @@ export async function lerContextoDaOperacao(
     p_operacao: id,
     p_mes: `${mes}-01`,
   });
-  if (error) throw new Error(`contexto_da_operacao: ${error.message}`);
+  if (error) throw falhaDeLeitura("contexto_da_operacao", error);
   if (data === null || data === undefined) return null;
   const d = data as ContextoDoBanco;
   return {

@@ -1,34 +1,10 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useTransition } from "react";
-import { PaginaDeLeitura } from "@/components/layout/pagina-de-leitura";
-import { ErroDeCarregamento } from "@/components/tabela/estados";
+import { ErroDeLeitura } from "@/components/estados/erro-de-leitura";
 
-/** Se a escala falha, a tela continua com o título e oferece tentar de novo. */
-export default function ErroDaEscala({
-  error,
-  reset,
-}: {
+export default function ErroDaEscala(props: {
   error: Error & { digest?: string };
   reset: () => void;
 }) {
-  const router = useRouter();
-  const [pendente, iniciar] = useTransition();
-  return (
-    <PaginaDeLeitura titulo="Escala">
-      <ErroDeCarregamento
-        titulo="Não foi possível carregar a escala"
-        descricao="O banco não respondeu ou a operação está fora do seu alcance. Confira e tente de novo; se continuar, avise quem cuida do sistema."
-        codigo={error.digest}
-        pendente={pendente}
-        aoTentar={() =>
-          iniciar(() => {
-            router.refresh();
-            reset();
-          })
-        }
-      />
-    </PaginaDeLeitura>
-  );
+  return <ErroDeLeitura {...props} oQue="a escala" titulo="Escala" />;
 }

@@ -270,6 +270,8 @@ jobs:
           fi
           exit "$status"
       - run: pnpm db:dev-dados
+      # Todas as funções que o app chama existem no banco com a mesma assinatura (só leitura, só nomes).
+      - run: pnpm db:paridade
       - run: |
           pnpm exec supabase status -o env \
             | sed -nE 's/^API_URL="?([^"]*)"?$/NEXT_PUBLIC_SUPABASE_URL=\1/p; s/^PUBLISHABLE_KEY="?([^"]*)"?$/NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=\1/p' \

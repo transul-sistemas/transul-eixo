@@ -1,3 +1,4 @@
+import { falhaDeLeitura } from "@/lib/erros/leitura";
 import type {
   EntradaAvancarNoPatio,
   EntradaCriarOrdem,
@@ -57,7 +58,7 @@ async function ler<T>(
   argumentos: Record<string, unknown>,
 ): Promise<T> {
   const { data, error } = await c.schema("nucleo").rpc(funcao, argumentos);
-  if (error) throw new Error(`${funcao}: ${error.message}`);
+  if (error) throw falhaDeLeitura(funcao, error);
   return data as T;
 }
 
@@ -189,7 +190,7 @@ export async function lerOperacoes(
     .is("excluido_em", null)
     .order("nome")
     .order("id");
-  if (error) throw new Error(`operacao: ${error.message}`);
+  if (error) throw falhaDeLeitura("operacao", error);
   return (data as OperacaoAEscolher[] | null) ?? [];
 }
 

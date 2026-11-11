@@ -7,7 +7,7 @@ Projeto técnico completo: `docs/projeto-tecnico.md`. Em caso de dúvida, pergun
 ## Regras invioláveis
 
 1. **Uma placa e um CPF existem uma vez só.** O que muda no tempo é o vínculo, sempre com vigência (início e fim) e sem sobreposição garantida pelo banco (`EXCLUDE`). Exceção (06/11/2026): a placa pode ter mais de um CR ao mesmo tempo (frota e acionista); dois do mesmo tipo geram alerta e fila, sem recusa, e o mesmo CR não se sobrepõe a si mesmo.
-2. **Toda inclusão, edição e exclusão é feita por wizard** (stepper horizontal, resumo ao vivo, rascunho salvo). Campo de seleção sem opção tem o botão "+" que abre um mini-wizard lateral.
+2. **Toda inclusão, edição e exclusão é feita por wizard** (stepper horizontal, resumo ao vivo, rascunho salvo). Campo de seleção sem opção tem o botão "+" que abre um mini-wizard em popup central, menor e empilhado sobre o assistente.
 3. **O Sankhya é dono do fato; o Eixo é dono da explicação.** Fato importado nunca é editado. Correção = ajuste justificado, com aprovação por alçada.
 4. **Cada métrica tem uma única definição** em `docs/glossario.md`. Nenhuma tela recalcula do seu jeito.
 5. **Permissão = módulo × ação × escopo**, aplicada no banco por RLS. A chave mestra (`service_role`) só existe nos workers.
@@ -39,6 +39,7 @@ Projeto técnico completo: `docs/projeto-tecnico.md`. Em caso de dúvida, pergun
 - Encerrar vínculo não é excluir: CR, vínculo da placa e da operação só se fecham com data de fim.
 - Ação em várias etapas é um processo: tarefa com dono, prazo e histórico; o wizard é a face da tarefa.
 - Vigente é verde e encerrado é vermelho suave, sempre com rótulo e ícone.
+- Wizard abre em popup central; a barra lateral é só para detalhe.
 - **Validação visual em toda entrega:** ao fim de cada checkpoint, capturas em 1366 e 1920, claro e escuro, e a rota para abrir com `pnpm dev`. Sem aprovação do visual, a entrega não avança. Telas de dados usam `lib/exemplo/` (nunca importado fora de desenvolvimento e testes) até o Acompanhamento da Frota estar pronto.
 
 ## Stack

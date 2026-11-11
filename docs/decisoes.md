@@ -22,6 +22,26 @@ Lote de conferência de `docs/cr-regras.md` (divergências 5 e 6). Decisões e h
 - **Cascata da ficha:** o gráfico passou a ter duas barras de receita empilhadas, CT-e e NFS-e (cores de módulo e de ação, tooltip com o valor completo); se as duas não somam a receita total, volta à barra única.
 - **Quem decidiu:** Alexandre (travas e o escopo do lote, 11/11/2026); as hipóteses H9, H10 e H11 foram aprovadas por ele em 11/11/2026 (H10 e H11 com os ajustes acima).
 
+## 11/11/2026 — Decisões sobre o lote de número, a ordem do banco local e o Acompanhamento v2
+
+- **Datas fora de faixa (Alexandre):** as 15 datas de 2028 e 2029 parecem em parte erro de digitação do ano
+  (salário, telefone, assistência médica, mão de obra) e em parte talvez legítimas (coligada, adiantamento).
+  **Ficam fora do resultado e na fila** ("data futura a confirmar"). Um CSV **local**, em `importacao/` (fora
+  do Git, sem nome de pessoa, sem valor e sem placa), leva o número do título, a natureza e as datas ao
+  financeiro, para corrigir no Sankhya.
+- **Banco real local, nesta ordem (só depois do CI da `main` verde e do merge do lote):** backup REAL com o
+  esquema atual; aplicar as migrations aditivas do lote (`20261116100000`, `20261116110000`,
+  `20261116120000`), sem apagar nada e recarregando a API; conferir a `querys/04` **por tipo de exceção**
+  (as 928 de cadastro pendente continuam 928; as novas contam à parte: data fora de faixa, data futura a
+  confirmar, CT-e sem status); novo backup REAL com o esquema novo.
+- **CI:** endurecer o passo de instalação do Chromium (cache do navegador do Playwright e nova tentativa em
+  falha de rede), num commit só, depois que a `main` estiver verde. Motivo: em 11/11 dois jobs caíram por
+  falha de DNS do runner ao instalar dependências do sistema, sem relação com o código.
+- **Acompanhamento v2:** hipóteses aprovadas (grupos, esperado proporcional, Programado em tabela própria,
+  Movimento como lista) e o "+" em popup central menor e empilhado (regra 2 do `CLAUDE.md` ajustada).
+  A rota depende só dos 165 veículos com posição. Ver `docs/acompanhamento-v2.md`.
+- **Quem decidiu:** Alexandre.
+
 ## 11/11/2026 — Estrutura completa, gerenciador de processos e vínculos com história
 
 - **Contexto (Alexandre, 11/11/2026):** o Eixo é a versão 2 da v1. Não copiamos: a v1 é gabarito de processos e de regras (`docs/propostas`, `DIAGNOSTICO_SISTEMA`, dicionário de indicadores). Portamos **regras**, não tabelas. Corrigimos o que estava errado (uma fonte única por etapa; papel rígido por subsistema; "ajuste manual" fora do sistema) e trazemos boas práticas atuais. Só documentação: nenhum código, migration ou teste de produto entrou com esta entrada.
@@ -1569,3 +1589,11 @@ Registro de direção, só em texto: nenhum código nem migration. Não muda a f
 - **Link nos códigos de placa:** Pátio, Ordens, Carteira, Locação e Conciliação passam a abrir `/frota/placas/<placa>`; a Conciliação e a Locação levam também à ficha do parceiro (pelo olho).
 - **Teste de consistência:** `lib/qualidade/esqueleto-global.test.ts` (toda tela do catálogo tem página, esqueleto só para Administrador e Diretoria, toda estrutura fecha a grade e toda tabela tem o olho), junto do critério (i) de `lista-de-vinte.test.ts`.
 - **Parado:** a busca de placas e fichas dentro do Ctrl+K (precisa de leitura própria com RLS e de teste de cancelamento da resposta anterior, armadilha 4); fica para a próxima fatia.
+
+## 11/11/2026 — Erros honestos, paridade do banco e cobertura de dados (hipótese)
+
+- **Causa no digest.** A falha de leitura é classificada no servidor (`lib/erros/leitura.ts`: banco fora, função ausente, consulta lenta, sem permissão, inesperado) e a causa vai no `digest` do erro (`eixo-leitura:<causa>:<id>`); o Next respeita um digest já existente. Limite: se alguém capturar e relançar outro `Error`, o digest se perde e a tela cai em "inesperado". Função e código só por Server Action (`lib/erros/detalhe-do-erro.ts`) para Administrador e Diretoria; o registro é em memória, por instância.
+- **Componente único** `components/estados/erro-de-leitura.tsx`: 21 `error.tsx` viraram uma linha (inclusive as 3 fichas, com o voltar em `topo`) e há um `error.tsx` de último recurso em `app/(sistema)`.
+- **`pnpm db:paridade`** (`lib/paridade`): funções que o app chama (`.rpc`, também pelos embrulhos com o parâmetro `funcao`) contra os tipos (teste estático) e o banco local. Roda antes do Next no `dev:banco` (só avisa) e no job `modo-banco` do CI.
+- **Simulação:** `?falha=funcao-ausente` (só com `EIXO_DADOS=exemplo`) reproduz a migration não aplicada, para o e2e.
+- **Cobertura:** `docs/cobertura-de-dados.md`. A tela de Cobertura de dados fica como proposta (exige função de leitura nova).

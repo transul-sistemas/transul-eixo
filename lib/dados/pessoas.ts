@@ -1,3 +1,4 @@
+import { falhaDeLeitura } from "@/lib/erros/leitura";
 import type {
   EntradaCadastrarPessoa,
   EntradaEditarPessoa,
@@ -80,7 +81,7 @@ export async function lerPessoasDaLista(
     p_pagina: consulta.pagina,
     p_tam: consulta.tam,
   });
-  if (error) throw new Error(`pessoas_da_lista: ${error.message}`);
+  if (error) throw falhaDeLeitura("pessoas_da_lista", error);
   const d = data as ListaDoBanco;
   return {
     linhas: d.linhas.map((l): LinhaDePessoa => ({
@@ -151,7 +152,7 @@ export async function lerFichaDaPessoa(
 ): Promise<FichaDaPessoa | null> {
   const c = await cliente();
   const { data, error } = await c.schema("nucleo").rpc("ficha_da_pessoa", { p_pessoa: id });
-  if (error) throw new Error(`ficha_da_pessoa: ${error.message}`);
+  if (error) throw falhaDeLeitura("ficha_da_pessoa", error);
   if (data === null || data === undefined) return null;
   const d = data as FichaDoBanco;
   return {
@@ -197,7 +198,7 @@ export async function lerEscalaDoMes(
     p_operacao: estado.operacao,
     p_mes: estado.mes ? `${estado.mes}-01` : null,
   });
-  if (error) throw new Error(`escala_do_mes: ${error.message}`);
+  if (error) throw falhaDeLeitura("escala_do_mes", error);
   const d = data as EscalaDoBanco;
   return {
     mes: mesDe(d.mes),

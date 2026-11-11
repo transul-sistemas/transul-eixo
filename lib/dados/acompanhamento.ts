@@ -1,3 +1,4 @@
+import { falhaDeLeitura } from "@/lib/erros/leitura";
 import { textoDoErro } from "@/lib/log/erro";
 import type {
   EntradaConfirmarCarteira,
@@ -61,7 +62,7 @@ async function ler<T>(
   argumentos: Record<string, unknown>,
 ): Promise<T> {
   const { data, error } = await c.schema("nucleo").rpc(funcao, argumentos);
-  if (error) throw new Error(`${funcao}: ${error.message}`);
+  if (error) throw falhaDeLeitura(funcao, error);
   return data as T;
 }
 

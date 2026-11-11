@@ -1,3 +1,4 @@
+import { falhaDeLeitura } from "@/lib/erros/leitura";
 import type { EstadoDasOperacoes } from "@/lib/navegacao/operacoes";
 import type {
   Cascata,
@@ -173,7 +174,7 @@ export async function lerOperacoesDoMes(
     p_pagina: consulta.pagina,
     p_tam: consulta.tam,
   });
-  if (error) throw new Error(`operacoes_do_mes: ${error.message}`);
+  if (error) throw falhaDeLeitura("operacoes_do_mes", error);
   const d = data as ListaDoBanco;
   return {
     mes: mesDe(d.mes),
@@ -214,7 +215,7 @@ export async function lerFichaDaOperacao(
     p_operacao: id,
     p_mes: mes ? `${mes}-01` : null,
   });
-  if (error) throw new Error(`ficha_da_operacao: ${error.message}`);
+  if (error) throw falhaDeLeitura("ficha_da_operacao", error);
   if (data === null || data === undefined) return null;
   const d = data as FichaDoBanco;
   return {

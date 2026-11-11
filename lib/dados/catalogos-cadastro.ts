@@ -1,3 +1,4 @@
+import { falhaDeLeitura } from "@/lib/erros/leitura";
 import { formatarData } from "@/components/formato/data";
 import {
   type ColunaDoCatalogo,
@@ -109,7 +110,7 @@ export async function listarCatalogo(
     if (coluna !== definicao.ordem) consulta = consulta.order(coluna, { ascending: true });
   }
   const { data, error, count } = await consulta.range((atual - 1) * tam, atual * tam - 1);
-  if (error) throw new Error(`Não foi possível ler ${definicao.nome}: ${error.message}`);
+  if (error) throw falhaDeLeitura(definicao.nome, error);
   const brutas = (data ?? []) as LinhaBruta[];
 
   // Os nomes dos itens que as linhas referenciam (marca do modelo, filial da garagem...).
@@ -130,7 +131,7 @@ export async function listarCatalogo(
         .from(coluna.de.tabela)
         .select("id, nome")
         .in("id", ids);
-      if (r.error) throw new Error(`Não foi possível ler ${coluna.titulo}: ${r.error.message}`);
+      if (r.error) throw falhaDeLeitura(coluna.titulo, r.error);
       for (const item of (r.data ?? []) as { id: string; nome: string }[])
         mapa.set(item.id, item.nome);
     }

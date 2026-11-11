@@ -57,3 +57,29 @@ Sem nenhuma receita e nenhum custo na janela (o staging do Sankhya ainda vazio),
 mostram "Sem dados ainda: depende da ponte do Sankhya (viagens e despesas)" e as colunas de dinheiro da lista
 mostram traço. O teste `lib/dominio/resultado-da-operacao.test.ts` e o e2e `e2e-banco/operacoes-ficha.spec.ts`
 guardam a regra.
+
+## Assistente em popup central; painel lateral só para detalhe
+
+Regra de Alexandre (11/11/2026): **o wizard abre em popup central; a barra lateral é só para detalhe.**
+
+- **Wizard** (inclusão, edição, exclusão e lançamento): diálogo centralizado, com stepper horizontal,
+  resumo ao vivo, rascunho salvo e "fechar é fechar". Nunca na lateral.
+- **Painel lateral** (`BotaoDoOlho`, Espiar, ficha curta): só para **ler o detalhe** de um item, sem
+  formulário de gravação.
+- O componente `Assistente` (`components/wizard/assistente.tsx`) hoje tem duas variantes: `modal`
+  (tela quase cheia) e `lateral` (o mini-wizard). A regra pede **uma variante de popup central** (proposta:
+  largura moderada para os assistentes curtos, e a tela quase cheia mantida para os longos) e **a aposentadoria da
+  variante lateral**.
+
+### Assistentes que hoje usam a variante lateral (conferido no código, 11/11/2026)
+
+| Assistente | Arquivo | O que fazer |
+| --- | --- | --- |
+| Lançar situação | `app/(sistema)/frota/acompanhamento/lancar-situacao.tsx` | Vira o wizard em popup central (fatia A2 de `docs/superpowers/plans/2026-11-11-acompanhamento-v2.md`) |
+| Avançar placa | `app/(sistema)/operacional/patio/avancar-placa.tsx` | Popup central |
+| Marcar dia | `app/(sistema)/pessoas/escala/marcar-dia.tsx` | Popup central |
+| Mini-cadastro de catálogo (o "+" do campo de seleção) | `app/(sistema)/frota/placas/assistentes/mini-cadastro-de-catalogo.tsx` | **Aprovado por Alexandre (11/11/2026):** popup central **menor e empilhado** sobre o assistente de baixo, sem rascunho próprio; a regra 2 do `CLAUDE.md` foi ajustada |
+| Assistente de teste (demonstração) | `app/(sistema)/admin/demonstracao/assistente-de-teste.tsx` | Acompanha o mini-cadastro (é a vitrine da variante) |
+
+Os demais assistentes (cadastrar, receber, entregar, devolver, corrigir e os de Operações, Pessoas,
+Parceiros e Cadastros) já usam a variante `modal` e só trocam de tamanho, se for decidido.

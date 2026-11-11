@@ -76,7 +76,10 @@ export function simulacaoDe(parametros: URLSearchParams) {
   const lento = Number(parametros.get("lento"));
   return {
     lentoMs: Number.isFinite(lento) && lento > 0 ? Math.min(lento, 5000) : undefined,
-    falha: parametros.get("falha") === "1",
+    falha:
+      parametros.get("falha") === "funcao-ausente"
+        ? ("funcao-ausente" as const)
+        : parametros.get("falha") === "1",
     falhaNoPainel: parametros.get("falhaNoPainel") === "1",
   };
 }

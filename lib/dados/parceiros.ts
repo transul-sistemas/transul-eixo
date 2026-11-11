@@ -1,3 +1,4 @@
+import { falhaDeLeitura } from "@/lib/erros/leitura";
 import type {
   EntradaCadastrarLocacao,
   EntradaCadastrarParceiro,
@@ -62,7 +63,7 @@ async function ler<T>(
 ): Promise<T> {
   const c = await cliente();
   const { data, error } = await c.schema("nucleo").rpc(funcao, argumentos);
-  if (error) throw new Error(`${funcao}: ${error.message}`);
+  if (error) throw falhaDeLeitura(funcao, error);
   return data as T;
 }
 

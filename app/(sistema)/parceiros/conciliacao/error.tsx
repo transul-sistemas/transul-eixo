@@ -1,10 +1,10 @@
 "use client";
 
-import { ErroDaTelaDeParceiros } from "../erro-da-tela";
+import { ErroDeLeitura } from "@/components/estados/erro-de-leitura";
 
 export default function ErroDaConciliacao(props: {
   error: Error & { digest?: string };
   reset: () => void;
 }) {
-  return <ErroDaTelaDeParceiros titulo="Conciliação" oQue="a conciliação" {...props} />;
+  return <ErroDeLeitura {...props} oQue="a conciliação" titulo="Conciliação" />;
 }
