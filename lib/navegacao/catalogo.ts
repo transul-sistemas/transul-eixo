@@ -89,6 +89,7 @@ export const CATALOGO: readonly ModuloDoCatalogo[] = [
       icone: "IconChecklist",
       dispositivos: TODOS,
       descricao: "Reúne o que espera a sua ação, como a aprovação de casos.",
+      estado: "pronto",
     },
     {
       slug: "resumo-do-dia",
@@ -144,6 +145,14 @@ export const CATALOGO: readonly ModuloDoCatalogo[] = [
       icone: "IconWallet",
       dispositivos: TODOS,
       descricao: "Confirma a carteira mensal, placa a placa.",
+      estado: "pronto",
+    },
+    {
+      slug: "excecoes",
+      nome: "Exceções",
+      icone: "IconAlertTriangle",
+      dispositivos: DESKTOP_E_TABLET,
+      descricao: "Reúne o que o cadastro não resolveu sozinho e leva a completar o dado.",
       estado: "pronto",
     },
     {

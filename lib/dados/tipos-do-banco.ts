@@ -1853,6 +1853,9 @@ isOneToOne: false
 "estado_em":
 { Args: { "p_ativo_id": string,"p_camada": string,"p_em": string }; Returns: string
                            },
+"excecoes_abertas":
+{ Args: { "p_assunto": string,"p_pagina": number,"p_tamanho": number }; Returns: Json
+                           },
 "ficha_da_operacao":
 { Args: { "p_mes"?: string,"p_operacao": string }; Returns: Json
                            },
@@ -2186,6 +2189,9 @@ isOneToOne: false
 { Args: { "p_ate": string,"p_ativos": (string)[],"p_inicio": string }; Returns: {
               "ativo_id": string,"dia": string,"sigla": string
             }[]
+                           },
+"tarefas_do_usuario":
+{ Args: Record<PropertyKey, never>; Returns: Json
                            },
 "texto_simples":
 { Args: { "p_texto": string }; Returns: string
