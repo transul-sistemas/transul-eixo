@@ -34,6 +34,22 @@ Modelo de entrada:
   fora do `.env.local`), os CPFs e CNPJs de fixture e a planilha do catálogo.
 - **Quem decidiu:** Alexandre.
 
+## 11/11/2026 — Largura fluida da grade (regra de tela)
+
+- **Decisão (Alexandre):** **tabela em grade preenche a largura; só rola por dentro.** Hoje as colunas dos dias têm
+  largura fixa e, em tela larga (perto de 1667 px, no tema escuro), sobra uma faixa vazia depois do dia 30. Passa a
+  valer: colunas dos dias com largura fluida (`repeat(var(--dias), minmax(40px, 1fr))`, teto de cerca de 80 px por
+  célula); primeira coluna fixa e sticky; em tela estreita a grade rola **dentro do cartão**, com o cabeçalho dos
+  dias e a primeira coluna fixos, e a **página nunca ganha rolagem horizontal**; as colunas seguem os dias do mês
+  (28 a 31); densidade Compacto ou Confortável lembrada por usuário; dia da semana no cabeçalho, fim de semana com
+  fundo levemente diferente, coluna de hoje destacada; **vale também para a grade do Movimento**.
+- **Aceite:** e2e que mede, em 1366, 1667 e 1920 px, que a soma das colunas ocupa a largura do cartão (sem sobra à
+  direita) e que em 1092 px a rolagem é interna, nos temas claro e escuro.
+- **Onde está:** `docs/padrao-de-telas.md` (regra geral), fatia A1 do plano do Acompanhamento, ficha
+  `docs/fichas-de-tela/frota-acompanhamento.md` e `docs/acompanhamento-v2.md`. **Não construído agora.**
+- **Hipótese:** acima de cerca de 2.500 px o cartão passa a ter a largura da grade (o cartão encolhe, sem faixa vazia).
+- **Quem decidiu:** Alexandre.
+
 ## 11/11/2026 — Meu dia, Posição do dia, decisões das fichas e fidelidade ao protótipo
 
 - **Meu dia e Posição do dia (Alexandre):**
