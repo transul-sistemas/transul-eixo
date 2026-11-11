@@ -27,6 +27,7 @@
     "demo:trocar": "node scripts/demo-trocar.ts",
     "db:carga": "node scripts/db-dev-dados.ts --quantidade 5000",
     "db:diagnostico": "node scripts/db-diagnostico.ts",
+    "db:paridade": "node scripts/paridade-do-banco.ts",
     "env:local": "node scripts/env-local.mjs",
     "sankhya:consulta": "node workers/sankhya/consulta.ts"
   },
