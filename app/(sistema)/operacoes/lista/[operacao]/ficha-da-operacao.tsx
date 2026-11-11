@@ -247,7 +247,7 @@ function Resumo({
         <CelulaDaGrade colunas={6}>
           <PainelDeGrafico
             titulo={`Cascata de ${rotuloDoPeriodo}`}
-            descricao="Receita menos os custos da frota e de serviço dá a margem."
+            descricao="A receita de CT-e e a de NFS-e, menos os custos da frota e de serviço, dão a margem."
             estado={estado}
             textoVazio={SEM_RESULTADO}
           >

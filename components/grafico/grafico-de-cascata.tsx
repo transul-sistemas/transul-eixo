@@ -6,7 +6,7 @@ import * as echarts from "echarts/core";
 import { CanvasRenderer } from "echarts/renderers";
 import { useCallback } from "react";
 import { formatarMoeda, formatarMoedaAbreviada } from "@/components/formato/moeda-valor";
-import type { PassoDaCascata } from "@/lib/dominio/resultado-da-operacao";
+import { type PassoDaCascata, tokenDoPasso } from "@/lib/dominio/resultado-da-operacao";
 import { useGrafico } from "./usar-grafico";
 
 echarts.use([BarChart, GridComponent, TooltipComponent, CanvasRenderer]);
@@ -44,7 +44,7 @@ export function GraficoDeCascata({
       xAxis: {
         type: "category",
         data: passos.map((p) => p.rotulo),
-        axisLabel: { color: t.texto, interval: 0 },
+        axisLabel: { color: t.texto, interval: 0, width: 96, overflow: "break" },
         axisLine: { lineStyle: { color: t.linha } },
         axisTick: { show: false },
       },
@@ -71,7 +71,12 @@ export function GraficoDeCascata({
           barMaxWidth: 56,
           data: passos.map((p) => ({
             value: p.altura,
-            itemStyle: { color: p.tipo === "custo" ? t.negativo : t.modulo("operacoes") },
+            itemStyle: {
+              color: ((token) =>
+                token === "negativo" ? t.negativo : token === "acao" ? t.acao : t.modulo(token))(
+                tokenDoPasso(p.tipo),
+              ),
+            },
           })),
         },
       ],
