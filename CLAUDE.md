@@ -30,6 +30,7 @@ Projeto técnico completo: `docs/projeto-tecnico.md`. Em caso de dúvida, pergun
 - Use as skills: `brainstorming` antes de cada módulo; `writing-plans` e `executing-plans` para cada fase; `test-driven-development` em toda regra de negócio; `systematic-debugging` em todo erro; `verification-before-completion` antes de dizer "pronto"; `requesting-code-review` e `finishing-a-development-branch` em cada pull request; `frontend-design` em toda tela; `supabase` para o banco.
 - **Teste antes do código** em toda regra de `lib/dominio/`.
 - Todo commit é feito direto na `main` e enviado com push na hora, sem branch, sem pull request e sem esperar o checkpoint (Alexandre, 05/11/2026); etiqueta anotada por fatia; nunca `--force`.
+- Commit que muda **só** `docs/**`, `*.md` ou `importacao/` sobe direto, sem esperar o verde do CI (o CI pula o e2e nesses casos); commit que toca código espera o CI verde (Alexandre, 11/11/2026).
 - **Ritmo:** risco alto (banco, permissões e RLS, login, funções atômicas, ponte do Sankhya, dados reais) para no checkpoint e espera o "aprovado"; risco baixo (telas que reusam componentes, ajustes visuais, textos, documentação), com tudo verde, integra sozinho e relata depois; relatório curto; no simples e reversível, escolhe o mais simples, registra como hipótese e segue (regra completa em `docs/decisoes.md`, 04/11/2026).
 - Pare e peça aprovação nos checkpoints de cada plano.
 - Nunca git add -A nem git commit -a: sempre git add por arquivo; nada de importacao/ vai ao Git.

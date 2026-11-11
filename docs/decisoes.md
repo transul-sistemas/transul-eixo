@@ -8,6 +8,28 @@ Modelo de entrada:
 
 ---
 
+## 11/11/2026 — CI mais rápido: e2e em quatro shards, execuções da main independentes e commit só de documentação
+
+- **Decisão (Alexandre, "arrochar", 11/11/2026):**
+  - **E2E em 4 shards em paralelo.** O job `app` ficou só com lint, tipos e testes unitários. O e2e virou o job
+    `e2e`, uma matriz de 4 shards (`--shard=i/4`, `fail-fast: false`), cada um com o seu Supabase local e o seu
+    build. O job `e2e-resultado` junta os relatórios (blob para HTML) e decide o resultado: passa se o e2e passou
+    ou se foi pulado por só mudar documentação; falhar ou cancelar reprova. **Quando a proteção da `main`
+    existir (GitHub Team), o job a exigir no lugar do e2e que ficava dentro do `app` é o `e2e-resultado`.**
+  - **Projetos de dependência.** O `preparar` (login) entra em todo shard: conferido no código do Playwright 1.64
+    (`runner/index.js`): as dependências são destacadas antes de dividir e reincluídas depois.
+  - **Concorrência.** Na `main` cada execução tem o seu grupo (`run_id`): nenhuma espera na fila nem cancela a
+    outra (antes, um push de documentação segurava a execução do commit seguinte). Pull request segue
+    agrupado por ramo, com cancelamento da execução anterior.
+  - **Commit só de documentação sobe direto.** Se o commit muda apenas `docs/**`, `*.md` ou `importacao/`, pode
+    ser enviado sem esperar o verde (o CI pula o e2e, via `scripts/ci/pula-e2e.sh`, testado em
+    `lib/qualidade/workflow-verificacao.test.ts`). **Commit que toca código espera o CI verde.** Nota:
+    `supabase/**` também pula o e2e, mas não faz parte desta regra (migration segue esperando o verde).
+- **Motivo:** o e2e passava de 20 minutos e a fila serializada de execuções da `main` multiplicava a espera.
+- **Medição:** tempo antes (um job): cerca de 19 a 24 min só no e2e (execuções 43033461321 e 43070484928 de
+  11/11/2026); o tempo depois entra aqui quando a primeira execução com shards terminar.
+- **Quem decidiu:** Alexandre.
+
 ## 11/11/2026 — Modo terminar: decisões fechadas, segurança da integração e ordem dos blocos
 
 - **Decisões fechadas (Alexandre):** **H1 sim** (o CR pertence a uma operação com vigência e a placa segue o
@@ -48,6 +70,7 @@ Modelo de entrada:
   programadas sem substituto geram a tarefa "indicar substituto" para o líder da operação.
 - **Hipótese de premiação com dois motoristas** (fora da v1): rateio por turno, soma igual a 100%.
 - **Quem decidiu:** Alexandre.
+
 ## 11/11/2026 — Receita em duas linhas, corte já aplicado na origem, dados congelados e data fora de faixa
 
 Lote de conferência de `docs/cr-regras.md` (divergências 5 e 6). Decisões e hipóteses, por assunto.
