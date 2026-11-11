@@ -48,6 +48,16 @@ const ASSUNTOS: Record<string, { nome: string; um: string; varios: string }> = {
     um: "lançamento com data fora de faixa",
     varios: "lançamentos com data fora de faixa",
   },
+  data_futura_a_confirmar: {
+    nome: "Data futura a confirmar",
+    um: "lançamento com data futura a confirmar",
+    varios: "lançamentos com data futura a confirmar",
+  },
+  cte_sem_status: {
+    nome: "CT-e sem status",
+    um: "CT-e sem status",
+    varios: "CT-e sem status",
+  },
   cr_frota_diverge_da_unidade: {
     nome: "CR de frota que diverge da unidade",
     um: "CR de frota que diverge da unidade",

@@ -22,6 +22,14 @@ import { carregarDadosDosAssistentes } from "../placas/assistentes/carregar-dado
 
 export type ParametrosDaBusca = Promise<Record<string, string | string[] | undefined>>;
 
+/** O que a primeira coluna mostra quando a exceção é de um documento do staging, sem placa, pessoa nem CR. */
+function rotuloDoDocumento(assunto: string): string {
+  if (assunto === "cte_sem_status") return "CT-e";
+  if (assunto === "data_fora_de_faixa" || assunto === "data_futura_a_confirmar")
+    return "Lançamento";
+  return "—";
+}
+
 function cabecalho() {
   const tela = acharTela(ROTA_DA_FILA)?.tela;
   return { titulo: tela?.nome ?? "Exceções", descricao: tela?.descricao };
@@ -93,8 +101,7 @@ function Linha({ l, estado }: { l: LinhaDeExcecao; estado: EstadoDaFila }) {
         {l.placa !== null ? (
           <Placa placa={l.placa} tamanho="p" />
         ) : (
-          (l.pessoaNome ??
-          (l.cr !== null ? `CR ${l.cr}` : l.assunto === "data_fora_de_faixa" ? "Lançamento" : "—"))
+          (l.pessoaNome ?? (l.cr !== null ? `CR ${l.cr}` : rotuloDoDocumento(l.assunto)))
         )}
       </th>
       <td className={celula}>{nomeDoAssunto(l.assunto)}</td>
