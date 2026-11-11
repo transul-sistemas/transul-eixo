@@ -59,7 +59,8 @@ só agregados); sem nuvem até Alexandre pedir; sem Sankhya e sem API nesta etap
   disponibilidade e do resultado; confirmar no dia grava o evento real; RLS por perfil); unitário dos grupos
   de siglas e da validade por conjunto; e2e do caminho principal (lançar pela célula, lançar em lote pelo
   dia, corrigir, programar) e teste de "fechar é fechar" (rascunho, Esc, foco volta à célula).
-- **Dependências:** A1 (a grade por conjunto), P1 (caixa de Tarefas, para confirmar o programado), H3 e H4
+- **Dependências:** A1 (a grade por conjunto), **M1 e M2** (o Lançar o dia integra a situação do dia à
+  Posição do dia), P1 (caixa de Tarefas, para confirmar o programado), H3 e H4
   de `docs/decisoes.md`. Hipótese dos cinco grupos confirmada.
 
 ## A3. Barra lateral com as abas
@@ -101,7 +102,8 @@ só agregados); sem nuvem até Alexandre pedir; sem Sankhya e sem API nesta etap
   serviço; ao atingir o limite não consulta; RLS); teste do worker com serviço simulado (sem rede), cobrindo
   cota, erro e nova tentativa; unitário da divisão carregado e vazio pelas siglas do dia; e2e do mapa com
   rota fictícia e atribuição presente; teste de que **nenhuma chave** aparece no código do navegador.
-- **Dependências:** A3 (a aba existe); a conferência da política de uso dos tiles do OpenStreetMap; a ponte
+- **Dependências:** A3 (a aba existe); **M2 (a Posição do dia é a fonte principal das posições; o dump da
+  v1 é só o histórico inicial)**; a conferência da política de uso dos tiles do OpenStreetMap; a ponte
   do Sankhya para origem e destino das viagens e para o km faturado (até lá, o par é o das duas cidades
   consecutivas e o km faturado mostra "Sem dados ainda").
 
@@ -148,3 +150,10 @@ só agregados); sem nuvem até Alexandre pedir; sem Sankhya e sem API nesta etap
 - **Dependências:** A1 (grade por conjunto), P1 (caixa de Tarefas), os códigos do motorista confirmados e o
   mapeamento de T, F, FE e AT da escala atual para os códigos novos. **Dois motoristas por conjunto ficam
   fora desta fatia.**
+
+## Nova ordem (11/11/2026)
+
+Depois da Etapa 5 (A5 e A1): **M1, M2, A2, V0 e Trocar CR, P3, A4** (ver
+`docs/superpowers/plans/2026-11-11-processos-e-vinculos.md`). **A4 depende de M2**, e não só do dump da v1: as
+posições do dia dos gestores são a fonte principal da rota; a carga da v1 (165 veículos) só dá o histórico
+inicial. Placa sem posição mostra "Sem dados ainda: depende de posição do veículo".

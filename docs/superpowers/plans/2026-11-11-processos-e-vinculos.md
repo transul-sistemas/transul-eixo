@@ -175,3 +175,46 @@ checkpoint**, e **só no staging e no banco local**; nada na nuvem.
 - **Testes de aceite:** pgTAP (não fecha com exceção vencida; não fecha se o total não bate; mês fechado
   recusa gravação direta; reabrir exige alçada e deixa evento; RLS); e2e do caminho principal.
 - **Dependências:** C0, D0, C1, P3 (processos como dado) e a definição de alçada (H3 e H6).
+
+## Nova ordem de execução (11/11/2026)
+
+**Depois da Etapa 5 do prompt único** (A5 e A1), a ordem é: **M1** (Meu dia, receber em lote, wizard em
+popup), **M2** (Posição do dia), **A2** (Lançar o dia no wizard em popup, integrando a situação do dia à M2),
+**V0 e Trocar CR**, **P3** (processos como dado), **A4** (rota na rodovia, que passa a **depender de M2**). A fila
+principal do restante não muda.
+
+## M1. Meu dia, Receber placas em lote e wizard em popup
+
+- **Modelo e ritmo:** banco (funções de leitura novas, RLS pela carteira) e tela. Risco médio: **para no
+  checkpoint** e espera o "aprovado" antes de aplicar no banco local.
+- **Objetivo:** o gestor de frota cai numa fila guiada (receber placas, posição do dia, confirmar carteira, outras
+  tarefas); "Receber placas" em lote com Aceitar, Aceitar com pendências e Recusar; o variante de **popup
+  central** do `Assistente` e a aposentadoria da variante lateral.
+- **Tabelas e funções:** nenhuma tabela nova de regra; leitura `nucleo.meu_dia()` e `nucleo.pedidos_para_receber()`
+  (security invoker, a RLS da carteira vale); o lote chama, **uma por placa**, as funções que já existem
+  (`receber_transferencia`, `concluir_transferencia`, `devolver_pedido_contestado`; pendências em
+  `transferencia_pendencia`), pela Server Action (Zod, `exigirPermissao()`); o prazo da transferência é parâmetro.
+- **Telas:** `docs/meu-dia.md`; ficha `docs/fichas-de-tela/inicio-meu-dia.md`; o popup central em
+  `components/wizard/`.
+- **Testes de aceite:** pgTAP (ordem da fila, só o destino decide, o Administrador não decide, RLS);
+  unitário (falha de uma placa não impede as outras, repetir o clique não duplica, motivo obrigatório); e2e do
+  caminho principal; fidelidade ao protótipo.
+- **Dependências:** Etapa 5 (A5 e A1), caixa de Tarefas (P1, já integrada), H5 e H4.
+
+## M2. Posição do dia
+
+- **Modelo e ritmo:** banco (tabelas e funções novas, RLS, dado de localização de ativo) e tela. Risco alto:
+  **para no checkpoint** e espera o "aprovado".
+- **Objetivo:** o popup obrigatório, todos os dias no primeiro acesso depois das 5h, que lista os conjuntos da
+  carteira e não fecha até todos serem respondidos (Continua em, Mudou de cidade, Sem sinal), com presets de
+  oficina e pátio, a situação do dia no mesmo passo, o alerta de distância improvável, rascunho e liberação só
+  pelo líder, com motivo.
+- **Tabelas e funções:** `config.cidade` (a partir de `cidades_brasil` do dump da v1, 5.571 linhas),
+  `nucleo.posicao_do_conjunto` (chave única por conjunto, dia e origem), `nucleo.liberacao_da_posicao`, tipo
+  `posicao_pendente` na fila de exceções; `posicoes_do_dia`, `registrar_posicao_do_dia`,
+  `liberar_posicao_do_dia`, `distancia_improvavel`; carga provisória `staging.posicao_diaria`
+  (`vehicle_posicoes_diarias`, 5.147 pontos, 165 veículos).
+- **Telas:** `docs/posicao-do-dia.md`; ficha `docs/fichas-de-tela/inicio-posicao-do-dia.md`.
+- **Testes de aceite:** pgTAP (unicidade, correção sem apagar, RLS por perfil, só o líder libera, pendência
+  única); unitário (regra das 5h, distância e fator, sem coordenada não alerta); e2e; fidelidade ao protótipo.
+- **Dependências:** M1 (a fila guiada), a tabela de cidades, H5. **Alimenta** A2, A4 e o Movimento.
