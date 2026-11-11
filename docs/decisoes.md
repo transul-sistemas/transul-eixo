@@ -8,6 +8,45 @@ Modelo de entrada:
 
 ---
 
+## 11/11/2026 — Meu dia, Posição do dia, decisões das fichas e fidelidade ao protótipo
+
+- **Meu dia e Posição do dia (Alexandre):**
+  - **Regra:** cada passo de processo aponta para um assistente (wizard) e a tarefa abre direto nele, com o
+    contexto preenchido, nunca numa tela avulsa. **Modos de interação:** wizard em popup central; popup
+    obrigatório (porta); barra lateral só para detalhe; fila guiada; aviso na linha
+    (`docs/gerenciador-de-processos.md`).
+  - **Meu dia** (`docs/meu-dia.md`): ao entrar, o gestor de frota cai numa fila guiada (receber placas, posição do
+    dia, confirmar carteira, depois as outras tarefas). "Receber placas" em lote, com cada placa como pedido
+    independente (se uma falhar, as outras seguem e a tela diz qual); Aceitar, Aceitar com pendências (a pendência
+    vira tarefa) e Recusar (devolve ao gestor de origem, motivo obrigatório); só o gestor de destino decide; o
+    Administrador não age em nome de ninguém.
+  - **Posição do dia** (`docs/posicao-do-dia.md`): popup **obrigatório** que lista os conjuntos da carteira e não
+    fecha até todos serem respondidos; "Continua em <cidade de ontem>", "Mudou de cidade" ou "Sem sinal"; alerta
+    de distância improvável por estrada; rascunho; liberação só pelo líder, com motivo; posição é da **placa**,
+    em nível de cidade, nunca de pessoa. **Abre todos os dias, no primeiro acesso depois das 5h.**
+  - **Fatias M1 e M2** (funções de banco novas e parada com checkpoint). **Ordem depois da Etapa 5:** M1, M2, A2
+    (Lançar o dia no wizard em popup, integrando a situação do dia à M2), V0 e Trocar CR, P3, A4. **A4 depende
+    de M2**, e não só do dump da v1.
+- **Decisões sobre as hipóteses das fichas:**
+  - **Gestor de frota:** leitura **limitada** do motorista (nome e status do dia, **só dos conjuntos da própria
+    carteira**; nada de salário, CPF, contato nem documento), por **função de leitura própria com RLS pela
+    carteira**, sem abrir a tabela de Pessoas.
+  - **Prazos e limites** das fichas viram **parâmetros em `config.parametro`**, editáveis só pelo Administrador,
+    com auditoria.
+  - **Escala e status do dia do motorista são coisas distintas:** a escala mantém **T, F, FE e AT** como
+    planejado; o realizado é **outra tabela** (TBV, TBE, FOL, FÉR, ATS, FRD, FLT, TBX); o planejado vira
+    **sugestão** (T para TBV, F para FOL, FE para FÉR, AT para ATS), **sem converter nada**.
+  - **Mês fechado (H3):** só a **Diretoria**, por tarefa, com **motivo obrigatório na reabertura**.
+  - **Lote do Lançar o dia:** mesma sigla e mesma hora para todos; a **Posição do dia é individual** por conjunto.
+- **Fidelidade ao protótipo:** as telas dos dois quadros aprovados são a **referência visual** (cópias em
+  `docs/prototipos/`, fora do build). Cada ficha tem o **checklist de fidelidade** e o que **sempre difere por
+  natureza** (mini placa em Barlow Semi Condensed, ícones Tabler, dados reais, mapa real). **Todo bloco termina com
+  capturas a 1366 (claro e escuro) ao lado do protótipo** em `capturas/galeria/<bloco>/` (fora do Git), com a lista
+  **Pontos para revisar** com todo desvio e o motivo. **Sem comparação de pixel no CI.**
+- **Estado (11/11/2026):** CI da `main` verde e os merges da Etapa 1 feitos (lote de número, paridade, erros e
+  matriz); e2e em 4 shards em validação.
+- **Quem decidiu:** Alexandre.
+
 ## 11/11/2026 — CI mais rápido: e2e em quatro shards, execuções da main independentes e commit só de documentação
 
 - **Decisão (Alexandre, "arrochar", 11/11/2026):**
