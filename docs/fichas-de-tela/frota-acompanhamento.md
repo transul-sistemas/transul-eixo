@@ -105,3 +105,33 @@ fecha e devolve o foco à célula, `H` vai para a coluna de hoje (proposta).
 - (H) Y conta o conjunto também no dia em que ele foi montado; hipótese mais simples, confirmar no glossário.
 - (H) Conjunto sem cavalo (cavalo baixado) sai de Y a partir da baixa.
 - Dúvida: o limite de 20 conjuntos por página convive bem com 165 veículos com posição? Mantido o padrão de 20.
+
+## Decisões de Alexandre (11/11/2026)
+
+- **Motorista para o gestor de frota (leitura limitada):** a linha do motorista mostra **só o nome e o status do dia**, **só dos conjuntos da própria carteira**; nada de salário, CPF, contato nem documento. Vem de **função de leitura própria com RLS pela carteira**, sem abrir a tabela de Pessoas.
+
+## Checklist de fidelidade
+
+**Referência visual:** `docs/prototipos/acompanhamento/1-grade-por-conjunto.html`. Marque cada item ao fim do bloco, com a captura a 1366 (claro e escuro)
+ao lado do protótipo em `capturas/galeria/<bloco>/` (fora do Git); todo desvio vai para **Pontos para revisar**,
+com o motivo.
+
+- [ ] **Tokens de cor:** fundo `#F6F7FB`, superfícies brancas, texto `#0F1729`, linhas `#ECEEF4`, azul de ação
+  `#3355FF`; cor do módulo Frota `#4338CA`; nenhum hexadecimal escrito à mão (só tokens).
+- [ ] **Tons de status:** verde de "em atividade" em cinco degraus (`--status-atividade-1` a `-5`), âmbar (2),
+  vermelho (3) e cinza (2); **vigente verde e encerrado vermelho suave, sempre com rótulo, data e ícone, nunca só
+  pela cor**; contraste de 4,5:1 nos dois temas.
+- [ ] **Fonte e pesos:** Barlow (400, 500, 600 e 700); títulos e números como no protótipo; a placa em Barlow
+  Semi Condensed.
+- [ ] **Textos e rótulos:** os do protótipo, em letra minúscula normal: "Acompanhamento", "Legenda", "Mostrar a linha do motorista", "X de Y conjuntos com lançamento hoje", "Disponibilidade do dia", "lançar", "Legenda rápida".
+- [ ] **Ordem dos elementos:** contexto global (período, filial, operação) e botão Legenda; abas (Grade, Agora, Censo, Movimento, Mapa) com o interruptor da linha do motorista; faixa do dia (hoje, X de Y conjuntos com lançamento, disponibilidade); chips do veículo; chips do motorista; a grade; a legenda rápida.
+- [ ] **Estados:** vazio ("Sem dados ainda: depende de X"), carregando (esqueleto), erro (mensagem por causa e
+  "Tentar de novo"), sem permissão, dado parcial; cada estado que pede algo oferece a ação.
+- [ ] **Tema claro e escuro** (primeira classe), com os tokens e o contraste.
+- [ ] **1366 e 1092:** sem rolagem lateral da página; em 1920 aparecem mais colunas, sem apenas esticar.
+
+**O que sempre difere por natureza (não é desvio):** a placa é o componente da **mini placa Mercosul** em
+**Barlow Semi Condensed** (o protótipo desenha uma placa genérica); os **ícones são Tabler** (o protótipo usa
+SVG avulso); os **dados são reais** (o protótipo é fictício); o **mapa é real**, com a linha pela rodovia (onde
+houver mapa); moeda, data e números pelos componentes de `components/formato/`; **20 por página e olhinho em toda
+linha** (o protótipo mostra poucas linhas). Específico desta tela: os rótulos em maiúsculas do protótipo ("VEÍCULO", "MOTORISTA", "CONJUNTO E MOTORISTA") viram letra minúscula normal (regra de textos da interface); a grade tem 20 conjuntos por página, cabeçalho e primeira coluna fixos e o olhinho no fim da linha.

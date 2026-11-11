@@ -97,3 +97,35 @@ Ctrl+K: "Indicar substituto", "Abrir escala". Na grade, `M` liga e desliga a lin
 - Dúvida: o Gestor de frota passa a ver o motorista (leitura) dos conjuntos da própria carteira? Hipótese: sim, só
   leitura e só o código do dia, sem remuneração.
 - (H) A tarefa "indicar substituto" nasce 10 dias antes do primeiro dia de férias sem substituto; o prazo é hipótese.
+
+## Decisões de Alexandre (11/11/2026)
+
+- **Gestor de frota (leitura limitada do motorista):** **nome e status do dia, só dos conjuntos da própria carteira**; **nada de salário, CPF, contato nem documento**; **função de leitura própria com RLS pela carteira**, sem abrir a tabela de Pessoas.
+- **Escala e status do dia são coisas distintas:** a **escala** mantém **T, F, FE e AT** como planejado; o **realizado** é **outra tabela** (TBV, TBE, FOL, FÉR, ATS, FRD, FLT, TBX); o planejado vira **sugestão** (**T para TBV, F para FOL, FE para FÉR, AT para ATS**), **sem converter nada** (o dia só vira realizado quando o gestor lança).
+- **Prazos e limites** desta ficha (por exemplo, "indicar substituto" com N dias de antecedência) são **parâmetros em `config.parametro`**, editáveis só pelo Administrador, com auditoria.
+
+## Checklist de fidelidade
+
+**Referência visual:** `docs/prototipos/acompanhamento/7-barra-lateral-motorista.html e docs/prototipos/acompanhamento/1-grade-por-conjunto.html (linha fina do motorista)`. Marque cada item ao fim do bloco, com a captura a 1366 (claro e escuro)
+ao lado do protótipo em `capturas/galeria/<bloco>/` (fora do Git); todo desvio vai para **Pontos para revisar**,
+com o motivo.
+
+- [ ] **Tokens de cor:** fundo `#F6F7FB`, superfícies brancas, texto `#0F1729`, linhas `#ECEEF4`, azul de ação
+  `#3355FF`; cor do módulo Frota `#4338CA` (e Pessoas `#E8508A` na origem do dado); nenhum hexadecimal escrito à mão (só tokens).
+- [ ] **Tons de status:** verde de "em atividade" em cinco degraus (`--status-atividade-1` a `-5`), âmbar (2),
+  vermelho (3) e cinza (2); **vigente verde e encerrado vermelho suave, sempre com rótulo, data e ícone, nunca só
+  pela cor**; contraste de 4,5:1 nos dois temas.
+- [ ] **Fonte e pesos:** Barlow (400, 500, 600 e 700); títulos e números como no protótipo; a placa em Barlow
+  Semi Condensed.
+- [ ] **Textos e rótulos:** os do protótipo, em letra minúscula normal: "Motorista", "Mostrar a linha do motorista", "Férias programadas sem substituto", "Indicar substituto", códigos TBV, TBE, FOL, FÉR, ATS, FRD, FLT, TBX.
+- [ ] **Ordem dos elementos:** na grade: a linha fina sob cada conjunto; na barra lateral: motoristas do conjunto com turno, calendário do mês (liso: realizado; pontilhado: escala), totais, aviso de férias sem substituto.
+- [ ] **Estados:** vazio ("Sem dados ainda: depende de X"), carregando (esqueleto), erro (mensagem por causa e
+  "Tentar de novo"), sem permissão, dado parcial; cada estado que pede algo oferece a ação.
+- [ ] **Tema claro e escuro** (primeira classe), com os tokens e o contraste.
+- [ ] **1366 e 1092:** sem rolagem lateral da página; em 1920 aparecem mais colunas, sem apenas esticar.
+
+**O que sempre difere por natureza (não é desvio):** a placa é o componente da **mini placa Mercosul** em
+**Barlow Semi Condensed** (o protótipo desenha uma placa genérica); os **ícones são Tabler** (o protótipo usa
+SVG avulso); os **dados são reais** (o protótipo é fictício); o **mapa é real**, com a linha pela rodovia (onde
+houver mapa); moeda, data e números pelos componentes de `components/formato/`; **20 por página e olhinho em toda
+linha** (o protótipo mostra poucas linhas). Específico desta tela: o protótipo mostra dois motoristas por conjunto (turno dia e noite): **fora da primeira versão** (um motorista vigente por conjunto).

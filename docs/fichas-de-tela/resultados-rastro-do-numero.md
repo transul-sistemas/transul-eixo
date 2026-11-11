@@ -96,3 +96,33 @@ volta ao valor que abriu.
 - Dúvida: o rastro mostra o título do Sankhya por número (`NUFIN`)? Hipótese: sim, e nunca CPF, nome ou placa em
   exportação para fora do sistema.
 - (H) Valor negativo (estorno) aparece em vermelho no degrau, com o lançamento original ao lado.
+
+## Decisões de Alexandre (11/11/2026)
+
+- **Limite de lançamentos por degrau** é **parâmetro em `config.parametro`**, editável só pelo Administrador, com auditoria.
+
+## Checklist de fidelidade
+
+**Referência visual:** `(sem protótipo: segue o molde de `docs/padrao-de-telas.md` e o painel lateral de detalhe)`. Marque cada item ao fim do bloco, com a captura a 1366 (claro e escuro)
+ao lado do protótipo em `capturas/galeria/<bloco>/` (fora do Git); todo desvio vai para **Pontos para revisar**,
+com o motivo.
+
+- [ ] **Tokens de cor:** fundo `#F6F7FB`, superfícies brancas, texto `#0F1729`, linhas `#ECEEF4`, azul de ação
+  `#3355FF`; cor do módulo Resultados (verde `#1FA971`); nenhum hexadecimal escrito à mão (só tokens).
+- [ ] **Tons de status:** verde de "em atividade" em cinco degraus (`--status-atividade-1` a `-5`), âmbar (2),
+  vermelho (3) e cinza (2); **vigente verde e encerrado vermelho suave, sempre com rótulo, data e ícone, nunca só
+  pela cor**; contraste de 4,5:1 nos dois temas.
+- [ ] **Fonte e pesos:** Barlow (400, 500, 600 e 700); títulos e números como no protótipo; a placa em Barlow
+  Semi Condensed.
+- [ ] **Textos e rótulos:** os do protótipo, em letra minúscula normal: "De onde vem este número".
+- [ ] **Ordem dos elementos:** painel lateral aberto de um valor; os degraus valor, operação, CR, placa, lançamento; o código do Sankhya e o porquê em cada degrau.
+- [ ] **Estados:** vazio ("Sem dados ainda: depende de X"), carregando (esqueleto), erro (mensagem por causa e
+  "Tentar de novo"), sem permissão, dado parcial; cada estado que pede algo oferece a ação.
+- [ ] **Tema claro e escuro** (primeira classe), com os tokens e o contraste.
+- [ ] **1366 e 1092:** sem rolagem lateral da página; em 1920 aparecem mais colunas, sem apenas esticar.
+
+**O que sempre difere por natureza (não é desvio):** a placa é o componente da **mini placa Mercosul** em
+**Barlow Semi Condensed** (o protótipo desenha uma placa genérica); os **ícones são Tabler** (o protótipo usa
+SVG avulso); os **dados são reais** (o protótipo é fictício); o **mapa é real**, com a linha pela rodovia (onde
+houver mapa); moeda, data e números pelos componentes de `components/formato/`; **20 por página e olhinho em toda
+linha** (o protótipo mostra poucas linhas). Específico desta tela: não há protótipo; é painel lateral de detalhe (só leitura).

@@ -96,3 +96,34 @@ Ctrl+Enter confirma o passo final; foco volta ao botão que abriu.
 - (H) A permissão de mês fechado (H3) ainda a definir; hipótese mais simples: só a Diretoria, por tarefa.
 - (H) Se o líder da operação nova recusar, a troca é revertida **por outra troca** (nada se apaga), com o motivo.
 - Dúvida: quem confirma a chegada quando a operação nova não tem líder. Hipótese: a fila do papel "líder de operação".
+
+## Decisões de Alexandre (11/11/2026)
+
+- **Mês fechado (H3):** mexer em mês fechado (troca retroativa que o atinja, ou reabrir o mês) é **só da Diretoria, por tarefa**, com **motivo obrigatório na reabertura**.
+- **Prazos e limites** desta ficha são **parâmetros em `config.parametro`**, editáveis só pelo Administrador, com auditoria.
+
+## Checklist de fidelidade
+
+**Referência visual:** `docs/prototipos/tarefas-e-vinculos/2-trocar-cr.html`. Marque cada item ao fim do bloco, com a captura a 1366 (claro e escuro)
+ao lado do protótipo em `capturas/galeria/<bloco>/` (fora do Git); todo desvio vai para **Pontos para revisar**,
+com o motivo.
+
+- [ ] **Tokens de cor:** fundo `#F6F7FB`, superfícies brancas, texto `#0F1729`, linhas `#ECEEF4`, azul de ação
+  `#3355FF`; cor do módulo Frota `#4338CA`; nenhum hexadecimal escrito à mão (só tokens).
+- [ ] **Tons de status:** verde de "em atividade" em cinco degraus (`--status-atividade-1` a `-5`), âmbar (2),
+  vermelho (3) e cinza (2); **vigente verde e encerrado vermelho suave, sempre com rótulo, data e ícone, nunca só
+  pela cor**; contraste de 4,5:1 nos dois temas.
+- [ ] **Fonte e pesos:** Barlow (400, 500, 600 e 700); títulos e números como no protótipo; a placa em Barlow
+  Semi Condensed.
+- [ ] **Textos e rótulos:** os do protótipo, em letra minúscula normal: "Trocar CR", "Antes", "Depois", "Encerrado em 12/10", "Vigente desde 12/10", "Impacto de uma troca retroativa", "O que acontece".
+- [ ] **Ordem dos elementos:** título e subtítulo (placa, tipo, data); stepper (Placa, Novo CR, Data e motivo, Conferir); antes (encerrado, vermelho suave) e depois (vigente, verde); motivo e data com o selo "retroativa, N dias"; "o que acontece"; o impacto da troca retroativa; a tarefa para o líder da outra operação; rodapé.
+- [ ] **Estados:** vazio ("Sem dados ainda: depende de X"), carregando (esqueleto), erro (mensagem por causa e
+  "Tentar de novo"), sem permissão, dado parcial; cada estado que pede algo oferece a ação.
+- [ ] **Tema claro e escuro** (primeira classe), com os tokens e o contraste.
+- [ ] **1366 e 1092:** sem rolagem lateral da página; em 1920 aparecem mais colunas, sem apenas esticar.
+
+**O que sempre difere por natureza (não é desvio):** a placa é o componente da **mini placa Mercosul** em
+**Barlow Semi Condensed** (o protótipo desenha uma placa genérica); os **ícones são Tabler** (o protótipo usa
+SVG avulso); os **dados são reais** (o protótipo é fictício); o **mapa é real**, com a linha pela rodovia (onde
+houver mapa); moeda, data e números pelos componentes de `components/formato/`; **20 por página e olhinho em toda
+linha** (o protótipo mostra poucas linhas). Específico desta tela: no protótipo o impacto vem em reais de exemplo; no Eixo vem de `impacto_da_troca_de_cr` (C3) e, sem dado, mostra "Sem dados ainda: depende de X".

@@ -98,3 +98,34 @@ Ctrl+K: "Lançar situação" e "Lançar o dia". O foco volta à célula que abri
   primeira versão.
 - (H) O texto do aviso de mês fechado depende da permissão de H3, ainda por definir.
 - Dúvida: o limite de rascunho por pessoa (um por conjunto e dia). Hipótese: um por conjunto e dia.
+
+## Decisões de Alexandre (11/11/2026)
+
+- **Lote do Lançar o dia:** **mesma sigla e mesma hora para todos** os conjuntos escolhidos, tudo ou nada com "X de Y". A **Posição do dia é individual por conjunto** (`docs/posicao-do-dia.md`), e não usa este lote.
+- **Mês fechado (H3):** lançar em dia de mês fechado exige a permissão da Diretoria, por tarefa e com motivo (ver `trocar-cr.md`).
+
+## Checklist de fidelidade
+
+**Referência visual:** `docs/prototipos/acompanhamento/2-wizard-situacao.html e docs/prototipos/acompanhamento/3-wizard-conferir.html`. Marque cada item ao fim do bloco, com a captura a 1366 (claro e escuro)
+ao lado do protótipo em `capturas/galeria/<bloco>/` (fora do Git); todo desvio vai para **Pontos para revisar**,
+com o motivo.
+
+- [ ] **Tokens de cor:** fundo `#F6F7FB`, superfícies brancas, texto `#0F1729`, linhas `#ECEEF4`, azul de ação
+  `#3355FF`; cor do módulo Frota `#4338CA`; nenhum hexadecimal escrito à mão (só tokens).
+- [ ] **Tons de status:** verde de "em atividade" em cinco degraus (`--status-atividade-1` a `-5`), âmbar (2),
+  vermelho (3) e cinza (2); **vigente verde e encerrado vermelho suave, sempre com rótulo, data e ícone, nunca só
+  pela cor**; contraste de 4,5:1 nos dois temas.
+- [ ] **Fonte e pesos:** Barlow (400, 500, 600 e 700); títulos e números como no protótipo; a placa em Barlow
+  Semi Condensed.
+- [ ] **Textos e rótulos:** os do protótipo, em letra minúscula normal: "Lançar situação", "Histórico do dia", "Corrigir o último evento", "Nova situação", os cinco grupos (Em operação, Aguardando, Manutenção, Parado, Operacional), "Lançar para N conjuntos".
+- [ ] **Ordem dos elementos:** título e subtítulo (placa, tipo, data); stepper (Dia e conjunto, Situação, Hora e observação, Conferir); histórico do dia com "Corrigir o último evento"; a escolha em cinco grupos; o aviso do conjunto; no Conferir, antes e depois, "o que acontece", lançar a mais conjuntos e o impacto no dia; rodapé (Cancelar, Voltar, Continuar).
+- [ ] **Estados:** vazio ("Sem dados ainda: depende de X"), carregando (esqueleto), erro (mensagem por causa e
+  "Tentar de novo"), sem permissão, dado parcial; cada estado que pede algo oferece a ação.
+- [ ] **Tema claro e escuro** (primeira classe), com os tokens e o contraste.
+- [ ] **1366 e 1092:** sem rolagem lateral da página; em 1920 aparecem mais colunas, sem apenas esticar.
+
+**O que sempre difere por natureza (não é desvio):** a placa é o componente da **mini placa Mercosul** em
+**Barlow Semi Condensed** (o protótipo desenha uma placa genérica); os **ícones são Tabler** (o protótipo usa
+SVG avulso); os **dados são reais** (o protótipo é fictício); o **mapa é real**, com a linha pela rodovia (onde
+houver mapa); moeda, data e números pelos componentes de `components/formato/`; **20 por página e olhinho em toda
+linha** (o protótipo mostra poucas linhas). Específico desta tela: o protótipo desenha o popup de 700 px; no Eixo é o componente `Assistente` em variante de popup central, com rascunho salvo, "fechar é fechar" e Esc; o protótipo mostra o grupo "Operacional" com DOp, que o Eixo só oferece quando a regra de entrega permitir.

@@ -158,3 +158,20 @@ Exceção prevista: o olho dispensa o botão quando a linha inteira já é o lin
 2. Se não souber preencher os campos 1 a 5, registre a dúvida em "Dúvidas e hipóteses", escolha a hipótese mais simples e
    siga; confirme com Alexandre quando o impacto for em regra de negócio.
 3. Ao construir, os estados do campo 3 viram testes; o texto do campo 6 é o texto que a tela mostra.
+
+## Atualização de 11/11/2026: Meu dia, Posição do dia e fidelidade ao protótipo
+
+- **Fichas novas:** `inicio-meu-dia.md` (Receber placas em lote) e `inicio-posicao-do-dia.md` (popup
+  obrigatório), com os 8 campos e o checklist de fidelidade.
+- **Checklist de fidelidade:** toda ficha traz, no fim, o **checklist de fidelidade** (tokens de cor e tons de
+  status, fonte e pesos, textos e rótulos, ordem dos elementos, estados vazio, carregando e erro, tema claro e
+  escuro, 1366 e 1092) e o que **sempre difere por natureza** (mini placa em Barlow Semi Condensed, ícones Tabler,
+  dados reais, mapa real com a linha pela rodovia). Os protótipos estão em `docs/prototipos/` (referência, fora do
+  build; ver `docs/prototipos/README.md`).
+- **Decisões de Alexandre** (11/11/2026) registradas nas fichas a que se aplicam e em `docs/decisoes.md`:
+  gestor de frota com leitura limitada do motorista; prazos e limites como parâmetros em `config.parametro`;
+  escala e status do dia do motorista distintos; popup da posição todos os dias, no primeiro acesso depois das
+  5h; mês fechado só pela Diretoria, por tarefa; lote do Lançar o dia com a mesma sigla e hora, e Posição do dia
+  individual.
+- **Fim de cada bloco:** capturas a 1366 (claro e escuro) ao lado do protótipo em `capturas/galeria/<bloco>/` (fora
+  do Git) e a lista **Pontos para revisar** com todo desvio e o motivo. Sem comparação de pixel no CI.

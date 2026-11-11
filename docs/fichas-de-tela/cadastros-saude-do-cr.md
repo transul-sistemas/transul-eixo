@@ -94,3 +94,33 @@ fecha e o foco volta à linha; o olho abre a ficha do CR.
 - (H) O dono do problema vem da matriz de responsáveis (P2); até lá, o dono é a fila do papel "analista de cadastro".
 - Dúvida: o prazo da exceção. Hipótese: 5 dias úteis, parâmetro em `config`.
 - (H) "CR repetido" nunca é fundido automaticamente; só por decisão humana, com motivo.
+
+## Decisões de Alexandre (11/11/2026)
+
+- **Prazo da exceção de CR** (por exemplo, 5 dias úteis) é **parâmetro em `config.parametro`**, editável só pelo Administrador, com auditoria.
+
+## Checklist de fidelidade
+
+**Referência visual:** `(sem protótipo: segue o molde de `docs/padrao-de-telas.md`)`. Marque cada item ao fim do bloco, com a captura a 1366 (claro e escuro)
+ao lado do protótipo em `capturas/galeria/<bloco>/` (fora do Git); todo desvio vai para **Pontos para revisar**,
+com o motivo.
+
+- [ ] **Tokens de cor:** fundo `#F6F7FB`, superfícies brancas, texto `#0F1729`, linhas `#ECEEF4`, azul de ação
+  `#3355FF`; cor do módulo Cadastros (cinza `#64748B`); nenhum hexadecimal escrito à mão (só tokens).
+- [ ] **Tons de status:** verde de "em atividade" em cinco degraus (`--status-atividade-1` a `-5`), âmbar (2),
+  vermelho (3) e cinza (2); **vigente verde e encerrado vermelho suave, sempre com rótulo, data e ícone, nunca só
+  pela cor**; contraste de 4,5:1 nos dois temas.
+- [ ] **Fonte e pesos:** Barlow (400, 500, 600 e 700); títulos e números como no protótipo; a placa em Barlow
+  Semi Condensed.
+- [ ] **Textos e rótulos:** os do protótipo, em letra minúscula normal: "Saúde do CR", os problemas (sem operação, sem placa, repetido, sem destino...).
+- [ ] **Ordem dos elementos:** contexto global; título; barra de consulta com chips por problema e contagem; a lista de CRs com o problema e o dono; o olhinho.
+- [ ] **Estados:** vazio ("Sem dados ainda: depende de X"), carregando (esqueleto), erro (mensagem por causa e
+  "Tentar de novo"), sem permissão, dado parcial; cada estado que pede algo oferece a ação.
+- [ ] **Tema claro e escuro** (primeira classe), com os tokens e o contraste.
+- [ ] **1366 e 1092:** sem rolagem lateral da página; em 1920 aparecem mais colunas, sem apenas esticar.
+
+**O que sempre difere por natureza (não é desvio):** a placa é o componente da **mini placa Mercosul** em
+**Barlow Semi Condensed** (o protótipo desenha uma placa genérica); os **ícones são Tabler** (o protótipo usa
+SVG avulso); os **dados são reais** (o protótipo é fictício); o **mapa é real**, com a linha pela rodovia (onde
+houver mapa); moeda, data e números pelos componentes de `components/formato/`; **20 por página e olhinho em toda
+linha** (o protótipo mostra poucas linhas). Específico desta tela: não há protótipo; vale o padrão de telas.

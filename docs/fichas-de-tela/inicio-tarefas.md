@@ -99,3 +99,34 @@ abre o wizard da tarefa, Esc fecha e devolve o foco ao cartão.
 - Dúvida: tarefa sem prazo ("exceção de cadastro") fica no fim da lista; hipótese: ordenar por prazo e, sem prazo, por
   data de abertura.
 - (H) "Tempo médio" é o tempo entre abrir e concluir, em dias corridos.
+
+## Decisões de Alexandre (11/11/2026)
+
+- **Prazos e limites** (receber placa, confirmar carteira, lançar o dia, indicar substituto) são **parâmetros em `config.parametro`**, editáveis só pelo Administrador, com auditoria.
+- **Meu dia:** o gestor de frota entra na fila guiada (`docs/meu-dia.md`); esta caixa é a lista de tudo o que sobra depois.
+
+## Checklist de fidelidade
+
+**Referência visual:** `docs/prototipos/tarefas-e-vinculos/1-inicio-tarefas.html`. Marque cada item ao fim do bloco, com a captura a 1366 (claro e escuro)
+ao lado do protótipo em `capturas/galeria/<bloco>/` (fora do Git); todo desvio vai para **Pontos para revisar**,
+com o motivo.
+
+- [ ] **Tokens de cor:** fundo `#F6F7FB`, superfícies brancas, texto `#0F1729`, linhas `#ECEEF4`, azul de ação
+  `#3355FF`; cor do módulo Início (azul de ação `#3355FF`); nenhum hexadecimal escrito à mão (só tokens).
+- [ ] **Tons de status:** verde de "em atividade" em cinco degraus (`--status-atividade-1` a `-5`), âmbar (2),
+  vermelho (3) e cinza (2); **vigente verde e encerrado vermelho suave, sempre com rótulo, data e ícone, nunca só
+  pela cor**; contraste de 4,5:1 nos dois temas.
+- [ ] **Fonte e pesos:** Barlow (400, 500, 600 e 700); títulos e números como no protótipo; a placa em Barlow
+  Semi Condensed.
+- [ ] **Textos e rótulos:** os do protótipo, em letra minúscula normal: "Tarefas", "Minhas (N)", "Da minha fila (N)", "Atrasadas (N)", "Delegadas a mim (N)", "atrasada há N dias", "vence amanhã às 10h", "Pegar", "O seu mês", "Substituição".
+- [ ] **Ordem dos elementos:** título e o perfil; abas (Minhas, Da minha fila, Atrasadas, Delegadas a mim); coluna de cartões (Atrasadas, Para hoje, Da fila do meu papel); coluna lateral (o seu mês, substituição, como funciona).
+- [ ] **Estados:** vazio ("Sem dados ainda: depende de X"), carregando (esqueleto), erro (mensagem por causa e
+  "Tentar de novo"), sem permissão, dado parcial; cada estado que pede algo oferece a ação.
+- [ ] **Tema claro e escuro** (primeira classe), com os tokens e o contraste.
+- [ ] **1366 e 1092:** sem rolagem lateral da página; em 1920 aparecem mais colunas, sem apenas esticar.
+
+**O que sempre difere por natureza (não é desvio):** a placa é o componente da **mini placa Mercosul** em
+**Barlow Semi Condensed** (o protótipo desenha uma placa genérica); os **ícones são Tabler** (o protótipo usa
+SVG avulso); os **dados são reais** (o protótipo é fictício); o **mapa é real**, com a linha pela rodovia (onde
+houver mapa); moeda, data e números pelos componentes de `components/formato/`; **20 por página e olhinho em toda
+linha** (o protótipo mostra poucas linhas). Específico desta tela: os cartões do protótipo usam botões avulsos; no Eixo cada botão **abre direto o assistente** do passo, com o contexto preenchido; as contagens e os prazos vêm do banco.
