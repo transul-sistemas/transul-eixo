@@ -87,6 +87,53 @@ Sem motor BPMN externo agora: o desenho cabe em tabelas e funções do próprio 
 - **Modo rápido** para quem repete a mesma tarefa: faz em lote, com "X de Y" no fim.
 - O passo final mostra o **resumo do antes e do depois** e oferece **desfazer** quando for possível.
 
+## Os três tipos de ator
+
+Quem age num processo pode ser de três tipos. Cada um tem o que pode fazer, e a trilha de eventos guarda
+sempre o **tipo** e o **autor**.
+
+| Ator | Quem é | Como entra | O que pode |
+| --- | --- | --- | --- |
+| **Pessoa** | Alguém com login, perfil, papel e vínculo | Login com 2FA | Pega, faz, reatribui (se tiver alçada) e aprova, dentro do escopo |
+| **Serviço** | Um worker do Eixo (a ponte do Sankhya, o fechamento agendado) | Chave de serviço **só nos workers** (`service_role` nunca vai ao navegador) | Abre instâncias e cria tarefas a partir de um fato novo; **nunca aprova** nem age em nome de pessoa |
+| **Externo** | Quem não tem login: um acionista, um agregado, um cliente | **Link temporário** com prazo, somente leitura ou confirmação de uma coisa só | Ver o que o link mostra e, se o passo permitir, confirmar ou contestar |
+
+Exemplo, de ponta a ponta:
+
+```mermaid
+flowchart LR
+  S["Serviço: importa as despesas do Sankhya"] --> E["Tarefa de exceção: despesa sem CR ou sem operação"]
+  E --> G["Pessoa: o gestor resolve e fecha o mês"]
+  G --> A["Externo: o acionista confirma pelo link, com prazo"]
+```
+
+Leitura: o **serviço** só cria a tarefa (o fato é do Sankhya e fica intocado); a **pessoa** resolve a
+exceção e fecha o mês; o **externo** confirma o acerto pelo link. Cada passo é um evento imutável, com o
+tipo do ator, o autor, a hora e o antes e depois. Prazo vencido do externo **sinaliza** e nunca fecha sozinho
+(H4).
+
+## O link temporário, somente leitura
+
+A v1 tinha uma página por token, `/v/[token]`, que mostrava o andamento de uma viagem a quem não tinha
+login. O desenho serviu, mas teve três defeitos que o Eixo não repete (lidos no código da v1, só leitura):
+a página lia o banco com a **chave mestra**, o token **não tinha prazo** e não ficava registrado **quem viu
+o quê**.
+
+No Eixo:
+
+- **Um token por pessoa e por assunto**, aleatório e longo, guardado **com hash** no banco (o texto do
+  token só aparece uma vez, ao criar).
+- **Prazo obrigatório** (`vence_em`), com revogação a qualquer momento por quem criou e pelo Administrador.
+- **Somente leitura por padrão.** Confirmar ou contestar é um passo de processo com **uma ação só**, e
+  vira evento com tipo de ator "externo".
+- **Escopo mínimo:** o link mostra só o recorte do assunto (por exemplo, o acerto daquele acionista), sem
+  CPF, sem documento e sem dado de outras pessoas. O texto da tela vem de uma função do banco que entrega
+  só as colunas liberadas; **nada de `service_role` na tela**.
+- **Cada abertura é registrada** (hora e resumo, sem dado pessoal) para a trilha e para a mineração de
+  processo.
+- **Sem indexação** (`noindex`) e sem o token em log, URL de terceiros ou mensagem de erro.
+- O link nunca dá acesso ao resto do sistema: não abre sessão.
+
 ## Regras
 
 1. A tarefa cai para o **dono do objeto** (carteira, destino).
