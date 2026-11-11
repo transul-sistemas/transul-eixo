@@ -3,7 +3,7 @@ import { AbasDaFichaNaUrl } from "@/components/ficha/abas-da-ficha-na-url";
 import { CabecalhoDaFicha } from "@/components/ficha/cabecalho-da-ficha";
 import { FichaDaRaiz } from "@/components/ficha/ficha-da-raiz";
 import { AvisoDeDadosCongelados } from "@/components/layout/aviso-de-dados-congelados";
-import { lerDadosAte } from "@/lib/dados/dados-ate";
+import { lerDadosAte, lerDadosAteDaFonte } from "@/lib/dados/dados-ate";
 import { mesIncompleto } from "@/lib/dominio/dados-congelados";
 import { SeletorDePeriodo } from "@/components/ficha/seletor-de-periodo";
 import { formatarData, formatarMes } from "@/components/formato/data";
@@ -341,10 +341,19 @@ function Placas({ ficha }: { ficha: FichaDaOperacao }) {
   );
 }
 
-function Pessoas({ ficha, contexto }: { ficha: FichaDaOperacao; contexto: ContextoDaOperacao }) {
+function Pessoas({
+  ficha,
+  contexto,
+  folhaAte,
+}: {
+  ficha: FichaDaOperacao;
+  contexto: ContextoDaOperacao;
+  folhaAte: string | null;
+}) {
   const p = ficha.pessoas;
   return (
     <div className="flex flex-col gap-4">
+      <AvisoDeDadosCongelados dadosAte={folhaAte} granularidade="mes" />
       {!contexto.vePessoas ? (
         <p className="text-muted-foreground text-sm">
           Os nomes aparecem para quem tem acesso a Pessoas. Aqui só a função e a escala.
@@ -576,7 +585,11 @@ export async function FichaDaOperacaoNaTela({
     );
   }
   // O mês padrão é o mês fechado mais recente (e não o último com viagem no staging da v1).
-  const [mesFechado, dadosAte] = await Promise.all([lerMesFechado(), lerDadosAte()]);
+  const [mesFechado, dadosAte, folhaAte] = await Promise.all([
+    lerMesFechado(),
+    lerDadosAte(),
+    lerDadosAteDaFonte("folha"),
+  ]);
   const periodo = lerPeriodo(parametros, mesFechado);
   const intervalo = intervaloDoPeriodo(periodo, mesFechado, somarMeses(mesFechado, -23));
   const mesesDoPeriodo = mesesDoIntervalo(intervalo);
@@ -630,7 +643,7 @@ export async function FichaDaOperacaoNaTela({
       />
     ),
     placas: <Placas ficha={ficha} />,
-    pessoas: <Pessoas ficha={ficha} contexto={contexto} />,
+    pessoas: <Pessoas ficha={ficha} contexto={contexto} folhaAte={folhaAte} />,
     resultado: <ResultadoDoPeriodo resultado={resultado} semDados={semDados} />,
     "linha-do-tempo": <LinhaDoTempoDaOperacao contexto={contexto} />,
     documentos: (

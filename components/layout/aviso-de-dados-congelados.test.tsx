@@ -19,6 +19,14 @@ describe("<AvisoDeDadosCongelados>", () => {
     expect(html).toContain("dados até 31/10/2026");
     expect(html).not.toContain("incompleto");
   });
+  it("fonte mensal (folha): mostra o último mês carregado, sem dia e sem mês incompleto", () => {
+    const html = renderToStaticMarkup(
+      <AvisoDeDadosCongelados dadosAte="2026-03-01" granularidade="mes" />,
+    );
+    expect(html).toContain("dados até 03/2026 (último mês carregado)");
+    expect(html).not.toContain("01/03/2026");
+    expect(html).not.toContain("incompleto");
+  });
   it("sem data limite não mostra nada", () => {
     expect(renderToStaticMarkup(<AvisoDeDadosCongelados dadosAte={null} />)).toBe("");
   });

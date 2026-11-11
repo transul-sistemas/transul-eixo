@@ -11,10 +11,12 @@ import {
 } from "@/components/formato/numero";
 import { BarraDeConsultaDaPagina } from "@/components/layout/barra-de-consulta";
 import { FaixaDeKpis } from "@/components/layout/faixa-de-kpis";
+import { AvisoDeDadosCongelados } from "@/components/layout/aviso-de-dados-congelados";
 import { PaginaDeLeitura } from "@/components/layout/pagina-de-leitura";
 import { EsqueletoDaTabela, ListaVazia } from "@/components/tabela/estados";
 import { Paginador } from "@/components/tabela/paginador";
 import { lerAbastecimentoDoMes } from "@/lib/dados/abastecimento";
+import { lerDadosAteDaFonte } from "@/lib/dados/dados-ate";
 import { modoDosDados } from "@/lib/dados/fonte";
 import {
   CAMPOS_DO_ABASTECIMENTO,
@@ -74,7 +76,10 @@ async function Conteudo({ parametros }: { parametros: URLSearchParams }) {
     PADRAO_DO_ABASTECIMENTO.tam,
   );
   const estado = lerAbastecimento(parametros, tam);
-  const dados = await lerAbastecimentoDoMes(estado);
+  const [dados, dadosAte] = await Promise.all([
+    lerAbastecimentoDoMes(estado),
+    lerDadosAteDaFonte("abastecimento"),
+  ]);
   const { totais } = dados;
   const semBusca = (() => {
     const limpa = escreverTabela(
@@ -87,6 +92,7 @@ async function Conteudo({ parametros }: { parametros: URLSearchParams }) {
 
   return (
     <>
+      <AvisoDeDadosCongelados dadosAte={dadosAte} />
       {dados.meses.length > 0 ? (
         <nav aria-label="Mês do abastecimento" className="flex flex-wrap gap-2">
           {dados.meses.slice(0, 12).map((mes) => (
