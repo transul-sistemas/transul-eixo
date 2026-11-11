@@ -1,11 +1,13 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { Etiqueta } from "@/components/etiqueta";
 import { formatarData, formatarDataEHora } from "@/components/formato/data";
 import { formatarInteiro } from "@/components/formato/numero";
 import { Placa } from "@/components/placa";
+import { BotaoDoOlho } from "@/components/tabela/botao-do-olho";
 import { Button } from "@/components/ui/button";
 import type {
   OperacaoAEscolher,
@@ -93,6 +95,9 @@ export function ListaDasOrdens({
                 <th scope="col" className="px-3 py-2 text-left font-medium">
                   Saiu em
                 </th>
+                <th scope="col" className="w-14 px-3 py-2 text-right font-medium">
+                  Detalhes
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -105,7 +110,13 @@ export function ListaDasOrdens({
                     nº {formatarInteiro(o.numero)}
                   </th>
                   <td className="px-3 py-2">
-                    <Placa placa={o.placa} tamanho="p" />
+                    <Link
+                      href={`/frota/placas/${o.placa}`}
+                      aria-label={`Abrir a ficha da placa ${o.placa}`}
+                      className="focus-visible:ring-ring/50 inline-flex rounded outline-none focus-visible:ring-3"
+                    >
+                      <Placa placa={o.placa} tamanho="p" />
+                    </Link>
                   </td>
                   <td className="px-3 py-2">
                     <Etiqueta status={TOM[o.situacao]}>{NOMES_DAS_SITUACOES[o.situacao]}</Etiqueta>
@@ -117,6 +128,23 @@ export function ListaDasOrdens({
                   <td className="px-3 py-2 tabular-nums">{formatarDataEHora(o.criadaEm)}</td>
                   <td className="px-3 py-2 tabular-nums">{formatarDataEHora(o.carregadaEm)}</td>
                   <td className="px-3 py-2 tabular-nums">{formatarDataEHora(o.saiuEm)}</td>
+                  <td className="px-3 py-2 text-right">
+                    <BotaoDoOlho
+                      item={`ordem nº ${formatarInteiro(o.numero)}`}
+                      hrefDaFicha={`/frota/placas/${o.placa}`}
+                      detalhes={[
+                        { rotulo: "Placa", valor: <Placa placa={o.placa} tamanho="p" /> },
+                        { rotulo: "Situação", valor: NOMES_DAS_SITUACOES[o.situacao] },
+                        { rotulo: "Operação", valor: o.operacao ?? "—" },
+                        { rotulo: "Destino", valor: o.destino },
+                        { rotulo: "Saída prevista", valor: formatarData(o.dataPrevista) },
+                        { rotulo: "Filial", valor: o.filial },
+                        { rotulo: "Criada em", valor: formatarDataEHora(o.criadaEm) },
+                        { rotulo: "Carregada em", valor: formatarDataEHora(o.carregadaEm) },
+                        { rotulo: "Saiu em", valor: formatarDataEHora(o.saiuEm) },
+                      ]}
+                    />
+                  </td>
                 </tr>
               ))}
             </tbody>

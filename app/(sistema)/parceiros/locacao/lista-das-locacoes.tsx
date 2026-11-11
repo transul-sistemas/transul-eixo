@@ -1,11 +1,13 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { Etiqueta } from "@/components/etiqueta";
 import { formatarData } from "@/components/formato/data";
 import { Moeda } from "@/components/formato/moeda";
 import { Placa } from "@/components/placa";
+import { BotaoDoOlho } from "@/components/tabela/botao-do-olho";
 import { Button } from "@/components/ui/button";
 import type { Locacao, Locacoes, SituacaoDaLocacao } from "@/lib/dados/parceiros-tipos";
 import type { Status } from "@/lib/visual/tons";
@@ -80,13 +82,22 @@ export function ListaDasLocacoes({
                 <th scope="col" className={TH}>
                   <span className="sr-only">Ações</span>
                 </th>
+                <th scope="col" className={`${TH} w-14 text-right`}>
+                  Detalhes
+                </th>
               </tr>
             </thead>
             <tbody>
               {dados.linhas.map((l) => (
                 <tr key={l.id} className="border-border border-t align-top">
                   <th scope="row" className="bg-card sticky left-0 px-3 py-2 text-left font-normal">
-                    <Placa placa={l.placa} tamanho="p" />
+                    <Link
+                      href={`/frota/placas/${l.placa}`}
+                      aria-label={`Abrir a ficha da placa ${l.placa}`}
+                      className="focus-visible:ring-ring/50 inline-flex rounded outline-none focus-visible:ring-3"
+                    >
+                      <Placa placa={l.placa} tamanho="p" />
+                    </Link>
                   </th>
                   <td className="px-3 py-2">{l.parceiroNome}</td>
                   <td className="px-3 py-2 tabular-nums">{formatarData(l.inicio)}</td>
@@ -117,6 +128,20 @@ export function ListaDasLocacoes({
                         Encerrar locação
                       </Button>
                     ) : null}
+                  </td>
+                  <td className="px-3 py-2 text-right">
+                    <BotaoDoOlho
+                      item={l.placa}
+                      hrefDaFicha={`/frota/placas/${l.placa}`}
+                      titulo={<Placa placa={l.placa} tamanho="m" />}
+                      detalhes={[
+                        { rotulo: "Parceiro", valor: l.parceiroNome },
+                        { rotulo: "Início", valor: formatarData(l.inicio) },
+                        { rotulo: "Fim", valor: l.fim ? formatarData(l.fim) : "—" },
+                        { rotulo: "Valor mensal", valor: <Moeda valor={l.valorMensalCentavos} /> },
+                        { rotulo: "Situação", valor: NOMES[l.situacao] },
+                      ]}
+                    />
                   </td>
                 </tr>
               ))}

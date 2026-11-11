@@ -2,6 +2,7 @@ import { CATALOGO, type IdDoModulo, type ModuloDoCatalogo, type Tela } from "./c
 import {
   MODULOS_POR_PERFIL,
   PERFIS_QUE_VEEM_EM_BREVE,
+  PERFIS_QUE_VEEM_ESQUELETO,
   type Perfil,
   TELAS_POR_PERFIL,
 } from "./perfis";
@@ -21,10 +22,15 @@ export function veEmBreve(perfil: Perfil): boolean {
   return PERFIS_QUE_VEEM_EM_BREVE.includes(perfil);
 }
 
-/** Pode abrir: tem o módulo e a tela está pronta (ou em breve, para quem acompanha a obra). */
+export function veEsqueleto(perfil: Perfil): boolean {
+  return PERFIS_QUE_VEEM_ESQUELETO.includes(perfil);
+}
+
+/** Pode abrir: tem o módulo e a tela está pronta (ou é esqueleto ou em breve, para quem acompanha a obra). */
 export function podeAbrir(perfil: Perfil, tela: Tela): boolean {
   if (!temOModulo(perfil, tela.permissao.modulo) || !telaLiberada(perfil, tela)) return false;
   if (tela.estado === "pronto") return true;
+  if (tela.estado === "esqueleto") return veEsqueleto(perfil);
   if (tela.estado === "em-breve") return veEmBreve(perfil);
   return false;
 }

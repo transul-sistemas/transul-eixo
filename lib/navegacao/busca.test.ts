@@ -94,7 +94,10 @@ describe("buscarTelas: modos do Acompanhamento da Frota (Ctrl+K)", () => {
 
 describe("buscarTelas: perfil", () => {
   it("quem não pode abrir a tela não a encontra", () => {
-    expect(buscarTelas("mapa", "Operacional")).toEqual([]);
+    expect(buscarTelas("totem", "Gestor de frota")).toEqual([]);
+    expect(buscarTelas("mapa", "Operacional").map((i) => i.rotulo)).toEqual([
+      "Início › Mapa do sistema",
+    ]);
     expect(buscarTelas("placas", "Operacional")).toEqual([]);
     expect(buscarTelas("comparativo", "Gestor de frota")).toEqual([]);
     expect(buscarTelas("placas", "Gestor de frota").map((i) => i.rotulo)).toEqual([

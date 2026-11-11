@@ -155,6 +155,11 @@ export function ConteudoDaBusca({
                       Em breve
                     </span>
                   ) : null}
+                  {item.estrutura ? (
+                    <span className="text-muted-foreground shrink-0 text-xs whitespace-nowrap">
+                      Estrutura
+                    </span>
+                  ) : null}
                 </div>
               );
             })}

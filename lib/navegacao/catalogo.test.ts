@@ -82,9 +82,10 @@ describe("catálogo: telas", () => {
       expect(tela.descricao.endsWith("."), tela.id).toBe(true);
     }
   });
-  it("tudo está em-breve, menos as telas desta lista, que estão prontas", () => {
+  it("tudo está como esqueleto, menos as telas desta lista, que estão prontas", () => {
     const prontas = telas.filter((t) => t.estado === "pronto").map((t) => t.id);
     expect(prontas).toEqual([
+      "inicio.mapa-do-sistema",
       "frota.acompanhamento",
       "frota.placas",
       "frota.abastecimento",
@@ -105,7 +106,9 @@ describe("catálogo: telas", () => {
       "admin.demonstracao",
     ]);
     expect(telas.filter((t) => t.estado === "restrito")).toEqual([]);
-    expect(acharTela("/inicio/mapa-do-sistema")?.tela.estado).toBe("em-breve");
+    expect(telas.filter((t) => t.estado === "em-breve")).toEqual([]);
+    expect(telas.filter((t) => t.estado === "esqueleto")).toHaveLength(16);
+    expect(acharTela("/inicio/mapa-do-sistema")?.tela.estado).toBe("pronto");
   });
 });
 
@@ -184,6 +187,9 @@ describe("perfis", () => {
   });
   it("só Administrador e Diretoria veem telas em breve", () => {
     expect([...PERFIS_QUE_VEEM_EM_BREVE]).toEqual(["Administrador", "Diretoria"]);
+  });
+  it("só Administrador e Diretoria veem telas esqueleto", () => {
+    expect([...perfis.PERFIS_QUE_VEEM_ESQUELETO]).toEqual(["Administrador", "Diretoria"]);
   });
   it("não há usuário provisório: a memória da barra e os rascunhos são de quem entrou (3.9a)", () => {
     expect("USUARIO_PROVISORIO" in perfis).toBe(false);

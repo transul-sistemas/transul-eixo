@@ -9,6 +9,9 @@ export type Perfil = (typeof PERFIS)[number];
 /** Telas em breve só aparecem para quem acompanha a construção do sistema. */
 export const PERFIS_QUE_VEEM_EM_BREVE: readonly Perfil[] = ["Administrador", "Diretoria"];
 
+/** Telas "esqueleto" (estrutura sem fonte de dados) só aparecem para quem acompanha a construção. */
+export const PERFIS_QUE_VEEM_ESQUELETO: readonly Perfil[] = ["Administrador", "Diretoria"];
+
 /** Módulos que cada perfil pode ver (permissão `<módulo>.ver`). Provisório até a Fase 3. */
 export const MODULOS_POR_PERFIL: Record<Perfil, "todos" | readonly IdDoModulo[]> = {
   Administrador: "todos",

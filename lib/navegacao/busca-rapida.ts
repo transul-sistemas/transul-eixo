@@ -17,6 +17,8 @@ export interface ItemDaBusca {
   /** Telas e modos têm rota; a ação pronta leva à tela com o assistente aberto. */
   readonly rota?: string;
   readonly emBreve: boolean;
+  /** Tela "esqueleto": abre inteira, sem dados ainda (selo "Estrutura"). */
+  readonly estrutura?: boolean;
   /** Falso para a ação ainda reservada (em breve): aparece, mas não executa. */
   readonly disponivel: boolean;
 }
@@ -50,6 +52,7 @@ function itemDaTela(
     cor: modulo.cor,
     rota: tela.rota,
     emBreve: tela.estado === "em-breve",
+    estrutura: tela.estado === "esqueleto",
     disponivel: true,
   };
 }
@@ -121,6 +124,7 @@ export function montarGrupos(
           cor: r.modulo.cor,
           rota: r.rota,
           emBreve: r.tela.estado === "em-breve",
+          estrutura: r.tela.estado === "esqueleto",
           disponivel: true,
         }
       : { ...itemDaTela(r.modulo, r.tela), rotulo: r.rotulo },
