@@ -112,7 +112,7 @@ export function funcoesDosTipos(tipos: string): Map<string, string[]> {
     if (ini < 0) return;
     const fim = corpo.indexOf("Enums: {", ini);
     const funcoes = corpo.slice(ini, fim < 0 ? undefined : fim);
-    for (const m of funcoes.matchAll(/^\s*"([a-z_0-9]+)":\s*\n\{ Args: (.*?); Returns:/gms)) {
+    for (const m of funcoes.matchAll(/^\s*"([a-z_0-9]+)":\s*\n\{ Args: ([\s\S]*?); Returns:/gm)) {
       const args = m[2] ?? "";
       const nomes = [...args.matchAll(/"([a-z_0-9]+)"\??:/g)].map((a) => a[1] as string);
       mapa.set(`${marca.esquema}.${m[1]}`, nomes);
