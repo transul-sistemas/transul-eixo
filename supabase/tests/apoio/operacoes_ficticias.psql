@@ -10,6 +10,7 @@
 --   Grãos 94:   receita 1.000,00 (9401) + 3.000,00 (9402) = 4.000,00; frota 400,00; serviço 600,00;
 --               margem 3.000,00 (75,0 %); folha: 2 funcionários, 2.700,00 de salário bruto.
 --   Cimento 94: receita 2.000,00; frota 0; serviço 300,00; margem 1.700,00 (85,0 %).
+-- Receita: CT-e de status A e NFS-e de TOP cadastrada (a NFS-e 940002 é da TOP 1136).
 -- Fora da conta: CT-e de 01/04 (limite do mês), CT-e que sumiu do Sankhya, CT-e com status R,
 -- provisão, despesa invalidada e despesa de fevereiro.
 
@@ -98,13 +99,13 @@ select pg_temp.guardar('k1', nucleo.cadastrar_ativo(
 set constraints all immediate;
 set constraints all deferred;
 
-insert into staging.viagem (nunota, codcencus, dt_negociacao, status_cte, frete_empresa, sumiu_do_sankhya_em) values
-  (940001, '9401', '2026-03-05', 'A', 1000.00, null),
-  (940002, '9402', '2026-03-31', null, 3000.00, null),
-  (940003, '9402', '2026-04-01', 'A', 500.00, null),
-  (940004, '9402', '2026-03-10', 'A', 700.00, '2026-04-02 10:00-03'),
-  (940005, '9402', '2026-03-11', 'R', 800.00, null),
-  (940006, '9403', '2026-03-12', 'A', 2000.00, null);
+insert into staging.viagem (nunota, codcencus, dt_negociacao, tipo_documento, status_cte, codtipoper, frete_empresa, sumiu_do_sankhya_em) values
+  (940001, '9401', '2026-03-05', 'CTE', 'A', null, 1000.00, null),
+  (940002, '9402', '2026-03-31', 'NFSE', null, 1136, 3000.00, null),
+  (940003, '9402', '2026-04-01', 'CTE', 'A', null, 500.00, null),
+  (940004, '9402', '2026-03-10', 'CTE', 'A', null, 700.00, '2026-04-02 10:00-03'),
+  (940005, '9402', '2026-03-11', 'CTE', 'R', null, 800.00, null),
+  (940006, '9403', '2026-03-12', 'CTE', 'A', null, 2000.00, null);
 insert into staging.natureza (codnat, descricao) values ('94001', 'Combustível 94'), ('94002', 'Salário 94');
 -- O custo é o valor líquido (glossário, "Resultados"); o desdobramento vem igual, como no Sankhya sem
 -- desconto nem juros.

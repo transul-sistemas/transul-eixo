@@ -6,7 +6,8 @@ import { describe, expect, it } from "vitest";
 // rastreado ou que não existe) e não abre nenhum arquivo da pasta.
 
 const ignorado = (caminho: string) =>
-  spawnSync("git", ["check-ignore", "--no-index", "-q", caminho], { encoding: "utf8" }).status === 0;
+  spawnSync("git", ["check-ignore", "--no-index", "-q", caminho], { encoding: "utf8" }).status ===
+  0;
 
 describe("importacao/ fica fora do Git", () => {
   it.each([

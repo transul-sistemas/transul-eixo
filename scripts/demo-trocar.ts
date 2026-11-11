@@ -67,7 +67,9 @@ async function principal() {
     stdio: "inherit",
   });
   if (r.status !== 0) throw new ErroDoEixo("A restauração falhou: o banco ficou como estava.");
-  console.log("Lembre: o backup não leva os logins. Se o login local sumiu, recrie com `pnpm dev:usuario`.");
+  console.log(
+    "Lembre: o backup não leva os logins. Se o login local sumiu, recrie com `pnpm dev:usuario`.",
+  );
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {

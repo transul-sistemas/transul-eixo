@@ -11,6 +11,10 @@ function cliente(data: unknown, error: { message: string; code?: string } | null
 const TOTAIS = {
   receita: "100.50",
   documentos: 2,
+  receita_cte: "60.50",
+  documentos_cte: 1,
+  receita_nfse: "40.00",
+  documentos_nfse: 1,
   custo_frota: "10.00",
   custo_servico: "20.00",
   margem: "70.50",
@@ -55,6 +59,9 @@ describe("lerResultadoDaOperacao", () => {
       p_fim: "2026-04-01",
     });
     expect(r?.atual.receitaCentavos).toBe(10_050);
+    expect(r?.atual.receitaCteCentavos).toBe(6_050);
+    expect(r?.atual.receitaNfseCentavos).toBe(4_000);
+    expect(r?.atual.documentosCte).toBe(1);
     expect(r?.atual.receitaPorPlacaCentavos).toBe(5_025);
     expect(r?.anterior.receitaPorPlacaCentavos).toBeNull();
     expect(r?.serie[0]).toMatchObject({ mes: "2026-03", margemCentavos: 7_050 });

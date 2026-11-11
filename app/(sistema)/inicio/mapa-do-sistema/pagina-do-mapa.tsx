@@ -46,7 +46,9 @@ export function PaginaDoMapa({ perfil, filtro }: { perfil: Perfil; filtro: Filtr
                 aria-current={ativo ? "true" : undefined}
                 className={cn(
                   classeDoChip,
-                  ativo ? "border-primary bg-primary/10 font-medium" : "border-input bg-card hover:bg-muted",
+                  ativo
+                    ? "border-primary bg-primary/10 font-medium"
+                    : "border-input bg-card hover:bg-muted",
                 )}
               >
                 {f.nome}
@@ -61,7 +63,11 @@ export function PaginaDoMapa({ perfil, filtro }: { perfil: Perfil; filtro: Filtr
       kpis={
         <FaixaDeKpis
           kpis={[
-            { id: "telas", rotulo: "Telas que você vê", valor: formatarInteiro(mapa.contagem.todos) },
+            {
+              id: "telas",
+              rotulo: "Telas que você vê",
+              valor: formatarInteiro(mapa.contagem.todos),
+            },
             { id: "prontas", rotulo: "Prontas", valor: formatarInteiro(mapa.contagem.pronto) },
             {
               id: "estrutura",

@@ -74,13 +74,13 @@ insert into nucleo.cr (codcencus, codigo, operacao_id, garagem_id, garagem_orige
 
 -- Receita (frete da empresa) de março de 2026: 10.000 (A) + 5.000 (B, NFS-e sem status) = 15.000.
 -- Fora: CT-e rejeitado, CT-e que sumiu do Sankhya; fevereiro e abril em outros meses.
-insert into staging.viagem (nunota, tipo_documento, status_cte, dt_negociacao, codcencus, frete_empresa, sumiu_do_sankhya_em) values
-  (9701, 'CTE', 'A', '2026-03-05', '4970001', 10000.00, null),
-  (9702, 'NFSE', null, '2026-03-20', '6970001', 5000.00, null),
-  (9703, 'CTE', 'R', '2026-03-10', '4970001', 999.00, null),
-  (9704, 'CTE', 'A', '2026-03-11', '4970001', 888.00, now()),
-  (9705, 'CTE', 'A', '2026-02-10', '4970001', 4000.00, null),
-  (9706, 'CTE', 'A', '2026-04-01', '4970001', 7777.00, null);
+insert into staging.viagem (nunota, tipo_documento, status_cte, codtipoper, dt_negociacao, codcencus, frete_empresa, sumiu_do_sankhya_em) values
+  (9701, 'CTE', 'A', null, '2026-03-05', '4970001', 10000.00, null),
+  (9702, 'NFSE', null, 1136, '2026-03-20', '6970001', 5000.00, null),
+  (9703, 'CTE', 'R', null, '2026-03-10', '4970001', 999.00, null),
+  (9704, 'CTE', 'A', null, '2026-03-11', '4970001', 888.00, now()),
+  (9705, 'CTE', 'A', null, '2026-02-10', '4970001', 4000.00, null),
+  (9706, 'CTE', 'A', null, '2026-04-01', '4970001', 7777.00, null);
 
 insert into staging.natureza (codnat, descricao) values
   ('97001', 'Combustível 97'), ('97002', 'Pneus 97'), ('97003', 'Manutenção 97');

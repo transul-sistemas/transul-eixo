@@ -59,10 +59,10 @@ async function assumirAdministrador(c: pg.Client): Promise<void> {
     );
   }
   const claims = JSON.stringify({ sub: adm.auth_user_id, role: "authenticated" });
-  await c.query(`select set_config('request.jwt.claims', $1, true), set_config('request.jwt.claim.sub', $2, true)`, [
-    claims,
-    adm.auth_user_id,
-  ]);
+  await c.query(
+    `select set_config('request.jwt.claims', $1, true), set_config('request.jwt.claim.sub', $2, true)`,
+    [claims, adm.auth_user_id],
+  );
 }
 
 async function pessoaDoCpf(c: pg.Client, cpf: string): Promise<string | null> {
@@ -77,14 +77,21 @@ async function pessoaDoCpf(c: pg.Client, cpf: string): Promise<string | null> {
 async function garantirPessoa(c: pg.Client, nome: string, cpf: string): Promise<string> {
   const existente = await pessoaDoCpf(c, cpf);
   if (existente) return existente;
-  const r = await um<{ p: { id: string } }>(c, `select nucleo.cadastrar_pessoa($1, $2) as p`, [nome, cpf]);
+  const r = await um<{ p: { id: string } }>(c, `select nucleo.cadastrar_pessoa($1, $2) as p`, [
+    nome,
+    cpf,
+  ]);
   return r.p.id;
 }
 
 const PARCEIROS: { nome: string; tipos: string[]; documento: () => string }[] = [
   { nome: "Demo Transportes Alfa Ltda", tipos: ["acionista"], documento: () => cnpjFicticio(1) },
   { nome: "Demo Logística Beta Ltda", tipos: ["acionista"], documento: () => cnpjFicticio(2) },
-  { nome: "Demo Cargas Gama Ltda", tipos: ["acionista", "locador"], documento: () => cnpjFicticio(3) },
+  {
+    nome: "Demo Cargas Gama Ltda",
+    tipos: ["acionista", "locador"],
+    documento: () => cnpjFicticio(3),
+  },
   { nome: "Demo Agregado Delta", tipos: ["agregado"], documento: () => cpfFicticio(201) },
   { nome: "Demo Agregado Épsilon", tipos: ["agregado"], documento: () => cpfFicticio(202) },
   { nome: "Demo Locadora Zeta Ltda", tipos: ["locador"], documento: () => cnpjFicticio(6) },
@@ -98,7 +105,8 @@ async function carregarPessoasEEscala(c: pg.Client, hoje: string) {
       `select id from nucleo.operacao where excluido_em is null and tipo = 'operacao' and not parada order by nome, id`,
     )
   ).rows.map((r) => r.id);
-  if (operacoes.length === 0) throw new ErroDoEixo("Não há operações no banco para vincular as pessoas.");
+  if (operacoes.length === 0)
+    throw new ErroDoEixo("Não há operações no banco para vincular as pessoas.");
   const plano = planoDasPessoas(hoje, N_PESSOAS, operacoes.length);
   const dias: string[] = [];
   for (let d = plano[0]!.inicio; d <= hoje; d = somarDias(d, 1)) dias.push(d);
@@ -136,7 +144,11 @@ async function carregarParceiros(c: pg.Client): Promise<void> {
   for (const p of PARCEIROS) {
     const documento = p.documento();
     if (await pessoaDoCpf(c, documento)) continue;
-    await c.query(`select nucleo.cadastrar_parceiro($1, $2, $3::text[])`, [documento, p.nome, p.tipos]);
+    await c.query(`select nucleo.cadastrar_parceiro($1, $2, $3::text[])`, [
+      documento,
+      p.nome,
+      p.tipos,
+    ]);
   }
 }
 
@@ -165,10 +177,14 @@ async function carregarFrota(c: pg.Client, hoje: string): Promise<string> {
     )
   ).rows.map((r) => r.id);
   const filiais = (
-    await c.query<{ id: string }>(`select id from config.filial where excluido_em is null order by nome, id`)
+    await c.query<{ id: string }>(
+      `select id from config.filial where excluido_em is null order by nome, id`,
+    )
   ).rows.map((r) => r.id);
   if (operacoes.length === 0 || filiais.length === 0) {
-    throw new ErroDoEixo("Faltam operações ou filiais no banco para montar a frota de demonstração.");
+    throw new ErroDoEixo(
+      "Faltam operações ou filiais no banco para montar a frota de demonstração.",
+    );
   }
   const carroceria = await um<{ id: string } | undefined>(
     c,
@@ -239,11 +255,18 @@ async function carregarFrota(c: pg.Client, hoje: string): Promise<string> {
   const cavalos: string[] = [];
   const implementos: string[] = [];
   for (let i = 1; i <= N_CAVALOS; i++) {
-    cavalos.push(await cadastrar(i, "cavalo", operacoes[i % operacoes.length]!, donos[i % donos.length]!));
+    cavalos.push(
+      await cadastrar(i, "cavalo", operacoes[i % operacoes.length]!, donos[i % donos.length]!),
+    );
   }
   for (let k = 1; k <= N_IMPLEMENTOS; k++) {
     implementos.push(
-      await cadastrar(N_CAVALOS + k, "implemento", operacoes[k % operacoes.length]!, donos[k % donos.length]!),
+      await cadastrar(
+        N_CAVALOS + k,
+        "implemento",
+        operacoes[k % operacoes.length]!,
+        donos[k % donos.length]!,
+      ),
     );
   }
   // Conjuntos simples: o cavalo k engata o semirreboque k (k de 1 a 20).
@@ -257,7 +280,11 @@ async function carregarFrota(c: pg.Client, hoje: string): Promise<string> {
 
   // Acompanhamento: situações lançadas ao longo dos últimos 30 dias (cavalos 11 a 20 em conjunto, 21 a 30 soltos).
   const lancar = async (ativo: string, sigla: string, dia: string) => {
-    await c.query(`select nucleo.lancar_situacao_do_dia($1::uuid, $2, $3::date)`, [ativo, sigla, dia]);
+    await c.query(`select nucleo.lancar_situacao_do_dia($1::uuid, $2, $3::date)`, [
+      ativo,
+      sigla,
+      dia,
+    ]);
   };
   const dias = [-29, -24, -19, -13, -8, -3];
   const conjunto = ["ETc", "CAr", "DEs", "ETv", "PÁT", "ETc"];
@@ -274,7 +301,12 @@ async function carregarFrota(c: pg.Client, hoje: string): Promise<string> {
   const versao = async (id: string) =>
     (await um<{ v: number }>(c, `select versao as v from nucleo.ativo where id = $1`, [id])).v;
   const patio = async (id: string, acao: string, quando: string, motivo: string | null = null) => {
-    await c.query(`select nucleo.avancar_no_patio($1::uuid, $2, $3, $4::timestamptz)`, [id, acao, motivo, quando]);
+    await c.query(`select nucleo.avancar_no_patio($1::uuid, $2, $3, $4::timestamptz)`, [
+      id,
+      acao,
+      motivo,
+      quando,
+    ]);
   };
   const entrega = hora(somarDias(hoje, -4), "09:00");
   for (let i = 1; i <= 10; i++) {
@@ -296,17 +328,22 @@ async function carregarFrota(c: pg.Client, hoje: string): Promise<string> {
     if (i === 7) await patio(id, "aceitar", hora(somarDias(hoje, -1), "11:00"));
     if (i >= 8) {
       await patio(id, "aceitar", hora(somarDias(hoje, -3), "08:00"));
-      await ordem(id, operacoes[i % operacoes.length]!, destinos[i % destinos.length]!, hora(somarDias(hoje, -3), "09:00"));
+      await ordem(
+        id,
+        operacoes[i % operacoes.length]!,
+        destinos[i % destinos.length]!,
+        hora(somarDias(hoje, -3), "09:00"),
+      );
     }
     if (i >= 9) await patio(id, "concluir", hora(somarDias(hoje, -2), "16:00"));
     if (i === 10) await patio(id, "liberar", hora(somarDias(hoje, -1), "07:00"));
   }
   // A fila do Totem: os cavalos 1 a 6 chegaram hoje, em ordem de chegada.
   for (let i = 1; i <= 6; i++) {
-    await c.query(`select nucleo.registrar_chegada($1, now() - ($2::int * interval '12 minutes'))`, [
-      placaDemo(i),
-      7 - i,
-    ]);
+    await c.query(
+      `select nucleo.registrar_chegada($1, now() - ($2::int * interval '12 minutes'))`,
+      [placaDemo(i), 7 - i],
+    );
   }
 
   // Cinco pedidos de transferência abertos, para o "Para receber".
@@ -325,12 +362,20 @@ async function carregarFrota(c: pg.Client, hoje: string): Promise<string> {
   }
 
   // Locação: cinco cavalos locados a parceiros locadores da demonstração.
-  const locadores = [cnpjFicticio(3), cnpjFicticio(6), cnpjFicticio(7), cpfFicticio(203), cnpjFicticio(6)];
+  const locadores = [
+    cnpjFicticio(3),
+    cnpjFicticio(6),
+    cnpjFicticio(7),
+    cpfFicticio(203),
+    cnpjFicticio(6),
+  ];
   for (let i = 26; i <= 30; i++) {
-    await c.query(
-      `select nucleo.cadastrar_locacao($1::uuid, $2, $3::date, $4::numeric)`,
-      [await parceiroDoDocumento(c, locadores[i - 26]!), placaDemo(i), somarDias(hoje, -50), String(7800 + (i - 26) * 450)],
-    );
+    await c.query(`select nucleo.cadastrar_locacao($1::uuid, $2, $3::date, $4::numeric)`, [
+      await parceiroDoDocumento(c, locadores[i - 26]!),
+      placaDemo(i),
+      somarDias(hoje, -50),
+      String(7800 + (i - 26) * 450),
+    ]);
   }
   return "carregada";
 }
@@ -343,7 +388,17 @@ export async function carregarAbastecimento(c: pg.Client, hoje: string): Promise
     const r = await c.query(
       `insert into staging.abastecimento (origem_id, placa, data, km_inicial, km_final, litros, valor_total, combustivel, origem)
        values ($1, $2, $3::date, $4, $5, $6, $7, $8, $9) on conflict (origem_id) do nothing`,
-      [a.origemId, a.placa, a.data, a.kmInicial, a.kmFinal, a.litros, a.valorTotal, a.combustivel, a.origem],
+      [
+        a.origemId,
+        a.placa,
+        a.data,
+        a.kmInicial,
+        a.kmFinal,
+        a.litros,
+        a.valorTotal,
+        a.combustivel,
+        a.origem,
+      ],
     );
     n += r.rowCount ?? 0;
   }
@@ -376,7 +431,9 @@ export async function resumoDaDemo(c: pg.Client): Promise<ResumoDaDemo> {
   return Object.fromEntries(rows.map((r) => [r.item, Number(r.n)]));
 }
 
-export async function carregarDemo(c: pg.Client): Promise<{ areas: Record<string, string>; abastecimento: number }> {
+export async function carregarDemo(
+  c: pg.Client,
+): Promise<{ areas: Record<string, string>; abastecimento: number }> {
   const hoje = (await um<{ d: string }>(c, `select nucleo.hoje_em_sao_paulo()::text as d`)).d;
   await assumirAdministrador(c);
   const areas: Record<string, string> = {};

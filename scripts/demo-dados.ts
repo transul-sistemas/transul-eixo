@@ -17,7 +17,6 @@ export const PREFIXO_DO_CPF_DEMO = "95000";
 export const PREFIXO_DO_CNPJ_DEMO = "9900";
 export const PREFIXO_DO_RENAVAM_DEMO = "99000";
 
-
 /** CODCENCUS do CR fictício número n (1 a 100): raiz 2, 4 ou 6 e 990nnn, nunca de 8 dígitos. */
 export function codcencusDemo(n: number): number {
   if (!Number.isInteger(n) || n < 1 || n > 100) {
@@ -94,12 +93,43 @@ export function placaDemo(n: number): string {
 }
 
 const PRIMEIROS = [
-  "Ana", "Bruno", "Carla", "Diego", "Elisa", "Fábio", "Gabriela", "Heitor", "Irene", "João",
-  "Karina", "Lucas", "Marta", "Nelson", "Olívia", "Paulo", "Rafaela", "Sérgio", "Tânia", "Vitor",
+  "Ana",
+  "Bruno",
+  "Carla",
+  "Diego",
+  "Elisa",
+  "Fábio",
+  "Gabriela",
+  "Heitor",
+  "Irene",
+  "João",
+  "Karina",
+  "Lucas",
+  "Marta",
+  "Nelson",
+  "Olívia",
+  "Paulo",
+  "Rafaela",
+  "Sérgio",
+  "Tânia",
+  "Vitor",
 ];
 const SOBRENOMES = [
-  "Almeida", "Barros", "Cardoso", "Dias", "Esteves", "Ferraz", "Gomes", "Holanda", "Ibarra",
-  "Junqueira", "Lacerda", "Moura", "Nogueira", "Oliveira", "Pacheco",
+  "Almeida",
+  "Barros",
+  "Cardoso",
+  "Dias",
+  "Esteves",
+  "Ferraz",
+  "Gomes",
+  "Holanda",
+  "Ibarra",
+  "Junqueira",
+  "Lacerda",
+  "Moura",
+  "Nogueira",
+  "Oliveira",
+  "Pacheco",
 ];
 
 /** Nome fictício número i: sempre começa com a marca "Demo". */

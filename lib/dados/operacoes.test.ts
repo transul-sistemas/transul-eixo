@@ -52,6 +52,10 @@ const LISTA = {
       crs: 2,
       receita: 4000,
       documentos: 2,
+      receita_cte: 3000,
+      documentos_cte: 1,
+      receita_nfse: "1000.00",
+      documentos_nfse: 1,
       custo_frota: "400.10",
       custo_servico: 600,
       margem: 2999.9,
@@ -128,12 +132,39 @@ describe("lerOperacoesDoMes", () => {
     expect(r.linhas[0]?.cascata).toEqual({
       receitaCentavos: 400000,
       documentos: 2,
+      receitaCteCentavos: 300000,
+      documentosCte: 1,
+      receitaNfseCentavos: 100000,
+      documentosNfse: 1,
       custoFrotaCentavos: 40010,
       custoServicoCentavos: 60000,
       margemCentavos: 299990,
       margemPercentual: 75,
     });
     expect(r.totais.cascata?.margemCentavos).toBe(299990);
+  });
+  it("a receita em duas linhas soma o total (CT-e + NFS-e)", async () => {
+    const { cliente } = clienteCom(LISTA);
+    const r = await lerOperacoesDoMes(lerOperacoes(new URLSearchParams("")), cliente);
+    const c = r.linhas[0]?.cascata;
+    expect((c?.receitaCteCentavos ?? 0) + (c?.receitaNfseCentavos ?? 0)).toBe(c?.receitaCentavos);
+  });
+  it("banco sem as duas linhas (resposta antiga) vira zero, sem quebrar", async () => {
+    const { cliente } = clienteCom({
+      ...LISTA,
+      linhas: [
+        {
+          ...LISTA.linhas[0],
+          receita_cte: undefined,
+          documentos_cte: undefined,
+          receita_nfse: undefined,
+          documentos_nfse: undefined,
+        },
+      ],
+    });
+    const r = await lerOperacoesDoMes(lerOperacoes(new URLSearchParams("")), cliente);
+    expect(r.linhas[0]?.cascata?.receitaCteCentavos).toBe(0);
+    expect(r.linhas[0]?.cascata?.documentosNfse).toBe(0);
   });
   it("sem Resultados, a cascata fica nula", async () => {
     const { cliente } = clienteCom({ ...LISTA, ve_resultado: false });

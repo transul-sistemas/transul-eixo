@@ -17,6 +17,7 @@
     "test:e2e-banco": "playwright test --config playwright.banco.config.ts",
     "test:capturas": "playwright test --project=preparar --project=capturas-1366 --project=capturas-1920 --project=capturas-tablet-820 --project=capturas-celular-390",
     "db:tipos": "node scripts/db-tipos.mjs",
+    "db:nova-migration": "node scripts/nova-migration.ts",
     "dev:usuario": "node scripts/dev-usuario.ts",
     "db:dev-dados": "node scripts/db-dev-dados.ts",
     "importar:cr": "node scripts/importar-cr.ts",

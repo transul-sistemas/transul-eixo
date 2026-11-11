@@ -33,7 +33,8 @@ function validaCpf(cpf: string): boolean {
 function validaCnpj(cnpj: string): boolean {
   if (!/^\d{14}$/.test(cnpj)) return false;
   const dv = (n: number) => {
-    const pesos = n === 12 ? [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2] : [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+    const pesos =
+      n === 12 ? [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2] : [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
     const soma = pesos.reduce((s, p, i) => s + p * Number(cnpj[i]), 0);
     const r = soma % 11;
     return r < 2 ? 0 : 11 - r;

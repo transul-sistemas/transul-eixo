@@ -17,7 +17,7 @@ export function semLancamentos(pontos: readonly PontoDeResultado[]): boolean {
 
 export interface PassoDaCascata {
   rotulo: string;
-  tipo: "total" | "custo";
+  tipo: "total" | "custo" | "receita_cte" | "receita_nfse";
   /** O valor com sinal (custos negativos), para o tooltip. */
   valor: number;
   /** Onde a barra começa (a parte invisível da pilha). */
@@ -26,21 +26,39 @@ export interface PassoDaCascata {
   altura: number;
 }
 
+/** O token de cor de cada tipo de barra (a tela traduz o token na cor do tema, claro e escuro). */
+export function tokenDoPasso(tipo: PassoDaCascata["tipo"]): "operacoes" | "acao" | "negativo" {
+  if (tipo === "custo") return "negativo";
+  if (tipo === "receita_nfse") return "acao";
+  return "operacoes";
+}
+
 export function passosDaCascata(c: {
   receitaCentavos: number;
+  /** As duas linhas da receita; só viram duas barras se somam o total. */
+  receitaCteCentavos?: number;
+  receitaNfseCentavos?: number;
   custoFrotaCentavos: number;
   custoServicoCentavos: number;
   margemCentavos: number;
 }): PassoDaCascata[] {
-  const passos: PassoDaCascata[] = [
-    {
-      rotulo: "Receita",
-      tipo: "total",
-      valor: c.receitaCentavos,
-      base: 0,
-      altura: c.receitaCentavos,
-    },
-  ];
+  const cte = c.receitaCteCentavos;
+  const nfse = c.receitaNfseCentavos;
+  const emDuasLinhas = cte !== undefined && nfse !== undefined && cte + nfse === c.receitaCentavos;
+  const passos: PassoDaCascata[] = emDuasLinhas
+    ? [
+        { rotulo: "Receita de CT-e", tipo: "receita_cte", valor: cte, base: 0, altura: cte },
+        { rotulo: "Receita de NFS-e", tipo: "receita_nfse", valor: nfse, base: cte, altura: nfse },
+      ]
+    : [
+        {
+          rotulo: "Receita",
+          tipo: "total",
+          valor: c.receitaCentavos,
+          base: 0,
+          altura: c.receitaCentavos,
+        },
+      ];
   let nivel = c.receitaCentavos;
   for (const [rotulo, custo] of [
     ["Custo da frota", c.custoFrotaCentavos],

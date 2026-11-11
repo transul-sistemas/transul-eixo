@@ -2,6 +2,9 @@ import { connection } from "next/server";
 import { AbasDaFichaNaUrl } from "@/components/ficha/abas-da-ficha-na-url";
 import { CabecalhoDaFicha } from "@/components/ficha/cabecalho-da-ficha";
 import { FichaDaRaiz } from "@/components/ficha/ficha-da-raiz";
+import { AvisoDeDadosCongelados } from "@/components/layout/aviso-de-dados-congelados";
+import { lerDadosAte, lerDadosAteDaFonte } from "@/lib/dados/dados-ate";
+import { mesIncompleto } from "@/lib/dominio/dados-congelados";
 import { SeletorDePeriodo } from "@/components/ficha/seletor-de-periodo";
 import { formatarData, formatarMes } from "@/components/formato/data";
 import { Moeda } from "@/components/formato/moeda";
@@ -90,6 +93,26 @@ function kpisDoResumo(r: ResultadoDoPeriodo, contra: string, semDados: boolean):
       rotulo: "Receita",
       valor: <Moeda valor={a.receitaCentavos} />,
       variacao: { pontos: variacaoPercentual(a.receitaCentavos, b.receitaCentavos), contra },
+    },
+    {
+      id: "receita-cte",
+      rotulo: "Receita de CT-e",
+      valor: <Moeda valor={a.receitaCteCentavos} />,
+      variacao: {
+        pontos: variacaoPercentual(a.receitaCteCentavos, b.receitaCteCentavos),
+        contra,
+      },
+      apoio: `${formatarInteiro(a.documentosCte)} ${a.documentosCte === 1 ? "documento" : "documentos"}`,
+    },
+    {
+      id: "receita-nfse",
+      rotulo: "Receita de NFS-e",
+      valor: <Moeda valor={a.receitaNfseCentavos} />,
+      variacao: {
+        pontos: variacaoPercentual(a.receitaNfseCentavos, b.receitaNfseCentavos),
+        contra,
+      },
+      apoio: `${formatarInteiro(a.documentosNfse)} ${a.documentosNfse === 1 ? "documento" : "documentos"}`,
     },
     {
       id: "frota",
@@ -224,7 +247,7 @@ function Resumo({
         <CelulaDaGrade colunas={6}>
           <PainelDeGrafico
             titulo={`Cascata de ${rotuloDoPeriodo}`}
-            descricao="Receita menos os custos da frota e de serviço dá a margem."
+            descricao="A receita de CT-e e a de NFS-e, menos os custos da frota e de serviço, dão a margem."
             estado={estado}
             textoVazio={SEM_RESULTADO}
           >
@@ -318,10 +341,19 @@ function Placas({ ficha }: { ficha: FichaDaOperacao }) {
   );
 }
 
-function Pessoas({ ficha, contexto }: { ficha: FichaDaOperacao; contexto: ContextoDaOperacao }) {
+function Pessoas({
+  ficha,
+  contexto,
+  folhaAte,
+}: {
+  ficha: FichaDaOperacao;
+  contexto: ContextoDaOperacao;
+  folhaAte: string | null;
+}) {
   const p = ficha.pessoas;
   return (
     <div className="flex flex-col gap-4">
+      <AvisoDeDadosCongelados dadosAte={folhaAte} granularidade="mes" />
       {!contexto.vePessoas ? (
         <p className="text-muted-foreground text-sm">
           Os nomes aparecem para quem tem acesso a Pessoas. Aqui só a função e a escala.
@@ -553,7 +585,11 @@ export async function FichaDaOperacaoNaTela({
     );
   }
   // O mês padrão é o mês fechado mais recente (e não o último com viagem no staging da v1).
-  const mesFechado = await lerMesFechado();
+  const [mesFechado, dadosAte, folhaAte] = await Promise.all([
+    lerMesFechado(),
+    lerDadosAte(),
+    lerDadosAteDaFonte("folha"),
+  ]);
   const periodo = lerPeriodo(parametros, mesFechado);
   const intervalo = intervaloDoPeriodo(periodo, mesFechado, somarMeses(mesFechado, -23));
   const mesesDoPeriodo = mesesDoIntervalo(intervalo);
@@ -607,7 +643,7 @@ export async function FichaDaOperacaoNaTela({
       />
     ),
     placas: <Placas ficha={ficha} />,
-    pessoas: <Pessoas ficha={ficha} contexto={contexto} />,
+    pessoas: <Pessoas ficha={ficha} contexto={contexto} folhaAte={folhaAte} />,
     resultado: <ResultadoDoPeriodo resultado={resultado} semDados={semDados} />,
     "linha-do-tempo": <LinhaDoTempoDaOperacao contexto={contexto} />,
     documentos: (
@@ -640,12 +676,16 @@ export async function FichaDaOperacaoNaTela({
         />
       }
       linhaDoTempo={
-        <SeletorDePeriodo
-          rota={`/operacoes/lista/${operacao.id}`}
-          parametros={parametros}
-          meses={chipsDeMes(mesFechado)}
-          atual={periodo}
-        />
+        <div className="flex flex-col gap-2">
+          <AvisoDeDadosCongelados dadosAte={dadosAte} />
+          <SeletorDePeriodo
+            rota={`/operacoes/lista/${operacao.id}`}
+            parametros={parametros}
+            meses={chipsDeMes(mesFechado)}
+            atual={periodo}
+            mesIncompleto={mesIncompleto(dadosAte)}
+          />
+        </div>
       }
     >
       <AbasDaFichaNaUrl<AbaDaOperacao>

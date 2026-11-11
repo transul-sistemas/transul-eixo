@@ -1,5 +1,7 @@
+import { IconAlertTriangle } from "@tabler/icons-react";
 import Link from "next/link";
 import { formatarMes } from "@/components/formato/data";
+import { ROTULO_DE_MES_INCOMPLETO } from "@/components/layout/aviso-de-dados-congelados";
 import { MODOS_DO_ACUMULADO, type Periodo } from "@/lib/dominio/periodo";
 import { enderecoDoPeriodo } from "@/lib/navegacao/operacoes";
 import { cn } from "@/lib/utils";
@@ -17,17 +19,22 @@ export function SeletorDePeriodo({
   parametros,
   meses,
   atual,
+  mesIncompleto = null,
 }: {
   rota: string;
   parametros: URLSearchParams;
   /** Os meses `aaaa-mm` a oferecer, do mais antigo ao mais recente. */
   meses: readonly string[];
   atual: Periodo;
+  /** O mês `aaaa-mm` com dados só até o meio: aparece por último, rotulado como incompleto. */
+  mesIncompleto?: string | null;
 }) {
+  const lista =
+    mesIncompleto && !meses.includes(mesIncompleto) ? [...meses, mesIncompleto] : [...meses];
   return (
     <div className="flex flex-col gap-2">
       <nav aria-label="Mês do resultado" className="flex flex-wrap gap-2">
-        {meses.map((mes) => {
+        {lista.map((mes) => {
           const ativo = atual.tipo === "mes" && atual.mes === mes;
           return (
             <Link
@@ -37,6 +44,12 @@ export function SeletorDePeriodo({
               className={cn(CLASSE, ativo && ATIVO)}
             >
               {formatarMes(mes)}
+              {mes === mesIncompleto ? (
+                <span className="ml-2 inline-flex items-center gap-1 text-xs">
+                  <IconAlertTriangle aria-hidden className="size-3.5" />
+                  {ROTULO_DE_MES_INCOMPLETO}
+                </span>
+              ) : null}
             </Link>
           );
         })}

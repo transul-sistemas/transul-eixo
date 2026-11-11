@@ -33,6 +33,10 @@ export async function lerMesFechado(
 interface TotaisDoBanco {
   receita: Numero;
   documentos: number | null;
+  receita_cte?: Numero;
+  documentos_cte?: number | null;
+  receita_nfse?: Numero;
+  documentos_nfse?: number | null;
   custo_frota: Numero;
   custo_servico: Numero;
   margem: Numero;
@@ -67,6 +71,10 @@ interface ResultadoDoBanco {
 const totais = (t: TotaisDoBanco): TotaisDoPeriodo => ({
   receitaCentavos: centavos(t.receita),
   documentos: t.documentos ?? 0,
+  receitaCteCentavos: centavos(t.receita_cte),
+  documentosCte: t.documentos_cte ?? 0,
+  receitaNfseCentavos: centavos(t.receita_nfse),
+  documentosNfse: t.documentos_nfse ?? 0,
   custoFrotaCentavos: centavos(t.custo_frota),
   custoServicoCentavos: centavos(t.custo_servico),
   margemCentavos: centavos(t.margem),

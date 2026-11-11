@@ -320,6 +320,20 @@ isOneToOne: false
       referencedColumns: ["codigo"]
     }
                   ]
+                },"receita_top": {
+                  Row: {
+                    "ativa": boolean,"codtipoper": number,"motivo": string,"tipo": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "ativa"?: boolean,"codtipoper": number,"motivo": string,"tipo": string
+                  }
+                  Update: {
+                    "ativa"?: boolean,"codtipoper"?: number,"motivo"?: string,"tipo"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
                 },"status": {
                   Row: {
                     "aplica_a": string,"baixada": boolean,"camada": string,"chip": string,"nome": string,"ordem": number,"sigla": string,"tipos_validos": (Database["nucleo"]['Enums']["tipo_de_ativo"])[],"versao": number
@@ -891,14 +905,14 @@ isOneToOne: false
                   ]
                 },"fila_de_excecoes": {
                   Row: {
-                    "assunto": string | null,"ativo_id": string | null,"campo": string | null,"cr_id": string | null,"criado_em": string,"descricao": string,"id": string,"pessoa_id": string | null,"resolucao": string | null,"resolvida_em": string | null,"resolvida_por": string | null,"versao": number
+                    "assunto": string | null,"ativo_id": string | null,"campo": string | null,"cr_id": string | null,"criado_em": string,"descricao": string,"id": string,"lancamento_origem_id": string | null,"pessoa_id": string | null,"resolucao": string | null,"resolvida_em": string | null,"resolvida_por": string | null,"versao": number
                   }
                   ComputedFields: never
                   Insert: {
-                    "assunto"?: string | null,"ativo_id"?: string | null,"campo"?: string | null,"cr_id"?: string | null,"criado_em"?: string,"descricao": string,"id"?: string,"pessoa_id"?: string | null,"resolucao"?: string | null,"resolvida_em"?: string | null,"resolvida_por"?: string | null,"versao"?: number
+                    "assunto"?: string | null,"ativo_id"?: string | null,"campo"?: string | null,"cr_id"?: string | null,"criado_em"?: string,"descricao": string,"id"?: string,"lancamento_origem_id"?: string | null,"pessoa_id"?: string | null,"resolucao"?: string | null,"resolvida_em"?: string | null,"resolvida_por"?: string | null,"versao"?: number
                   }
                   Update: {
-                    "assunto"?: string | null,"ativo_id"?: string | null,"campo"?: string | null,"cr_id"?: string | null,"criado_em"?: string,"descricao"?: string,"id"?: string,"pessoa_id"?: string | null,"resolucao"?: string | null,"resolvida_em"?: string | null,"resolvida_por"?: string | null,"versao"?: number
+                    "assunto"?: string | null,"ativo_id"?: string | null,"campo"?: string | null,"cr_id"?: string | null,"criado_em"?: string,"descricao"?: string,"id"?: string,"lancamento_origem_id"?: string | null,"pessoa_id"?: string | null,"resolucao"?: string | null,"resolvida_em"?: string | null,"resolvida_por"?: string | null,"versao"?: number
                   }
                   Relationships: [
                     {
@@ -1683,7 +1697,10 @@ isOneToOne: false
                 }
           }
           Functions: {
-            "abastecimento_do_mes":
+            "abastecimento_ate":
+{ Args: Record<PropertyKey, never>; Returns: string
+                           },
+"abastecimento_do_mes":
 { Args: { "p_busca"?: string,"p_mes"?: string,"p_ordem"?: string,"p_pagina"?: number,"p_tam"?: number }; Returns: Json
                            },
 "agora_do_acompanhamento":
@@ -1741,7 +1758,7 @@ isOneToOne: false
                            },
 "cascata_das_operacoes":
 { Args: { "p_mes": string }; Returns: {
-              "crs": number,"custo_frota": number,"custo_servico": number,"documentos": number,"operacao_id": string,"receita": number
+              "crs": number,"custo_frota": number,"custo_servico": number,"documentos": number,"documentos_cte": number,"documentos_nfse": number,"operacao_id": string,"receita": number,"receita_cte": number,"receita_nfse": number
             }[]
                            },
 "catalogos_dos_assistentes":
@@ -1809,6 +1826,12 @@ isOneToOne: false
 "crs_ocupados":
 { Args: Record<PropertyKey, never>; Returns: string[]
                            },
+"dados_do_staging_ate":
+{ Args: Record<PropertyKey, never>; Returns: string
+                           },
+"data_na_faixa":
+{ Args: { "p_data": string }; Returns: boolean
+                           },
 "desatrelar":
 { Args: { "p_cavalo_id": string,"p_em": string,"p_implementos"?: (string)[] }; Returns: number
                            },
@@ -1870,6 +1893,9 @@ isOneToOne: false
                            },
 "filial_do_cr_em":
 { Args: { "p_ativo_id": string,"p_em": string }; Returns: string
+                           },
+"folha_ate":
+{ Args: Record<PropertyKey, never>; Returns: string
                            },
 "garagem_em":
 { Args: { "p_ativo_id": string,"p_em": string }; Returns: string
@@ -1938,6 +1964,9 @@ isOneToOne: false
         isOneToOne: true
         isSetofReturn: false
       } },
+"linha_de_receita":
+{ Args: { "p_codtipoper": number,"p_serie": string,"p_status_cte": string,"p_tipo_documento": string }; Returns: string
+                           },
 "linhas_divergentes":
 { Args: Record<PropertyKey, never>; Returns: {
               "ativo_id": string,"motivo": string
@@ -2158,6 +2187,12 @@ isOneToOne: false
 "registrar_evento":
 { Args: { "p_ativo_id": string,"p_camada"?: string,"p_em": string,"p_em_origem"?: Database["config"]['Enums']["origem_da_data"],"p_justificativa"?: string,"p_origem"?: string,"p_sigla": string }; Returns: string
                            },
+"registrar_excecoes_de_cte_sem_status":
+{ Args: Record<PropertyKey, never>; Returns: number
+                           },
+"registrar_excecoes_de_data":
+{ Args: Record<PropertyKey, never>; Returns: number
+                           },
 "renavam_valido":
 { Args: { "p_texto": string }; Returns: boolean
                            },
@@ -2199,11 +2234,17 @@ isOneToOne: false
               "ativo_id": string,"dia": string,"sigla": string
             }[]
                            },
+"staging_tem_dtneg":
+{ Args: Record<PropertyKey, never>; Returns: boolean
+                           },
 "tarefas_do_usuario":
 { Args: Record<PropertyKey, never>; Returns: Json
                            },
 "texto_simples":
 { Args: { "p_texto": string }; Returns: string
+                           },
+"tipo_da_data":
+{ Args: { "p_data": string }; Returns: string
                            },
 "tipo_do_cr":
 { Args: { "p_participa_da_frota": boolean,"p_veiculo_obrigatorio": boolean }; Returns: Database["nucleo"]['Enums']["tipo_de_cr"]
@@ -2213,6 +2254,9 @@ isOneToOne: false
                            },
 "ultima_correcao_tardia_em":
 { Args: { "p_ativo_id": string }; Returns: string
+                           },
+"ultimo_mes_completo_do_staging":
+{ Args: Record<PropertyKey, never>; Returns: string
                            },
 "vincular_usuario":
 { Args: { "p_email": string,"p_perfil": string,"p_pessoa_id": string }; Returns: undefined

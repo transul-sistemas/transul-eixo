@@ -1,3 +1,4 @@
+import { IconAlertTriangle } from "@tabler/icons-react";
 import { cookies } from "next/headers";
 import Link from "next/link";
 import { connection } from "next/server";
@@ -8,13 +9,16 @@ import {
   BarraDeConsultaDaPagina,
   type ChipDeConsulta,
 } from "@/components/layout/barra-de-consulta";
+import { ROTULO_DE_MES_INCOMPLETO } from "@/components/layout/aviso-de-dados-congelados";
 import { FaixaDeKpis, type Kpi } from "@/components/layout/faixa-de-kpis";
 import { PaginaDeLeitura } from "@/components/layout/pagina-de-leitura";
 import { EsqueletoDaTabela, ListaVazia } from "@/components/tabela/estados";
 import { Paginador } from "@/components/tabela/paginador";
+import { lerDadosAte } from "@/lib/dados/dados-ate";
 import { modoDosDados } from "@/lib/dados/fonte";
 import { lerOperacoesDoMes, type OperacoesDoMes } from "@/lib/dados/operacoes";
 import { lerMesFechado } from "@/lib/dados/operacoes-ficha";
+import { mesIncompleto } from "@/lib/dominio/dados-congelados";
 import { chipsDeMes, somarMeses, variacaoPercentual } from "@/lib/dominio/periodo";
 import { acharTela } from "@/lib/navegacao/catalogo";
 import {
@@ -98,16 +102,22 @@ export function SeletorDeMes({
   parametros,
   meses,
   atual,
+  mesIncompleto = null,
 }: {
   rota: string;
   parametros: URLSearchParams;
   meses: readonly string[];
   atual: string;
+  /** O mês `aaaa-mm` com dados só até o meio (rotulado, nunca padrão); vem da data limite do staging. */
+  mesIncompleto?: string | null;
 }) {
-  if (meses.length === 0) return null;
+  // O mês incompleto entra na frente (do mais recente ao mais antigo), com o rótulo.
+  const lista =
+    mesIncompleto && !meses.includes(mesIncompleto) ? [mesIncompleto, ...meses] : [...meses];
+  if (lista.length === 0) return null;
   return (
     <nav aria-label="Mês do resultado" className="flex flex-wrap gap-2">
-      {meses.slice(0, 12).map((mes) => (
+      {lista.slice(0, 12).map((mes) => (
         <Link
           key={mes}
           href={enderecoDoMes(rota, parametros, mes)}
@@ -118,6 +128,12 @@ export function SeletorDeMes({
           )}
         >
           {formatarMes(mes)}
+          {mes === mesIncompleto ? (
+            <span className="ml-2 inline-flex items-center gap-1 text-xs">
+              <IconAlertTriangle aria-hidden className="size-3.5" />
+              {ROTULO_DE_MES_INCOMPLETO}
+            </span>
+          ) : null}
         </Link>
       ))}
     </nav>
@@ -217,7 +233,7 @@ async function Conteudo({ parametros }: { parametros: URLSearchParams }) {
   );
   const estadoDaUrl = lerOperacoes(parametros, tam);
   // O mês padrão é o mês fechado mais recente (e não o último com viagem no staging da v1).
-  const mesFechado = await lerMesFechado();
+  const [mesFechado, dadosAte] = await Promise.all([lerMesFechado(), lerDadosAte()]);
   const mes = estadoDaUrl.mes ?? mesFechado;
   const estado = { ...estadoDaUrl, mes };
   const [dados, anterior] = await Promise.all([
@@ -235,12 +251,14 @@ async function Conteudo({ parametros }: { parametros: URLSearchParams }) {
       titulo={titulo}
       descricao={descricao}
       consulta={<Barra contagens={dados.chips} />}
+      dadosAte={dadosAte}
     >
       <SeletorDeMes
         rota={ROTA_DAS_OPERACOES}
         parametros={parametros}
         meses={chipsDeMes(mesFechado).reverse()}
         atual={dados.mes}
+        mesIncompleto={mesIncompleto(dadosAte)}
       />
       <FaixaDeKpis kpis={kpisDe(dados, anterior)} />
       {!dados.veResultado ? (
