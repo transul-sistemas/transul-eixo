@@ -32,6 +32,7 @@ Modelo de entrada:
   - **H5:** o Administrador reatribui tarefa, mas não age em nome de ninguém.
   - **H6:** a escrita da Diretoria passa por tarefa e aprovação. **Ponto a rever:** hoje a semente dá criar, editar e excluir à Diretoria em todos os módulos de negócio.
   - **H7:** notificação primeiro dentro do sistema; e-mail só depois do SMTP.
+  - **H8 (revisão estrutural, 11/11/2026):** despesa em CR bloqueado ou inativo no Sankhya **continua contando no resultado**. O CR entra como encerrado e nunca é descartado (`docs/cr-regras.md`, regra a). Alternativa descartada: ignorar a despesa de CR inativo, que a faria sumir em silêncio.
 - **Plano:** `docs/superpowers/plans/2026-11-11-processos-e-vinculos.md` (fatias V0, P1 a P5). A fila atual não muda.
 - **Quem decidiu:** Alexandre (critérios, gerenciador e regra dos vínculos); as hipóteses H1 a H7 aguardam a confirmação dele.
 
