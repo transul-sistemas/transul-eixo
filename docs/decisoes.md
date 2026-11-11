@@ -8,6 +8,26 @@ Modelo de entrada:
 
 ---
 
+## 11/11/2026 — Decisões sobre o lote de número, a ordem do banco local e o Acompanhamento v2
+
+- **Datas fora de faixa (Alexandre):** as 15 datas de 2028 e 2029 parecem em parte erro de digitação do ano
+  (salário, telefone, assistência médica, mão de obra) e em parte talvez legítimas (coligada, adiantamento).
+  **Ficam fora do resultado e na fila** ("data futura a confirmar"). Um CSV **local**, em `importacao/` (fora
+  do Git, sem nome de pessoa, sem valor e sem placa), leva o número do título, a natureza e as datas ao
+  financeiro, para corrigir no Sankhya.
+- **Banco real local, nesta ordem (só depois do CI da `main` verde e do merge do lote):** backup REAL com o
+  esquema atual; aplicar as migrations aditivas do lote (`20261116100000`, `20261116110000`,
+  `20261116120000`), sem apagar nada e recarregando a API; conferir a `querys/04` **por tipo de exceção**
+  (as 928 de cadastro pendente continuam 928; as novas contam à parte: data fora de faixa, data futura a
+  confirmar, CT-e sem status); novo backup REAL com o esquema novo.
+- **CI:** endurecer o passo de instalação do Chromium (cache do navegador do Playwright e nova tentativa em
+  falha de rede), num commit só, depois que a `main` estiver verde. Motivo: em 11/11 dois jobs caíram por
+  falha de DNS do runner ao instalar dependências do sistema, sem relação com o código.
+- **Acompanhamento v2:** hipóteses aprovadas (grupos, esperado proporcional, Programado em tabela própria,
+  Movimento como lista) e o "+" em popup central menor e empilhado (regra 2 do `CLAUDE.md` ajustada).
+  A rota depende só dos 165 veículos com posição. Ver `docs/acompanhamento-v2.md`.
+- **Quem decidiu:** Alexandre.
+
 ## 11/11/2026 — Estrutura completa, gerenciador de processos e vínculos com história
 
 - **Contexto (Alexandre, 11/11/2026):** o Eixo é a versão 2 da v1. Não copiamos: a v1 é gabarito de processos e de regras (`docs/propostas`, `DIAGNOSTICO_SISTEMA`, dicionário de indicadores). Portamos **regras**, não tabelas. Corrigimos o que estava errado (uma fonte única por etapa; papel rígido por subsistema; "ajuste manual" fora do sistema) e trazemos boas práticas atuais. Só documentação: nenhum código, migration ou teste de produto entrou com esta entrada.
