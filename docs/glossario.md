@@ -100,3 +100,15 @@ Definições do desenho de 11/11/2026 (`docs/gerenciador-de-processos.md` e `doc
 | Vigente | Vínculo (placa-CR, CR-operação) em vigor na data: começou e ainda não terminou. Verde, com rótulo e ícone: "Vigente desde 12/10". |
 | Encerrado | Vínculo que terminou com data de fim. Continua existindo, com histórico; nunca é apagado. Vermelho suave, com rótulo e ícone: "Encerrado em 12/10". |
 | Trocar CR | Ação atômica que fecha o vínculo antigo da placa e abre o novo na mesma data, sem buraco, com motivo, e move a placa para a operação do novo CR. Troca retroativa vira "correção tardia". |
+
+## Acompanhamento v2
+
+Definições do desenho de 11/11/2026 (`docs/acompanhamento-v2.md`). Ainda não construído.
+
+| Termo | O que é |
+| --- | --- |
+| Conjuntos com lançamento hoje | "X de Y": **Y** são os conjuntos ativos no dia (cavalo não baixado com composição vigente) e **X** são os que têm ao menos um evento de situação com a hora naquele dia, de qualquer origem. Os programados não contam. |
+| Situação programada | Situação marcada para um dia futuro. Fica fora do realizado (não conta em "X de Y", na disponibilidade nem no resultado) e vira tarefa de confirmar no dia. |
+| Correção tardia | Lançamento de situação em dia anterior a hoje, com motivo, marcado e contado no selo da célula. Em mês fechado exige permissão. |
+| Esperado até a data | Meta do conjunto × dias decorridos ÷ dias do mês. O mês em curso leva o rótulo "mês em curso" e não é classificado como crítico sem dado lançado. |
+| Rota estimada pela rodovia | Caminho entre as cidades que a placa visitou, calculado por um serviço de rotas (perfil de caminhão). Não é telemetria. |
