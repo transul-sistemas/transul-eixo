@@ -1,5 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import { abrirHidratada } from "./apoio";
+import { sessaoDe } from "./apoio/usuarios-de-teste";
 import { deixarLento } from "./apoio-lentidao";
 
 const ROTA = "/frota/placas";
@@ -207,8 +208,10 @@ test.describe("lista de placas: estados", () => {
     await expect(alerta).toContainText("Aplique as migrations");
     await expect(alerta).toContainText("Não foi possível carregar as placas");
     await expect(alerta.getByRole("button", { name: "Tentar de novo" })).toBeVisible();
-    // Perfil comum nunca vê função nem código do erro; só o Administrador e a Diretoria (pela Server Action).
-    await expect(alerta).not.toContainText("PGRST202");
+    // O Administrador (o login padrão deste projeto) vê a função e o código do erro, pela Server Action
+    // que só responde a ele e à Diretoria. O perfil comum não vê (teste do Gestor de frota, mais abaixo).
+    await expect(alerta).toContainText("listar_placas");
+    await expect(alerta).toContainText("PGRST202");
   });
 
   test("busca digitada cancela a resposta anterior (só vale a última)", async ({ page }) => {
@@ -1510,5 +1513,21 @@ test.describe("lista de placas: acessibilidade apontada na revisão", () => {
     expect(alturaDaTabela).toBeGreaterThanOrEqual(200);
     await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
     await expect(resumo(page)).toBeInViewport();
+  });
+});
+
+test.describe("lista de placas: função ausente para um perfil comum", () => {
+  test.use({ storageState: sessaoDe("gestor_de_frota") });
+
+  test("o Gestor de frota vê a causa e o próximo passo, nunca a função nem o código do erro", async ({
+    page,
+  }) => {
+    await abrirHidratada(page, `${ROTA}?falha=funcao-ausente`, "header");
+    const alerta = page.getByRole("main").getByRole("alert");
+    await expect(alerta).toContainText("Aplique as migrations");
+    await expect(alerta.getByRole("button", { name: "Tentar de novo" })).toBeVisible();
+    await expect(alerta).not.toContainText("PGRST202");
+    await expect(alerta).not.toContainText("listar_placas");
+    await expect(alerta).not.toContainText("Código do erro");
   });
 });
