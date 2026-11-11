@@ -151,7 +151,7 @@ Conferido nas migrations em 11/11/2026:
    (R$ 45.919.374,89; 9.230 documentos) e o de out/2026 (R$ 40.372.666,60; 7.738) não mudou**, conferido
    em agregados no banco local: set = 9.055 CT-e (R$ 43.601.969,36) + 175 NFS-e (R$ 2.317.405,53); out =
    7.620 CT-e (R$ 38.646.963,71) + 118 NFS-e (R$ 1.725.702,89). A única diferença nos 12 meses é 1 CT-e de
-   nov/2025 sem status fora da série V (R$ 7.262,50), hipótese H10. Descrição original: o filtro **não era** a
+   nov/2025 sem status fora da série V (R$ 7.262,50), aprovada com ajuste: esse CT-e vai para a fila de exceções com o tipo "CT-e sem status" (`cte_sem_status`), fora da receita até alguém decidir. Descrição original: o filtro **não era** a
    regra de série e status registrada em `docs/v1-frutos-e-licoes.md`. **Conferido em 11/11/2026 no staging local, só em
    agregados** (receita = `frete_empresa`, sem os documentos que sumiram do Sankhya):
    - **Em CT-e as duas regras coincidem:** status `I` e `R` ficam fora das duas; série V sem status entra
@@ -204,7 +204,9 @@ Conferido nas migrations em 11/11/2026:
      (gatilho `t10_corte_travado`, enquanto `nucleo.staging_tem_dtneg()` for falso); o aviso "dados até"
      (`nucleo.dados_do_staging_ate()`), com o mês incompleto rotulado e o mês fechado padrão limitado ao
      último mês completo; e a **data fora de faixa** (`nucleo.data_na_faixa`: de 01/01/2020 até hoje + 1
-     ano), que tira o lançamento do resultado e o leva à fila de exceções (`data_fora_de_faixa`). A trava
+     ano), que tira o lançamento do resultado e o leva à fila de exceções: "data futura a confirmar"
+     (além disso, até hoje + 10 anos; no banco local 15 lançamentos, de 2028 e 2029) e "data fora de faixa"
+     (antes de 2020 ou além de hoje + 10 anos; 3 lançamentos, de 2206 e 2926). A trava
      cai sozinha quando a ponte do Sankhya gravar a `dtneg` em `staging.despesa`.
 7. **Os 10 tipos e a fila com dono e prazo** ainda não existem: a fila atual (`fila_de_excecoes`) cobre
    placa, pessoa e CR cadastrais, não despesa sem destino.
