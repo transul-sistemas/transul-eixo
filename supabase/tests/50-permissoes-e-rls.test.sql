@@ -194,6 +194,8 @@ select set_eq(
     'config.campo_corrigivel.campo_corrigivel_ler', 'nucleo.sinal_do_sankhya.sinal_do_sankhya_ler',
     'nucleo.correcao_de_campo.correcao_de_campo_ler',
     'nucleo.fila_de_excecoes.fila_de_excecoes_ler', 'nucleo.fila_de_excecoes.fila_de_excecoes_alterar',
+    -- Parte B (11/11/2026): o Gestor de frota lê as exceções das placas da carteira (pgTAP 104).
+    'nucleo.fila_de_excecoes.fila_de_excecoes_ler_da_carteira',
     -- 3.9a: a leitura mantida das placas (equivalência com ve_ativo no pgTAP 81).
     'nucleo.leitura_da_placa.leitura_da_placa_ler',
     -- Carteira mensal (testada em 86-carteira-mensal.test.sql).
