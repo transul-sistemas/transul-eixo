@@ -79,7 +79,7 @@ jobs:
       - if: steps.recente.outputs.roda == 'true'
         run: pnpm build
       - if: steps.recente.outputs.roda == 'true'
-        run: pnpm exec playwright install --with-deps chromium
+        run: bash scripts/ci/instalar-chromium.sh
       - if: steps.recente.outputs.roda == 'true'
         run: pnpm test:e2e
       - uses: actions/upload-artifact@v4

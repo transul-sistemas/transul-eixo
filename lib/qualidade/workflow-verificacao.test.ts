@@ -119,7 +119,7 @@ describe("workflow de verificação: o que nunca se pula e o que se pula", () =>
       "run: pnpm build",
       "id: playwright",
       "actions/cache@",
-      "playwright install",
+      "instalar-chromium.sh",
       "run: pnpm test:e2e",
     ]) {
       const passo = passoCom("app", trecho);
@@ -194,7 +194,7 @@ describe("e2e noturno: o e2e completo da main, uma vez por noite", () => {
   });
 
   it("roda o e2e completo só quando houve commit (ou disparo manual)", () => {
-    for (const trecho of ["run: pnpm build", "playwright install", "run: pnpm test:e2e"]) {
+    for (const trecho of ["run: pnpm build", "instalar-chromium.sh", "run: pnpm test:e2e"]) {
       const passo = passos.find((p) => p.includes(trecho)) ?? "";
       expect(passo, trecho).not.toBe("");
       expect(passo, trecho).toMatch(/if: steps\.recente\.outputs\.roda == 'true'/);
@@ -217,7 +217,7 @@ describe("workflow de verificação: jobs só do pull request (capturas e modo b
   it("as capturas rodam o pnpm test:capturas com EIXO_CAPTURAS e sobem sempre, por 7 dias", () => {
     const capturas = passoCom("capturas", "run: pnpm test:capturas");
     expect(capturas).toContain('EIXO_CAPTURAS: "1"');
-    for (const anterior of ["supabase start", "run: pnpm build", "playwright install"]) {
+    for (const anterior of ["supabase start", "run: pnpm build", "instalar-chromium.sh"]) {
       expect(passoCom("capturas", anterior), anterior).not.toBe("");
     }
     const envio = passoCom("capturas", "name: capturas-do-acesso");
@@ -285,5 +285,31 @@ describe("workflow de verificação: jobs só do pull request (capturas e modo b
   it("o e2e noturno (main) não tira capturas nem roda o modo banco", () => {
     expect(noturno).not.toContain("capturas");
     expect(noturno).not.toContain("e2e-banco");
+  });
+});
+
+// Falha de rede do runner (11/11/2026): "Temporary failure resolving" no apt derrubou dois jobs antes de
+// qualquer teste. A instalação do Chromium passa por um script com nova tentativa, em todos os jobs.
+describe("instalação do Chromium com nova tentativa", () => {
+  const script = readFileSync("scripts/ci/instalar-chromium.sh", "utf-8");
+
+  it("nenhum job chama o playwright install direto: todos passam pelo script", () => {
+    expect(texto).not.toMatch(/run: pnpm exec playwright install/);
+    expect(noturno).not.toMatch(/run: pnpm exec playwright install/);
+    const chamadas = texto.match(/run: bash scripts\/ci\/instalar-chromium\.sh/g) ?? [];
+    expect(chamadas).toHaveLength(3);
+  });
+
+  it("o script instala com as dependências, repete com espera crescente e pede ao apt para tentar de novo", () => {
+    expect(script).toContain("pnpm exec playwright install --with-deps chromium");
+    expect(script).toMatch(/for tentativa in \$\(seq 1 "\$total"\)/);
+    expect(script).toContain("sleep");
+    expect(script).toContain('Acquire::Retries "5";');
+    expect(script).toMatch(/exit 1\s*$/);
+  });
+
+  it("o script tem sintaxe de bash válida", () => {
+    const r = spawnSync("bash", ["-n", "scripts/ci/instalar-chromium.sh"], { encoding: "utf-8" });
+    expect(r.status, r.stderr).toBe(0);
   });
 });

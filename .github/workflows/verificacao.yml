@@ -107,7 +107,7 @@ jobs:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.versao }}-${{ hashFiles('pnpm-lock.yaml') }}
       - if: steps.mudancas.outputs.pula_e2e != 'true'
-        run: pnpm exec playwright install --with-deps chromium
+        run: bash scripts/ci/instalar-chromium.sh
       - if: steps.mudancas.outputs.pula_e2e != 'true'
         run: pnpm test:e2e
       - uses: actions/upload-artifact@v4
@@ -218,7 +218,7 @@ jobs:
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.versao }}-${{ hashFiles('pnpm-lock.yaml') }}
-      - run: pnpm exec playwright install --with-deps chromium
+      - run: bash scripts/ci/instalar-chromium.sh
       - env:
           EIXO_CAPTURAS: "1"
         run: pnpm test:capturas
@@ -281,7 +281,7 @@ jobs:
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.versao }}-${{ hashFiles('pnpm-lock.yaml') }}
-      - run: pnpm exec playwright install --with-deps chromium
+      - run: bash scripts/ci/instalar-chromium.sh
       - run: pnpm test:e2e-banco
       - uses: actions/upload-artifact@v4
         if: failure()
