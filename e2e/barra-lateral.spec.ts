@@ -89,12 +89,12 @@ test.describe("barra lateral: grupos", () => {
     }
   });
 
-  test("telas em breve levam a etiqueta, e a Demonstração não", async ({ page }) => {
+  test("telas em breve e em estrutura levam a etiqueta, e a Demonstração não", async ({ page }) => {
     await abrir(page, "/admin/demonstracao");
     const demo = menu(page).getByRole("link", { name: /^Demonstração/ });
     await expect(demo).toBeVisible();
     await expect(demo).not.toContainText("Em breve");
-    await expect(menu(page).getByRole("link", { name: /^Auditoria/ })).toContainText("Em breve");
+    await expect(menu(page).getByRole("link", { name: /^Auditoria/ })).toContainText("Estrutura");
   });
 });
 
