@@ -194,6 +194,7 @@ select set_eq(
     'config.campo_corrigivel.campo_corrigivel_ler', 'nucleo.sinal_do_sankhya.sinal_do_sankhya_ler',
     'nucleo.correcao_de_campo.correcao_de_campo_ler',
     'nucleo.fila_de_excecoes.fila_de_excecoes_ler', 'nucleo.fila_de_excecoes.fila_de_excecoes_alterar',
+    -- Parte B (11/11/2026): o Gestor de frota lê as exceções das placas da carteira (pgTAP 104).
     'nucleo.fila_de_excecoes.fila_de_excecoes_ler_da_carteira',
     -- Receita por tipo de documento (testadas em 107-receita-por-tipo-de-documento.test.sql).
     'config.receita_top.receita_top_ler', 'config.receita_top.receita_top_criar', 'config.receita_top.receita_top_alterar',
