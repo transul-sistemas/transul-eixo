@@ -1,3 +1,4 @@
+import { falhaDeLeitura } from "@/lib/erros/leitura";
 import type { NumerosDeTarefas } from "@/lib/dominio/tarefas";
 import type { ErroDoBanco } from "./escrita-do-banco";
 
@@ -29,7 +30,7 @@ export async function lerTarefas(
 ): Promise<NumerosDeTarefas> {
   const c = await cliente();
   const { data, error } = await c.schema("nucleo").rpc("tarefas_do_usuario");
-  if (error) throw new Error(`tarefas_do_usuario: ${error.message}`);
+  if (error) throw falhaDeLeitura("tarefas_do_usuario", error);
   const d = data as Bruto;
   const excecoes = d.excecoes as { total: number; por_assunto: { assunto: string; n: number }[] };
   return {
@@ -81,7 +82,7 @@ export async function lerExcecoes(
     p_pagina: estado.pagina,
     p_tamanho: TAMANHO_DA_FILA,
   });
-  if (error) throw new Error(`excecoes_abertas: ${error.message}`);
+  if (error) throw falhaDeLeitura("excecoes_abertas", error);
   const d = data as Bruto;
   return {
     pagina: Number(d.pagina),

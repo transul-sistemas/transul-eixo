@@ -1,3 +1,4 @@
+import { falhaDeLeitura } from "@/lib/erros/leitura";
 import type { EstadoDaVisaoGeral } from "@/lib/navegacao/visao-geral";
 import type { ErroDoBanco } from "./escrita-do-banco";
 import type { ValoresDoResultado, VisaoGeralDosResultados } from "./visao-geral-tipos";
@@ -66,7 +67,7 @@ export async function lerVisaoGeral(
     p_agrupamento: estado.agrupamento,
     p_top: 10,
   });
-  if (error) throw new Error(`visao_geral_dos_resultados: ${error.message}`);
+  if (error) throw falhaDeLeitura("visao_geral_dos_resultados", error);
   const v = data as Bruto;
   const kpis = v.kpis as Bruto;
   const outras = v.outras as Bruto;

@@ -1,3 +1,4 @@
+import { falhaDeLeitura } from "@/lib/erros/leitura";
 import type { EstadoDoAbastecimento } from "@/lib/navegacao/abastecimento";
 import type { AbastecimentoDoMes } from "./abastecimento-tipos";
 import type { TipoDeAtivo } from "./placas-tipos";
@@ -78,7 +79,7 @@ export async function lerAbastecimentoDoMes(
     p_pagina: consulta.pagina,
     p_tam: consulta.tam,
   });
-  if (error) throw new Error(`abastecimento_do_mes: ${error.message}`);
+  if (error) throw falhaDeLeitura("abastecimento_do_mes", error);
   const d = data as RespostaDoBanco;
   return {
     mes: mesDe(d.mes),
