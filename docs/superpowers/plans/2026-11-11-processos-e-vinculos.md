@@ -84,3 +84,94 @@ nuvem até Alexandre pedir; commit direto na `main`, arquivo por arquivo.
 - **Telas:** o wizard do acerto, com resumo do antes e do depois.
 - **Aceite:** pgTAP (quatro olhos, evento imutável, o valor bate com a fonte); e2e do caminho principal.
 - **Dependências:** P3 e a **ponte do Sankhya**. Só depois dela.
+
+## Revisão estrutural (11/11/2026): fatias C0 a C4 e D0
+
+Vêm da rodada de revisão estrutural (`docs/revisao-estrutural.md`, `docs/cr-regras.md`,
+`docs/v1-frutos-e-licoes.md`). A fila principal continua a mesma. Ordem sugerida: **V0 e C0 juntas** (as duas
+mexem no vínculo CR-operação), depois **D0**, depois **C1**, **C2**, **C3** e **C4**. Todas dependem da
+hipótese **H8** (`docs/decisoes.md`) e das H1 a H3. Todas são banco e regra de negócio: **Opus, com
+checkpoint**, e **só no staging e no banco local**; nada na nuvem.
+
+## C0. CR canônico
+
+- **Objetivo:** um modelo só do CR. O vínculo **CR-operação passa a ter vigência para todo CR** e existe
+  **uma função que resolve "CR > placa > operação na data D"**. Fecha as divergências 1, 3 e 4 de
+  `docs/cr-regras.md`.
+- **Tabelas:** generalizar `nucleo.cr_de_servico_na_operacao` para todo CR (frota, acionista e serviço),
+  preencher a partir de `cr.operacao_id` e de `placa_na_operacao` sem perder a montagem (o caminho de menor
+  risco de `docs/vinculos-com-historia.md`); marcar `cr.operacao_id` como legado até chegar a zero de
+  divergência.
+- **Funções:** `nucleo.resolver_cr(p_data date, p_codcencus, p_placa)` devolvendo CR, placa e operação
+  vigentes naquela data (por data D, não por mês); `nucleo.cr_da_operacao_no_mes` passa a chamar esta função.
+  Um CR inativo ou bloqueado continua resolvido (regra a).
+- **Testes de aceite:** pgTAP (a função devolve a operação certa nos limites `[início, fim)`; CR bloqueado
+  com despesa resolve; troca de CR muda o resultado na data); **teste de arquitetura** (I5: falha se
+  qualquer consulta lê `cr.operacao_id`, `cr_do_ativo`, `placa_na_operacao` ou `cr_de_servico_na_operacao`
+  fora da função); pgTAP de RLS com usuário de cada perfil.
+- **Dependências:** H1 confirmada. É a base de V0, D0 e C1 a C4.
+
+## D0. Lançamento classificado em 1 tipo, com total que bate
+
+- **Objetivo:** todo lançamento cai em exatamente 1 dos 10 tipos e o total por mês sempre bate. **Sobre o
+  staging**, sem esperar a ponte.
+- **Tabelas e funções:** `config.tipo_de_lancamento` (os 10 tipos, com a ordem de decisão e se entra no
+  resultado da operação); `nucleo.tipo_do_lancamento(...)` (a ordem de `docs/cr-regras.md`); visão
+  `nucleo.lancamento_atribuido` (lançamento, CR, tipo, placa, operação, competência); "sem destino" e a
+  fila de exceções com dono e prazo para o que não for atribuído (regra e). Neutralização de frete de
+  terceiro e impostos (regra d).
+- **Testes de aceite:** I1, I2, I3, I4 e I9 sobre o staging: nenhum lançamento com 0 ou 2 tipos; soma por
+  tipo mais "sem destino" = total, mês a mês e valor a valor; entradas = atribuídas + fila. O relatório de
+  reconciliação mostra só **agregados** (nada de CPF, nome ou placa).
+- **Dependências:** C0 e a pergunta de `docs/cr-regras.md` (divergência 6: a base da competência no
+  staging). Antes da ponte do Sankhya.
+
+## C1. Saúde do CR
+
+- **Objetivo:** uma tela que diz, para cada CR, se ele está bem: com operação vigente, com placa quando o
+  tipo exige, sem duplicata, sem despesa em "sem destino", e o que fazer.
+- **Tabelas e funções:** visão `nucleo.saude_do_cr` (um CR por linha, com o problema e o dono); regras de
+  sinalização em `lib/dominio/` (puras, com teste). Reaproveita a fila de exceções.
+- **Telas:** **Ficha do CR** ganha a aba "Saúde"; lista de CRs com chips por problema, com contagem, 20 por
+  página e olho.
+- **Testes de aceite:** um caso por problema (CR sem operação, sem placa onde era exigida, repetido, placa
+  com 2 CRs do mesmo tipo, bloqueado com despesa); RLS por perfil; e2e em 1366 e 1920.
+- **Dependências:** C0, D0 e a V0 (ficha do CR).
+
+## C2. Rastro do número
+
+- **Objetivo:** clicar em um valor mostra o caminho até os lançamentos: valor → operação → CR → placa →
+  lançamento, com o "porquê" de cada passo. É o princípio "explicável" em ato.
+- **Tabelas e funções:** `nucleo.rastro_do_valor(p_metrica, p_chave, p_mes)` devolvendo os degraus e os
+  totais por degrau (o banco soma; a tela não soma); usa só a função de resolução e a de atribuição.
+- **Telas:** painel lateral "De onde vem este número", aberto de qualquer valor da cascata, da ficha e do
+  Resultados; cada degrau mostra o código do Sankhya e o motivo.
+- **Testes de aceite:** a soma dos degraus = o valor clicado (I2); o rastro de um valor conhecido bate com o
+  staging; o painel fecha com Esc e devolve o foco; RLS: ninguém vê degrau de operação que não vê.
+- **Dependências:** C0 e D0.
+
+## C3. Impacto antes de gravar a troca de CR
+
+- **Objetivo:** antes de confirmar **Trocar CR** (V0), o assistente mostra o que muda: quanto do resultado
+  de cada operação, por mês, passa de uma para a outra, e quais meses já estão fechados.
+- **Tabelas e funções:** `nucleo.impacto_da_troca_de_cr(p_placa, p_cr_novo, p_data)` somente leitura,
+  devolvendo antes e depois por operação e mês; a V0 (`trocar_cr`) só grava depois.
+- **Telas:** o passo final do assistente Trocar CR com o resumo do antes e do depois e o aviso "correção
+  tardia" quando a data é retroativa (H3).
+- **Testes de aceite:** antes + depois somam o mesmo total (nada se perde); mês fechado exige a permissão
+  definida em H3; o impacto de uma troca conhecida bate com a gravação real.
+- **Dependências:** V0, C0, D0 e H3.
+
+## C4. Fechamento do mês com trava
+
+- **Objetivo:** o mês fecha, com a conferência feita e a trava visível; depois de fechado, mudança só por
+  **ajuste justificado, com aprovação por alçada**, nunca por edição do fato.
+- **Tabelas e funções:** `nucleo.fechamento_do_mes` (mês, situação: aberto, em conferência, fechado; quem,
+  quando, totais congelados); `fechar_mes` atômica, que **recusa** se houver exceção aberta com prazo
+  vencido ou se o total não bater (I2); `reabrir_mes` só com alçada e motivo, registrada em evento. Roda
+  como processo de P3 (fechamento mensal da operação).
+- **Telas:** Resultados › Fechamentos (hoje esqueleto): o lacre do mês, a lista de pendências e o histórico
+  de ajustes.
+- **Testes de aceite:** pgTAP (não fecha com exceção vencida; não fecha se o total não bate; mês fechado
+  recusa gravação direta; reabrir exige alçada e deixa evento; RLS); e2e do caminho principal.
+- **Dependências:** C0, D0, C1, P3 (processos como dado) e a definição de alçada (H3 e H6).
