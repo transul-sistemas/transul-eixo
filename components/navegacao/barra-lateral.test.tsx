@@ -202,17 +202,17 @@ describe("<BarraLateral>: sair", () => {
 // Fatia 3.9a: quem entrou aparece no rodapé (nome e e-mail), e a memória da barra é de cada pessoa.
 describe("<BarraLateral>: quem entrou", () => {
   const sair = async () => {};
-  const quem = { nome: "Ana Ribeiro", email: "ana@transul.com.br" };
+  const quem = { nome: "Ana Ribeiro", email: "pessoa@eixo.teste" };
 
   it("expandida, o rodapé mostra o nome e o e-mail acima do Sair", () => {
     const html = barra({ aoSair: sair, quem });
     expect(html).toMatch(
-      /data-rodape-sair=""[\s\S]*Ana Ribeiro[\s\S]*ana@transul\.com\.br[\s\S]*>Sair</,
+      /data-rodape-sair=""[\s\S]*Ana Ribeiro[\s\S]*pessoa@eixo.teste[\s\S]*>Sair</,
     );
   });
   it("compacta, o nome e o e-mail ficam no título do Sair", () => {
     const html = barra({ aoSair: sair, quem, estadoInicial: { compacta: true } });
-    expect(html).toContain('title="Sair (Ana Ribeiro, ana@transul.com.br)"');
+    expect(html).toContain('title="Sair (Ana Ribeiro, pessoa@eixo.teste)"');
     expect(html).not.toContain(">Ana Ribeiro<");
   });
   it("a barra principal diz de quem é a memória (os testes de tela leem a chave)", () => {

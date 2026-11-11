@@ -1,9 +1,9 @@
--- Torna Administrador do Eixo o login de Alexandre (alexandre@transultransporte.com.br).
+-- Torna Administrador do Eixo o login de Alexandre (troque o e-mail abaixo pelo seu antes de rodar).
 -- Rodar no SQL Editor do painel (ou pela CLI) depois do `supabase db push --include-seed`.
 -- Pode rodar de novo: não duplica.
 do $$
 declare
-  v_email text := lower('alexandre@transultransporte.com.br');
+  v_email text := lower('pessoa@eixo.teste');
   v_documento text;
   v_pessoa uuid;
 begin
@@ -26,4 +26,4 @@ end $$;
 select u.perfil, u.ativo
   from nucleo.usuario u
   join auth.users au on au.id = u.auth_user_id
- where lower(au.email) = lower('alexandre@transultransporte.com.br');
+ where lower(au.email) = lower('pessoa@eixo.teste');
