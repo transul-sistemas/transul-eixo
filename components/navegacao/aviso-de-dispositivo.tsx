@@ -15,6 +15,7 @@ export function AvisoDeDispositivo({ rota }: { rota?: string }) {
   return (
     <p
       role="note"
+      data-testid="aviso-de-dispositivo"
       className="border-border bg-muted flex items-center gap-2 border-b px-4 py-2 text-sm md:hidden"
     >
       <IconDeviceDesktop aria-hidden className="text-muted-foreground size-4 shrink-0" />

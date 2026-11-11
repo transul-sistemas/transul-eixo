@@ -283,7 +283,7 @@ test.describe("casca pequena: aviso de dispositivo", () => {
   }, info) => {
     test.skip(info.project.name !== "celular-390", "o aviso é só do celular");
     await abrirHidratada(page, "/pessoas/escala");
-    await expect(page.getByRole("note")).toHaveText(AVISO);
+    await expect(page.getByTestId("aviso-de-dispositivo")).toHaveText(AVISO);
     await expect(page.getByRole("heading", { level: 1, name: "Escala" })).toBeVisible();
   });
 
@@ -297,13 +297,13 @@ test.describe("casca pequena: aviso de dispositivo", () => {
       "/pessoas/status-diario",
     ]) {
       await abrirHidratada(page, rota);
-      await expect(page.getByRole("note"), rota).toHaveCount(0);
+      await expect(page.getByTestId("aviso-de-dispositivo"), rota).toHaveCount(0);
     }
   });
 
   test("no tablet nenhuma tela mostra o aviso", async ({ page }, info) => {
     test.skip(info.project.name !== "tablet-820", "o tablet não tem aviso");
     await abrirHidratada(page, "/pessoas/escala");
-    await expect(page.getByRole("note")).toBeHidden();
+    await expect(page.getByTestId("aviso-de-dispositivo")).toBeHidden();
   });
 });

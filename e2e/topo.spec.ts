@@ -108,7 +108,7 @@ test.describe("topo: no computador", () => {
 
   test("não mostra o aviso de celular", async ({ page }) => {
     await abrirHidratada(page, "/pessoas/escala");
-    await expect(page.getByRole("note")).toBeHidden();
+    await expect(page.getByTestId("aviso-de-dispositivo")).toBeHidden();
   });
 });
 

@@ -97,6 +97,7 @@ describe("<AvisoDeDispositivo>", () => {
     const html = renderToStaticMarkup(<AvisoDeDispositivo rota="/pessoas/escala" />);
     expect(html).toContain("Esta tela funciona melhor em um computador.");
     expect(html).toContain('role="note"');
+    expect(html).toContain('data-testid="aviso-de-dispositivo"');
     expect(html).toMatch(/class="[^"]*md:hidden/);
   });
   it("tela de celular não mostra aviso", () => {
