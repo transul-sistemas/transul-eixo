@@ -112,3 +112,8 @@ Definições do desenho de 11/11/2026 (`docs/acompanhamento-v2.md`). Ainda não 
 | Correção tardia | Lançamento de situação em dia anterior a hoje, com motivo, marcado e contado no selo da célula. Em mês fechado exige permissão. |
 | Esperado até a data | Meta do conjunto × dias decorridos ÷ dias do mês. O mês em curso leva o rótulo "mês em curso" e não é classificado como crítico sem dado lançado. |
 | Rota estimada pela rodovia | Caminho entre as cidades que a placa visitou, calculado por um serviço de rotas (perfil de caminhão). Não é telemetria. |
+| Realizado (motorista) | O que o motorista fez no dia, por um dos códigos TBV, TBE, TBX, FOL, FÉR, ATS, FRD ou FLT (a confirmar). Evento do dia, com correção por motivo. |
+| Programado (motorista) | O dia futuro que vem da escala, mostrado em itálico e pontilhado. Não conta no realizado. |
+| Escala | O planejado do motorista: turno, horário e a marcação de cada dia (hoje T, F, FE e AT em `pessoas.marcacao_da_escala`). Diferente do realizado. |
+| Status do dia do motorista | O código do realizado de um dia. Alimenta a linha do motorista sob o conjunto, a contagem da faixa e o calendário da aba Motorista. |
+| Tom de status | O degrau de clareza de uma cor de status (`--status-atividade-1` a `-5`, e os do âmbar, do vermelho e do cinza). A sigla é sempre escrita; o tom só reforça. |
