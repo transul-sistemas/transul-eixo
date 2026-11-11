@@ -93,7 +93,8 @@ function Linha({ l, estado }: { l: LinhaDeExcecao; estado: EstadoDaFila }) {
         {l.placa !== null ? (
           <Placa placa={l.placa} tamanho="p" />
         ) : (
-          (l.pessoaNome ?? (l.cr !== null ? `CR ${l.cr}` : "—"))
+          (l.pessoaNome ??
+          (l.cr !== null ? `CR ${l.cr}` : l.assunto === "data_fora_de_faixa" ? "Lançamento" : "—"))
         )}
       </th>
       <td className={celula}>{nomeDoAssunto(l.assunto)}</td>

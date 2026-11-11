@@ -43,6 +43,11 @@ const ASSUNTOS: Record<string, { nome: string; um: string; varios: string }> = {
     um: "CR sem garagem",
     varios: "CRs sem garagem",
   },
+  data_fora_de_faixa: {
+    nome: "Data fora de faixa",
+    um: "lançamento com data fora de faixa",
+    varios: "lançamentos com data fora de faixa",
+  },
   cr_frota_diverge_da_unidade: {
     nome: "CR de frota que diverge da unidade",
     um: "CR de frota que diverge da unidade",
