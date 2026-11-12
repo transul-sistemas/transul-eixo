@@ -2,6 +2,7 @@ import {
   grupoDaSigla,
   NOMES_DAS_SIGLAS,
   NOMES_DOS_CHIPS,
+  SIGLAS,
   type Sigla,
   SIGNIFICADOS_DAS_SIGLAS,
   type TomDeStatus,
@@ -79,6 +80,29 @@ export function montarLegenda(): readonly GrupoMontado[] {
     id: g.id,
     nome: g.nome,
     entradas: g.siglas.map(entradaDaSigla),
+  }));
+}
+
+const VERDES = [
+  ["atividade-1", "carregado"],
+  ["atividade-2", "no ponto"],
+  ["atividade-3", "vazio"],
+  ["atividade-4", "espera"],
+  ["atividade-5", "disponível"],
+] as const satisfies readonly (readonly [TomDeStatus, string])[];
+
+export interface TomDeVerde {
+  readonly tom: TomDeStatus;
+  readonly rotulo: string;
+  readonly siglas: readonly Sigla[];
+}
+
+/** Os cinco degraus do verde, do mais escuro (mais perto de gerar receita) ao mais claro. */
+export function tonsDeVerdeDaLegenda(): readonly TomDeVerde[] {
+  return VERDES.map(([tom, rotulo]) => ({
+    tom,
+    rotulo,
+    siglas: SIGLAS.filter((s) => tomDaSigla(s) === tom),
   }));
 }
 

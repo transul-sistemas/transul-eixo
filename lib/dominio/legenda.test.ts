@@ -4,6 +4,7 @@ import {
   GRUPOS_DA_LEGENDA,
   montarLegenda,
   normalizarBusca,
+  tonsDeVerdeDaLegenda,
 } from "./legenda";
 import {
   grupoDaSigla,
@@ -118,6 +119,27 @@ describe("a legenda gerada", () => {
     for (const s of ["ALU", "EMP", "VEN", "SUC", "VND"]) {
       expect(aviso(s)).toContain("posse e da baixa");
     }
+  });
+});
+
+describe("os tons de verde da legenda", () => {
+  it("são cinco degraus, do mais escuro ao mais claro, com as siglas tiradas da régua", () => {
+    const verdes = tonsDeVerdeDaLegenda();
+    expect(verdes.map((v) => v.tom)).toEqual([
+      "atividade-1",
+      "atividade-2",
+      "atividade-3",
+      "atividade-4",
+      "atividade-5",
+    ]);
+    expect(verdes.map((v) => v.siglas)).toEqual([
+      ["ETc"],
+      ["CAr", "DEs"],
+      ["ETv"],
+      ["ACe", "ADe", "CAn"],
+      ["DOp"],
+    ]);
+    for (const v of verdes) expect(v.rotulo.length).toBeGreaterThan(0);
   });
 });
 
