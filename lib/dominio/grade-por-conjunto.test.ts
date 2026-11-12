@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
+  ALTURA_DA_LINHA,
+  ALTURA_FIXA_DA_GRADE,
   diasDoMes,
   engatadoNoDia,
   instanteDoDia,
@@ -195,6 +197,17 @@ describe("linhasQueCabem: a grade cabe na janela, a página nunca rola na vertic
     while (linhasQueCabem(altura, "compacta") === n) altura += 1;
     expect(linhasQueCabem(altura, "compacta")).toBe(n + 1);
     expect(linhasQueCabem(altura - 1, "compacta")).toBe(n);
+  });
+  it("as constantes de calibragem mandam: a janela exata de n linhas dá n, em qualquer valor delas", () => {
+    // Se o calibre mudar (ALTURA_FIXA_DA_GRADE ou ALTURA_DA_LINHA), este teste continua valendo.
+    for (const densidade of ["compacta", "confortavel"] as const) {
+      for (const n of [3, 4, 9, 10, 50, 100]) {
+        const exata = ALTURA_FIXA_DA_GRADE + n * ALTURA_DA_LINHA[densidade];
+        expect(linhasQueCabem(exata, densidade), `${densidade} ${n}`).toBe(n);
+        // Um pixel a menos não comporta a linha de baixo (salvo no mínimo de 3).
+        if (n > 3) expect(linhasQueCabem(exata - 1, densidade)).toBe(n - 1);
+      }
+    }
   });
   it("altura inválida ou ausente usa a janela padrão (768)", () => {
     expect(linhasQueCabem(Number.NaN, "compacta")).toBe(linhasQueCabem(768, "compacta"));

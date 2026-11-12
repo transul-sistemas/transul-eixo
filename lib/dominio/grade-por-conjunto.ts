@@ -103,12 +103,14 @@ export type TamanhoDaPagina = number | "auto";
 /** A altura que o servidor assume quando a janela ainda não disse a dela (cookie ausente). */
 export const ALTURA_PADRAO_DA_JANELA = 768;
 /**
- * A altura que a grade deixa para fora das linhas: topo do sistema, título e abas, faixa do dia, chips,
- * barra de consulta, cabeçalho dos dias, paginador, legenda rápida e os respiros. Calibrada com a
- * captura de 1366 × 768 (revisar quando o layout da tela mudar).
+ * CALIBRE DO AUTO (ajuste só aqui; os testes seguem as constantes). A altura que a grade deixa para fora
+ * das linhas: topo do sistema, título e abas, faixa do dia, chips, barra de consulta, cabeçalho dos dias,
+ * paginador, legenda rápida e os respiros. Estimativa a conferir com as capturas de 1366 × 768,
+ * 1667 × 900 e 1920 × 1080: se sobrar espaço embaixo, diminua; se a grade rolar por dentro com a página
+ * cabendo, aumente.
  */
 export const ALTURA_FIXA_DA_GRADE = 456;
-/** A altura de uma linha de conjunto: o cavalo, o modelo e os chips dos implementos. */
+/** CALIBRE DO AUTO: a altura de uma linha de conjunto (o cavalo, o modelo e os chips dos implementos). */
 export const ALTURA_DA_LINHA = { compacta: 64, confortavel: 84 } as const;
 export const MINIMO_DE_LINHAS = 3;
 export const MAXIMO_DE_LINHAS = 100;
