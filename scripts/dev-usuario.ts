@@ -1,3 +1,5 @@
+// `pnpm dev:usuario -- --pessoa "Demo Ana Almeida" [--perfil ...] [--email ...]` liga o login a uma pessoa
+// de demonstração (gestor de frota ou operacional; veja docs/demonstracao.md), sem mostrar CPF.
 // `pnpm dev:usuario -- [--perfil diretoria|gestor_de_frota|operacional] [--email nome@exemplo.com]`:
 // cria ou atualiza um login no Auth do Supabase LOCAL, ligado a uma Pessoa de teste (Administrador por
 // padrão), para usar o sistema no `pnpm dev`. Fatia 3.9a.
@@ -49,6 +51,74 @@ export function validarSenha(primeira: string, segunda: string): string | null {
   return null;
 }
 
+const PERFIS_DA_PESSOA_DEMO = ["diretoria", "gestor_de_frota", "operacional"] as const;
+
+function validarEmail(texto: string): string {
+  const email = texto.trim().toLowerCase();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new ErroDoEixo("E-mail inválido.");
+  return email;
+}
+
+/** O e-mail padrão do login de uma pessoa Demo: sem a marca, sem acento, com hífen (demo.ana-almeida@eixo.local). */
+function emailDaPessoaDemo(nome: string): string {
+  const resto = nome
+    .replace(/^Demo\s+/, "")
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  return `demo.${resto}@eixo.local`;
+}
+
+/**
+ * `--pessoa "Demo Ana Almeida"`: liga o login a uma pessoa de demonstração (gestor de frota ou
+ * operacional) em vez da pessoa de teste do perfil. Nulo quando o argumento não vem. O perfil, se não
+ * vier, sai do papel da pessoa (perfilDaPessoaDemo).
+ */
+export function lerLoginDePessoaDemo(
+  argv: readonly string[],
+): { pessoa: string; perfil: CodigoDoPerfil | null; email: string } | null {
+  const valor = (nome: string) => {
+    const i = argv.indexOf(nome);
+    return i >= 0 ? (argv[i + 1] ?? "") : null;
+  };
+  const pessoa = valor("--pessoa");
+  if (pessoa === null) return null;
+  const nome = pessoa.trim();
+  if (!/^Demo\s+\S/.test(nome)) {
+    throw new ErroDoEixo('O --pessoa só aceita pessoa de demonstração: o nome começa com "Demo".');
+  }
+  const pedido = valor("--perfil");
+  let perfil: CodigoDoPerfil | null = null;
+  if (pedido !== null) {
+    if (!(PERFIS as readonly string[]).includes(pedido)) {
+      throw new ErroDoEixo(`Perfil desconhecido: use ${PERFIS_DA_PESSOA_DEMO.join(", ")}.`);
+    }
+    if (!(PERFIS_DA_PESSOA_DEMO as readonly string[]).includes(pedido)) {
+      throw new ErroDoEixo(
+        `Para uma pessoa Demo, use o perfil ${PERFIS_DA_PESSOA_DEMO.join(", ")} (o Administrador é o login de teste).`,
+      );
+    }
+    perfil = pedido as CodigoDoPerfil;
+  }
+  const email = validarEmail(valor("--email") ?? emailDaPessoaDemo(nome));
+  return { pessoa: nome, perfil, email };
+}
+
+/** O perfil do login da pessoa Demo: o pedido, ou gestor de frota para quem tem o papel, ou operacional. */
+export function perfilDaPessoaDemo(
+  temPapelDeGestor: boolean,
+  pedido: CodigoDoPerfil | null,
+): CodigoDoPerfil {
+  if (pedido === "gestor_de_frota" && !temPapelDeGestor) {
+    throw new ErroDoEixo(
+      "Essa pessoa Demo não tem o papel de gestor de frota: escolha outro perfil.",
+    );
+  }
+  return pedido ?? (temPapelDeGestor ? "gestor_de_frota" : "operacional");
+}
+
 /** Só o Auth da própria máquina (o Supabase local no Docker). */
 export function enderecoLocal(endereco: string): boolean {
   let url: URL;
@@ -98,11 +168,46 @@ function lerSenhaSemEco(pergunta: string): Promise<string> {
   });
 }
 
+/** A pessoa Demo pelo nome (nunca pelo CPF): o id, se tem o papel de gestor e se o e-mail já é de outra pessoa. */
+async function acharPessoaDemo(nome: string, email: string) {
+  return comBanco(async (banco) => {
+    const { rows } = await banco.query<{ id: string; gestor: boolean }>(
+      `select p.id, exists (select 1 from nucleo.papel_da_pessoa pp where pp.pessoa_id = p.id and pp.papel = 'gestor_de_frota') as gestor
+         from nucleo.pessoa p where p.nome = $1 and p.excluido_em is null`,
+      [nome],
+    );
+    if (rows.length === 0) {
+      throw new ErroDoEixo(
+        "Não há pessoa Demo com esse nome: carregue a demonstração (pnpm demo:carregar) e confira o nome.",
+      );
+    }
+    if (rows.length > 1)
+      throw new ErroDoEixo("Há mais de uma pessoa com esse nome: use um nome único.");
+    const ocupado = await banco.query<{ pessoa_id: string }>(
+      `select u.pessoa_id from nucleo.usuario u join auth.users a on a.id = u.auth_user_id where lower(a.email) = $1`,
+      [email],
+    );
+    if (ocupado.rows[0] && ocupado.rows[0].pessoa_id !== rows[0]!.id) {
+      throw new ErroDoEixo("Esse e-mail já está ligado a outra pessoa: escolha outro com --email.");
+    }
+    return rows[0]!;
+  });
+}
+
 async function principal() {
-  const { perfil, email } = lerArgumentosDoUsuario(process.argv.slice(2));
+  const argv = process.argv.slice(2);
+  let { perfil, email } = lerArgumentosDoUsuario(argv);
+  const demo = lerLoginDePessoaDemo(argv);
+  if (demo) email = demo.email;
   const local = supabaseLocal();
   if (!enderecoLocal(local.url) || !bancoLocal(local.banco)) {
     throw new ErroDoEixo("Recusado: o dev:usuario só roda no Supabase local.");
+  }
+  let pessoaDemoId: string | null = null;
+  if (demo) {
+    const achada = await acharPessoaDemo(demo.pessoa, email);
+    pessoaDemoId = achada.id;
+    perfil = perfilDaPessoaDemo(achada.gestor, demo.perfil);
   }
 
   const primeira = await lerSenhaSemEco(`Senha para ${email} (mínimo 12 caracteres): `);
@@ -124,6 +229,21 @@ async function principal() {
 
   // A Pessoa de teste do perfil (achada pelo CPF), o papel de gestor e o vínculo, como no Studio.
   await comBanco(async (banco) => {
+    if (pessoaDemoId) {
+      // Pessoa Demo: só liga o login e, no Operacional, dá as filiais (o escopo do pátio).
+      await banco.query("select nucleo.vincular_usuario($1, $2, $3)", [
+        email,
+        pessoaDemoId,
+        perfil,
+      ]);
+      if (perfil === "operacional") {
+        await banco.query(
+          `insert into nucleo.usuario_filial (usuario_id, filial_id) select $1, f.id from config.filial f where f.excluido_em is null on conflict do nothing`,
+          [pessoaDemoId],
+        );
+      }
+      return;
+    }
     const base = BASE_DO_CPF[perfil];
     const { rows } = await banco.query<{ documento: string }>(
       `select base || d1::text || d2::text as documento
