@@ -95,9 +95,13 @@ $$;
 create function pg_temp.completar(p_nome text, p_n bigint, p_placa text, p_gestor text, p_cr text, p_operacao text,
                                   p_tipo nucleo.tipo_de_ativo default 'cavalo') returns uuid language plpgsql as $$
 begin
+  -- Cada ativo tem o seu CR (o CR de frota é de um ativo só); p_cr diz o tipo: 'F' frota, 'X' acionista.
+  insert into nucleo.cr (codcencus, codigo, participa_da_frota, veiculo_obrigatorio, tipo, tipo_origem)
+    values (11100 + p_n % 1000, 'C111-' || p_nome, true, true,
+            case p_cr when 'X' then 'acionista'::nucleo.tipo_de_cr else 'frota_de_ativo'::nucleo.tipo_de_cr end, 'informada');
   return pg_temp.guardar(p_nome, nucleo.cadastrar_ativo(
     p_tipo => p_tipo, p_renavam => pg_temp.renavam(p_n), p_placa => p_placa,
-    p_gestor_id => pg_temp.id(p_gestor), p_cr_id => (select id from nucleo.cr where codigo = p_cr),
+    p_gestor_id => pg_temp.id(p_gestor), p_cr_id => (select id from nucleo.cr where codigo = 'C111-' || p_nome),
     p_operacao_id => (select id from nucleo.operacao where nome = p_operacao),
     p_em => '2026-01-02 08:00-03',
     p_funcao => case when p_tipo = 'implemento' then 'semirreboque'::nucleo.funcao_do_implemento end,
@@ -117,26 +121,23 @@ select pg_temp.pessoa('Dir', 111000004, 'diretoria', false);
 select pg_temp.pessoa('Oper', 111000005, 'operacional', false);
 select pg_temp.guardar('auth_sem_vinculo', tests.criar_usuario('sem.vinculo.111@exemplo.local'));
 insert into nucleo.operacao (nome) values ('Grãos 111'), ('Cimento 111');
-insert into nucleo.cr (codcencus, codigo, participa_da_frota, veiculo_obrigatorio, tipo, tipo_origem) values
-  (11101, 'K111F', true, true, 'frota_de_ativo', 'informada'),
-  (11102, 'K111X', true, true, 'acionista', 'informada');
-select pg_temp.completar('kA', 11101, 'GCJ1A01', 'Gestor A', 'K111F', 'Grãos 111');
-select pg_temp.completar('kB', 11102, 'GCJ1A02', 'Gestor A', 'K111X', 'Grãos 111');
-select pg_temp.completar('kC', 11103, 'GCJ1A03', 'Gestor C', 'K111F', 'Cimento 111');
-select pg_temp.completar('kS', 11104, 'GCJ1A04', 'Gestor A', 'K111F', 'Grãos 111');
-select pg_temp.completar('cam', 11105, 'GCJ1A05', 'Gestor A', 'K111F', 'Grãos 111', 'caminhao');
-select pg_temp.completar('iA1', 11111, 'GCJ1B01', 'Gestor A', 'K111F', 'Grãos 111', 'implemento');
-select pg_temp.completar('iA2', 11112, 'GCJ1B02', 'Gestor A', 'K111F', 'Grãos 111', 'implemento');
-select pg_temp.completar('iB1', 11113, 'GCJ1B03', 'Gestor A', 'K111X', 'Grãos 111', 'implemento');
-select pg_temp.completar('iC', 11114, 'GCJ1B04', 'Gestor C', 'K111F', 'Cimento 111', 'implemento');
-select pg_temp.completar('iL', 11115, 'GCJ1B05', 'Gestor A', 'K111F', 'Grãos 111', 'implemento');
+select pg_temp.completar('kA', 11101, 'GCJ1A01', 'Gestor A', 'F', 'Grãos 111');
+select pg_temp.completar('kB', 11102, 'GCJ1A02', 'Gestor A', 'X', 'Grãos 111');
+select pg_temp.completar('kC', 11103, 'GCJ1A03', 'Gestor C', 'F', 'Cimento 111');
+select pg_temp.completar('kS', 11104, 'GCJ1A04', 'Gestor A', 'F', 'Grãos 111');
+select pg_temp.completar('cam', 11105, 'GCJ1A05', 'Gestor A', 'F', 'Grãos 111', 'caminhao');
+select pg_temp.completar('iA1', 11111, 'GCJ1B01', 'Gestor A', 'F', 'Grãos 111', 'implemento');
+select pg_temp.completar('iA2', 11112, 'GCJ1B02', 'Gestor A', 'F', 'Grãos 111', 'implemento');
+select pg_temp.completar('iB1', 11113, 'GCJ1B03', 'Gestor A', 'X', 'Grãos 111', 'implemento');
+select pg_temp.completar('iC', 11114, 'GCJ1B04', 'Gestor C', 'F', 'Cimento 111', 'implemento');
+select pg_temp.completar('iL', 11115, 'GCJ1B05', 'Gestor A', 'F', 'Grãos 111', 'implemento');
 select nucleo.engatar(pg_temp.id('kA'), pg_temp.id('iA1'), 1::smallint, '2026-01-02 12:00-03');
 select nucleo.engatar(pg_temp.id('kA'), pg_temp.id('iA2'), 2::smallint, '2026-01-10 09:00-03');
 select nucleo.engatar(pg_temp.id('kB'), pg_temp.id('iB1'), 1::smallint, '2026-01-15 09:00-03');
 select nucleo.engatar(pg_temp.id('kC'), pg_temp.id('iC'), 1::smallint, '2026-01-05 09:00-03');
 select nucleo.registrar_evento(pg_temp.id('kA'), 'ETc', '2026-01-03 10:00-03');
 select nucleo.desatrelar(pg_temp.id('kA'), '2026-01-20 15:00-03', array[pg_temp.id('iA2')]);
-select nucleo.registrar_evento(pg_temp.id('kA'), 'MAN', '2026-01-25 10:00-03');
+select nucleo.registrar_evento(pg_temp.id('kA'), 'MAc', '2026-01-25 10:00-03');
 select nucleo.registrar_evento(pg_temp.id('kB'), 'ETc', '2026-01-16 10:00-03');
 select pg_temp.disparar();
 
@@ -225,16 +226,16 @@ select is(
   'desengate no meio do mês: a linha muda no dia 20, o do desengate (o dia vale pelo fim do dia)'
 );
 select is(
-  pg_temp.celula(current_setting('t.grade')::jsonb, 'GCJ1A01', 26)->>'sigla', 'MAN',
-  'situação: o cavalo em MAN (impedida) no dia 26'
+  pg_temp.celula(current_setting('t.grade')::jsonb, 'GCJ1A01', 26)->>'sigla', 'MAc',
+  'situação: o cavalo em MAc (impedida) no dia 26'
 );
 select is(
-  pg_temp.celula_do_implemento(current_setting('t.grade')::jsonb, 'GCJ1B01', 26)->>'sigla', 'MAN',
-  'herança: o conjunto inteiro fica impedido, e o implemento engatado mostra MAN'
+  pg_temp.celula_do_implemento(current_setting('t.grade')::jsonb, 'GCJ1B01', 26)->>'sigla', 'MAc',
+  'herança: o conjunto inteiro fica impedido, e o implemento engatado mostra MAc'
 );
 select is(
   pg_temp.celula(current_setting('t.grade')::jsonb, 'GCJ1A01', 26)->>'grupo', 'impedida',
-  'situação: o grupo da célula MAN é impedida (o tom sai do grupo e da sigla)'
+  'situação: o grupo da célula MAc é impedida (o tom sai do grupo e da sigla)'
 );
 
 -- ---- selo de lançamentos por célula ------------------------------------------------------------------
