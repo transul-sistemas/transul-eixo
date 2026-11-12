@@ -8,6 +8,7 @@ import {
   medidaDoDia,
   linhasQueCabem,
   rotuloDaCausa,
+  rotuloDoPeriodoDoEngate,
   rotuloDoSelo,
   situacaoDoConjuntoNoDia,
   tamanhoEfetivoDaPagina,
@@ -255,5 +256,27 @@ describe("medidaDoDia: X de Y conjuntos com lançamento hoje", () => {
   });
   it("sem conjuntos ativos no dia, a medida é vazia (nunca 0 de 0)", () => {
     expect(medidaDoDia(0, 0)).toEqual({ tipo: "vazia" });
+  });
+});
+
+describe("rotuloDoPeriodoDoEngate", () => {
+  const fmt = (d: string) => d.split("-").reverse().join("/");
+  it("engate em aberto: desde o dia", () => {
+    expect(rotuloDoPeriodoDoEngate("2026-11-03", null, fmt)).toBe("engatado desde 03/11/2026");
+  });
+  it("engatou e desatrelou em dias diferentes: de ... a ...", () => {
+    expect(rotuloDoPeriodoDoEngate("2026-11-03", "2026-11-10", fmt)).toBe(
+      "engatado de 03/11/2026 a 10/11/2026",
+    );
+  });
+  it("engatou e desatrelou no MESMO dia", () => {
+    expect(rotuloDoPeriodoDoEngate("2026-11-12", "2026-11-12", fmt)).toBe(
+      "engatado em 12/11/2026 e desatrelado no mesmo dia",
+    );
+  });
+  it("nunca mostra até anterior a de: trata como o mesmo dia", () => {
+    expect(rotuloDoPeriodoDoEngate("2026-11-12", "2026-11-11", fmt)).toBe(
+      "engatado em 12/11/2026 e desatrelado no mesmo dia",
+    );
   });
 });
