@@ -36,7 +36,7 @@ import { LancarSituacao } from "./lancar-situacao";
 
 // A grade por conjunto (A1): uma linha por conjunto (o cavalo, com os implementos recuados embaixo), uma
 // coluna por dia do mês. A situação do cavalo vale para o conjunto; o selo da célula conta os lançamentos
-// do dia. A largura é fluida: as colunas dos dias dividem o cartão (de 40 px a 80 px cada), a primeira
+// do dia. A largura é fluida: as colunas dos dias dividem o cartão (de 34 px a 80 px cada), a primeira
 // coluna e o cabeçalho dos dias ficam fixos e a rolagem lateral é só dentro do cartão
 // (docs/padrao-de-telas.md, "Tabela em grade preenche a largura; só rola por dentro").
 
@@ -57,9 +57,9 @@ const LARGURA_MAXIMA = "calc(var(--primeira) + var(--olho) + var(--dias) * var(-
 function estiloDaGrade(dias: number): CSSProperties {
   return {
     "--dias": dias,
-    "--primeira": "15rem",
+    "--primeira": "12rem",
     "--olho": "3rem",
-    "--min-dia": "40px",
+    "--min-dia": "34px",
     "--max-dia": "80px",
   } as CSSProperties;
 }
@@ -597,8 +597,8 @@ export function GradePorConjunto({
       </div>
       {grade.fora.total === 0 ? (
         <p className="text-muted-foreground border-border bg-card rounded-xl border px-4 py-3 text-sm">
-          Nenhuma placa fora de conjunto neste mês. Cavalo sem implemento, caminhão, apoio,
-          equipamento e implemento solto aparecem aqui.
+          Nenhuma placa fora de conjunto neste mês. Implemento solto, apoio e equipamento aparecem
+          aqui.
         </p>
       ) : (
         <CartaoDaGrade

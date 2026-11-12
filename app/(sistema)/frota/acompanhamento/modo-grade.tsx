@@ -315,7 +315,7 @@ export async function ModoGrade({
                       ? `Nenhum conjunto com este filtro em ${formatarMes(estado.mes)}`
                       : "Nenhum conjunto montado ainda"
                   }
-                  descricao="Cavalo sem implemento, caminhão, apoio e equipamento aparecem em Fora de conjunto, logo abaixo."
+                  descricao="Implemento solto, apoio e equipamento aparecem em Fora de conjunto, logo abaixo."
                   {...(filtrada ? { hrefLimpar: limpar } : {})}
                 />
               ) : null

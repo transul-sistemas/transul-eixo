@@ -54,7 +54,7 @@ export interface ConjuntoDaGrade {
   siglaAtual: string;
   grupoAtual: string | null;
   tiposDeCr: TipoDeCrDaGrade[];
-  /** O nome pela nomenclatura ("Rodotrem", "pendente"...); nulo se não há implemento no fim do mês. */
+  /** O nome pela nomenclatura ("Rodotrem", "pendente"...), "Caminhão" (nunca engatou no mês) ou "Sem implemento". */
   nomeDoConjunto: string | null;
   dias: CelulaDoConjunto[];
   implementos: ImplementoDoConjunto[];
