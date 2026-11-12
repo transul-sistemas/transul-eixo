@@ -151,3 +151,9 @@ com o motivo.
 SVG avulso); os **dados são reais** (o protótipo é fictício); o **mapa é real**, com a linha pela rodovia (onde
 houver mapa); moeda, data e números pelos componentes de `components/formato/`; **20 por página e olhinho em toda
 linha** (o protótipo mostra poucas linhas). Específico desta tela: os rótulos em maiúsculas do protótipo ("VEÍCULO", "MOTORISTA", "CONJUNTO E MOTORISTA") viram letra minúscula normal (regra de textos da interface); a grade tem 20 conjuntos por página, cabeçalho e primeira coluna fixos e o olhinho no fim da linha.
+
+## Decisão de 12/11/2026: largura da grade em 1366 px
+
+- **Em 1366 px a barra lateral recolhe sozinha** (como no modo foco) na grade do Acompanhamento; o mínimo do dia continua **34 px**. Sem a barra, a grade de 31 dias **cabe sem rolagem** (cerca de 1.294 px de cartão).
+- **Abaixo de 1280 px** a grade rola **por dentro** do cartão, com a coluna do conjunto (12 rem) e o cabeçalho dos dias fixos; a página nunca ganha rolagem lateral.
+- **Estado:** decidido; a implementação (recolher a barra em 1366) entra no lote de ajustes que Alexandre mandar depois de testar a prévia. O e2e de 1366 passa a exigir "cabe e preenche" quando a barra estiver recolhida.
