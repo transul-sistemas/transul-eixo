@@ -16,9 +16,11 @@ import type {
   CarteiraDoMes,
   CelulaDoConjunto,
   ChipsDaGrade,
+  GradeDeSoltas,
   GradePorConjunto,
   LinhaDoAgora,
   LinhaDoCenso,
+  PlacaSolta,
   SituacaoLancada,
   TipoDeCrDaGrade,
 } from "./acompanhamento-tipos";

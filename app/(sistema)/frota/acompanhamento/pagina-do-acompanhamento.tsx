@@ -1,9 +1,10 @@
 import { cookies } from "next/headers";
 import {
   lerDensidadeLembrada,
-  lerTamanhoLembrado,
+  lerAlturaDaJanela,
   NOME_DO_COOKIE_DA_DENSIDADE_DA_GRADE,
-  NOME_DO_COOKIE_DO_TAMANHO,
+  NOME_DO_COOKIE_DA_ALTURA_DA_JANELA,
+  NOME_DO_COOKIE_DO_TAMANHO_DA_GRADE,
 } from "@/lib/navegacao/preferencias-da-tabela";
 import Link from "next/link";
 import { connection } from "next/server";
@@ -13,6 +14,7 @@ import { formatarInteiro } from "@/components/formato/numero";
 import { Etiqueta } from "@/components/etiqueta";
 import { FaixaDeKpis } from "@/components/layout/faixa-de-kpis";
 import { BotaoDaLegenda } from "@/components/legenda/faixa-de-legenda";
+import { ModoFoco } from "@/components/tabela/modo-foco";
 import { PaginaDeLeitura } from "@/components/layout/pagina-de-leitura";
 import { EsqueletoDaTabela, ListaVazia } from "@/components/tabela/estados";
 import { lerAgora, lerCenso, type LinhaDoAgora } from "@/lib/dados/acompanhamento";
@@ -24,7 +26,7 @@ import {
   enderecoDoAcompanhamento,
   type EstadoDoAcompanhamento,
   lerAcompanhamento,
-  TAMANHO_PADRAO_DA_GRADE,
+  lerTamanhoDaGrade,
   NOMES_DOS_AGRUPAMENTOS,
 } from "@/lib/navegacao/acompanhamento";
 import { acharTela } from "@/lib/navegacao/catalogo";
@@ -50,7 +52,13 @@ function paraParametros(bruto: Record<string, string | string[] | undefined>): U
   return parametros;
 }
 
-const NOMES_DOS_MODOS = { grade: "Grade", agora: "Agora", censo: "Censo", mapa: "Mapa" } as const;
+const NOMES_DOS_MODOS = {
+  grade: "Grade · Conjuntos",
+  soltas: "Grade · Soltas",
+  agora: "Agora",
+  censo: "Censo",
+  mapa: "Mapa",
+} as const;
 
 const classeDoLink =
   "border-input bg-card hover:bg-muted focus-visible:ring-ring/50 inline-flex h-9 items-center rounded-lg border px-3 text-sm outline-none focus-visible:ring-3";
@@ -326,9 +334,12 @@ export async function PaginaDoAcompanhamento({
 }) {
   await connection();
   const hoje = hojeEmSaoPaulo(new Date());
-  const tamLembrado = lerTamanhoLembrado(
-    (await cookies()).get(NOME_DO_COOKIE_DO_TAMANHO)?.value,
-    TAMANHO_PADRAO_DA_GRADE,
+  const tamLembrado = lerTamanhoDaGrade(
+    (await cookies()).get(NOME_DO_COOKIE_DO_TAMANHO_DA_GRADE)?.value,
+    "auto",
+  );
+  const alturaDaJanela = lerAlturaDaJanela(
+    (await cookies()).get(NOME_DO_COOKIE_DA_ALTURA_DA_JANELA)?.value,
   );
   const densidade = lerDensidadeLembrada(
     (await cookies()).get(NOME_DO_COOKIE_DA_DENSIDADE_DA_GRADE)?.value,
@@ -343,8 +354,15 @@ export async function PaginaDoAcompanhamento({
         descricao="Esta tela não tem dados de exemplo. Rode o sistema com os dados do banco para ver a grade, o Agora e o Censo."
       />
     );
-  } else if (estado.modo === "grade") {
-    conteudo = <ModoGrade estado={estado} hoje={hoje} densidade={densidade} />;
+  } else if (estado.modo === "grade" || estado.modo === "soltas") {
+    conteudo = (
+      <ModoGrade
+        estado={estado}
+        hoje={hoje}
+        densidade={densidade}
+        alturaDaJanela={alturaDaJanela}
+      />
+    );
   } else if (estado.modo === "agora") {
     conteudo = <ModoAgora estado={estado} hoje={hoje} />;
   } else if (estado.modo === "censo") {
@@ -353,15 +371,25 @@ export async function PaginaDoAcompanhamento({
     conteudo = (
       <ListaVazia
         titulo="O mapa entra numa próxima versão"
-        descricao="Por enquanto, acompanhe as placas pela Grade, pelo Agora e pelo Censo."
+        descricao="Por enquanto, acompanhe as placas pela Grade, pelas Soltas, pelo Agora e pelo Censo."
       />
     );
   }
+  // As abas da grade cabem na janela: a página nunca rola na vertical (a grade rola por dentro).
+  const daGrade = estado.modo === "grade" || estado.modo === "soltas";
   return (
     <PaginaDeLeitura
       titulo={titulo}
       descricao={descricao}
-      acoes={<BotaoDaLegenda />}
+      lista={daGrade}
+      alturaFixa={daGrade}
+      emFoco={daGrade && estado.foco}
+      acoes={
+        <>
+          {daGrade ? <ModoFoco /> : null}
+          <BotaoDaLegenda />
+        </>
+      }
       consulta={<Abas estado={estado} hoje={hoje} />}
     >
       {conteudo}
