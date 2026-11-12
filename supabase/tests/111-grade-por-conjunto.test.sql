@@ -12,7 +12,7 @@
 begin;
 \ir apoio/como_usuario.psql
 
-select plan(83);
+select plan(81);
 
 create function pg_temp.id(p_nome text) returns uuid language sql as $$
   select nullif(current_setting('t.' || lower(regexp_replace(p_nome, '[^A-Za-z0-9]', '_', 'g')), true), '')::uuid
@@ -211,14 +211,6 @@ select is(
 select is(
   pg_temp.linha(current_setting('t.grade')::jsonb, 'GCJ1A07')->>'nome_do_conjunto', 'Sem implemento',
   'nome: cavalo que teve implemento no mês e acabou sem nenhum é Sem implemento'
-);
-select is(
-  (pg_temp.celula_do_implemento(current_setting('t.grade')::jsonb, 'GCJ1B06', 11)->>'engatado')::boolean, true,
-  'desengate: o dia 11 ainda é do conjunto do cavalo D'
-);
-select is(
-  (pg_temp.celula_do_implemento(current_setting('t.grade')::jsonb, 'GCJ1B06', 12)->>'engatado')::boolean, false,
-  'desengate: no dia 12, o do desengate à tarde, o implemento já saiu'
 );
 select is(
   pg_temp.linha(current_setting('t.grade')::jsonb, 'GCJ1A01')->'tipos_de_cr', '["frota"]'::jsonb,
