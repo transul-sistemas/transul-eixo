@@ -17,6 +17,13 @@ export interface ModoDaTela {
   readonly nome: string;
 }
 
+/** Atalho da busca rápida (Ctrl+K) para uma rota filha da tela; não entra no menu lateral nem nos modos. */
+export interface AtalhoDaTela {
+  readonly id: string;
+  readonly nome: string;
+  readonly rota: string;
+}
+
 export interface Tela {
   readonly id: string;
   readonly nome: string;
@@ -28,6 +35,7 @@ export interface Tela {
   readonly descricao: string;
   readonly dispositivos: readonly Dispositivo[];
   readonly modos?: readonly ModoDaTela[];
+  readonly atalhos?: readonly AtalhoDaTela[];
   /** A lista abre a ficha de cada item em `<rota>/<identificador>` (placa, pessoa, operação, parceiro). */
   readonly ficha?: true;
   /** O que o selo de contagem do item conta, para o leitor de tela ("3 para receber"). */
@@ -58,6 +66,7 @@ interface DadosDaTela {
   descricao: string;
   estado?: EstadoDaTela;
   modos?: readonly ModoDaTela[];
+  atalhos?: readonly AtalhoDaTela[];
   ficha?: true;
   contador?: string;
 }
@@ -126,6 +135,7 @@ export const CATALOGO: readonly ModuloDoCatalogo[] = [
         { id: "censo", nome: "Censo" },
         { id: "mapa", nome: "Mapa" },
       ],
+      atalhos: [{ id: "legenda", nome: "Legenda e siglas", rota: "/frota/acompanhamento/legenda" }],
     },
     {
       slug: "placas",

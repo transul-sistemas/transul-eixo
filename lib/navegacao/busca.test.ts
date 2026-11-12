@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { acharTela, type ModuloDoCatalogo, type Tela } from "./catalogo";
+import { acharTela, CATALOGO, type ModuloDoCatalogo, type Tela } from "./catalogo";
 import { buscarTelas, normalizar } from "./busca";
 
 describe("normalizar", () => {
@@ -86,7 +86,9 @@ describe("buscarTelas: modos do Acompanhamento da Frota (Ctrl+K)", () => {
     );
   });
   it("cada rota achada com ?modo= abre uma tela do catálogo", () => {
-    for (const { rota } of buscarTelas("acompanhamento", "Administrador")) {
+    for (const { rota, tela } of buscarTelas("acompanhamento", "Administrador")) {
+      // Os atalhos (rota filha, como a legenda) não são telas do catálogo: levam à rota que declaram.
+      if (tela.atalhos?.some((atalho) => atalho.rota === rota)) continue;
       expect(acharTela(rota), rota).toBeDefined();
     }
   });
@@ -136,5 +138,17 @@ describe("buscarTelas: perfil", () => {
     const ids = buscarTelas("a", "Administrador", fixture).map((r) => r.tela.id);
     expect(ids).toEqual(expect.arrayContaining(["frota.aberta", "frota.breve"]));
     expect(ids).not.toContain("frota.trancada");
+  });
+});
+
+describe("buscarTelas: a legenda do Acompanhamento (Ctrl+K), fora do menu lateral", () => {
+  it.each(["legenda", "siglas", "Legenda e siglas"])("acha a legenda buscando por %s", (termo) => {
+    const r = buscarTelas(termo, "Administrador").find((x) => x.modo?.id === "legenda");
+    expect(r?.rota).toBe("/frota/acompanhamento/legenda");
+    expect(r?.rotulo).toBe("Frota › Acompanhamento › Legenda e siglas");
+  });
+  it("a legenda não vira tela do catálogo, então não entra no menu lateral", () => {
+    const telas = CATALOGO.flatMap((m) => m.telas.map((t) => t.rota));
+    expect(telas).not.toContain("/frota/acompanhamento/legenda");
   });
 });
