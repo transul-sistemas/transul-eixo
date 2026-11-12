@@ -5,6 +5,7 @@ import { type ReactNode, Suspense } from "react";
 import { AreaPrincipal } from "@/components/navegacao/area-principal";
 import { AvisoDeDispositivo } from "@/components/navegacao/aviso-de-dispositivo";
 import { BarraLateral } from "@/components/navegacao/barra-lateral";
+import { FaixaDaDemonstracaoDaSessao } from "@/components/navegacao/faixa-da-demonstracao";
 import { TopoDoSistema, TopoReservado } from "@/components/navegacao/topo-do-sistema";
 import { ArmadorDaVolta } from "@/components/tabela/retorno-da-lista-no-navegador";
 import { exigirSessao, obterPessoaDaSessao } from "@/lib/seguranca/sessao-do-servidor";
@@ -77,6 +78,9 @@ export default function LayoutDoSistema({ children }: { children: ReactNode }) {
         <BarraLateralDaSessao />
       </Suspense>
       <AreaPrincipal>
+        <Suspense fallback={null}>
+          <FaixaDaDemonstracaoDaSessao />
+        </Suspense>
         <Suspense fallback={<TopoReservado />}>
           <TopoDoSistema />
         </Suspense>

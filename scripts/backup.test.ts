@@ -10,6 +10,8 @@ import {
   argumentosDaRestauracao,
   argumentosDoRecarregarApi,
   argumentosDoSinalDaApi,
+  conteinerDaApi,
+  conteinerDoBanco,
   conferirSenha,
   criptografar,
   descriptografar,
@@ -149,5 +151,35 @@ describe("depois da restauração", () => {
     expect(fimDoRestore).toBeGreaterThan(-1);
     expect(recarga).toBeGreaterThan(fimDoRestore);
     expect(corpo.indexOf("argumentosDoSinalDaApi()")).toBeGreaterThan(fimDoRestore);
+  });
+});
+
+describe("o contêiner do banco: o do Eixo, ou um descartável de teste", () => {
+  it("sem variável, é sempre o banco local do Eixo", () => {
+    expect(conteinerDoBanco({})).toBe("supabase_db_TranSul_Eixo");
+    expect(conteinerDaApi({})).toBe("supabase_rest_TranSul_Eixo");
+  });
+  it("aceita só contêiner de banco descartável (project_id eixo_descartavel)", () => {
+    expect(conteinerDoBanco({ EIXO_CONTEINER_DO_BANCO: "supabase_db_eixo_descartavel" })).toBe(
+      "supabase_db_eixo_descartavel",
+    );
+    expect(conteinerDaApi({ EIXO_CONTEINER_DA_API: "supabase_rest_eixo_descartavel" })).toBe(
+      "supabase_rest_eixo_descartavel",
+    );
+  });
+  it.each(["supabase_db_outro_projeto", "supabase_db_eixo_descartavel; rm", "postgres", "x"])(
+    "recusa %j",
+    (nome) => {
+      expect(() => conteinerDoBanco({ EIXO_CONTEINER_DO_BANCO: nome })).toThrow(/descartável/);
+      expect(() => conteinerDaApi({ EIXO_CONTEINER_DA_API: nome })).toThrow(/descartável/);
+    },
+  );
+  it("os recarregamentos da API seguem o contêiner escolhido", () => {
+    expect(argumentosDoRecarregarApi("supabase_db_eixo_descartavel")[1]).toBe(
+      "supabase_db_eixo_descartavel",
+    );
+    expect(argumentosDoSinalDaApi("supabase_rest_eixo_descartavel")[3]).toBe(
+      "supabase_rest_eixo_descartavel",
+    );
   });
 });
