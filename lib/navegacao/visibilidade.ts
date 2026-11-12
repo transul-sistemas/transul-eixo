@@ -5,6 +5,7 @@ import {
   PERFIS_QUE_VEEM_ESQUELETO,
   type Perfil,
   TELAS_POR_PERFIL,
+  TELAS_SO_DO_ADMINISTRADOR,
 } from "./perfis";
 
 export function temOModulo(perfil: Perfil, modulo: IdDoModulo): boolean {
@@ -14,6 +15,7 @@ export function temOModulo(perfil: Perfil, modulo: IdDoModulo): boolean {
 
 /** A tela não está fora do recorte do perfil no módulo (TELAS_POR_PERFIL). */
 export function telaLiberada(perfil: Perfil, tela: Pick<Tela, "id" | "permissao">): boolean {
+  if (perfil !== "Administrador" && TELAS_SO_DO_ADMINISTRADOR.includes(tela.id)) return false;
   const recorte = TELAS_POR_PERFIL[perfil]?.[tela.permissao.modulo];
   return recorte === undefined || recorte.includes(tela.id);
 }

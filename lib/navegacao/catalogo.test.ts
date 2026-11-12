@@ -37,8 +37,8 @@ describe("catálogo: módulos", () => {
 
 describe("catálogo: telas", () => {
   const telas = todasAsTelas();
-  it("tem 36 telas", () => {
-    expect(telas).toHaveLength(36);
+  it("tem 37 telas", () => {
+    expect(telas).toHaveLength(37);
   });
   it("id e rota são únicos", () => {
     expect(new Set(telas.map((t) => t.id)).size).toBe(telas.length);
@@ -86,6 +86,7 @@ describe("catálogo: telas", () => {
     const prontas = telas.filter((t) => t.estado === "pronto").map((t) => t.id);
     expect(prontas).toEqual([
       "inicio.tarefas",
+      "inicio.meu-dia",
       "inicio.mapa-do-sistema",
       "frota.acompanhamento",
       "frota.placas",
