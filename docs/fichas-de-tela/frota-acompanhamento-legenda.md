@@ -116,3 +116,9 @@ com o motivo.
 SVG avulso); os **dados são reais** (o protótipo é fictício); o **mapa é real**, com a linha pela rodovia (onde
 houver mapa); moeda, data e números pelos componentes de `components/formato/`; **20 por página e olhinho em toda
 linha** (o protótipo mostra poucas linhas). Específico desta tela: o protótipo digita as siglas; no Eixo a tela é **gerada da régua** (nome, grupo, tom, significado), com teste de completude; os grupos seguem os cinco aprovados, não os do desenho.
+
+## Decisões de 12/11/2026 (A5)
+
+- **Primeira versão aprovada** dos tons de âmbar, vermelho e cinza e do tema escuro; o contraste de 4,5:1 é coberto por teste (`lib/qualidade/contraste-de-status.test.ts`).
+- **Onde se abre:** botão "Legenda" da grade e Ctrl+K (busca por "legenda" ou "siglas", atalho `atalhos` do catálogo). **Não entra no menu lateral.**
+- **Títulos dos cartões** em maiúsculas pequenas com espaçamento, o estilo de etiqueta do protótipo (exceção consciente à regra de rótulos sem maiúsculas).
