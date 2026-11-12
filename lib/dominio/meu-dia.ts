@@ -19,6 +19,14 @@ export const ROTULO_DA_DECISAO: Record<Decisao, string> = {
   recusar: "Recusar",
 };
 
+/** Um pedido que espera o gestor, com o CR vigente de hoje e a operação da placa. */
+export interface LinhaDoPedido {
+  pedido: PedidoDeTransferencia;
+  /** Os CRs vigentes hoje (pode haver mais de um); `[]` = sem CR vigente; `null` = não foi possível ler. */
+  crs: { codigo: string; nome: string }[] | null;
+  operacao: string | null;
+}
+
 export interface ItemDoLote {
   pedido: PedidoDeTransferencia;
   decisao: Decisao | null;
