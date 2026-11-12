@@ -21,6 +21,12 @@ do que cada ficha marca como "pronta". Cada ficha cita os documentos de origem (
 | [`cadastros-ficha-do-cr.md`](cadastros-ficha-do-cr.md) | Cadastros | `/cadastros/crs/<codigo>` (rota proposta) | esqueleto |
 | [`cadastros-saude-do-cr.md`](cadastros-saude-do-cr.md) | Cadastros | `/cadastros/saude-do-cr` (rota proposta) | esqueleto |
 | [`resultados-rastro-do-numero.md`](resultados-rastro-do-numero.md) | Resultados | painel `?rastro=` (rota proposta) | esqueleto |
+| [`frota-acompanhamento-grade-soltas.md`](frota-acompanhamento-grade-soltas.md) | Frota | aba "Grade · Soltas" de `/frota/acompanhamento` (rota proposta) | esqueleto (S1) |
+| [`frota-engatar-implementos.md`](frota-engatar-implementos.md) | Frota | popup (`?assistente=engatar-implemento`) | pronto para um implemento; vários e a aba Soltas são esqueleto (S1) |
+| [`frota-enviar-placa.md`](frota-enviar-placa.md) | Frota | popup (`?assistente=disponibilizar-placa`) | pronto com 3 passos; desenho novo é esqueleto (S2) |
+| [`frota-confirmar-carteira.md`](frota-confirmar-carteira.md) | Frota | popup sobre `/frota/carteira` e as Tarefas | existe com 2 passos; desenho novo é esqueleto (S3) |
+| [`frota-baixa-de-placa.md`](frota-baixa-de-placa.md) | Frota | popup (rota proposta) | esqueleto (S4); só a função `registrar_baixa` existe |
+| [`cadastros-saude-do-cr-quadro.md`](cadastros-saude-do-cr-quadro.md) | Cadastros | `/cadastros/saude-do-cr` (rota proposta) | esqueleto (CR1); complementa `cadastros-saude-do-cr.md` |
 
 O estado vem de `lib/navegacao/catalogo.ts`; onde a tela ainda não tem rota, a ficha marca "rota proposta".
 
