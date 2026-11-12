@@ -34,9 +34,9 @@ describe("<TelaEmBreve>", () => {
       "var(--modulo-cadastros)",
     );
   });
-  it("o Acompanhamento lista os quatro modos que vai ter", () => {
+  it("o Acompanhamento lista os modos que tem", () => {
     const html = renderToStaticMarkup(<TelaEmBreve rota="/frota/acompanhamento" />);
-    expect(html).toContain("Grade, Agora, Censo e Mapa");
+    expect(html).toContain("Grade · Conjuntos, Grade · Soltas, Agora, Censo e Mapa");
   });
   it("tela sem modos não fala de modos", () => {
     expect(renderToStaticMarkup(<TelaEmBreve rota="/frota/placas" />)).not.toContain("Modos");

@@ -127,10 +127,12 @@ export const CATALOGO: readonly ModuloDoCatalogo[] = [
       nome: "Acompanhamento",
       icone: "IconListDetails",
       dispositivos: DESKTOP_E_TABLET,
-      descricao: "Acompanha cada placa pela régua de status, nos modos Grade, Agora, Censo e Mapa.",
+      descricao:
+        "Acompanha cada placa pela régua de status, nos modos Grade (Conjuntos e Soltas), Agora, Censo e Mapa.",
       estado: "pronto",
       modos: [
-        { id: "grade", nome: "Grade" },
+        { id: "grade", nome: "Grade · Conjuntos" },
+        { id: "soltas", nome: "Grade · Soltas" },
         { id: "agora", nome: "Agora" },
         { id: "censo", nome: "Censo" },
         { id: "mapa", nome: "Mapa" },
