@@ -61,11 +61,16 @@ for (const tema of TEMAS) {
     }) => {
       await abrirGrade(page, largura, tema);
       const m = await medir(page);
-      if (m.cartaoRolavel <= m.cartaoLargura) {
-        // Cabe: as colunas dividem o cartão inteiro, sem sobra à direita.
+      if (largura >= 1667) {
+        // Com a barra lateral aberta, 1667 px já dão cerca de 1.315 px ao cartão: um mês de 31 dias (coluna do
+        // conjunto de 12 rem + olho + 31 × 34 px = 1.294 px) cabe, sem rolagem, e as colunas preenchem o cartão.
+        expect(m.cartaoRolavel).toBeLessThanOrEqual(m.cartaoLargura);
+        expect(Math.abs(m.sobraADireita)).toBeLessThanOrEqual(1);
+      } else if (m.cartaoRolavel <= m.cartaoLargura) {
+        // Cabe (1366 só cabe sem a barra lateral, em modo foco): as colunas dividem o cartão inteiro.
         expect(Math.abs(m.sobraADireita)).toBeLessThanOrEqual(1);
       } else {
-        // Não cabe nos 40 px mínimos por dia: a sobra vira rolagem dentro do cartão.
+        // Com a barra aberta o cartão tem cerca de 1.014 px: rola por dentro, nunca sobra faixa vazia.
         expect(m.cartaoRolavel).toBeGreaterThan(m.cartaoLargura);
       }
       // Nunca sobra faixa vazia e a página nunca rola de lado.
