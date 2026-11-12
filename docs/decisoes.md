@@ -1769,3 +1769,11 @@ Registro de direção, só em texto: nenhum código nem migration. Não muda a f
 - **Por quê.** O lote de número abriu exceções de data como `data_fora_de_faixa` e a migration seguinte as reclassificou sem fechar as antigas: 18 abertas, 15 duplicadas. Corrigido por `20261116130000` e o pgTAP 110.
 - **Também:** fatia CI-2 (teste de migração sobre dados fictícios) no plano de processos e vínculos, obrigatória antes da carga na nuvem; não executada agora.
 - **Operações nomeadas nos documentos:** ficam (decisão dele). Os 4 nomes de pessoa em código eram fictícios ou falsos positivos; nada a trocar.
+
+## 12/11/2026 — Backup: nunca restaurar demo para produzir o real (decisão)
+
+- **Regra.** Nunca restaure um backup que contenha demo para produzir o real; o real puro se reconstrói pelos scripts de carga. `pnpm demo:trocar -- real --sim` agora recusa um backup com demo (ou que não consiga ler).
+- **`pnpm backup:conteudo -- <arquivo>`** informa só contagens do backup (placas reais, placas Demo, parâmetro `banco_em_demonstracao`, migrations), sem restaurar nada.
+- **Nomes dos backups** (mapa em `C:\Backups\eixo\LEIA-ME.txt`; arquivo nunca é movido nem renomeado): `real-com-staging` (10/11, 928 placas, sem demo, 48 migrations), `real-com-demo-antiga` (12/11, com as 50 ZDM antigas, 56 migrations), `demo-antiga` (10/11) e `demo-nova` (12/11, cenários novos e parâmetro da faixa).
+- **Atenção:** o backup de `real-com-staging` tem 48 migrations; depois de restaurá-lo, reaplique as novas com `supabase migration up --local`.
+
