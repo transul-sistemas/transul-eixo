@@ -12,7 +12,7 @@
 begin;
 \ir apoio/como_usuario.psql
 
-select plan(82);
+select plan(88);
 
 create function pg_temp.id(p_nome text) returns uuid language sql as $$
   select nullif(current_setting('t.' || lower(regexp_replace(p_nome, '[^A-Za-z0-9]', '_', 'g')), true), '')::uuid
@@ -95,7 +95,8 @@ create function pg_temp.chip(p_grade jsonb, p_placa text) returns jsonb language
    where i->>'placa' = p_placa
 $$;
 create function pg_temp.completar(p_nome text, p_n bigint, p_placa text, p_gestor text, p_cr text, p_operacao text,
-                                  p_tipo nucleo.tipo_de_ativo default 'cavalo') returns uuid language plpgsql as $$
+                                  p_tipo nucleo.tipo_de_ativo default 'cavalo',
+                                  p_em timestamptz default '2026-01-02 08:00-03') returns uuid language plpgsql as $$
 begin
   -- Cada ativo tem o seu CR (o CR de frota é de um ativo só); p_cr diz o tipo: 'F' frota, 'X' acionista.
   insert into nucleo.cr (codcencus, codigo, participa_da_frota, veiculo_obrigatorio, tipo, tipo_origem)
@@ -105,7 +106,7 @@ begin
     p_tipo => p_tipo, p_renavam => pg_temp.renavam(p_n), p_placa => p_placa,
     p_gestor_id => pg_temp.id(p_gestor), p_cr_id => (select id from nucleo.cr where codigo = 'C111-' || p_nome),
     p_operacao_id => (select id from nucleo.operacao where nome = p_operacao),
-    p_em => '2026-01-02 08:00-03',
+    p_em => p_em,
     p_funcao => case when p_tipo = 'implemento' then 'semirreboque'::nucleo.funcao_do_implemento end,
     p_carroceria_id => case when p_tipo = 'implemento' then (select id from config.carroceria where nome = 'Graneleira') end,
     p_eixos => case when p_tipo = 'implemento' then 2::smallint end));
@@ -118,6 +119,10 @@ $$;
 --   cam (caminhão); soltas: iL (implemento solto) e ap (apoio).
 --   iB1 fica impedido (MAc) em 20/01 estando engatado: o conjunto B fica impedido, com a causa.
 --   iA2 entra em MAN em 22/01, já desatrelado: NÃO impede o conjunto A.
+--   iB2 (segunda peça do conjunto B) fica impedido (SDo) em 21/01: com iB1 são DUAS causas.
+--   Soltas valem a data de referência (hoje no mês em curso; no mês passado, o último dia do mês): em janeiro,
+--   no fim do mês, são soltas iA2, iD, iL e ap (iA1, iB1 e iB2 seguem engatados). No mês em curso: kT/iT/iU
+--   nascem agora; iT é engatado e DESATRELADO hoje (aparece nas soltas hoje) e iU segue engatado.
 -- Gestor C: conjunto kC (iC desde 05/01).
 -- Regra de 12/11/2026: cavalo sem implemento é o conjunto 'Caminhão'; só implemento solto, apoio e
 -- equipamento ficam em 'Fora de conjunto'.
@@ -141,9 +146,14 @@ select pg_temp.completar('iL', 11115, 'GCJ1B05', 'Gestor A', 'F', 'Grãos 111', 
 select pg_temp.completar('kD', 11106, 'GCJ1A07', 'Gestor A', 'F', 'Grãos 111');
 select pg_temp.completar('iD', 11116, 'GCJ1B06', 'Gestor A', 'F', 'Grãos 111', 'implemento');
 select pg_temp.completar('ap', 11107, 'GCJ1A06', 'Gestor A', 'F', 'Grãos 111', 'apoio');
+select pg_temp.completar('iB2', 11117, 'GCJ1B07', 'Gestor A', 'X', 'Grãos 111', 'implemento');
+select pg_temp.completar('kT', 11108, 'GCJ1A08', 'Gestor A', 'F', 'Grãos 111', 'cavalo', now() - interval '5 hours');
+select pg_temp.completar('iT', 11118, 'GCJ1B09', 'Gestor A', 'F', 'Grãos 111', 'implemento', now() - interval '5 hours');
+select pg_temp.completar('iU', 11119, 'GCJ1B10', 'Gestor A', 'F', 'Grãos 111', 'implemento', now() - interval '5 hours');
 select nucleo.engatar(pg_temp.id('kA'), pg_temp.id('iA1'), 1::smallint, '2026-01-02 12:00-03');
 select nucleo.engatar(pg_temp.id('kA'), pg_temp.id('iA2'), 2::smallint, '2026-01-10 09:00-03');
 select nucleo.engatar(pg_temp.id('kB'), pg_temp.id('iB1'), 1::smallint, '2026-01-15 09:00-03');
+select nucleo.engatar(pg_temp.id('kB'), pg_temp.id('iB2'), 2::smallint, '2026-01-15 09:00-03');
 select nucleo.engatar(pg_temp.id('kC'), pg_temp.id('iC'), 1::smallint, '2026-01-05 09:00-03');
 select nucleo.engatar(pg_temp.id('kD'), pg_temp.id('iD'), 1::smallint, '2026-01-03 09:00-03');
 select nucleo.desatrelar(pg_temp.id('kD'), '2026-01-12 15:00-03');
@@ -153,6 +163,10 @@ select nucleo.registrar_evento(pg_temp.id('kA'), 'MAc', '2026-01-25 10:00-03');
 select nucleo.registrar_evento(pg_temp.id('kB'), 'ETc', '2026-01-16 10:00-03');
 select nucleo.registrar_evento(pg_temp.id('iB1'), 'MAc', '2026-01-20 10:00-03');
 select nucleo.registrar_evento(pg_temp.id('iA2'), 'MAN', '2026-01-22 10:00-03');
+select nucleo.registrar_evento(pg_temp.id('iB2'), 'SDo', '2026-01-21 10:00-03');
+select nucleo.engatar(pg_temp.id('kT'), pg_temp.id('iT'), 1::smallint, now() - interval '3 hours');
+select nucleo.engatar(pg_temp.id('kT'), pg_temp.id('iU'), 2::smallint, now() - interval '3 hours');
+select nucleo.desatrelar(pg_temp.id('kT'), now() - interval '1 hour', array[pg_temp.id('iT')]);
 select pg_temp.disparar();
 
 -- ---- privilégios e segurança ---------------------------------------------------------------------
@@ -259,8 +273,8 @@ select is(
   'situação: o cavalo em MAc (impedida) no dia 26'
 );
 select is(
-  pg_temp.celula(current_setting('t.grade')::jsonb, 'GCJ1A01', 26)->'causa', 'null'::jsonb,
-  'causa: cavalo impedido por si mesmo não tem causa de implemento'
+  pg_temp.celula(current_setting('t.grade')::jsonb, 'GCJ1A01', 26)->'causas', '[]'::jsonb,
+  'causas: cavalo impedido por si mesmo não tem causa de implemento'
 );
 select is(
   pg_temp.celula(current_setting('t.grade')::jsonb, 'GCJ1A01', 26)->>'grupo', 'impedida',
@@ -275,8 +289,20 @@ select is(
   'conjunto B: no dia 20 o implemento engatado impede o conjunto (MAc)'
 );
 select is(
-  pg_temp.celula(current_setting('t.grade')::jsonb, 'GCJ1A02', 20)->'causa'->>'placa', 'GCJ1B03',
-  'causa: o conjunto B está impedido pelo implemento GCJ1B03'
+  pg_temp.celula(current_setting('t.grade')::jsonb, 'GCJ1A02', 19)->'causas', '[]'::jsonb,
+  'causas: no dia 19 do conjunto B nenhuma peça impede'
+);
+select is(
+  (select array_agg((c->>'placa') || ':' || (c->>'sigla') order by ord)
+     from jsonb_array_elements(pg_temp.celula(current_setting('t.grade')::jsonb, 'GCJ1A02', 20)->'causas') with ordinality as t(c, ord)),
+  array['GCJ1B03:MAc'],
+  'causas: no dia 20 o conjunto B está impedido só pelo implemento GCJ1B03 (MAc)'
+);
+select is(
+  (select array_agg(c->>'placa' order by ord)
+     from jsonb_array_elements(pg_temp.celula(current_setting('t.grade')::jsonb, 'GCJ1A02', 21)->'causas') with ordinality as t(c, ord)),
+  array['GCJ1B03', 'GCJ1B07'],
+  'causas: no dia 21 são DUAS peças impedindo o conjunto B (GCJ1B03 e GCJ1B07), todas listadas'
 );
 select is(
   pg_temp.celula(current_setting('t.grade')::jsonb, 'GCJ1A02', 20)->>'grupo', 'impedida',
@@ -389,36 +415,37 @@ reset role;
 -- ---- aba Soltas: implemento sem cavalo engatado no mês, apoio e equipamento ----------------------------------
 select tests.como(pg_temp.id('auth_Gestor A'));
 select set_config('t.soltas', nucleo.grade_de_soltas('2026-01-01')::text, true);
-select is((current_setting('t.soltas')::jsonb->>'total')::int, 2, 'soltas: o apoio e o implemento solto do Gestor A');
+select is((current_setting('t.soltas')::jsonb->>'total')::int, 4,
+  'soltas: valem a data de referência (31/01): o apoio, o implemento solto e os dois desatrelados (iA2 e iD)');
 select is(
   (select array_agg(l->>'placa' order by l->>'placa') from jsonb_array_elements(current_setting('t.soltas')::jsonb->'linhas') l),
-  array['GCJ1A06', 'GCJ1B05'], 'soltas: uma linha por placa, ordenada'
+  array['GCJ1A06', 'GCJ1B02', 'GCJ1B05', 'GCJ1B06'], 'soltas: uma linha por placa, ordenada'
 );
 select is(
   (select count(*) from jsonb_array_elements(current_setting('t.soltas')::jsonb->'linhas') l
-    where l->>'placa' in ('GCJ1A01', 'GCJ1B01', 'GCJ1A04', 'GCJ1A05', 'GCJ1B06', 'GCJ1B02')),
-  0::bigint, 'soltas: quem formou conjunto no mês (cavalo, caminhão e implemento engatado) não aparece aqui'
+    where l->>'placa' in ('GCJ1A01', 'GCJ1B01', 'GCJ1A04', 'GCJ1A05', 'GCJ1B03', 'GCJ1B07')),
+  0::bigint, 'soltas: cavalo, caminhão e implemento ainda engatado na data de referência não aparecem aqui'
 );
 select is(jsonb_array_length(current_setting('t.soltas')::jsonb->'linhas'->0->'dias'), 31, 'soltas: janeiro tem 31 colunas');
 select is(
-  current_setting('t.soltas')::jsonb->'chips', '{"todos": 2, "em-atividade": 0, "atencao": 0, "impedida": 0, "patio": 2, "fora": 0}'::jsonb,
+  current_setting('t.soltas')::jsonb->'chips', '{"todos": 4, "em-atividade": 0, "atencao": 0, "impedida": 1, "patio": 3, "fora": 0}'::jsonb,
   'soltas: os chips contam por grupo no banco'
 );
 select is(
-  (nucleo.grade_de_soltas('2026-01-01', '{"grupo": "patio"}')->>'total')::int, 2,
-  'soltas: o filtro de pátio traz as duas'
+  (nucleo.grade_de_soltas('2026-01-01', '{"grupo": "patio"}')->>'total')::int, 3,
+  'soltas: o filtro de pátio traz as três'
 );
 select is(
   (select array_agg(l->>'placa' order by l->>'placa')
      from jsonb_array_elements(nucleo.grade_de_soltas('2026-01-01', '{"grupo": "patio"}')->'linhas') l),
-  array['GCJ1A06', 'GCJ1B05'], 'soltas: as linhas devolvidas pelo filtro de pátio são as das duas (a página, não só a contagem)'
+  array['GCJ1A06', 'GCJ1B05', 'GCJ1B06'], 'soltas: as linhas devolvidas pelo filtro de pátio são as três (a página, não só a contagem)'
 );
 select is(
-  (nucleo.grade_de_soltas('2026-01-01', '{"grupo": "impedida"}')->>'total')::int, 0,
-  'soltas: o filtro de impedida não traz nenhuma'
+  (nucleo.grade_de_soltas('2026-01-01', '{"grupo": "impedida"}')->>'total')::int, 1,
+  'soltas: o filtro de impedida traz só a solta impedida (iA2 em MAN)'
 );
 select is(
-  nucleo.grade_de_soltas('2026-01-01', '{}', 2, 1)->'linhas'->0->>'placa', 'GCJ1B05',
+  nucleo.grade_de_soltas('2026-01-01', '{}', 2, 1)->'linhas'->0->>'placa', 'GCJ1B02',
   'soltas: a página 2 com uma linha por página traz a segunda'
 );
 select is(
@@ -426,12 +453,12 @@ select is(
   'soltas: grupo desconhecido é recusado'
 );
 select results_eq(
-  $$select x, y from nucleo.soltas_com_situacao_no_dia('2026-01-02')$$, $$values (2::bigint, 2::bigint)$$,
-  'X de Y soltas no dia 2: as duas nasceram nesse dia, com o lançamento inicial: 2 de 2'
+  $$select x, y from nucleo.soltas_com_situacao_no_dia('2026-01-02')$$, $$values (6::bigint, 6::bigint)$$,
+  'X de Y soltas no dia 2 (valem as soltas daquele dia): as seis nasceram nele, com o lançamento inicial: 6 de 6'
 );
 select results_eq(
-  $$select x, y from nucleo.soltas_com_situacao_no_dia('2026-01-04')$$, $$values (0::bigint, 2::bigint)$$,
-  'X de Y soltas no dia 4: 0 de 2'
+  $$select x, y from nucleo.soltas_com_situacao_no_dia('2026-01-04')$$, $$values (0::bigint, 5::bigint)$$,
+  'X de Y soltas no dia 4: o implemento D já está engatado e saiu das soltas: 0 de 5'
 );
 reset role;
 select tests.como(pg_temp.id('auth_Adm'));
@@ -440,12 +467,34 @@ select is(
   'lançar: o Administrador lança MAN no apoio no dia 16'
 );
 select results_eq(
-  $$select x, y from nucleo.soltas_com_situacao_no_dia('2026-01-16')$$, $$values (1::bigint, 2::bigint)$$,
-  'X de Y soltas no dia 16: depois do lançamento no apoio, 1 de 2'
+  $$select x, y from nucleo.soltas_com_situacao_no_dia('2026-01-16')$$, $$values (1::bigint, 3::bigint)$$,
+  'X de Y soltas no dia 16: soltas daquele dia (iD, iL e ap); depois do lançamento no apoio, 1 de 3'
 );
 select is(
   pg_temp.erro_de(format('select * from nucleo.soltas_com_situacao_no_dia(%L)', ((now() at time zone 'America/Sao_Paulo')::date + 1)::text)),
   '22023', 'X de Y soltas: dia que ainda não chegou é recusado'
+);
+reset role;
+select tests.como(pg_temp.id('auth_Gestor A'));
+select is(
+  (select count(*) from jsonb_array_elements(
+     nucleo.grade_de_soltas(date_trunc('month', nucleo.hoje_em_sao_paulo())::date)->'linhas') l
+    where l->>'placa' = 'GCJ1B09'),
+  1::bigint, 'soltas hoje: o implemento desatrelado hoje já aparece nas soltas de hoje'
+);
+select is(
+  (select count(*) from jsonb_array_elements(
+     nucleo.grade_de_soltas(date_trunc('month', nucleo.hoje_em_sao_paulo())::date)->'linhas') l
+    where l->>'placa' = 'GCJ1B10'),
+  0::bigint, 'soltas hoje: o implemento que segue engatado não é solta'
+);
+select isnt(
+  pg_temp.chip(nucleo.grade_por_conjunto(date_trunc('month', nucleo.hoje_em_sao_paulo())::date), 'GCJ1B09'), null,
+  'conjunto: o implemento que saiu hoje continua como chip no conjunto em que esteve no mês'
+);
+select results_eq(
+  $$select x, y from nucleo.soltas_com_situacao_no_dia(nucleo.hoje_em_sao_paulo())$$, $$values (1::bigint, 5::bigint)$$,
+  'X de Y soltas hoje: valem as soltas de hoje (ap, iL, iA2, iD e iT); só iT teve evento hoje: 1 de 5'
 );
 reset role;
 select tests.como(pg_temp.id('auth_Gestor C'));

@@ -25,7 +25,12 @@ import type {
   TipoDeCrDaGrade,
 } from "@/lib/dados/acompanhamento-tipos";
 import { NOMES_DOS_TIPOS } from "@/lib/dados/placas-tipos";
-import { type DiaDaColuna, diasDoMes, rotuloDoSelo } from "@/lib/dominio/grade-por-conjunto";
+import {
+  type DiaDaColuna,
+  diasDoMes,
+  rotuloDaCausa,
+  rotuloDoSelo,
+} from "@/lib/dominio/grade-por-conjunto";
 import { ehSigla, NOMES_DAS_SIGLAS, tomDaSigla } from "@/lib/dominio/status";
 import {
   type Densidade,
@@ -208,7 +213,7 @@ function CelulaDoDia({
 }) {
   const altura = ALTURA_DA_CELULA[densidade];
   const selo = rotuloDoSelo(celula);
-  const causa = celula.causa ? `impedido por ${celula.causa.placa} · ${celula.sigla ?? ""}` : null;
+  const causa = rotuloDaCausa(celula.causas ?? []);
   // Hoje sem nenhum lançamento: a célula convida a lançar (rótulo, não só cor).
   const faltaLancar = coluna.hoje && celula.eventos === 0 && !causa;
   const rotulo = [
@@ -341,7 +346,8 @@ function LinhaDoConjunto({
     dias: conjunto.dias.map((d) => ({ dia: d.dia, sigla: d.sigla })),
   });
   const hoje = colunas.find((c) => c.hoje);
-  const causaDeHoje = hoje ? conjunto.dias.find((d) => d.dia === hoje.dia)?.causa : undefined;
+  const causasDeHoje = hoje ? (conjunto.dias.find((d) => d.dia === hoje.dia)?.causas ?? []) : [];
+  const causaDeHoje = rotuloDaCausa(causasDeHoje);
   const detalhes: DetalheDoItem[] = [
     { rotulo: "Conjunto", valor: conjunto.nomeDoConjunto ?? "Sem implemento" },
     { rotulo: "Modelo", valor: textoDoModelo(conjunto.modelo, conjunto.ano) },
@@ -352,9 +358,7 @@ function LinhaDoConjunto({
         conjunto.tiposDeCr.map((t) => NOMES_DOS_TIPOS_DE_CR[t]).join(" e ") || "Sem CR de frota",
     },
     { rotulo: "Situação agora", valor: nomeDaSigla(conjunto.siglaAtual) },
-    ...(causaDeHoje
-      ? [{ rotulo: "Impedido por", valor: `${causaDeHoje.placa} · ${conjunto.siglaAtual}` }]
-      : []),
+    ...(causaDeHoje ? [{ rotulo: "Hoje", valor: causaDeHoje }] : []),
     ...conjunto.implementos.map((i, n) => ({
       rotulo: `Implemento ${formatarInteiro(n + 1)}`,
       valor: `${i.placa} · ${i.modelo} · ${periodoDoEngate(i)} · ${nomeDaSigla(i.siglaAtual)}`,

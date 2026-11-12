@@ -37,7 +37,7 @@ Companheiros: `docs/padrao-de-telas.md`, `docs/gerenciador-de-processos.md` (o d
 | Coluna de hoje | Destacada (cabeçalho e fundo), com rótulo e não só pela cor |
 | Faixa de chips | Os chips da régua (Em atividade, Impedida, Atenção, Pátio, Fora) **com contagem** por conjunto; filtram a grade; a sigla exata vai em "mais filtros" |
 | Medida do dia | **"X de Y conjuntos com lançamento hoje"** |
-| Soltas (aba) | Implemento sem cavalo engatado no mês, apoio e equipamento ganham a aba "Grade · Soltas", uma linha por placa, com os seus chips, a sua faixa do dia e a medida "X de Y soltas com situação hoje". O cavalo sem implemento e o caminhão são conjuntos ("Caminhão") |
+| Soltas (aba) | Implemento sem cavalo engatado na data de referência (hoje; no mês passado, o último dia), apoio e equipamento ganham a aba "Grade · Soltas", uma linha por placa, com os seus chips, a sua faixa do dia e a medida "X de Y soltas com situação hoje". O cavalo sem implemento e o caminhão são conjuntos ("Caminhão") |
 
 **Largura fluida (regra de 11/11/2026).** Hoje as colunas dos dias têm largura fixa e, em tela larga (perto de
 1667 px, no tema escuro), sobra uma faixa vazia depois do dia 30. A grade passa a **preencher a largura do cartão**:

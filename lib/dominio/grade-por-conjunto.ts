@@ -61,22 +61,41 @@ export interface PecaNoDia {
   grupo: string | null;
 }
 
+/** A peça que impede o conjunto: o implemento engatado impedido e a sigla dele. */
+export interface CausaDoImpedimento {
+  placa: string;
+  sigla: string;
+}
+
 /**
  * A situação do conjunto no dia (regra de 12/11/2026): a do cavalo, EXCETO quando um implemento engatado
  * naquele dia está impedido (manutenção, sem documento, problema documental): aí o conjunto fica impedido
- * e a causa é a placa do implemento ("impedido por <placa> · <sigla>"). Cavalo impedido por si mesmo não
- * tem causa (é ele). Com mais de um implemento impedido vale o primeiro da lista (posição mais baixa).
- * O banco calcula o mesmo em `nucleo.situacao_com_causa`; isto dá nome à regra e cobre os limites.
+ * e as causas são as placas dos implementos impedidos. Cavalo impedido por si mesmo não tem causa de
+ * implemento (é ele). Com mais de um implemento impedido a sigla do conjunto é a do primeiro (posição mais
+ * baixa) e TODOS aparecem nas causas, na ordem. O banco calcula o mesmo em `nucleo.dias_do_conjunto`
+ * (a situação vem de `nucleo.situacao_com_causa`); isto dá nome à regra e cobre os limites.
  */
 export function situacaoDoConjuntoNoDia(entrada: {
   cavalo: PecaNoDia;
   implementosEngatados: readonly PecaNoDia[];
-}): { sigla: string | null; causa: { placa: string; sigla: string } | null } {
-  if (entrada.cavalo.grupo === "impedida") return { sigla: entrada.cavalo.sigla, causa: null };
-  const impedido = entrada.implementosEngatados.find((i) => i.grupo === "impedida" && i.sigla);
-  if (impedido?.sigla)
-    return { sigla: impedido.sigla, causa: { placa: impedido.placa, sigla: impedido.sigla } };
-  return { sigla: entrada.cavalo.sigla, causa: null };
+}): { sigla: string | null; causas: CausaDoImpedimento[] } {
+  if (entrada.cavalo.grupo === "impedida") return { sigla: entrada.cavalo.sigla, causas: [] };
+  const causas = entrada.implementosEngatados.flatMap((i): CausaDoImpedimento[] =>
+    i.grupo === "impedida" && i.sigla ? [{ placa: i.placa, sigla: i.sigla }] : [],
+  );
+  const primeira = causas[0];
+  return { sigla: primeira ? primeira.sigla : entrada.cavalo.sigla, causas };
+}
+
+/**
+ * O texto das causas, para a dica, o aria-label e o painel: uma peça, "impedido por <placa> · <sigla>"; duas
+ * ou mais, "impedido por N peças: <placa> <sigla>, <placa> <sigla>". Sem causa, nulo.
+ */
+export function rotuloDaCausa(causas: readonly CausaDoImpedimento[]): string | null {
+  const [unica, ...resto] = causas;
+  if (!unica) return null;
+  if (resto.length === 0) return `impedido por ${unica.placa} · ${unica.sigla}`;
+  return `impedido por ${causas.length} peças: ${causas.map((c) => `${c.placa} ${c.sigla}`).join(", ")}`;
 }
 
 export type TamanhoDaPagina = number | "auto";
@@ -84,12 +103,14 @@ export type TamanhoDaPagina = number | "auto";
 /** A altura que o servidor assume quando a janela ainda não disse a dela (cookie ausente). */
 export const ALTURA_PADRAO_DA_JANELA = 768;
 /**
- * A altura que a grade deixa para fora das linhas: topo do sistema, título e abas, faixa do dia, chips,
- * barra de consulta, cabeçalho dos dias, paginador, legenda rápida e os respiros. Calibrada com a
- * captura de 1366 × 768 (revisar quando o layout da tela mudar).
+ * CALIBRE DO AUTO (ajuste só aqui; os testes seguem as constantes). A altura que a grade deixa para fora
+ * das linhas: topo do sistema, título e abas, faixa do dia, chips, barra de consulta, cabeçalho dos dias,
+ * paginador, legenda rápida e os respiros. Estimativa a conferir com as capturas de 1366 × 768,
+ * 1667 × 900 e 1920 × 1080: se sobrar espaço embaixo, diminua; se a grade rolar por dentro com a página
+ * cabendo, aumente.
  */
 export const ALTURA_FIXA_DA_GRADE = 456;
-/** A altura de uma linha de conjunto: o cavalo, o modelo e os chips dos implementos. */
+/** CALIBRE DO AUTO: a altura de uma linha de conjunto (o cavalo, o modelo e os chips dos implementos). */
 export const ALTURA_DA_LINHA = { compacta: 64, confortavel: 84 } as const;
 export const MINIMO_DE_LINHAS = 3;
 export const MAXIMO_DE_LINHAS = 100;
