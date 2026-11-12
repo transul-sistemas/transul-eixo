@@ -218,3 +218,17 @@ principal do restante não muda.
 - **Testes de aceite:** pgTAP (unicidade, correção sem apagar, RLS por perfil, só o líder libera, pendência
   única); unitário (regra das 5h, distância e fator, sem coordenada não alerta); e2e; fidelidade ao protótipo.
 - **Dependências:** M1 (a fila guiada), a tabela de cidades, H5. **Alimenta** A2, A4 e o Movimento.
+
+## CI-2. Teste de migração sobre dados (NÃO executar agora)
+
+Pedido de Alexandre em 11/11/2026, depois do defeito do lote de número (a migration reclassificou exceções e deixou as
+antigas abertas; só apareceu num banco que já tinha staging carregado, porque o CI roda com o staging vazio).
+
+- **O que é:** aplicar as migrations novas num banco com fixtures **fictícias** de staging e de fila (estado "antes"
+  parecido com o real) e conferir, depois da migration, as contagens e a **idempotência** (rodar a função duas vezes não
+  muda nada na segunda).
+- **Onde:** job do CI que sobe o banco, aplica as migrations até a anterior, insere as fixtures, aplica as novas e roda
+  as conferências; nada de dado real, nada de nuvem.
+- **Obrigatória ANTES da carga na nuvem.** Sem ela verde, não há carga.
+- **Aceite:** reproduz o caso de 11/11 (18 antigas abertas, 15 reclassificadas): termina com 3 abertas do tipo certo e
+  15 fechadas com motivo, nenhuma apagada; segunda rodada com zero alterações.

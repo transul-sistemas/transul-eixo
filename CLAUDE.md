@@ -37,6 +37,7 @@ Projeto técnico completo: `docs/projeto-tecnico.md`. Em caso de dúvida, pergun
 - **Nunca** coloque senha, chave ou token em arquivo, commit, log ou conversa. Use `.env.local` (fora do Git) e as variáveis da Vercel e do Supabase. Mantenha `.env.example` atualizado, sem valores.
 - **Nunca imprima a saída de `supabase status`** nem de comando que mostre chaves: leia só os nomes necessários e grave por script, sem imprimir (`pnpm env:local`); o `.claude/settings.json` nega `supabase status` direto (regra completa em `docs/decisoes.md`, 04/11/2026).
 - Na dúvida entre duas leituras de uma regra de negócio, pergunte.
+- Função que **reclassifica ou reabre** algo deve **fechar o que reclassificou**, de forma idempotente, com pgTAP que roda a função duas vezes e confere as contagens (Alexandre, 11/11/2026).
 - Encerrar vínculo não é excluir: CR, vínculo da placa e da operação só se fecham com data de fim.
 - Ação em várias etapas é um processo: tarefa com dono, prazo e histórico; o wizard é a face da tarefa.
 - Vigente é verde e encerrado é vermelho suave, sempre com rótulo e ícone.

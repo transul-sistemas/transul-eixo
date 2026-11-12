@@ -1762,3 +1762,10 @@ Registro de direção, só em texto: nenhum código nem migration. Não muda a f
 - **`pnpm db:paridade`** (`lib/paridade`): funções que o app chama (`.rpc`, também pelos embrulhos com o parâmetro `funcao`) contra os tipos (teste estático) e o banco local. Roda antes do Next no `dev:banco` (só avisa) e no job `modo-banco` do CI.
 - **Simulação:** `?falha=funcao-ausente` (só com `EIXO_DADOS=exemplo`) reproduz a migration não aplicada, para o e2e.
 - **Cobertura:** `docs/cobertura-de-dados.md`. A tela de Cobertura de dados fica como proposta (exige função de leitura nova).
+
+## 11/11/2026 — Função que reclassifica ou reabre fecha o que reclassificou (decisão)
+
+- **Regra.** Toda função que reclassifica ou reabre algo deve fechar, com motivo e sem apagar, o que reclassificou, de forma idempotente. O pgTAP roda a função duas vezes e confere as contagens (abertas, fechadas, total de linhas).
+- **Por quê.** O lote de número abriu exceções de data como `data_fora_de_faixa` e a migration seguinte as reclassificou sem fechar as antigas: 18 abertas, 15 duplicadas. Corrigido por `20261116130000` e o pgTAP 110.
+- **Também:** fatia CI-2 (teste de migração sobre dados fictícios) no plano de processos e vínculos, obrigatória antes da carga na nuvem; não executada agora.
+- **Operações nomeadas nos documentos:** ficam (decisão dele). Os 4 nomes de pessoa em código eram fictícios ou falsos positivos; nada a trocar.
