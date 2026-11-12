@@ -11,7 +11,7 @@ Companheiros: `docs/padrao-de-telas.md`, `docs/gerenciador-de-processos.md` (o d
 
 ## Como está hoje (conferido no código, 11/11/2026)
 
-- `/frota/acompanhamento` tem quatro modos: Grade, Agora, Censo e Mapa.
+- `/frota/acompanhamento` tem cinco modos: Grade · Conjuntos, Grade · Soltas, Agora, Censo e Mapa (Grade · Soltas e a grade por conjunto chegaram na A1, 12/11/2026).
 - A **grade é por placa**, mês a mês, com o dia na coluna.
 - O lançamento é o assistente **Lançar situação**: um mini-wizard **lateral** de dois passos (Situação,
   Conferir), aberto pela célula, uma placa por vez. A situação vale para a placa; o banco fecha as camadas
@@ -37,7 +37,7 @@ Companheiros: `docs/padrao-de-telas.md`, `docs/gerenciador-de-processos.md` (o d
 | Coluna de hoje | Destacada (cabeçalho e fundo), com rótulo e não só pela cor |
 | Faixa de chips | Os chips da régua (Em atividade, Impedida, Atenção, Pátio, Fora) **com contagem** por conjunto; filtram a grade; a sigla exata vai em "mais filtros" |
 | Medida do dia | **"X de Y conjuntos com lançamento hoje"** |
-| Fora de conjunto | Implemento solto, equipamento, caminhão e apoio aparecem numa seção própria abaixo, uma linha por placa |
+| Soltas (aba) | Implemento sem cavalo engatado no mês, apoio e equipamento ganham a aba "Grade · Soltas", uma linha por placa, com os seus chips, a sua faixa do dia e a medida "X de Y soltas com situação hoje". O cavalo sem implemento e o caminhão são conjuntos ("Caminhão") |
 
 **Largura fluida (regra de 11/11/2026).** Hoje as colunas dos dias têm largura fixa e, em tela larga (perto de
 1667 px, no tema escuro), sobra uma faixa vazia depois do dia 30. A grade passa a **preencher a largura do cartão**:

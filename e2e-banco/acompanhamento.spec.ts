@@ -28,10 +28,10 @@ test.describe("Acompanhamento (Administrador)", () => {
     const alvo = await cavaloDoGerador();
     await page.goto(`/frota/acompanhamento?busca=${alvo.placa}`);
     await expect(page.getByRole("heading", { level: 1, name: "Acompanhamento" })).toBeVisible();
-    // O cavalo do gerador não tem implemento: aparece em "Fora de conjunto", uma linha por placa.
-    const grade = page.getByTestId("grade-fora-de-conjunto");
+    // O cavalo do gerador não tem implemento: é o conjunto "Caminhão", uma linha por conjunto.
+    const grade = page.getByTestId("grade-do-mes");
     await expect(grade).toBeVisible();
-    await expect(page.getByTestId("total-fora-de-conjunto")).toContainText("1 placas");
+    await expect(page.getByTestId("total-da-grade")).toContainText("1 conjuntos");
 
     // A última célula clicável da linha é a de hoje.
     await grade
