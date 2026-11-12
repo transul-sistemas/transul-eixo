@@ -46,7 +46,10 @@ export function FaixaDeLegenda() {
       className="border-border bg-card flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl border px-4 py-2.5 text-xs"
     >
       <strong className="text-sm font-semibold">Legenda</strong>
-      <ul className="flex flex-wrap items-center gap-1.5" aria-label="Em atividade, do mais escuro ao mais claro">
+      <ul
+        className="flex flex-wrap items-center gap-1.5"
+        aria-label="Em atividade, do mais escuro ao mais claro"
+      >
         {tonsDeVerdeDaLegenda().map((v) => (
           <li
             key={v.tom}

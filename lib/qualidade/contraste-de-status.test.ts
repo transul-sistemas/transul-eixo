@@ -18,7 +18,10 @@ function valor(seletor: string, nome: string): string {
 
 describe.each([":root", ".dark"])("contraste dos tons de status em %s", (seletor) => {
   it.each(TONS_DE_STATUS)("%s: texto sobre o fundo do tom é de 4,5:1 ou mais", (tom) => {
-    const razao = contraste(valor(seletor, `--status-${tom}-texto`), valor(seletor, `--status-${tom}`));
+    const razao = contraste(
+      valor(seletor, `--status-${tom}-texto`),
+      valor(seletor, `--status-${tom}`),
+    );
     expect(razao).toBeGreaterThanOrEqual(4.5);
   });
 
@@ -30,8 +33,11 @@ describe.each([":root", ".dark"])("contraste dos tons de status em %s", (seletor
 });
 
 describe("os tons de verde são cinco degraus distintos", () => {
-  it.each([":root", ".dark"])("em %s, os fundos de atividade-1 a -5 são todos diferentes", (seletor) => {
-    const fundos = [1, 2, 3, 4, 5].map((n) => valor(seletor, `--status-atividade-${n}`));
-    expect(new Set(fundos).size).toBe(5);
-  });
+  it.each([":root", ".dark"])(
+    "em %s, os fundos de atividade-1 a -5 são todos diferentes",
+    (seletor) => {
+      const fundos = [1, 2, 3, 4, 5].map((n) => valor(seletor, `--status-atividade-${n}`));
+      expect(new Set(fundos).size).toBe(5);
+    },
+  );
 });

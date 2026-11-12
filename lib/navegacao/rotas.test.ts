@@ -30,6 +30,9 @@ const telas = todasAsTelas();
 const rotasDeModulo = CATALOGO.map((m) => m.rota);
 // As telas de acesso (fatia 3.8) ficam fora do catálogo e fora da casca do sistema, em app/(acesso)/.
 const ROTAS_DE_ACESSO = ["/entrar", "/esqueci-a-senha", "/nova-senha", "/acesso-nao-liberado"];
+// Rotas filhas de uma tela do catálogo que não são item de menu nem ficha: a legenda do Acompanhamento
+// (A5) abre pelo botão "Legenda" da grade e herda a permissão de Frota.
+const ROTAS_FILHAS = ["/frota/acompanhamento/legenda"];
 
 describe("rotas e catálogo", () => {
   it.each(telas.map((t) => [t.rota, t.id] as const))("a rota %s (%s) tem página", (rota) => {
@@ -43,11 +46,16 @@ describe("rotas e catálogo", () => {
       (rota) =>
         rota !== "/" &&
         !ROTAS_DE_ACESSO.includes(rota) &&
+        !ROTAS_FILHAS.includes(rota) &&
         !rotasDeModulo.includes(rota) &&
         !telas.some((t) => t.rota === rota) &&
         !ehFicha(rota),
     );
     expect(foraDoCatalogo).toEqual([]);
+  });
+  it.each(ROTAS_FILHAS)("a rota filha %s existe e fica sob uma tela do catálogo", (rota) => {
+    expect(rotasDasPaginas).toContain(rota);
+    expect(telas.some((t) => rota.startsWith(`${t.rota}/`))).toBe(true);
   });
   it("a ficha da placa existe como rota filha de Placas", () => {
     expect(rotasDasPaginas).toContain("/frota/placas/[placa]");

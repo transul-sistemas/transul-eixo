@@ -34,9 +34,10 @@ describe("a régua tem tudo o que a legenda precisa", () => {
     expect(NOMES_DAS_SIGLAS[sigla]?.trim(), `${sigla}: nome`).toBeTruthy();
     expect(STATUS, `${sigla}: grupo`).toContain(grupoDaSigla(sigla));
     expect(TONS_DE_STATUS, `${sigla}: tom`).toContain(TONS_DAS_SIGLAS[sigla]);
-    expect(SIGNIFICADOS_DAS_SIGLAS[sigla]?.trim().length ?? 0, `${sigla}: significado`).toBeGreaterThan(
-      10,
-    );
+    expect(
+      SIGNIFICADOS_DAS_SIGLAS[sigla]?.trim().length ?? 0,
+      `${sigla}: significado`,
+    ).toBeGreaterThan(10);
   });
 
   it("o tom de cada sigla é da família do grupo dela", () => {

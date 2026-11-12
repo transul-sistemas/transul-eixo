@@ -53,7 +53,9 @@ describe("a legenda na tela", () => {
   });
 
   it("a busca estreita a lista: 'folga' deixa só a Folga", () => {
-    const html = renderToStaticMarkup(<GruposDaLegenda grupos={filtrarLegenda(legenda, "folga")} />);
+    const html = renderToStaticMarkup(
+      <GruposDaLegenda grupos={filtrarLegenda(legenda, "folga")} />,
+    );
     expect(html).toContain('data-sigla-da-legenda="FOg"');
     expect(html).not.toContain('data-sigla-da-legenda="ETc"');
   });

@@ -9,13 +9,7 @@ export interface EstadoDoBalao {
 }
 
 export type AcaoDoBalao =
-  | "entrou-mouse"
-  | "saiu-mouse"
-  | "focou"
-  | "desfocou"
-  | "tocou"
-  | "tocou-fora"
-  | "esc";
+  "entrou-mouse" | "saiu-mouse" | "focou" | "desfocou" | "tocou" | "tocou-fora" | "esc";
 
 export const BALAO_FECHADO: EstadoDoBalao = { mouse: false, foco: false, fixado: false };
 

@@ -130,3 +130,15 @@
     @apply font-sans;
   }
 }
+
+/* "Imprimir ou salvar em PDF" da legenda: a folha esconde a barra lateral e o topo, e mantém os
+   tons (o navegador só imprime fundo se pedirmos). */
+@media print {
+  body:has([data-legenda-da-regua]) :is(aside[data-barra], header, [data-topo-reservado]) {
+    display: none !important;
+  }
+  body:has([data-legenda-da-regua]) {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+}

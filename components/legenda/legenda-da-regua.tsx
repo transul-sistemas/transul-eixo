@@ -3,10 +3,7 @@
 import { IconPrinter, IconSearch } from "@tabler/icons-react";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  filtrarLegenda,
-  type GrupoMontado,
-} from "@/lib/dominio/legenda";
+import { filtrarLegenda, type GrupoMontado } from "@/lib/dominio/legenda";
 import { SiglaDoStatus } from "./sigla-do-status";
 import { TonsDeVerde } from "./tons-de-verde";
 
@@ -149,8 +146,8 @@ export function LegendaDaRegua({
 
       <p className="border-border bg-card text-muted-foreground rounded-xl border px-4 py-2.5 text-sm">
         Esta legenda é gerada da régua de status: uma fonte só, nunca digitada à mão. Toda sigla tem
-        nome, grupo e significado, e um teste falha se faltar algum. Também aparece ao passar o mouse
-        ou tocar em qualquer sigla da grade.
+        nome, grupo e significado, e um teste falha se faltar algum. Também aparece ao passar o
+        mouse ou tocar em qualquer sigla da grade.
       </p>
 
       {busca.trim() ? null : <TonsDeVerde />}

@@ -13,7 +13,9 @@ export function TonsDeVerde({ className }: { className?: string }) {
       )}
     >
       <strong className="font-semibold">Tons de verde</strong>
-      <span className="text-muted-foreground">quanto mais escuro, mais perto de gerar receita:</span>
+      <span className="text-muted-foreground">
+        quanto mais escuro, mais perto de gerar receita:
+      </span>
       <ul className="flex flex-wrap items-center gap-2">
         {tonsDeVerdeDaLegenda().map((v) => (
           <li
