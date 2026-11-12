@@ -14,18 +14,27 @@ import { type ErroDoBanco, resultadoDoErro } from "./escrita-do-banco";
 import type {
   CarteiraConfirmada,
   CarteiraDoMes,
-  CelulaDaGrade,
-  GradeDoMes,
+  CelulaDoConjunto,
+  CelulaDoImplemento,
+  ChipsDaGrade,
+  GradePorConjunto,
   LinhaDoAgora,
   LinhaDoCenso,
   SituacaoLancada,
+  TipoDeCrDaGrade,
 } from "./acompanhamento-tipos";
 import type { TipoDeAtivo } from "./placas-tipos";
 
 export type {
-  CelulaDaGrade,
-  LinhaDaGrade,
-  GradeDoMes,
+  AlvoDoLancamento,
+  CelulaDoConjunto,
+  CelulaDoImplemento,
+  ChipsDaGrade,
+  ConjuntoDaGrade,
+  GradePorConjunto,
+  ImplementoDoConjunto,
+  PlacaForaDeConjunto,
+  TipoDeCrDaGrade,
   LinhaDoAgora,
   LinhaDoCenso,
   PlacaDaCarteira,
@@ -36,7 +45,7 @@ export type {
 
 // A leitura e a escrita do Acompanhamento e da Carteira (primeira versão): só o banco, com a sessão
 // de quem usa (a RLS decide o que cada perfil vê). Quem filtra, pagina, ordena e soma é o banco
-// (nucleo.grade_do_acompanhamento, agora_do_acompanhamento, censo_do_acompanhamento, carteira_do_mes);
+// (nucleo.grade_por_conjunto, agora_do_acompanhamento, censo_do_acompanhamento, carteira_do_mes);
 // aqui só se converte o formato. A escrita devolve sempre a linha ou um erro tipado.
 
 interface Resposta {
@@ -74,45 +83,131 @@ async function atualizarVencidas(c: ClienteDoAcompanhamento): Promise<void> {
 
 // ---------- Grade ----------
 
-interface LinhaDaGradeDoBanco {
+interface ImplementoDoBanco {
+  ativo_id: string;
+  placa: string;
+  modelo: string;
+  funcao: string | null;
+  posicao: number;
+  dias: CelulaDoImplemento[];
+}
+
+interface ConjuntoDoBanco {
+  ativo_id: string;
+  placa: string;
+  modelo: string;
+  ano: number | null;
+  operacao: string | null;
+  sigla_atual: string;
+  grupo_atual: string | null;
+  tipos_de_cr: TipoDeCrDaGrade[];
+  nome_do_conjunto: string | null;
+  dias: CelulaDoConjunto[];
+  implementos: ImplementoDoBanco[];
+}
+
+interface ForaDoBanco {
   ativo_id: string;
   placa: string;
   tipo: TipoDeAtivo;
   modelo: string;
+  ano: number | null;
   operacao: string | null;
-  gestor: string | null;
-  em_conjunto: boolean;
-  dias: CelulaDaGrade[];
+  sigla_atual: string;
+  grupo_atual: string | null;
+  tipos_de_cr: TipoDeCrDaGrade[];
+  dias: CelulaDoConjunto[];
 }
 
-export async function lerGrade(
-  filtros: { mes: string; busca: string; tipo: TipoDeAtivo | null; pagina: number; tam: number },
+interface GradeDoBanco {
+  mes: string;
+  hoje: string;
+  dias_no_mes: number;
+  linhas: ConjuntoDoBanco[];
+  total: number;
+  pagina: number;
+  paginas: number;
+  tam: number;
+  chips: ChipsDaGrade;
+  lancamento_hoje: { x: number; y: number };
+  fora: { linhas: ForaDoBanco[]; total: number; pagina: number; paginas: number };
+}
+
+/** Os filtros da grade por conjunto (o estado da URL, sem o que é só de outros modos). */
+export interface FiltrosDaGrade {
+  mes: string;
+  busca: string;
+  tipoDeCr: TipoDeCrDaGrade | null;
+  grupo: Exclude<keyof ChipsDaGrade, "todos"> | null;
+  pagina: number;
+  foraPagina: number;
+  tam: number;
+}
+
+/** A grade por conjunto: filtra, pagina e conta no banco (`nucleo.grade_por_conjunto`); aqui só se converte. */
+export async function lerGradePorConjunto(
+  filtros: FiltrosDaGrade,
   cliente: () => Promise<ClienteDoAcompanhamento> = clienteDaSessao,
-): Promise<GradeDoMes> {
+): Promise<GradePorConjunto> {
   const c = await cliente();
-  const g = await ler<Omit<GradeDoMes, "linhas"> & { linhas: LinhaDaGradeDoBanco[] }>(
-    c,
-    "grade_do_acompanhamento",
-    {
-      p_mes: `${filtros.mes}-01`,
-      p_busca: filtros.busca,
-      p_tipos: filtros.tipo ? [filtros.tipo] : [],
-      p_pagina: filtros.pagina,
-      p_tam: filtros.tam,
+  const g = await ler<GradeDoBanco>(c, "grade_por_conjunto", {
+    p_mes: `${filtros.mes}-01`,
+    p_filtros: {
+      busca: filtros.busca,
+      tipo_de_cr: filtros.tipoDeCr ?? "",
+      grupo: filtros.grupo ?? "",
+      fora_pagina: filtros.foraPagina,
     },
-  );
+    p_pagina: filtros.pagina,
+    p_tam: filtros.tam,
+  });
   return {
-    ...g,
+    mes: g.mes,
+    hoje: g.hoje,
+    diasNoMes: g.dias_no_mes,
     linhas: g.linhas.map((l) => ({
       ativoId: l.ativo_id,
       placa: l.placa,
-      tipo: l.tipo,
       modelo: l.modelo,
+      ano: l.ano,
       operacao: l.operacao,
-      gestor: l.gestor,
-      emConjunto: l.em_conjunto,
+      siglaAtual: l.sigla_atual,
+      grupoAtual: l.grupo_atual,
+      tiposDeCr: l.tipos_de_cr,
+      nomeDoConjunto: l.nome_do_conjunto,
       dias: l.dias,
+      implementos: l.implementos.map((i) => ({
+        ativoId: i.ativo_id,
+        placa: i.placa,
+        modelo: i.modelo,
+        funcao: i.funcao,
+        posicao: i.posicao,
+        dias: i.dias,
+      })),
     })),
+    total: g.total,
+    pagina: g.pagina,
+    paginas: g.paginas,
+    tam: g.tam,
+    chips: g.chips,
+    lancamentoHoje: g.lancamento_hoje,
+    fora: {
+      linhas: g.fora.linhas.map((l) => ({
+        ativoId: l.ativo_id,
+        placa: l.placa,
+        tipo: l.tipo,
+        modelo: l.modelo,
+        ano: l.ano,
+        operacao: l.operacao,
+        siglaAtual: l.sigla_atual,
+        grupoAtual: l.grupo_atual,
+        tiposDeCr: l.tipos_de_cr,
+        dias: l.dias,
+      })),
+      total: g.fora.total,
+      pagina: g.fora.pagina,
+      paginas: g.fora.paginas,
+    },
   };
 }
 

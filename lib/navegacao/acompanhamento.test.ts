@@ -30,7 +30,10 @@ describe("estado do Acompanhamento na URL", () => {
       agrupamento: "operacao",
       busca: "",
       tipo: null,
+      grupo: null,
+      tipoDeCr: null,
       pagina: 1,
+      foraPagina: 1,
       tam: 20,
     });
   });
@@ -48,8 +51,24 @@ describe("estado do Acompanhamento na URL", () => {
       agrupamento: "gestor",
       busca: "abc",
       tipo: "cavalo",
+      grupo: null,
+      tipoDeCr: null,
       pagina: 3,
+      foraPagina: 1,
       tam: 20,
+    });
+  });
+
+  it('os chips da grade, o tipo de CR e a página de "fora de conjunto" ficam na URL (ida e volta)', () => {
+    const e = lerAcompanhamento(p("chip=impedida&cr=acionista&fora=3&pagina=2"), HOJE);
+    expect(e).toMatchObject({ grupo: "impedida", tipoDeCr: "acionista", foraPagina: 3, pagina: 2 });
+    expect(enderecoDoAcompanhamento(e, HOJE)).toBe(
+      "/frota/acompanhamento?chip=impedida&cr=acionista&pagina=2&fora=3",
+    );
+    expect(lerAcompanhamento(p("chip=azul&cr=terceiro&fora=-1"), HOJE)).toMatchObject({
+      grupo: null,
+      tipoDeCr: null,
+      foraPagina: 1,
     });
   });
 

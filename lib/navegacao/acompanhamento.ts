@@ -1,4 +1,5 @@
 import { TAMANHOS_DE_PAGINA } from "./preferencias-da-tabela";
+import type { TipoDeCrDaGrade } from "@/lib/dados/acompanhamento-tipos";
 import { TIPOS_DE_ATIVO, type TipoDeAtivo } from "@/lib/dados/placas-tipos";
 import { siglaValidaNoContexto } from "@/lib/dominio/situacao";
 import { REGRAS_DAS_SIGLAS, type Sigla, SIGLAS } from "@/lib/dominio/status";
@@ -20,6 +21,15 @@ export const NOMES_DOS_AGRUPAMENTOS: Record<Agrupamento, string> = {
   tipo: "Tipo de ativo",
 };
 
+/** Os chips da grade: o grupo de situação do conjunto (a régua tem cinco grupos). */
+export const GRUPOS_DA_GRADE = ["em-atividade", "atencao", "impedida", "patio", "fora"] as const;
+export type GrupoDaGrade = (typeof GRUPOS_DA_GRADE)[number];
+
+export const TIPOS_DE_CR_DA_GRADE = [
+  "frota",
+  "acionista",
+] as const satisfies readonly TipoDeCrDaGrade[];
+
 export interface EstadoDoAcompanhamento {
   modo: ModoDoAcompanhamento;
   /** `aaaa-mm` (grade). */
@@ -29,7 +39,13 @@ export interface EstadoDoAcompanhamento {
   agrupamento: Agrupamento;
   busca: string;
   tipo: TipoDeAtivo | null;
+  /** Chip da grade por conjunto: o grupo de situação (`chip=` na URL). */
+  grupo: GrupoDaGrade | null;
+  /** Tipo do CR vigente do conjunto (`cr=` na URL). */
+  tipoDeCr: TipoDeCrDaGrade | null;
   pagina: number;
+  /** Página da seção "Fora de conjunto" (`fora=` na URL). */
+  foraPagina: number;
   /** Linhas por página da grade: 20, 50 ou 100. */
   tam: number;
 }
@@ -47,7 +63,11 @@ export interface EstadoDaCarteira {
 const MES = /^\d{4}-(0[1-9]|1[0-2])$/;
 const DIA = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
 
-function umDe<T extends string>(lista: readonly T[], valor: string | null, padrao: T): T {
+function umDe<T extends string, P extends T | null>(
+  lista: readonly T[],
+  valor: string | null,
+  padrao: P,
+): T | P {
   return valor !== null && (lista as readonly string[]).includes(valor) ? (valor as T) : padrao;
 }
 
@@ -86,7 +106,10 @@ export function lerAcompanhamento(
     tipo: (TIPOS_DE_ATIVO as readonly string[]).includes(parametros.get("tipo") ?? "")
       ? (parametros.get("tipo") as TipoDeAtivo)
       : null,
+    grupo: umDe(GRUPOS_DA_GRADE, parametros.get("chip"), null),
+    tipoDeCr: umDe(TIPOS_DE_CR_DA_GRADE, parametros.get("cr"), null),
     pagina: pagina(parametros.get("pagina")),
+    foraPagina: pagina(parametros.get("fora")),
     tam: (TAMANHOS_DE_PAGINA as readonly number[]).includes(tamDaUrl) ? tamDaUrl : tamLembrado,
   };
 }
@@ -99,7 +122,10 @@ export function enderecoDoAcompanhamento(e: EstadoDoAcompanhamento, hoje: string
   if (e.agrupamento !== "operacao") q.set("por", e.agrupamento);
   if (e.busca !== "") q.set("busca", e.busca);
   if (e.tipo !== null) q.set("tipo", e.tipo);
+  if (e.grupo !== null) q.set("chip", e.grupo);
+  if (e.tipoDeCr !== null) q.set("cr", e.tipoDeCr);
   if (e.pagina !== 1) q.set("pagina", String(e.pagina));
+  if (e.foraPagina !== 1) q.set("fora", String(e.foraPagina));
   if (e.tam !== TAMANHO_PADRAO_DA_GRADE) q.set("tam", String(e.tam));
   const texto = q.toString();
   return texto ? `/frota/acompanhamento?${texto}` : "/frota/acompanhamento";
