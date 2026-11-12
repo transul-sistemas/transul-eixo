@@ -63,6 +63,16 @@ async function principal() {
     console.log("Simulação: nada foi feito. Para restaurar de verdade, rode de novo com --sim.");
     return;
   }
+  if (alvo === "real") {
+    // Regra de 12/11/2026: nunca restaurar um backup que contenha demo para produzir o real.
+    const lido = spawnSync(process.execPath, ["scripts/backup-conteudo.ts", arquivo], {
+      encoding: "utf8",
+    });
+    if (lido.status !== 0 || /real com demo/.test(lido.stdout))
+      throw new ErroDoEixo(
+        "Este backup contém demonstração (ou não pôde ser lido): não serve para voltar ao real. Veja `pnpm backup:conteudo -- <arquivo>` e C:/Backups/eixo/LEIA-ME.txt.",
+      );
+  }
   const r = spawnSync(process.execPath, ["scripts/backup.ts", "restaurar", arquivo], {
     stdio: "inherit",
   });
