@@ -42,6 +42,33 @@ export const ESQUEMAS_DO_BACKUP = [
 const PASTA_PADRAO = "C:/Backups/eixo";
 const CONTEINER_LOCAL = "supabase_db_TranSul_Eixo";
 const CONTEINER_DA_API = "supabase_rest_TranSul_Eixo";
+/**
+ * O contêiner do banco: o local do Eixo, ou (só para o teste de ida e volta) o de um banco DESCARTÁVEL,
+ * com project_id `eixo_descartavel`. Qualquer outro nome é recusado, para o backup e a restauração nunca
+ * irem parar em outro banco por engano.
+ */
+export function conteinerDoBanco(env: Record<string, string | undefined> = process.env): string {
+  const nome = env.EIXO_CONTEINER_DO_BANCO;
+  if (!nome) return CONTEINER_LOCAL;
+  if (!/^supabase_db_eixo_descartavel[a-z0-9_]*$/.test(nome)) {
+    throw new ErroDoBackup(
+      "EIXO_CONTEINER_DO_BANCO só aceita o contêiner de um banco descartável (eixo_descartavel).",
+    );
+  }
+  return nome;
+}
+
+export function conteinerDaApi(env: Record<string, string | undefined> = process.env): string {
+  const nome = env.EIXO_CONTEINER_DA_API;
+  if (!nome) return CONTEINER_DA_API;
+  if (!/^supabase_rest_eixo_descartavel[a-z0-9_]*$/.test(nome)) {
+    throw new ErroDoBackup(
+      "EIXO_CONTEINER_DA_API só aceita o contêiner da API de um banco descartável (eixo_descartavel).",
+    );
+  }
+  return nome;
+}
+
 const NUVEM = {
   host: "aws-0-us-east-2.pooler.supabase.com",
   porta: "5432",
@@ -98,10 +125,10 @@ export function argumentosDaRestauracao(argv: readonly string[]): { arquivo: str
 
 /** Recarrega o esquema da API (PostgREST) no banco local: o pg_restore recria as funções e, sem isso,
  * a API responde PGRST202 ("função não achada no cache") até reiniciar. Não altera dado. */
-export function argumentosDoRecarregarApi(): string[] {
+export function argumentosDoRecarregarApi(conteiner: string = conteinerDoBanco()): string[] {
   return [
     "exec",
-    CONTEINER_LOCAL,
+    conteiner,
     "psql",
     "-U",
     "postgres",
@@ -116,8 +143,8 @@ export function argumentosDoRecarregarApi(): string[] {
 
 /** SIGUSR1 ao PostgREST local: recarrega o esquema sem desligar o contêiner. Reforço do notify, que
  * pode não chegar se a API perdeu a escuta do canal "pgrst" (visto em 10/11/2026). */
-export function argumentosDoSinalDaApi(): string[] {
-  return ["kill", "-s", "SIGUSR1", CONTEINER_DA_API];
+export function argumentosDoSinalDaApi(conteiner: string = conteinerDaApi()): string[] {
+  return ["kill", "-s", "SIGUSR1", conteiner];
 }
 
 export function nomeDoArquivo(origem: "local" | "nuvem", agora: Date): string {
@@ -291,7 +318,7 @@ async function backup(argv: string[]) {
   } else {
     dump = rodar("docker", [
       "exec",
-      CONTEINER_LOCAL,
+      conteinerDoBanco(),
       "pg_dump",
       "-U",
       "postgres",
@@ -319,7 +346,7 @@ async function restaurar(argv: string[]) {
   const restore = rodar("docker", [
     "exec",
     "-i",
-    CONTEINER_LOCAL,
+    conteinerDoBanco(),
     "pg_restore",
     "-U",
     "postgres",

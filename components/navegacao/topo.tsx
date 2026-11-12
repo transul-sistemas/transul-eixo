@@ -94,7 +94,7 @@ export function Topo({
   }
 
   return (
-    <header className="border-border bg-background sticky top-0 z-20 flex flex-wrap items-center gap-x-3 gap-y-2 border-b px-4 py-2 group-has-[[data-modo-foco]]/casca:hidden sm:px-8 lg:justify-between lg:gap-x-6">
+    <header className="border-border bg-background sticky top-0 z-20 flex flex-wrap items-center gap-x-3 gap-y-2 border-b px-4 py-2 group-has-[[data-faixa-demo]]/casca:top-8 group-has-[[data-modo-foco]]/casca:hidden sm:px-8 lg:justify-between lg:gap-x-6">
       <button
         type="button"
         aria-label="Abrir menu"
