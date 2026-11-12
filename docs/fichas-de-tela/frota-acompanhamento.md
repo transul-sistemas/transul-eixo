@@ -13,11 +13,15 @@ fatura. **O conjunto é uma peça só (12/11/2026):** uma linha e um só conjunt
 cara (placa, Frota ou Acionista, nome do conjunto, modelo e ano) e os implementos são **chips pequenos na própria célula
 da esquerda** ("+ N implementos", com as placas em tamanho menor), **sem células nem linhas próprias**. A situação do
 dia é a do cavalo, **exceto quando um implemento engatado naquele dia está impedido** (manutenção, sem documento,
-problema documental): aí a célula fica no tom de impedida, com um ícone de alerta, e a dica e o painel dizem a causa
-("impedido por <placa> · <sigla>"). O olhinho abre os detalhes de cada implemento (período engatado e situação).
+problema documental): aí a célula fica no tom de impedida, com um ícone de alerta, e a dica e o painel dizem a causa:
+com uma peça, "impedido por <placa> · <sigla>"; com duas ou mais, "impedido por N peças: <placa> <sigla>, <placa> <sigla>"
+(todas, na ordem; a sigla da célula é a da primeira). O olhinho abre os detalhes de cada implemento (período engatado e situação).
 
 O cavalo sem implemento é o conjunto "Caminhão" (e quem terminou o mês sem implemento é "Sem implemento"). O que não forma
-conjunto (implemento sem cavalo engatado no mês, apoio e equipamento) vai para a aba **Soltas**.
+conjunto na data de referência (implemento sem cavalo engatado, apoio e equipamento) vai para a aba **Soltas**. **Solta vale a
+data, não o mês (12/11/2026):** a referência é hoje no mês em curso e o último dia do mês num mês passado; o implemento
+desatrelado hoje aparece em Soltas hoje, e o conjunto em que ele esteve continua em Conjuntos pelos dias em que existiu
+(o chip dele mostra o período engatado).
 
 **Abas:** Grade · Conjuntos | Grade · Soltas | Agora | Censo | Mapa (`?modo=grade|soltas|agora|censo|mapa`). Cada aba de
 grade tem a sua faixa do dia, os seus chips de situação com contagem e a sua medida: "X de Y conjuntos com lançamento
@@ -127,8 +131,8 @@ A grade **preenche a largura do cartão** e só rola por dentro (`docs/padrao-de
 ## Estados e rótulos de vigência
 
 A composição tem vigência: o implemento engatado no meio do mês aparece no chip com o período ("engatado de dd/mm a dd/mm"),
-e só conta para a situação do conjunto nos dias em que estava engatado (o dia vale pelo fim do dia); se ele não esteve
-engatado em nenhum dia do mês, é uma placa da aba Soltas. O CR da linha mostra "Vigente desde dd/mm" (verde, com ícone). Se o CR mudou no mês, a
+e só conta para a situação do conjunto nos dias em que estava engatado (o dia vale pelo fim do dia); na data de referência
+ele não está engatado, é também uma placa da aba Soltas. O CR da linha mostra "Vigente desde dd/mm" (verde, com ícone). Se o CR mudou no mês, a
 linha leva "Trocou de CR em dd/mm" e abre a troca (`trocar-cr.md`). Encerrado em vermelho suave, sempre com rótulo e
 data, nunca só pela cor.
 
