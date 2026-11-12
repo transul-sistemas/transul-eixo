@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Enviar placa a outro gestor</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:'Barlow',sans-serif;color:#0f1729;background:#f6f7fb}
+.sk{background:#e9ecf3;border-radius:8px}
+.btn{padding:10px 18px;border-radius:10px;font-size:15px;font-weight:600;font-family:'Barlow',sans-serif;cursor:pointer;border:1px solid #d9dde8;background:#fff;color:#0f1729}
+.btn.pri{background:#3355ff;border-color:#3355ff;color:#fff}
+.plate{display:inline-block;border:1.5px solid #1d3a8a;border-top:5px solid #1d3a8a;border-radius:4px;background:#fff;font-weight:700;font-size:14px;letter-spacing:1px;padding:0 5px;color:#0f1729}
+.tg{display:inline-block;padding:2px 9px;border-radius:999px;font-size:12px;font-weight:700}
+.mut{color:#5a6478;font-size:13px}
+.k{font-size:12px;font-weight:700;letter-spacing:.06em;color:#5a6478;margin-bottom:8px}
+.step{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:500;color:#5a6478}
+.dot{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;background:#eceef4;color:#5a6478}
+.dot.ok{background:#22a06b;color:#fff}
+.dot.on{background:#3355ff;color:#fff}
+.g{display:grid;grid-template-columns:28px 1fr 130px 110px;gap:10px;align-items:center;padding:10px 12px;border:1px solid #eceef4;border-radius:10px;margin-bottom:8px;font-size:14px}
+.g.sel{border:2px solid #3355ff;background:#eef1ff}
+.li{display:flex;gap:10px;font-size:14px;line-height:1.45;margin:0 0 8px}
+.n{flex:none;width:22px;height:22px;border-radius:50%;background:#eceef4;color:#5a6478;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center}
+</style>
+</helmet>
+<div style="position:relative;box-sizing:border-box;min-height:900px;background:#f6f7fb;overflow:hidden">
+  <div style="padding:20px 24px;display:flex;flex-direction:column;gap:12px">
+    <div class="sk" style="height:22px;width:220px"></div><div class="sk" style="height:34px;width:300px"></div><div class="sk" style="height:90px"></div>
+    <div class="sk" style="height:70px"></div><div class="sk" style="height:70px"></div><div class="sk" style="height:70px"></div><div class="sk" style="height:70px"></div>
+  </div>
+  <div style="position:absolute;left:0;top:0;right:0;bottom:0;background:rgba(15,23,41,.55)"></div>
+
+  <div role="dialog" aria-label="Enviar placa a outro gestor" style="position:absolute;left:50%;top:24px;transform:translateX(-50%);width:1080px;max-width:96%;background:#fff;border-radius:16px;box-shadow:0 24px 64px rgba(15,23,41,.35);box-sizing:border-box;padding:22px 28px;display:flex;flex-direction:column;gap:12px">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
+      <div><h2 style="margin:0;font-size:22px;font-weight:700">Enviar placa a outro gestor</h2>
+      <div style="font-size:14px;color:#5a6478;margin-top:2px"><span class="plate">ZDM1A05</span> Simples · cavalo e 1 implemento · CR004 · Operação A · quinta-feira, 12 de novembro de 2026</div></div>
+      <button class="btn" aria-label="Fechar" style="padding:6px 12px">×</button>
+    </div>
+    <div style="display:flex;gap:18px;flex-wrap:wrap;padding:10px 0;border-top:1px solid #eceef4;border-bottom:1px solid #eceef4">
+      <span class="step"><span class="dot ok">✓</span>Placa</span><span class="step" style="color:#0f1729"><span class="dot on">2</span>Gestor de destino</span><span class="step"><span class="dot">3</span>Pendências</span><span class="step"><span class="dot">4</span>Conferir</span>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1.4fr 1fr;gap:18px;align-items:start">
+      <div>
+        <div class="k">PARA QUEM VOCÊ ENVIA</div>
+        <label class="g sel"><input type="radio" name="d" checked><span><b>Gestor Demo 03</b><div class="mut">filial Matriz · Operação A e Operação B</div></span><span class="mut">24 placas</span><span><span class="tg" style="background:#d3efe3;color:#0f5c3d">responde em 1 dia</span></span></label>
+        <label class="g"><input type="radio" name="d"><span><b>Gestor Demo 04</b><div class="mut">filial Matriz · Operação Norte</div></span><span class="mut">18 placas</span><span><span class="tg" style="background:#fbecc7;color:#7a5200">2 atrasadas</span></span></label>
+        <label class="g"><input type="radio" name="d"><span><b>Gestor Demo 06</b><div class="mut">filial Cordeirópolis · Operação Sudeste</div></span><span class="mut">21 placas</span><span><span class="tg" style="background:#d3efe3;color:#0f5c3d">responde em 2 dias</span></span></label>
+        <div style="margin-top:12px"><label class="k" for="mt">MOTIVO (OBRIGATÓRIO)</label><select id="mt" style="padding:9px 10px;border-radius:8px;border:1px solid #d9dde8;font-family:'Barlow',sans-serif;font-size:14px;width:100%;box-sizing:border-box"><option>Mudança de operação</option></select>
+        <textarea aria-label="Observação" style="margin-top:8px;padding:9px 10px;border-radius:8px;border:1px solid #d9dde8;font-family:'Barlow',sans-serif;font-size:14px;width:100%;box-sizing:border-box;height:56px">Placa passa para a Operação B a partir da próxima semana.</textarea></div>
+      </div>
+
+      <div style="background:#f6f7fb;border-radius:12px;padding:16px">
+        <div class="k">COMO FUNCIONA</div>
+        <div class="li"><span class="n">1</span><span>A placa <b>continua na sua carteira</b> até o destino aceitar.</span></div>
+        <div class="li"><span class="n">2</span><span>O destino recebe uma <b>tarefa com prazo de 5 dias</b>.</span></div>
+        <div class="li"><span class="n">3</span><span>Ele <b>aceita, aceita com pendências ou recusa</b>, com motivo.</span></div>
+        <div class="li"><span class="n">4</span><span>Enquanto ele não receber, <b>só você pode cancelar</b> o pedido.</span></div>
+        <div class="li"><span class="n">5</span><span>Se aceitar, o <b>CR e a operação</b> são confirmados por ele; se a operação mudar, ele usa Trocar CR, com a data.</span></div>
+        <div style="margin-top:8px;border:1.5px solid #e8a317;background:#fff8e6;border-radius:10px;padding:10px 12px;font-size:13px"><b style="color:#7a5200">2 pendências vão junto:</b> RENAVAM e carroceria do implemento. Elas viram tarefa do destino se ele aceitar com pendências.</div>
+      </div>
+    </div>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;border-top:1px solid #eceef4;padding-top:12px">
+      <button class="btn">Cancelar</button>
+      <div style="display:flex;gap:10px"><button class="btn">Voltar</button><button class="btn pri">Continuar</button></div>
+    </div>
+    <div style="font-size:12px;color:#5a6478;margin-top:-4px">O Administrador não envia nem recebe em nome de ninguém. Dados de exemplo (fictícios).</div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1360,"height":900}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

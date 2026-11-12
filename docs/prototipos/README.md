@@ -39,6 +39,20 @@ Origem: https://claude.ai/artifact/R4XnmLHR55bc17ra993Yy6 (versão lida em 11/11
 | `tarefas-e-vinculos/4-meu-dia-receber-placas.html` | O assistente "Receber placas" em lote, passo 1 de 3 do Meu dia, com Aceitar, Com pendências e Recusar | `inicio-meu-dia.md` | Placas, gestores, CRs e prazos |
 | `tarefas-e-vinculos/5-posicao-do-dia.html` | O popup obrigatório da Posição do dia: um conjunto por linha, "Continua em…", "Mudou de cidade", "Sem sinal", alerta de distância improvável | `inicio-posicao-do-dia.md` | Cidades, km e conjuntos |
 
+## Quadro 3: Soltas, Engatar, Enviar placa, Confirmar carteira, Baixa e Saúde do CR
+
+Origem: https://claude.ai/artifact/PqMdWsezYHkyazkKpx9jMy (versão lida em 12/11/2026). Os quadros 1 e 2 foram relidos na
+mesma data e **não mudaram** (os doze arquivos acima são idênticos ao fonte atual); só este quadro é novo.
+
+| Arquivo | O que é | Ficha de tela correspondente | O que é exemplo fictício |
+| --- | --- | --- | --- |
+| `soltas-envio-carteira-e-saude/1-grade-soltas.html` | A aba "Grade · Soltas" do Acompanhamento: peça solta com a situação da própria peça, chips por situação e por tipo, célula "lançar", botões Engatar e Dar baixa e o olhinho | `frota-acompanhamento-grade-soltas.md` | Placas `ZDM…`, contagens (38 de 52), situações |
+| `soltas-envio-carteira-e-saude/2-engatar-implementos.html` | O assistente Engatar implementos no passo Implementos: disponíveis no pátio da filial, conjunto resultante calculado pela estrutura e a conferência | `frota-engatar-implementos.md` | Placas, "Bitrem", filial |
+| `soltas-envio-carteira-e-saude/3-enviar-placa.html` | O assistente Enviar placa a outro gestor no passo Gestor de destino: lista de destinos, motivo obrigatório, "como funciona" e as pendências que vão junto | `frota-enviar-placa.md` | Gestores Demo, contagens, prazos de resposta |
+| `soltas-envio-carteira-e-saude/4-confirmar-carteira.html` | O assistente Confirmar a carteira do mês no passo Conferir as placas: "Está comigo / Não é minha / Corrigir", barra de progresso e salvar para continuar depois | `frota-confirmar-carteira.md` | Placas, CRs, "12 de 14 confirmadas" |
+| `soltas-envio-carteira-e-saude/5-baixa-de-placa.html` | O assistente Dar baixa na placa no passo Conferir: o pedido, o quadro "quatro olhos" e o que acontece quando a Diretoria aprovar | `frota-baixa-de-placa.md` | ZDM2B31, CR013, "24 para 23 placas" |
+| `soltas-envio-carteira-e-saude/6-saude-do-cr.html` | A tela Saúde do CR: cartões de contagem, "o que fazer por dono e prazo", reconciliação por tipo e o rastro do número | `cadastros-saude-do-cr-quadro.md` (e `cadastros-saude-do-cr.md`) | Contagens e percentuais por tipo |
+
 ## Regra de fidelidade
 
 Todo bloco do modo terminar termina com capturas a 1366 (claro e escuro) **ao lado** do protótipo
