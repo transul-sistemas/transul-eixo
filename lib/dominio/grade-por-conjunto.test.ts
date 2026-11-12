@@ -5,6 +5,7 @@ import {
   instanteDoDia,
   medidaDoDia,
   linhasQueCabem,
+  rotuloDaCausa,
   rotuloDoSelo,
   situacaoDoConjuntoNoDia,
   tamanhoEfetivoDaPagina,
@@ -102,7 +103,7 @@ describe("situacaoDoConjuntoNoDia: a do cavalo, salvo implemento engatado impedi
         cavalo: livre("AAA1A11"),
         implementosEngatados: [livre("BBB1B11")],
       }),
-    ).toEqual({ sigla: "ETc", causa: null });
+    ).toEqual({ sigla: "ETc", causas: [] });
   });
   it("implemento engatado impedido deixa o conjunto impedido, com a causa", () => {
     expect(
@@ -110,27 +111,37 @@ describe("situacaoDoConjuntoNoDia: a do cavalo, salvo implemento engatado impedi
         cavalo: livre("AAA1A11"),
         implementosEngatados: [livre("BBB1B11"), impedido("BBB1B12", "SDo")],
       }),
-    ).toEqual({ sigla: "SDo", causa: { placa: "BBB1B12", sigla: "SDo" } });
+    ).toEqual({ sigla: "SDo", causas: [{ placa: "BBB1B12", sigla: "SDo" }] });
   });
-  it("cavalo impedido por si mesmo: a causa é o próprio cavalo (nulo)", () => {
+  it("cavalo impedido por si mesmo: não há causa de implemento", () => {
     expect(
       situacaoDoConjuntoNoDia({
         cavalo: impedido("AAA1A11", "MAN"),
         implementosEngatados: [impedido("BBB1B11")],
       }),
-    ).toEqual({ sigla: "MAN", causa: null });
+    ).toEqual({ sigla: "MAN", causas: [] });
   });
-  it("com dois implementos impedidos, vale o primeiro engatado (posição mais baixa)", () => {
+  it("com dois ou mais implementos impedidos, a sigla é a do primeiro e TODAS as causas vêm, na ordem", () => {
     expect(
       situacaoDoConjuntoNoDia({
         cavalo: livre("AAA1A11"),
-        implementosEngatados: [impedido("BBB1B11", "MAc"), impedido("BBB1B12", "DOC")],
-      }).causa,
-    ).toEqual({ placa: "BBB1B11", sigla: "MAc" });
+        implementosEngatados: [
+          impedido("BBB1B11", "MAc"),
+          livre("BBB1B13"),
+          impedido("BBB1B12", "DOC"),
+        ],
+      }),
+    ).toEqual({
+      sigla: "MAc",
+      causas: [
+        { placa: "BBB1B11", sigla: "MAc" },
+        { placa: "BBB1B12", sigla: "DOC" },
+      ],
+    });
   });
   it("implemento fora do conjunto naquele dia não conta (só os engatados entram na lista)", () => {
     expect(situacaoDoConjuntoNoDia({ cavalo: livre("AAA1A11"), implementosEngatados: [] })).toEqual(
-      { sigla: "ETc", causa: null },
+      { sigla: "ETc", causas: [] },
     );
   });
   it("cavalo sem situação no dia: o conjunto fica sem situação", () => {
@@ -139,7 +150,31 @@ describe("situacaoDoConjuntoNoDia: a do cavalo, salvo implemento engatado impedi
         cavalo: { placa: "AAA1A11", sigla: null, grupo: null },
         implementosEngatados: [],
       }),
-    ).toEqual({ sigla: null, causa: null });
+    ).toEqual({ sigla: null, causas: [] });
+  });
+});
+
+describe("rotuloDaCausa: o texto da dica, do aria-label e do painel", () => {
+  it("sem causa, sem texto", () => {
+    expect(rotuloDaCausa([])).toBeNull();
+  });
+  it("com uma peça: impedido por <placa> · <sigla>", () => {
+    expect(rotuloDaCausa([{ placa: "BBB1B11", sigla: "MAc" }])).toBe("impedido por BBB1B11 · MAc");
+  });
+  it("com duas ou mais peças: conta as peças e lista todas, na ordem", () => {
+    expect(
+      rotuloDaCausa([
+        { placa: "BBB1B11", sigla: "MAc" },
+        { placa: "BBB1B12", sigla: "DOC" },
+      ]),
+    ).toBe("impedido por 2 peças: BBB1B11 MAc, BBB1B12 DOC");
+    expect(
+      rotuloDaCausa([
+        { placa: "BBB1B11", sigla: "MAc" },
+        { placa: "BBB1B12", sigla: "DOC" },
+        { placa: "BBB1B13", sigla: "SDo" },
+      ]),
+    ).toBe("impedido por 3 peças: BBB1B11 MAc, BBB1B12 DOC, BBB1B13 SDo");
   });
 });
 
