@@ -268,3 +268,16 @@ describe("cenários de observação (12/11/2026)", () => {
     expect(() => roteiroDoMovimento(26)).toThrow();
   });
 });
+
+describe("o carregamento da demonstração só acrescenta", () => {
+  const texto = readFileSync("scripts/demo-carregar.ts", "utf8");
+  it("nunca apaga, trunca nem derruba nada", () => {
+    expect(texto).not.toMatch(/\bdelete\s+from\b/i);
+    expect(texto).not.toMatch(/\btruncate\b/i);
+    expect(texto).not.toMatch(/\bdrop\s+(table|schema|function|column)\b/i);
+    expect(texto).not.toMatch(/service_role/);
+  });
+  it("só roda no banco local", () => {
+    expect(texto).toContain("exigirBancoLocalParaDemo(endereco)");
+  });
+});
