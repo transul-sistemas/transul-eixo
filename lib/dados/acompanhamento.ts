@@ -15,7 +15,6 @@ import type {
   CarteiraConfirmada,
   CarteiraDoMes,
   CelulaDoConjunto,
-  CelulaDoImplemento,
   ChipsDaGrade,
   GradePorConjunto,
   LinhaDoAgora,
@@ -28,12 +27,12 @@ import type { TipoDeAtivo } from "./placas-tipos";
 export type {
   AlvoDoLancamento,
   CelulaDoConjunto,
-  CelulaDoImplemento,
   ChipsDaGrade,
   ConjuntoDaGrade,
+  GradeDeSoltas,
   GradePorConjunto,
   ImplementoDoConjunto,
-  PlacaForaDeConjunto,
+  PlacaSolta,
   TipoDeCrDaGrade,
   LinhaDoAgora,
   LinhaDoCenso,
@@ -83,13 +82,26 @@ async function atualizarVencidas(c: ClienteDoAcompanhamento): Promise<void> {
 
 // ---------- Grade ----------
 
+interface CelulaDoBanco {
+  dia: string;
+  sigla: string | null;
+  grupo: string | null;
+  causa?: { ativo_id: string; placa: string } | null;
+  eventos: number;
+  manual: boolean;
+  tardia: boolean;
+}
+
 interface ImplementoDoBanco {
   ativo_id: string;
   placa: string;
   modelo: string;
   funcao: string | null;
   posicao: number;
-  dias: CelulaDoImplemento[];
+  engatado_de: string;
+  engatado_ate: string | null;
+  sigla_atual: string;
+  grupo_atual: string | null;
 }
 
 interface ConjuntoDoBanco {
@@ -102,11 +114,11 @@ interface ConjuntoDoBanco {
   grupo_atual: string | null;
   tipos_de_cr: TipoDeCrDaGrade[];
   nome_do_conjunto: string | null;
-  dias: CelulaDoConjunto[];
+  dias: CelulaDoBanco[];
   implementos: ImplementoDoBanco[];
 }
 
-interface ForaDoBanco {
+interface SoltaDoBanco {
   ativo_id: string;
   placa: string;
   tipo: TipoDeAtivo;
@@ -116,32 +128,64 @@ interface ForaDoBanco {
   sigla_atual: string;
   grupo_atual: string | null;
   tipos_de_cr: TipoDeCrDaGrade[];
-  dias: CelulaDoConjunto[];
+  dias: CelulaDoBanco[];
 }
 
-interface GradeDoBanco {
+interface CorpoDaGrade {
   mes: string;
   hoje: string;
   dias_no_mes: number;
-  linhas: ConjuntoDoBanco[];
   total: number;
   pagina: number;
   paginas: number;
   tam: number;
   chips: ChipsDaGrade;
-  lancamento_hoje: { x: number; y: number };
-  fora: { linhas: ForaDoBanco[]; total: number; pagina: number; paginas: number };
 }
 
-/** Os filtros da grade por conjunto (o estado da URL, sem o que é só de outros modos). */
+type GradeDoBanco = CorpoDaGrade & {
+  linhas: ConjuntoDoBanco[];
+  lancamento_hoje: { x: number; y: number };
+};
+type SoltasDoBanco = CorpoDaGrade & {
+  linhas: SoltaDoBanco[];
+  situacao_hoje: { x: number; y: number };
+};
+
+/** Os filtros das grades (conjuntos e soltas): o estado da URL, sem o que é só de outros modos. */
 export interface FiltrosDaGrade {
   mes: string;
   busca: string;
   tipoDeCr: TipoDeCrDaGrade | null;
   grupo: Exclude<keyof ChipsDaGrade, "todos"> | null;
   pagina: number;
-  foraPagina: number;
   tam: number;
+}
+
+function filtrosDoBanco(filtros: FiltrosDaGrade) {
+  return {
+    p_mes: `${filtros.mes}-01`,
+    p_filtros: {
+      busca: filtros.busca,
+      tipo_de_cr: filtros.tipoDeCr ?? "",
+      grupo: filtros.grupo ?? "",
+    },
+    p_pagina: filtros.pagina,
+    p_tam: filtros.tam,
+  };
+}
+
+function dias(celulas: CelulaDoBanco[]): CelulaDoConjunto[] {
+  return celulas.map((c) => ({
+    dia: c.dia,
+    sigla: c.sigla,
+    grupo: c.grupo,
+    ...(c.causa !== undefined
+      ? { causa: c.causa === null ? null : { ativoId: c.causa.ativo_id, placa: c.causa.placa } }
+      : {}),
+    eventos: c.eventos,
+    manual: c.manual,
+    tardia: c.tardia,
+  }));
 }
 
 /** A grade por conjunto: filtra, pagina e conta no banco (`nucleo.grade_por_conjunto`); aqui só se converte. */
@@ -150,17 +194,7 @@ export async function lerGradePorConjunto(
   cliente: () => Promise<ClienteDoAcompanhamento> = clienteDaSessao,
 ): Promise<GradePorConjunto> {
   const c = await cliente();
-  const g = await ler<GradeDoBanco>(c, "grade_por_conjunto", {
-    p_mes: `${filtros.mes}-01`,
-    p_filtros: {
-      busca: filtros.busca,
-      tipo_de_cr: filtros.tipoDeCr ?? "",
-      grupo: filtros.grupo ?? "",
-      fora_pagina: filtros.foraPagina,
-    },
-    p_pagina: filtros.pagina,
-    p_tam: filtros.tam,
-  });
+  const g = await ler<GradeDoBanco>(c, "grade_por_conjunto", filtrosDoBanco(filtros));
   return {
     mes: g.mes,
     hoje: g.hoje,
@@ -175,14 +209,17 @@ export async function lerGradePorConjunto(
       grupoAtual: l.grupo_atual,
       tiposDeCr: l.tipos_de_cr,
       nomeDoConjunto: l.nome_do_conjunto,
-      dias: l.dias,
+      dias: dias(l.dias),
       implementos: l.implementos.map((i) => ({
         ativoId: i.ativo_id,
         placa: i.placa,
         modelo: i.modelo,
         funcao: i.funcao,
         posicao: i.posicao,
-        dias: i.dias,
+        engatadoDe: i.engatado_de,
+        engatadoAte: i.engatado_ate,
+        siglaAtual: i.sigla_atual,
+        grupoAtual: i.grupo_atual,
       })),
     })),
     total: g.total,
@@ -191,23 +228,38 @@ export async function lerGradePorConjunto(
     tam: g.tam,
     chips: g.chips,
     lancamentoHoje: g.lancamento_hoje,
-    fora: {
-      linhas: g.fora.linhas.map((l) => ({
-        ativoId: l.ativo_id,
-        placa: l.placa,
-        tipo: l.tipo,
-        modelo: l.modelo,
-        ano: l.ano,
-        operacao: l.operacao,
-        siglaAtual: l.sigla_atual,
-        grupoAtual: l.grupo_atual,
-        tiposDeCr: l.tipos_de_cr,
-        dias: l.dias,
-      })),
-      total: g.fora.total,
-      pagina: g.fora.pagina,
-      paginas: g.fora.paginas,
-    },
+  };
+}
+
+/** A aba Soltas: implemento sem cavalo engatado no mês, apoio e equipamento (`nucleo.grade_de_soltas`). */
+export async function lerGradeDeSoltas(
+  filtros: FiltrosDaGrade,
+  cliente: () => Promise<ClienteDoAcompanhamento> = clienteDaSessao,
+): Promise<GradeDeSoltas> {
+  const c = await cliente();
+  const g = await ler<SoltasDoBanco>(c, "grade_de_soltas", filtrosDoBanco(filtros));
+  return {
+    mes: g.mes,
+    hoje: g.hoje,
+    diasNoMes: g.dias_no_mes,
+    linhas: g.linhas.map((l): PlacaSolta => ({
+      ativoId: l.ativo_id,
+      placa: l.placa,
+      tipo: l.tipo,
+      modelo: l.modelo,
+      ano: l.ano,
+      operacao: l.operacao,
+      siglaAtual: l.sigla_atual,
+      grupoAtual: l.grupo_atual,
+      tiposDeCr: l.tipos_de_cr,
+      dias: dias(l.dias),
+    })),
+    total: g.total,
+    pagina: g.pagina,
+    paginas: g.paginas,
+    tam: g.tam,
+    chips: g.chips,
+    situacaoHoje: g.situacao_hoje,
   };
 }
 

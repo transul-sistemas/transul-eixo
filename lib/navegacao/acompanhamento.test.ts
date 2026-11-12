@@ -12,14 +12,27 @@ const HOJE = "2026-11-09";
 const p = (texto: string) => new URLSearchParams(texto);
 
 describe("estado do Acompanhamento na URL", () => {
-  it("o tamanho da página: 20 por padrão, o lembrado, e a URL vale mais; valor fora de 20/50/100 é ignorado", () => {
-    expect(lerAcompanhamento(p(""), HOJE).tam).toBe(20);
+  it("o tamanho da página: Auto por padrão, o lembrado, e a URL vale mais; valor fora de auto/20/50/100 é ignorado", () => {
+    expect(lerAcompanhamento(p(""), HOJE).tam).toBe("auto");
     expect(lerAcompanhamento(p(""), HOJE, 50).tam).toBe(50);
     expect(lerAcompanhamento(p("tam=100"), HOJE, 50).tam).toBe(100);
+    expect(lerAcompanhamento(p("tam=auto"), HOJE, 50).tam).toBe("auto");
     expect(lerAcompanhamento(p("tam=7"), HOJE, 50).tam).toBe(50);
-    expect(lerAcompanhamento(p("tam=100000"), HOJE).tam).toBe(20);
+    expect(lerAcompanhamento(p("tam=100000"), HOJE).tam).toBe("auto");
     const e = lerAcompanhamento(p("tam=50&pagina=2"), HOJE);
     expect(enderecoDoAcompanhamento(e, HOJE)).toBe("/frota/acompanhamento?pagina=2&tam=50");
+    expect(enderecoDoAcompanhamento(lerAcompanhamento(p("tam=20"), HOJE), HOJE)).toBe(
+      "/frota/acompanhamento?tam=20",
+    );
+  });
+
+  it("as abas Conjuntos (grade) e Soltas ficam em ?modo=; o modo foco fica em ?foco=1", () => {
+    expect(lerAcompanhamento(p("modo=soltas"), HOJE).modo).toBe("soltas");
+    expect(lerAcompanhamento(p(""), HOJE).modo).toBe("grade");
+    expect(lerAcompanhamento(p("foco=1"), HOJE).foco).toBe(true);
+    expect(lerAcompanhamento(p("foco=0"), HOJE).foco).toBe(false);
+    const e = lerAcompanhamento(p("modo=soltas&foco=1"), HOJE);
+    expect(enderecoDoAcompanhamento(e, HOJE)).toBe("/frota/acompanhamento?modo=soltas&foco=1");
   });
 
   it("sem nada, abre a grade do mês de hoje, página 1", () => {
@@ -33,8 +46,8 @@ describe("estado do Acompanhamento na URL", () => {
       grupo: null,
       tipoDeCr: null,
       pagina: 1,
-      foraPagina: 1,
-      tam: 20,
+      foco: false,
+      tam: "auto",
     });
   });
 
@@ -54,21 +67,20 @@ describe("estado do Acompanhamento na URL", () => {
       grupo: null,
       tipoDeCr: null,
       pagina: 3,
-      foraPagina: 1,
-      tam: 20,
+      foco: false,
+      tam: "auto",
     });
   });
 
-  it('os chips da grade, o tipo de CR e a página de "fora de conjunto" ficam na URL (ida e volta)', () => {
-    const e = lerAcompanhamento(p("chip=impedida&cr=acionista&fora=3&pagina=2"), HOJE);
-    expect(e).toMatchObject({ grupo: "impedida", tipoDeCr: "acionista", foraPagina: 3, pagina: 2 });
+  it("os chips da grade e o tipo de CR ficam na URL (ida e volta)", () => {
+    const e = lerAcompanhamento(p("chip=impedida&cr=acionista&pagina=2"), HOJE);
+    expect(e).toMatchObject({ grupo: "impedida", tipoDeCr: "acionista", pagina: 2 });
     expect(enderecoDoAcompanhamento(e, HOJE)).toBe(
-      "/frota/acompanhamento?chip=impedida&cr=acionista&pagina=2&fora=3",
+      "/frota/acompanhamento?chip=impedida&cr=acionista&pagina=2",
     );
-    expect(lerAcompanhamento(p("chip=azul&cr=terceiro&fora=-1"), HOJE)).toMatchObject({
+    expect(lerAcompanhamento(p("chip=azul&cr=terceiro"), HOJE)).toMatchObject({
       grupo: null,
       tipoDeCr: null,
-      foraPagina: 1,
     });
   });
 

@@ -13,11 +13,13 @@ export interface AlvoDoLancamento {
   dias: { dia: string; sigla: string | null }[];
 }
 
-/** A célula de um dia do cavalo (ou de uma placa fora de conjunto). */
+/** A célula de um dia do conjunto (ou de uma placa solta). */
 export interface CelulaDoConjunto {
   dia: string;
   sigla: string | null;
   grupo: string | null;
+  /** O implemento engatado que impede o conjunto neste dia ("impedido por <placa> · <sigla>"); nulo se não há. */
+  causa?: { ativoId: string; placa: string } | null;
   /** Quantos eventos de situação o dia teve (o selo). */
   eventos: number;
   manual: boolean;
@@ -25,26 +27,24 @@ export interface CelulaDoConjunto {
   tardia: boolean;
 }
 
-/** A célula de um dia do implemento: só tem sigla nos dias em que estava engatado no cavalo. */
-export interface CelulaDoImplemento {
-  dia: string;
-  engatado: boolean;
-  sigla: string | null;
-  grupo: string | null;
-}
-
 export type TipoDeCrDaGrade = "frota" | "acionista";
 
+/** Um implemento do conjunto: um chip na célula da esquerda, sem células de dias próprias. */
 export interface ImplementoDoConjunto {
   ativoId: string;
   placa: string;
   modelo: string;
   funcao: string | null;
   posicao: number;
-  dias: CelulaDoImplemento[];
+  /** Primeiro dia do mês em que estava engatado (o dia vale pelo fim do dia). */
+  engatadoDe: string;
+  /** Último dia engatado; nulo se segue engatado no fim do mês. */
+  engatadoAte: string | null;
+  siglaAtual: string;
+  grupoAtual: string | null;
 }
 
-/** Uma linha da grade: o conjunto (o cavalo com os implementos engatados no mês). */
+/** Uma linha da grade: o conjunto (o cavalo ou o caminhão, com os implementos engatados no mês). */
 export interface ConjuntoDaGrade {
   ativoId: string;
   placa: string;
@@ -60,8 +60,8 @@ export interface ConjuntoDaGrade {
   implementos: ImplementoDoConjunto[];
 }
 
-/** Uma linha de "Fora de conjunto": uma placa que não esteve em conjunto no mês. */
-export interface PlacaForaDeConjunto {
+/** Uma linha da aba Soltas: implemento sem cavalo engatado no mês, apoio ou equipamento. */
+export interface PlacaSolta {
   ativoId: string;
   placa: string;
   tipo: TipoDeAtivo;
@@ -97,7 +97,20 @@ export interface GradePorConjunto {
   chips: ChipsDaGrade;
   /** "X de Y conjuntos com lançamento hoje". */
   lancamentoHoje: { x: number; y: number };
-  fora: { linhas: PlacaForaDeConjunto[]; total: number; pagina: number; paginas: number };
+}
+
+export interface GradeDeSoltas {
+  mes: string;
+  hoje: string;
+  diasNoMes: number;
+  linhas: PlacaSolta[];
+  total: number;
+  pagina: number;
+  paginas: number;
+  tam: number;
+  chips: ChipsDaGrade;
+  /** "X de Y soltas com situação hoje". */
+  situacaoHoje: { x: number; y: number };
 }
 
 export interface LinhaDoAgora {
