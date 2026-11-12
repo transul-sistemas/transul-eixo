@@ -4,8 +4,10 @@ import {
   engatadoNoDia,
   instanteDoDia,
   medidaDoDia,
+  linhasQueCabem,
   rotuloDoSelo,
-  siglaDoImplementoNoDia,
+  situacaoDoConjuntoNoDia,
+  tamanhoEfetivoDaPagina,
 } from "@/lib/dominio/grade-por-conjunto";
 
 // As regras puras da grade por conjunto, espelho do que o banco calcula (nucleo.dias_do_implemento,
@@ -86,18 +88,92 @@ describe("instanteDoDia", () => {
   });
 });
 
-describe("siglaDoImplementoNoDia: o implemento engatado herda a sigla do cavalo", () => {
-  it("engatado: a sigla do cavalo", () => {
-    expect(siglaDoImplementoNoDia({ engatado: true, siglaDoCavalo: "ETc" })).toBe("ETc");
+describe("situacaoDoConjuntoNoDia: a do cavalo, salvo implemento engatado impedido", () => {
+  const impedido = (placa: string, sigla = "MAc") => ({ placa, sigla, grupo: "impedida" as const });
+  const livre = (placa: string, sigla = "ETc") => ({
+    placa,
+    sigla,
+    grupo: "em-atividade" as const,
   });
-  it("engatado com o cavalo impedido: o conjunto inteiro mostra a sigla impedida", () => {
-    expect(siglaDoImplementoNoDia({ engatado: true, siglaDoCavalo: "MAc" })).toBe("MAc");
+
+  it("sem implemento impedido, vale a situação do cavalo e não há causa", () => {
+    expect(
+      situacaoDoConjuntoNoDia({
+        cavalo: livre("AAA1A11"),
+        implementosEngatados: [livre("BBB1B11")],
+      }),
+    ).toEqual({ sigla: "ETc", causa: null });
   });
-  it("fora do conjunto, sem sigla", () => {
-    expect(siglaDoImplementoNoDia({ engatado: false, siglaDoCavalo: "ETc" })).toBeNull();
+  it("implemento engatado impedido deixa o conjunto impedido, com a causa", () => {
+    expect(
+      situacaoDoConjuntoNoDia({
+        cavalo: livre("AAA1A11"),
+        implementosEngatados: [livre("BBB1B11"), impedido("BBB1B12", "SDo")],
+      }),
+    ).toEqual({ sigla: "SDo", causa: { placa: "BBB1B12", sigla: "SDo" } });
   });
-  it("cavalo sem situação no dia: o implemento também fica sem", () => {
-    expect(siglaDoImplementoNoDia({ engatado: true, siglaDoCavalo: null })).toBeNull();
+  it("cavalo impedido por si mesmo: a causa é o próprio cavalo (nulo)", () => {
+    expect(
+      situacaoDoConjuntoNoDia({
+        cavalo: impedido("AAA1A11", "MAN"),
+        implementosEngatados: [impedido("BBB1B11")],
+      }),
+    ).toEqual({ sigla: "MAN", causa: null });
+  });
+  it("com dois implementos impedidos, vale o primeiro engatado (posição mais baixa)", () => {
+    expect(
+      situacaoDoConjuntoNoDia({
+        cavalo: livre("AAA1A11"),
+        implementosEngatados: [impedido("BBB1B11", "MAc"), impedido("BBB1B12", "DOC")],
+      }).causa,
+    ).toEqual({ placa: "BBB1B11", sigla: "MAc" });
+  });
+  it("implemento fora do conjunto naquele dia não conta (só os engatados entram na lista)", () => {
+    expect(situacaoDoConjuntoNoDia({ cavalo: livre("AAA1A11"), implementosEngatados: [] })).toEqual(
+      { sigla: "ETc", causa: null },
+    );
+  });
+  it("cavalo sem situação no dia: o conjunto fica sem situação", () => {
+    expect(
+      situacaoDoConjuntoNoDia({
+        cavalo: { placa: "AAA1A11", sigla: null, grupo: null },
+        implementosEngatados: [],
+      }),
+    ).toEqual({ sigla: null, causa: null });
+  });
+});
+
+describe("linhasQueCabem: a grade cabe na janela, a página nunca rola na vertical", () => {
+  it("quanto mais alta a janela, mais linhas; nunca menos de 3 nem mais de 100", () => {
+    expect(linhasQueCabem(768, "compacta")).toBeLessThan(linhasQueCabem(1080, "compacta"));
+    expect(linhasQueCabem(100, "compacta")).toBe(3);
+    expect(linhasQueCabem(100000, "compacta")).toBe(100);
+  });
+  it("o confortável gasta mais altura por linha: cabem menos linhas", () => {
+    expect(linhasQueCabem(900, "confortavel")).toBeLessThan(linhasQueCabem(900, "compacta"));
+  });
+  it("a conta é exata nos limites: uma linha a mais só quando sobra a altura inteira dela", () => {
+    const n = linhasQueCabem(900, "compacta");
+    // 900 px dão n linhas; tirar um pixel não pode dar mais linhas, e achar a altura mínima de n+1 dá n+1.
+    expect(linhasQueCabem(899, "compacta")).toBeLessThanOrEqual(n);
+    let altura = 900;
+    while (linhasQueCabem(altura, "compacta") === n) altura += 1;
+    expect(linhasQueCabem(altura, "compacta")).toBe(n + 1);
+    expect(linhasQueCabem(altura - 1, "compacta")).toBe(n);
+  });
+  it("altura inválida ou ausente usa a janela padrão (768)", () => {
+    expect(linhasQueCabem(Number.NaN, "compacta")).toBe(linhasQueCabem(768, "compacta"));
+    expect(linhasQueCabem(0, "compacta")).toBe(linhasQueCabem(768, "compacta"));
+  });
+});
+
+describe("tamanhoEfetivoDaPagina: Auto é o padrão; 20, 50 e 100 valem como estão", () => {
+  it("auto calcula pela altura da janela", () => {
+    expect(tamanhoEfetivoDaPagina("auto", 900, "compacta")).toBe(linhasQueCabem(900, "compacta"));
+  });
+  it("20, 50 e 100 não dependem da altura", () => {
+    expect(tamanhoEfetivoDaPagina(20, 900, "compacta")).toBe(20);
+    expect(tamanhoEfetivoDaPagina(100, 500, "confortavel")).toBe(100);
   });
 });
 

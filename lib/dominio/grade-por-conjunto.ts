@@ -54,12 +54,66 @@ export function engatadoNoDia(vigencias: readonly Vigencia[], dia: string, agora
   );
 }
 
-/** A sigla do implemento no dia: a do cavalo, se engatado; sem sigla fora do conjunto. */
-export function siglaDoImplementoNoDia(entrada: {
-  engatado: boolean;
-  siglaDoCavalo: string | null;
-}): string | null {
-  return entrada.engatado ? entrada.siglaDoCavalo : null;
+/** Uma peça do conjunto num dia: a placa, a sigla do dia e o grupo da régua. */
+export interface PecaNoDia {
+  placa: string;
+  sigla: string | null;
+  grupo: string | null;
+}
+
+/**
+ * A situação do conjunto no dia (regra de 12/11/2026): a do cavalo, EXCETO quando um implemento engatado
+ * naquele dia está impedido (manutenção, sem documento, problema documental): aí o conjunto fica impedido
+ * e a causa é a placa do implemento ("impedido por <placa> · <sigla>"). Cavalo impedido por si mesmo não
+ * tem causa (é ele). Com mais de um implemento impedido vale o primeiro da lista (posição mais baixa).
+ * O banco calcula o mesmo em `nucleo.situacao_com_causa`; isto dá nome à regra e cobre os limites.
+ */
+export function situacaoDoConjuntoNoDia(entrada: {
+  cavalo: PecaNoDia;
+  implementosEngatados: readonly PecaNoDia[];
+}): { sigla: string | null; causa: { placa: string; sigla: string } | null } {
+  if (entrada.cavalo.grupo === "impedida") return { sigla: entrada.cavalo.sigla, causa: null };
+  const impedido = entrada.implementosEngatados.find((i) => i.grupo === "impedida" && i.sigla);
+  if (impedido?.sigla)
+    return { sigla: impedido.sigla, causa: { placa: impedido.placa, sigla: impedido.sigla } };
+  return { sigla: entrada.cavalo.sigla, causa: null };
+}
+
+export type TamanhoDaPagina = number | "auto";
+
+/** A altura que o servidor assume quando a janela ainda não disse a dela (cookie ausente). */
+export const ALTURA_PADRAO_DA_JANELA = 768;
+/**
+ * A altura que a grade deixa para fora das linhas: topo do sistema, título e abas, faixa do dia, chips,
+ * barra de consulta, cabeçalho dos dias, paginador, legenda rápida e os respiros. Calibrada com a
+ * captura de 1366 × 768 (revisar quando o layout da tela mudar).
+ */
+export const ALTURA_FIXA_DA_GRADE = 456;
+/** A altura de uma linha de conjunto: o cavalo, o modelo e os chips dos implementos. */
+export const ALTURA_DA_LINHA = { compacta: 64, confortavel: 84 } as const;
+export const MINIMO_DE_LINHAS = 3;
+export const MAXIMO_DE_LINHAS = 100;
+
+/** Quantas linhas cabem na altura da janela (a página nunca rola na vertical). Entre 3 e 100. */
+export function linhasQueCabem(
+  alturaDaJanela: number,
+  densidade: keyof typeof ALTURA_DA_LINHA,
+): number {
+  const altura =
+    Number.isFinite(alturaDaJanela) && alturaDaJanela > 0
+      ? alturaDaJanela
+      : ALTURA_PADRAO_DA_JANELA;
+  const n = Math.floor((altura - ALTURA_FIXA_DA_GRADE) / ALTURA_DA_LINHA[densidade]);
+  return Math.min(Math.max(n, MINIMO_DE_LINHAS), MAXIMO_DE_LINHAS);
+}
+
+/** O tamanho da página: "auto" cabe na janela; 20, 50 e 100 valem como estão (a tabela rola por dentro). */
+export function tamanhoEfetivoDaPagina(
+  tam: TamanhoDaPagina,
+  alturaDaJanela: number,
+  densidade: keyof typeof ALTURA_DA_LINHA,
+): number {
+  return tam === "auto" ? linhasQueCabem(alturaDaJanela, densidade) : tam;
 }
 
 /** O texto do selo de uma célula ("2 lançamentos, com correção tardia"), ou nulo se o dia não teve lançamento. */
