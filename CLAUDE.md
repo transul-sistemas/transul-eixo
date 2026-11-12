@@ -38,6 +38,7 @@ Projeto técnico completo: `docs/projeto-tecnico.md`. Em caso de dúvida, pergun
 - **Nunca imprima a saída de `supabase status`** nem de comando que mostre chaves: leia só os nomes necessários e grave por script, sem imprimir (`pnpm env:local`); o `.claude/settings.json` nega `supabase status` direto (regra completa em `docs/decisoes.md`, 04/11/2026).
 - Na dúvida entre duas leituras de uma regra de negócio, pergunte.
 - Função que **reclassifica ou reabre** algo deve **fechar o que reclassificou**, de forma idempotente, com pgTAP que roda a função duas vezes e confere as contagens (Alexandre, 11/11/2026).
+- **Rota sem `[segmento]` não lê `searchParams`, `params`, `cookies()` nem `headers()` no componente da página fora de `<Suspense>`** (a página síncrona repassa e quem lê fica dentro do Suspense, como nas telas irmãs); o build com Cache Components falha no prerender; teste em `lib/qualidade/leitura-em-suspense.test.ts` (Alexandre, 12/11/2026). Vale para A1, M1 e M2 desde o início.
 - **Nunca restaure um backup que contenha demo para produzir o real**; o real puro se reconstrói pelos scripts de carga. Confira o que um backup guarda com `pnpm backup:conteudo -- <arquivo>` (Alexandre, 12/11/2026).
 - Encerrar vínculo não é excluir: CR, vínculo da placa e da operação só se fecham com data de fim.
 - Ação em várias etapas é um processo: tarefa com dono, prazo e histórico; o wizard é a face da tarefa.

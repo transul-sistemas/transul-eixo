@@ -5,17 +5,24 @@ import { type CSSProperties, useRef, useState } from "react";
 import { formatarData } from "@/components/formato/data";
 import { Placa } from "@/components/placa";
 import type { GradeDoMes as Grade, LinhaDaGrade } from "@/lib/dados/acompanhamento-tipos";
-import { STATUS, type Status, variavelDoStatus } from "@/lib/visual/tons";
+import { FaixaDeLegenda } from "@/components/legenda/faixa-de-legenda";
+import { estiloDoTom } from "@/components/legenda/tom";
+import { ehSigla, NOMES_DAS_SIGLAS, tomDaSigla } from "@/lib/dominio/status";
 import { LancarSituacao } from "./lancar-situacao";
 
 // A grade do mês: uma linha por placa, uma coluna por dia. Cada célula mostra a situação no fim do dia
 // (a cor é a do grupo de status) e abre o assistente "Lançar situação" daquele dia. Dia futuro não
 // abre nada. Cabeçalho e primeira coluna fixos; a rolagem lateral fica só dentro da tabela.
 
-function tomDaCelula(grupo: string | null): CSSProperties | undefined {
-  if (grupo === null || !(STATUS as readonly string[]).includes(grupo)) return undefined;
-  const forte = variavelDoStatus(grupo as Status);
-  return { backgroundColor: `var(${forte}-suave)`, boxShadow: `inset 0 -2px 0 var(${forte})` };
+/** O tom da célula é o da sigla (verde em cinco degraus e os tons dos outros grupos); a sigla vai escrita. */
+function tomDaCelula(sigla: string | null): CSSProperties | undefined {
+  return sigla !== null && ehSigla(sigla) ? estiloDoTom(tomDaSigla(sigla)) : undefined;
+}
+
+/** "ETc, Em trânsito carregado": o nome da sigla para o balão do mouse e o leitor de tela. */
+function nomeDaSigla(sigla: string | null): string {
+  if (sigla === null) return "sem situação";
+  return ehSigla(sigla) ? `${sigla}, ${NOMES_DAS_SIGLAS[sigla]}` : sigla;
 }
 
 export function GradeDoMes({ grade }: { grade: Grade }) {
@@ -68,7 +75,7 @@ export function GradeDoMes({ grade }: { grade: Grade }) {
                 </th>
                 {linha.dias.map((celula) => {
                   const futuro = celula.dia > grade.hoje;
-                  const rotulo = `${linha.placa}, ${formatarData(celula.dia)}: ${celula.sigla ?? "sem situação"}`;
+                  const rotulo = `${linha.placa}, ${formatarData(celula.dia)}: ${nomeDaSigla(celula.sigla)}`;
                   return (
                     <td key={celula.dia} className="border-border border-b p-0.5 text-center">
                       {futuro ? (
@@ -78,7 +85,7 @@ export function GradeDoMes({ grade }: { grade: Grade }) {
                           type="button"
                           aria-label={`Lançar situação: ${rotulo}`}
                           title={rotulo}
-                          style={tomDaCelula(celula.grupo)}
+                          style={tomDaCelula(celula.sigla)}
                           className="hover:ring-ring focus-visible:ring-ring/60 relative block h-7 w-full rounded font-medium outline-none hover:ring-1 focus-visible:ring-2"
                           onClick={(evento) => {
                             quemAbriu.current = evento.currentTarget;
@@ -102,6 +109,7 @@ export function GradeDoMes({ grade }: { grade: Grade }) {
           </tbody>
         </table>
       </div>
+      <FaixaDeLegenda />
       <p className="text-muted-foreground text-xs">
         Cada célula mostra a situação no fim do dia (hoje, a de agora). O ponto no canto marca o dia
         com lançamento. Clique numa célula para lançar a situação daquele dia.

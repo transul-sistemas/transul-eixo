@@ -1800,6 +1800,11 @@ Registro de direção, só em texto: nenhum código nem migration. Não muda a f
 - **Também:** fatia CI-2 (teste de migração sobre dados fictícios) no plano de processos e vínculos, obrigatória antes da carga na nuvem; não executada agora.
 - **Operações nomeadas nos documentos:** ficam (decisão dele). Os 4 nomes de pessoa em código eram fictícios ou falsos positivos; nada a trocar.
 
+## 12/11/2026 — Leitura de dado de requisição só dentro de Suspense (decisão)
+
+- **Lição.** O build do PR #34 caiu: a página `/frota/acompanhamento/legenda` fazia `await searchParams` direto, e a rota sem segmento dinâmico é pré-renderizada ("uncached or runtime data during prerendering").
+- **Regra.** Página, layout ou `default` de rota sem `[segmento]` não lê `searchParams`, `params`, `cookies()`, `headers()` nem `connection()` no componente padrão; a página é síncrona, repassa o que recebeu e o componente que lê fica dentro de `<Suspense>` com esqueleto (padrão de `frota/acompanhamento/page.tsx`). Rotas com `[segmento]` não são pré-renderizadas e ficam de fora.
+- **Teste.** `lib/qualidade/leitura-em-suspense.test.ts` varre `app/` (com controle negativo: o código antigo da legenda é pego). Vale para as telas A1, M1 e M2 desde o início.
 ## 12/11/2026 — Backup: nunca restaurar demo para produzir o real (decisão)
 
 - **Regra.** Nunca restaure um backup que contenha demo para produzir o real; o real puro se reconstrói pelos scripts de carga. `pnpm demo:trocar -- real --sim` agora recusa um backup com demo (ou que não consiga ler).

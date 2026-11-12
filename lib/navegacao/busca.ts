@@ -50,6 +50,17 @@ function candidatos(perfil: Perfil, catalogo: readonly ModuloDoCatalogo[]): Cand
           alvo: normalizar(modo.nome),
         });
       }
+      for (const atalho of tela.atalhos ?? []) {
+        lista.push({
+          modulo,
+          tela,
+          modo: { id: atalho.id, nome: atalho.nome },
+          rota: atalho.rota,
+          rotulo: `${base} › ${atalho.nome}`,
+          texto: normalizar(`${modulo.nome} ${tela.nome} ${atalho.nome}`),
+          alvo: normalizar(atalho.nome),
+        });
+      }
     }
   }
   return lista;

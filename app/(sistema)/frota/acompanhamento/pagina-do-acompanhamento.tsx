@@ -12,6 +12,7 @@ import { formatarData, formatarMes, hojeEmSaoPaulo } from "@/components/formato/
 import { formatarInteiro } from "@/components/formato/numero";
 import { Etiqueta } from "@/components/etiqueta";
 import { FaixaDeKpis } from "@/components/layout/faixa-de-kpis";
+import { BotaoDaLegenda } from "@/components/legenda/faixa-de-legenda";
 import { PaginaDeLeitura } from "@/components/layout/pagina-de-leitura";
 import { ProvedorDoUsuario } from "@/components/navegacao/usuario-da-sessao";
 import { EsqueletoDaTabela, ListaVazia } from "@/components/tabela/estados";
@@ -458,6 +459,7 @@ export async function PaginaDoAcompanhamento({
     <PaginaDeLeitura
       titulo={titulo}
       descricao={descricao}
+      acoes={<BotaoDaLegenda />}
       consulta={<Abas estado={estado} hoje={hoje} />}
     >
       {conteudo}

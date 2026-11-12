@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
+import { TONS_DE_STATUS } from "@/lib/dominio/status";
 
 const css = readFileSync("app/tokens.css", "utf-8");
 
@@ -45,6 +46,8 @@ const nomes = [
   "--texto-negativo",
   ...modulos.flatMap((m) => [`--modulo-${m}`, `--modulo-${m}-suave`]),
   ...status.flatMap((s) => [`--status-${s}`, `--status-${s}-suave`]),
+  // Os tons de cada sigla (A5): fundo e texto, vindos da régua (TONS_DE_STATUS).
+  ...TONS_DE_STATUS.flatMap((t) => [`--status-${t}`, `--status-${t}-texto`]),
 ];
 
 describe("tokens do Eixo", () => {
