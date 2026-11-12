@@ -17,10 +17,10 @@ export const PREFIXO_DO_CPF_DEMO = "95000";
 export const PREFIXO_DO_CNPJ_DEMO = "9900";
 export const PREFIXO_DO_RENAVAM_DEMO = "99000";
 
-/** CODCENCUS do CR fictício número n (1 a 100): raiz 2, 4 ou 6 e 990nnn, nunca de 8 dígitos. */
+/** CODCENCUS do CR fictício número n (1 a 300): raiz 2, 4 ou 6 e 990nnn, nunca de 8 dígitos. */
 export function codcencusDemo(n: number): number {
-  if (!Number.isInteger(n) || n < 1 || n > 100) {
-    throw new ErroDoEixo("O CR da demonstração vai do número 1 ao 100.");
+  if (!Number.isInteger(n) || n < 1 || n > 300) {
+    throw new ErroDoEixo("O CR da demonstração vai do número 1 ao 300.");
   }
   return [2, 4, 6][n % 3]! * 1_000_000 + 990_000 + n;
 }
@@ -245,3 +245,132 @@ export function abastecimentosDaDemo(
   });
   return saida;
 }
+
+// ---------------------------------------------------------------------------------------------
+// Cenários de observação (12/11/2026): pedidos atrasados, vínculos com história e movimento recente.
+// Só regras puras; quem grava é o scripts/demo-carregar.ts, pelas funções e caminhos legítimos do banco.
+// ---------------------------------------------------------------------------------------------
+
+/** A chave em config.parametro que liga a faixa "banco em demonstração" (a restauração do real a remove). */
+export const CHAVE_DA_FAIXA_DEMO = "banco_em_demonstracao";
+export const TEXTO_DA_FAIXA_DEMO =
+  "Banco em demonstração: números fictícios misturados com os reais";
+
+/** Prazo para receber a placa (decisão H4): passado dele, o pedido aberto está atrasado. */
+export const PRAZO_DE_RECEBER_EM_DIAS = 5;
+
+export function pedidoAtrasado(diasAbertos: number): boolean {
+  return diasAbertos > PRAZO_DE_RECEBER_EM_DIAS;
+}
+
+export type PedidoDaDemo = {
+  /** Número do cavalo da demonstração (1 a 30). */
+  cavalo: number;
+  /** Há quantos dias o pedido foi aberto. */
+  diasAbertos: number;
+  situacao: "pendente" | "em_conferencia";
+  /** Pendências conhecidas; sem resposta, ficam abertas na conferência. */
+  pendencias: string[];
+};
+
+/** Pedidos de transferência além dos cinco do "Para receber": atrasados, em conferência e no prazo. */
+export function planoDosPedidos(): PedidoDaDemo[] {
+  return [
+    { cavalo: 11, diasAbertos: 9, situacao: "pendente", pendencias: [] },
+    { cavalo: 12, diasAbertos: 7, situacao: "pendente", pendencias: ["Conferir o estepe"] },
+    { cavalo: 13, diasAbertos: 14, situacao: "pendente", pendencias: [] },
+    {
+      cavalo: 14,
+      diasAbertos: 8,
+      situacao: "em_conferencia",
+      pendencias: ["Documento do veículo vencido", "Multa em aberto"],
+    },
+    {
+      cavalo: 15,
+      diasAbertos: 3,
+      situacao: "em_conferencia",
+      pendencias: ["Avaria no para-choque"],
+    },
+    { cavalo: 16, diasAbertos: 2, situacao: "pendente", pendencias: [] },
+  ];
+}
+
+export type VinculoComHistoria = {
+  /** Número da placa da demonstração (e do CR atual). */
+  placa: number;
+  crAntigo: number;
+  crAtual: number;
+  /** Posição das operações na lista (módulo o total). */
+  operacaoAntiga: number;
+  operacaoAtual: number;
+  /** Há quantos dias a placa e o CR antigo começaram. */
+  inicioHaDias: number;
+  /** Há quantos dias o CR antigo terminou e o atual começou. */
+  trocaHaDias: number;
+};
+
+export const TROCA_RECENTE_EM_DIAS = 14;
+
+/** Seis placas com CR encerrado numa operação e CR vigente em outra; duas com troca recente. */
+export function planoDosVinculos(): VinculoComHistoria[] {
+  const trocas = [5, 12, 40, 55, 70, 90];
+  return trocas.map((trocaHaDias, i) => ({
+    placa: 51 + i,
+    crAntigo: 101 + i,
+    crAtual: 51 + i,
+    operacaoAntiga: i,
+    operacaoAtual: i + 1,
+    inicioHaDias: 120,
+    trocaHaDias,
+  }));
+}
+
+const SIGLAS_DE_CONJUNTO = [
+  "ETc",
+  "CAr",
+  "DEs",
+  "ETv",
+  "ACe",
+  "CAn",
+  "ADe",
+  "MAc",
+  "MAt",
+  "FOg",
+  "SMo",
+  "DOC",
+  "PÁT",
+];
+const SIGLAS_SOLO = ["ETv", "PÁT", "MAN", "REF", "SIN", "FOg", "SDo", "DOC"];
+
+/** O cavalo 11 a 20 anda em conjunto; o 21 a 25 está solto. */
+export function cavaloEmConjunto(cavalo: number): boolean {
+  return cavalo >= 11 && cavalo <= 20;
+}
+
+export type LancamentoDoMovimento = { diasAtras: number; sigla: string };
+
+/**
+ * Os lançamentos recentes de um cavalo (anteontem, ontem e hoje), com siglas diferentes de um dia para o
+ * outro e de um cavalo para o outro. Só siglas que a régua aceita para conjunto ou para solo.
+ */
+export function roteiroDoMovimento(cavalo: number): LancamentoDoMovimento[] {
+  if (cavalo < 11 || cavalo > 25) {
+    throw new ErroDoEixo("O movimento recente vai do cavalo 11 ao 25.");
+  }
+  const siglas = cavaloEmConjunto(cavalo) ? SIGLAS_DE_CONJUNTO : SIGLAS_SOLO;
+  return [2, 1, 0].map((diasAtras, k) => ({
+    diasAtras,
+    sigla: siglas[(cavalo * 3 + k * 2) % siglas.length]!,
+  }));
+}
+
+/** Número de cada placa e CR que os cenários usam (acima dos 50 da frota base, para não colidir). */
+export const NUMEROS_DOS_CENARIOS = {
+  placaComDoisCr: { placa: 58, crAtual: 58, crDuplicado: 158 },
+  placaComFrotaEAcionista: { placa: 57, crFrota: 57, crAcionista: 157 },
+  placaDeCadastroIncompleto: { placa: 59, cr: 59 },
+  placaSemCr: { placa: 60, cr: 60 },
+  operacaoDemo: { placaInicial: 61, placas: 8, crsDeServico: [161, 162] },
+  crDeServicoSemOperacao: 163,
+  crQueDivergeDaUnidade: 164,
+} as const;
