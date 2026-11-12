@@ -1,6 +1,6 @@
 # Ficha: Frota › Acompanhamento (a grade por conjunto)
 
-Escrita em 11/11/2026. **Só desenho: a grade por conjunto não está construída** (hoje a grade é por placa; fatia A1 de
+Escrita em 11/11/2026. **A grade por conjunto está construída em ramo, aguardando o checkpoint** (fatia A1, 12/11/2026; antes era por placa; fatia A1 de
 `docs/superpowers/plans/2026-11-11-acompanhamento-v2.md`). Desenho de origem: `docs/acompanhamento-v2.md`, item (a).
 Referência de layout (inspiração, dados fictícios): o artefato do Acompanhamento, arquivo `Main.dc.html`.
 
@@ -101,7 +101,7 @@ A grade **preenche a largura do cartão** e só rola por dentro (`docs/padrao-de
 
 - Rota: `/frota/acompanhamento` (modo Grade, `?modo=grade`). Módulo Frota (cor `#4338CA`).
 - Quem vê: Administrador, Diretoria e Gestor de frota (escopo da carteira). Operacional não.
-- Estado no catálogo: **pronta** (grade por placa). A grade por conjunto é a fatia A1: ainda desenho.
+- Estado no catálogo: **pronta**. A grade por conjunto (A1) está em ramo (`a1-grade-por-conjunto`), sem motorista (fatia A6) e sem disponibilidade do dia.
 
 ## Estados e rótulos de vigência
 
