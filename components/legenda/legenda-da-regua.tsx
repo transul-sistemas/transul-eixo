@@ -18,7 +18,7 @@ export function GruposDaLegenda({ grupos }: { grupos: readonly GrupoMontado[] })
           data-grupo-da-legenda={g.id}
           className="border-border bg-card break-inside-avoid rounded-xl border px-4 py-3.5"
         >
-          <h2 id={`legenda-${g.id}`} className="text-muted-foreground mb-1.5 text-sm font-semibold">
+          <h2 id={`legenda-${g.id}`} className="text-muted-foreground mb-1.5 text-xs font-semibold tracking-wider uppercase">
             {g.nome}
           </h2>
           <ul>
