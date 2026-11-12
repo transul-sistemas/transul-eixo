@@ -58,6 +58,35 @@
   --status-patio-suave: color-mix(in srgb, var(--status-patio) 14%, var(--superficie));
   --status-fora: #8a94a6;
   --status-fora-suave: color-mix(in srgb, var(--status-fora) 14%, var(--superficie));
+
+  /* tons de cada sigla (A5): fundo e texto. Verde em cinco degraus, quanto mais escuro mais perto de
+     gerar receita; a sigla é sempre escrita, a cor só reforça. Texto de 4,5:1 ou mais sobre o fundo. */
+  --status-atividade-1: #14532d;
+  --status-atividade-1-texto: #ffffff;
+  --status-atividade-2: #1a7f4b;
+  --status-atividade-2-texto: #ffffff;
+  --status-atividade-3: #7fd6a2;
+  --status-atividade-3-texto: #0b3d24;
+  --status-atividade-4: #b6ebcb;
+  --status-atividade-4-texto: #0f5c3d;
+  --status-atividade-5: #dff5e8;
+  --status-atividade-5-texto: #0f5c3d;
+  --status-atencao-1: #fbecc7;
+  --status-atencao-1-texto: #7a5200;
+  --status-atencao-2: #f5d58a;
+  --status-atencao-2-texto: #5c3d00;
+  --status-impedida-1: #fadadb;
+  --status-impedida-1-texto: #8a1f24;
+  --status-impedida-2: #f3b4b6;
+  --status-impedida-2-texto: #6e1318;
+  --status-impedida-3: #b42328;
+  --status-impedida-3-texto: #ffffff;
+  --status-patio-1: #d5ebfb;
+  --status-patio-1-texto: #0b5688;
+  --status-fora-1: #e5e8ee;
+  --status-fora-1-texto: #4a5568;
+  --status-fora-2: #c3c9d4;
+  --status-fora-2-texto: #343c4b;
 }
 
 .dark {
@@ -112,4 +141,33 @@
   --status-patio-suave: color-mix(in srgb, var(--status-patio) 22%, var(--superficie));
   --status-fora: #8a94a6;
   --status-fora-suave: color-mix(in srgb, var(--status-fora) 22%, var(--superficie));
+
+  /* tons de cada sigla (A5), tema escuro: os degraus seguem a mesma ordem de intensidade (o mais
+     vivo é o mais perto de gerar receita). Valores do escuro aguardam a confirmação de Alexandre. */
+  --status-atividade-1: #3ddc8c;
+  --status-atividade-1-texto: #04200f;
+  --status-atividade-2: #2a9d63;
+  --status-atividade-2-texto: #03180c;
+  --status-atividade-3: #1d6b45;
+  --status-atividade-3-texto: #ffffff;
+  --status-atividade-4: #174a33;
+  --status-atividade-4-texto: #d4f5e3;
+  --status-atividade-5: #12362a;
+  --status-atividade-5-texto: #c9efdc;
+  --status-atencao-1: #5c4310;
+  --status-atencao-1-texto: #fde7b0;
+  --status-atencao-2: #8a6414;
+  --status-atencao-2-texto: #ffffff;
+  --status-impedida-1: #4d2227;
+  --status-impedida-1-texto: #ffc9cc;
+  --status-impedida-2: #7a2a31;
+  --status-impedida-2-texto: #ffe0e2;
+  --status-impedida-3: #c93a40;
+  --status-impedida-3-texto: #ffffff;
+  --status-patio-1: #17415f;
+  --status-patio-1-texto: #cfe8fb;
+  --status-fora-1: #2b3447;
+  --status-fora-1-texto: #d3d9e6;
+  --status-fora-2: #444e63;
+  --status-fora-2-texto: #ffffff;
 }
