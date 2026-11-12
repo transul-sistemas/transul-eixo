@@ -131,6 +131,7 @@ test("com 20, 50 ou 100 linhas a tabela rola por dentro e a página continua sem
   page,
 }) => {
   await abrir(page, "/frota/acompanhamento?tam=100", TELAS[0], "light");
+  await expect(page.getByTestId("grade-do-mes")).toBeVisible();
   const m = await medir(page, "grade-do-mes");
   expect(m.paginaAltura).toBeLessThanOrEqual(m.paginaAlturaDaJanela);
   await expect(page.getByTestId("total-da-grade")).toBeInViewport({ ratio: 1 });
