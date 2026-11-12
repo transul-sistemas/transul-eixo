@@ -10,7 +10,7 @@
 begin;
 \ir apoio/como_usuario.psql
 
-select plan(57);
+select plan(62);
 
 create function pg_temp.id(p_nome text) returns uuid language sql as $$
   select nullif(current_setting('t.' || lower(regexp_replace(p_nome, '[^A-Za-z0-9]', '_', 'g')), true), '')::uuid
@@ -112,8 +112,11 @@ $$;
 
 -- ---- dados -------------------------------------------------------------------------------------
 -- Gestor A: conjunto kA (iA1 desde 02/01 12h; iA2 de 10/01 09h a 20/01 15h), conjunto kB (iB1 desde 15/01),
---   fora de conjunto: kS (cavalo sem implemento), cam (caminhão), iL (implemento solto).
+--   conjunto kD (iD de 03/01 a 12/01: solto no fim do mês), conjunto 'Caminhão' kS (cavalo que nunca engatou) e
+--   cam (caminhão); fora de conjunto: iL (implemento solto) e ap (apoio).
 -- Gestor C: conjunto kC (iC desde 05/01).
+-- Regra de 12/11/2026: cavalo sem implemento é o conjunto 'Caminhão'; só implemento solto, apoio e
+-- equipamento ficam em 'Fora de conjunto'.
 select pg_temp.pessoa('Gestor A', 111000001, 'gestor_de_frota', true);
 select pg_temp.pessoa('Gestor C', 111000002, 'gestor_de_frota', true);
 select pg_temp.pessoa('Adm', 111000003, 'administrador', false);
@@ -131,10 +134,15 @@ select pg_temp.completar('iA2', 11112, 'GCJ1B02', 'Gestor A', 'F', 'Grãos 111',
 select pg_temp.completar('iB1', 11113, 'GCJ1B03', 'Gestor A', 'X', 'Grãos 111', 'implemento');
 select pg_temp.completar('iC', 11114, 'GCJ1B04', 'Gestor C', 'F', 'Cimento 111', 'implemento');
 select pg_temp.completar('iL', 11115, 'GCJ1B05', 'Gestor A', 'F', 'Grãos 111', 'implemento');
+select pg_temp.completar('kD', 11106, 'GCJ1A07', 'Gestor A', 'F', 'Grãos 111');
+select pg_temp.completar('iD', 11116, 'GCJ1B06', 'Gestor A', 'F', 'Grãos 111', 'implemento');
+select pg_temp.completar('ap', 11107, 'GCJ1A06', 'Gestor A', 'F', 'Grãos 111', 'apoio');
 select nucleo.engatar(pg_temp.id('kA'), pg_temp.id('iA1'), 1::smallint, '2026-01-02 12:00-03');
 select nucleo.engatar(pg_temp.id('kA'), pg_temp.id('iA2'), 2::smallint, '2026-01-10 09:00-03');
 select nucleo.engatar(pg_temp.id('kB'), pg_temp.id('iB1'), 1::smallint, '2026-01-15 09:00-03');
 select nucleo.engatar(pg_temp.id('kC'), pg_temp.id('iC'), 1::smallint, '2026-01-05 09:00-03');
+select nucleo.engatar(pg_temp.id('kD'), pg_temp.id('iD'), 1::smallint, '2026-01-03 09:00-03');
+select nucleo.desatrelar(pg_temp.id('kD'), '2026-01-12 15:00-03');
 select nucleo.registrar_evento(pg_temp.id('kA'), 'ETc', '2026-01-03 10:00-03');
 select nucleo.desatrelar(pg_temp.id('kA'), '2026-01-20 15:00-03', array[pg_temp.id('iA2')]);
 select nucleo.registrar_evento(pg_temp.id('kA'), 'MAc', '2026-01-25 10:00-03');
@@ -165,10 +173,10 @@ select ok(
 -- ---- Gestor A: o escopo e a forma da linha ---------------------------------------------------------
 select tests.como(pg_temp.id('auth_Gestor A'));
 select set_config('t.grade', nucleo.grade_por_conjunto('2026-01-01')::text, true);
-select is((current_setting('t.grade')::jsonb->>'total')::int, 2, 'grade: o Gestor A vê os dois conjuntos da carteira dele');
+select is((current_setting('t.grade')::jsonb->>'total')::int, 5, 'grade: o Gestor A vê os cinco conjuntos da carteira dele (o cavalo sem implemento e o caminhão são conjuntos)');
 select is(
   (select array_agg(l->>'placa' order by l->>'placa') from jsonb_array_elements(current_setting('t.grade')::jsonb->'linhas') l),
-  array['GCJ1A01', 'GCJ1A02'], 'grade: a linha é o cavalo do conjunto, ordenada pela placa'
+  array['GCJ1A01', 'GCJ1A02', 'GCJ1A04', 'GCJ1A05', 'GCJ1A07'], 'grade: a linha é o cavalo (ou o caminhão) do conjunto, ordenada pela placa'
 );
 select is(jsonb_array_length(pg_temp.linha(current_setting('t.grade')::jsonb, 'GCJ1A01')->'dias'), 31, 'grade: janeiro tem 31 colunas de dia');
 select is(
@@ -179,6 +187,26 @@ select is(
   pg_temp.linha(current_setting('t.grade')::jsonb, 'GCJ1A01')->>'nome_do_conjunto',
   nucleo.nome_do_conjunto(pg_temp.id('kA'), now()),
   'grade: o nome do conjunto vem da nomenclatura, calculado e nunca gravado na placa'
+);
+select is(
+  pg_temp.linha(current_setting('t.grade')::jsonb, 'GCJ1A04')->>'nome_do_conjunto', 'Caminhão',
+  'nome: cavalo que nunca engatou no mês é o conjunto Caminhão'
+);
+select is(
+  pg_temp.linha(current_setting('t.grade')::jsonb, 'GCJ1A05')->>'nome_do_conjunto', 'Caminhão',
+  'nome: o caminhão também é o conjunto Caminhão'
+);
+select is(
+  pg_temp.linha(current_setting('t.grade')::jsonb, 'GCJ1A07')->>'nome_do_conjunto', 'Sem implemento',
+  'nome: cavalo que teve implemento no mês e acabou sem nenhum é Sem implemento'
+);
+select is(
+  (pg_temp.celula_do_implemento(current_setting('t.grade')::jsonb, 'GCJ1B06', 11)->>'engatado')::boolean, true,
+  'desengate: o dia 11 ainda é do conjunto do cavalo D'
+);
+select is(
+  (pg_temp.celula_do_implemento(current_setting('t.grade')::jsonb, 'GCJ1B06', 12)->>'engatado')::boolean, false,
+  'desengate: no dia 12, o do desengate à tarde, o implemento já saiu'
 );
 select is(
   pg_temp.linha(current_setting('t.grade')::jsonb, 'GCJ1A01')->'tipos_de_cr', '["frota"]'::jsonb,
@@ -254,21 +282,21 @@ select is(
 
 -- ---- fora de conjunto, chips e paginação -----------------------------------------------------------------
 select is(
-  (current_setting('t.grade')::jsonb->'fora'->>'total')::int, 3,
-  'fora de conjunto: o cavalo sem implemento, o caminhão e o implemento solto do Gestor A'
+  (current_setting('t.grade')::jsonb->'fora'->>'total')::int, 2,
+  'fora de conjunto: só o apoio e o implemento solto do Gestor A'
 );
 select is(
   (select array_agg(l->>'placa' order by l->>'placa') from jsonb_array_elements(current_setting('t.grade')::jsonb->'fora'->'linhas') l),
-  array['GCJ1A04', 'GCJ1A05', 'GCJ1B05'], 'fora de conjunto: uma linha por placa, ordenada'
+  array['GCJ1A06', 'GCJ1B05'], 'fora de conjunto: uma linha por placa, ordenada'
 );
 select is(
   (select count(*) from jsonb_array_elements(current_setting('t.grade')::jsonb->'fora'->'linhas') l
-    where l->>'placa' in ('GCJ1A01', 'GCJ1B01')),
-  0::bigint, 'fora de conjunto: quem está num conjunto não aparece aqui'
+    where l->>'placa' in ('GCJ1A01', 'GCJ1B01', 'GCJ1A04', 'GCJ1A05', 'GCJ1B06')),
+  0::bigint, 'fora de conjunto: quem forma conjunto (inclusive o cavalo sem implemento e o caminhão) não aparece aqui'
 );
 select is(
-  current_setting('t.grade')::jsonb->'chips', '{"todos": 2, "em-atividade": 1, "atencao": 0, "impedida": 1, "patio": 0, "fora": 0}'::jsonb,
-  'chips: a contagem por grupo vem do banco (kA impedido, kB em atividade)'
+  current_setting('t.grade')::jsonb->'chips', '{"todos": 5, "em-atividade": 1, "atencao": 0, "impedida": 1, "patio": 3, "fora": 0}'::jsonb,
+  'chips: a contagem por grupo vem do banco (kA impedido, kB em atividade, três no pátio)'
 );
 select is(
   (nucleo.grade_por_conjunto('2026-01-01', '{"grupo": "impedida"}')->>'total')::int, 1,
@@ -295,11 +323,11 @@ select is(
   'paginação: a página 2 com uma linha por página traz o segundo conjunto'
 );
 select is(
-  nucleo.grade_por_conjunto('2026-01-01', '{}', 1, 1)->>'paginas', '2',
-  'paginação: duas páginas de um conjunto'
+  nucleo.grade_por_conjunto('2026-01-01', '{}', 1, 1)->>'paginas', '5',
+  'paginação: cinco páginas de um conjunto'
 );
 select is(
-  (nucleo.grade_por_conjunto('2026-01-01', '{"fora_pagina": 2}', 1, 2)->'fora'->'linhas'->0->>'placa'), 'GCJ1B05',
+  (nucleo.grade_por_conjunto('2026-01-01', '{"fora_pagina": 2}', 1, 1)->'fora'->'linhas'->0->>'placa'), 'GCJ1B05',
   'paginação: a seção "fora de conjunto" tem página própria'
 );
 select is(
@@ -311,20 +339,20 @@ reset role;
 -- ---- X de Y conjuntos com lançamento --------------------------------------------------------------------
 select tests.como(pg_temp.id('auth_Gestor A'));
 select results_eq(
-  $$select x, y from nucleo.conjuntos_com_lancamento_no_dia('2026-01-02')$$, $$values (1::bigint, 1::bigint)$$,
-  'X de Y no dia 2: o conjunto A está montado (12h) e teve o lançamento inicial: 1 de 1'
+  $$select x, y from nucleo.conjuntos_com_lancamento_no_dia('2026-01-02')$$, $$values (5::bigint, 5::bigint)$$,
+  'X de Y no dia 2: os cinco conjuntos do Gestor A nasceram nesse dia, com o lançamento inicial: 5 de 5'
 );
 select results_eq(
-  $$select x, y from nucleo.conjuntos_com_lancamento_no_dia('2026-01-04')$$, $$values (0::bigint, 1::bigint)$$,
-  'X de Y no dia 4: 0 de 1 (sem lançamento)'
+  $$select x, y from nucleo.conjuntos_com_lancamento_no_dia('2026-01-04')$$, $$values (0::bigint, 5::bigint)$$,
+  'X de Y no dia 4: 0 de 5 (sem lançamento)'
 );
 select results_eq(
-  $$select x, y from nucleo.conjuntos_com_lancamento_no_dia('2026-01-15')$$, $$values (0::bigint, 2::bigint)$$,
-  'X de Y no dia 15: o conjunto B entra em Y no dia em que foi montado'
+  $$select x, y from nucleo.conjuntos_com_lancamento_no_dia('2026-01-15')$$, $$values (0::bigint, 5::bigint)$$,
+  'X de Y no dia 15: 0 de 5'
 );
 select results_eq(
-  $$select x, y from nucleo.conjuntos_com_lancamento_no_dia('2026-01-16')$$, $$values (1::bigint, 2::bigint)$$,
-  'X de Y no dia 16: o lançamento do conjunto B conta: 1 de 2'
+  $$select x, y from nucleo.conjuntos_com_lancamento_no_dia('2026-01-16')$$, $$values (1::bigint, 5::bigint)$$,
+  'X de Y no dia 16: o lançamento do conjunto B conta: 1 de 5'
 );
 select is(
   pg_temp.erro_de(format('select * from nucleo.conjuntos_com_lancamento_no_dia(%L)', ((now() at time zone 'America/Sao_Paulo')::date + 1)::text)),
@@ -334,16 +362,16 @@ reset role;
 
 select tests.como(pg_temp.id('auth_Adm'));
 select results_eq(
-  $$select x, y from nucleo.conjuntos_com_lancamento_no_dia('2026-01-16')$$, $$values (1::bigint, 3::bigint)$$,
-  'X de Y no dia 16, para o Administrador (os três conjuntos): 1 de 3, conferido com a contagem manual'
+  $$select x, y from nucleo.conjuntos_com_lancamento_no_dia('2026-01-16')$$, $$values (1::bigint, 6::bigint)$$,
+  'X de Y no dia 16, para o Administrador (os seis conjuntos): 1 de 6, conferido com a contagem manual'
 );
 select is(
   nucleo.lancar_situacao_do_dia(pg_temp.id('kC'), 'ETc', '2026-01-16')->>'sigla', 'ETc',
   'lançar: o Administrador lança ETc no conjunto C no dia 16'
 );
 select results_eq(
-  $$select x, y from nucleo.conjuntos_com_lancamento_no_dia('2026-01-16')$$, $$values (2::bigint, 3::bigint)$$,
-  'X de Y: depois do lançamento do conjunto C, 2 de 3'
+  $$select x, y from nucleo.conjuntos_com_lancamento_no_dia('2026-01-16')$$, $$values (2::bigint, 6::bigint)$$,
+  'X de Y: depois do lançamento do conjunto C, 2 de 6'
 );
 select set_config('t.grade_adm', nucleo.grade_por_conjunto('2026-01-01')::text, true);
 select is(
@@ -358,7 +386,7 @@ reset role;
 
 -- ---- o mês, o escopo dos demais perfis -------------------------------------------------------------------------
 select tests.como(pg_temp.id('auth_Adm'));
-select is((nucleo.grade_por_conjunto('2026-01-01')->>'total')::int, 3, 'RLS: o Administrador vê os três conjuntos');
+select is((nucleo.grade_por_conjunto('2026-01-01')->>'total')::int, 6, 'RLS: o Administrador vê os seis conjuntos');
 select is(
   jsonb_array_length(nucleo.grade_por_conjunto('2026-02-01')->'linhas'->0->'dias'), 28,
   'mês: fevereiro tem 28 colunas (as colunas seguem os dias do mês)'
@@ -373,7 +401,7 @@ select is(
 );
 reset role;
 select tests.como(pg_temp.id('auth_Dir'));
-select is((nucleo.grade_por_conjunto('2026-01-01')->>'total')::int, 3, 'RLS: a Diretoria vê os três conjuntos');
+select is((nucleo.grade_por_conjunto('2026-01-01')->>'total')::int, 6, 'RLS: a Diretoria vê os seis conjuntos');
 reset role;
 select tests.como(pg_temp.id('auth_Gestor C'));
 select is(
