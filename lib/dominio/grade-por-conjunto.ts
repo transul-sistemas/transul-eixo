@@ -78,8 +78,7 @@ export function rotuloDoSelo(selo: {
 }
 
 export type MedidaDoDia =
-  | { tipo: "vazia" }
-  | { tipo: "medida"; x: number; y: number; completa: boolean };
+  { tipo: "vazia" } | { tipo: "medida"; x: number; y: number; completa: boolean };
 
 /** "X de Y conjuntos com lançamento hoje": sem Y, a medida é vazia (nunca "0 de 0"). */
 export function medidaDoDia(x: number, y: number): MedidaDoDia {
