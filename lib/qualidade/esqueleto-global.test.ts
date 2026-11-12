@@ -20,9 +20,8 @@ const PENDENCIAS_DO_OLHO: Record<string, string> = {
     "o olho de Placas é o Espiar, na célula da placa (CelulaDaPlaca), não no fim da linha",
   // Telas prontas com tabela que ainda não ganhou o olho no fim da linha.
   "app/(sistema)/frota/placas/pagina-de-placas.tsx": "usa TabelaDePlacas (olho = Espiar na placa)",
-  "app/(sistema)/frota/acompanhamento/grade-do-mes.tsx": "grade mês a mês do Acompanhamento",
   "app/(sistema)/frota/acompanhamento/pagina-do-acompanhamento.tsx":
-    "usa a grade e a TabelaDePlacas",
+    "as tabelas do Agora e do Censo (a grade por conjunto tem o olho)",
   "app/(sistema)/frota/analise/pagina-da-analise.tsx": "tabelas das quatro camadas da análise",
   "app/(sistema)/resultados/visao-geral/pagina-da-visao-geral.tsx": "tabela por agrupamento",
   "app/(sistema)/frota/excecoes/pagina-da-fila.tsx":

@@ -1,22 +1,21 @@
 import { cookies } from "next/headers";
-import { SeletorDeTamanho } from "@/components/tabela/seletor-de-tamanho";
 import {
+  lerDensidadeLembrada,
   lerTamanhoLembrado,
+  NOME_DO_COOKIE_DA_DENSIDADE_DA_GRADE,
   NOME_DO_COOKIE_DO_TAMANHO,
-  TAMANHOS_DE_PAGINA,
 } from "@/lib/navegacao/preferencias-da-tabela";
 import Link from "next/link";
 import { connection } from "next/server";
 import type { ReactNode } from "react";
-import { formatarData, formatarMes, hojeEmSaoPaulo } from "@/components/formato/data";
+import { formatarData, hojeEmSaoPaulo } from "@/components/formato/data";
 import { formatarInteiro } from "@/components/formato/numero";
 import { Etiqueta } from "@/components/etiqueta";
 import { FaixaDeKpis } from "@/components/layout/faixa-de-kpis";
 import { BotaoDaLegenda } from "@/components/legenda/faixa-de-legenda";
 import { PaginaDeLeitura } from "@/components/layout/pagina-de-leitura";
-import { ProvedorDoUsuario } from "@/components/navegacao/usuario-da-sessao";
 import { EsqueletoDaTabela, ListaVazia } from "@/components/tabela/estados";
-import { lerAgora, lerCenso, lerGrade, type LinhaDoAgora } from "@/lib/dados/acompanhamento";
+import { lerAgora, lerCenso, type LinhaDoAgora } from "@/lib/dados/acompanhamento";
 import { modoDosDados } from "@/lib/dados/fonte";
 import { NOMES_DOS_TIPOS, TIPOS_DE_ATIVO } from "@/lib/dados/placas-tipos";
 import { NOMES_DOS_CHIPS } from "@/lib/dominio/status";
@@ -26,14 +25,12 @@ import {
   type EstadoDoAcompanhamento,
   lerAcompanhamento,
   TAMANHO_PADRAO_DA_GRADE,
-  mesVizinho,
   NOMES_DOS_AGRUPAMENTOS,
 } from "@/lib/navegacao/acompanhamento";
 import { acharTela } from "@/lib/navegacao/catalogo";
-import { exigirSessao } from "@/lib/seguranca/sessao-do-servidor";
 import { cn } from "@/lib/utils";
 import { STATUS, type Status } from "@/lib/visual/tons";
-import { GradeDoMes } from "./grade-do-mes";
+import { ModoGrade } from "./modo-grade";
 
 export type ParametrosDaBusca = Promise<Record<string, string | string[] | undefined>>;
 
@@ -126,104 +123,6 @@ function Filtros({
         Filtrar
       </button>
     </form>
-  );
-}
-
-async function ModoGrade({ estado, hoje }: { estado: EstadoDoAcompanhamento; hoje: string }) {
-  // O assistente "Lançar situação" guarda o rascunho pelo usuário da sessão (ProvedorDoUsuario).
-  const [grade, sessao] = await Promise.all([lerGrade(estado), exigirSessao()]);
-  const mesAtual = hoje.slice(0, 7);
-  return (
-    <>
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div className="flex items-center gap-2" aria-label="Mês da grade">
-          <Link
-            className={classeDoLink}
-            href={enderecoDoAcompanhamento(
-              { ...estado, mes: mesVizinho(estado.mes, -1), pagina: 1 },
-              hoje,
-            )}
-          >
-            Mês anterior
-          </Link>
-          <span
-            className="min-w-20 text-center font-semibold tabular-nums"
-            data-testid="mes-da-grade"
-          >
-            {formatarMes(estado.mes)}
-          </span>
-          {estado.mes < mesAtual ? (
-            <Link
-              className={classeDoLink}
-              href={enderecoDoAcompanhamento(
-                { ...estado, mes: mesVizinho(estado.mes, 1), pagina: 1 },
-                hoje,
-              )}
-            >
-              Próximo mês
-            </Link>
-          ) : null}
-        </div>
-        <Filtros estado={estado} comBusca />
-      </div>
-      {grade.total === 0 ? (
-        <ListaVazia
-          titulo={
-            estado.busca || estado.tipo
-              ? "Nenhuma placa encontrada"
-              : "Ainda não há placas para acompanhar"
-          }
-          descricao={
-            estado.busca || estado.tipo
-              ? "Nenhuma placa combina com a busca e o tipo escolhidos. Limpe os filtros para ver a grade inteira."
-              : "Quando houver placas na sua visão (carteira, operação ou filial), elas aparecem aqui, uma por linha."
-          }
-          {...(estado.busca || estado.tipo
-            ? {
-                hrefLimpar: enderecoDoAcompanhamento(
-                  { ...estado, busca: "", tipo: null, pagina: 1 },
-                  hoje,
-                ),
-              }
-            : {})}
-        />
-      ) : (
-        <ProvedorDoUsuario usuario={sessao.usuarioId}>
-          <GradeDoMes grade={grade} />
-        </ProvedorDoUsuario>
-      )}
-      <nav aria-label="Páginas da grade" className="flex flex-wrap items-center gap-3 text-sm">
-        <span data-testid="total-da-grade" className="text-muted-foreground">
-          {formatarInteiro(grade.total)} placas · página {formatarInteiro(grade.pagina)} de{" "}
-          {formatarInteiro(grade.paginas)}
-        </span>
-        <SeletorDeTamanho
-          tam={estado.tam}
-          enderecos={Object.fromEntries(
-            TAMANHOS_DE_PAGINA.map((t) => [
-              t,
-              enderecoDoAcompanhamento({ ...estado, tam: t, pagina: 1 }, hoje),
-            ]),
-          )}
-        />
-        {grade.pagina > 1 ? (
-          <Link
-            className={classeDoLink}
-            href={enderecoDoAcompanhamento({ ...estado, pagina: grade.pagina - 1 }, hoje)}
-          >
-            Página anterior
-          </Link>
-        ) : null}
-        {grade.pagina < grade.paginas ? (
-          <Link
-            className={classeDoLink}
-            href={enderecoDoAcompanhamento({ ...estado, pagina: grade.pagina + 1 }, hoje)}
-          >
-            Próxima página
-          </Link>
-        ) : null}
-      </nav>
-    </>
   );
 }
 
@@ -431,6 +330,9 @@ export async function PaginaDoAcompanhamento({
     (await cookies()).get(NOME_DO_COOKIE_DO_TAMANHO)?.value,
     TAMANHO_PADRAO_DA_GRADE,
   );
+  const densidade = lerDensidadeLembrada(
+    (await cookies()).get(NOME_DO_COOKIE_DA_DENSIDADE_DA_GRADE)?.value,
+  );
   const estado = lerAcompanhamento(paraParametros(await searchParams), hoje, tamLembrado);
   const { titulo, descricao } = cabecalho();
   let conteudo: ReactNode;
@@ -442,7 +344,7 @@ export async function PaginaDoAcompanhamento({
       />
     );
   } else if (estado.modo === "grade") {
-    conteudo = <ModoGrade estado={estado} hoje={hoje} />;
+    conteudo = <ModoGrade estado={estado} hoje={hoje} densidade={densidade} />;
   } else if (estado.modo === "agora") {
     conteudo = <ModoAgora estado={estado} hoje={hoje} />;
   } else if (estado.modo === "censo") {

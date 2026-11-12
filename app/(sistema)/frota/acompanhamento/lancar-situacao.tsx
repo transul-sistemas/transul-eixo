@@ -5,7 +5,7 @@ import type { Resolver } from "react-hook-form";
 import { formatarData } from "@/components/formato/data";
 import { useUsuarioDaSessao } from "@/components/navegacao/usuario-da-sessao";
 import { Assistente } from "@/components/wizard/assistente";
-import type { LinhaDaGrade } from "@/lib/dados/acompanhamento-tipos";
+import type { AlvoDoLancamento } from "@/lib/dados/acompanhamento-tipos";
 import { esquemaLancarSituacao } from "@/lib/dominio/esquemas/acompanhamento";
 import { NOMES_DAS_SIGLAS, type Sigla } from "@/lib/dominio/status";
 import { siglasParaLancar } from "@/lib/navegacao/acompanhamento";
@@ -32,13 +32,13 @@ const DEFINICAO: DefinicaoDeAssistente = {
 };
 
 export function LancarSituacao({
-  linha,
+  alvo: linha,
   dia,
   aoFechar,
   aoGravar,
   focoFinal,
 }: {
-  linha: LinhaDaGrade;
+  alvo: AlvoDoLancamento;
   dia: string;
   aoFechar: () => void;
   aoGravar: () => void;
