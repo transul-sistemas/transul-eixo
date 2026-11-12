@@ -8,6 +8,36 @@ Modelo de entrada:
 
 ---
 
+## 12/11/2026 — Critério (d) estendido a todo assistente do inventário
+
+- **Contexto:** o inventário `docs/assistentes-e-popups.md` (12/11/2026) lista 50 assistentes e popups, existentes e novos. O
+  critério (d) dos testes de estrutura (`toda ação tem rota, botão, entrada no Ctrl+K e permissão`, entrada de 11/11/2026
+  "Estrutura completa, gerenciador de processos e vínculos com história") hoje cobre só as 11 ações de
+  `lib/navegacao/acoes.ts`; o inventário mostra assistentes sem entrada ali (Lançar situação, Confirmar a carteira, Criar
+  ordem, Nova locação, Cadastrar parceiro e pessoa, entre outros).
+- **Extensão do critério (d):** **todo assistente do inventário tem**, verificado por teste:
+  1. **uma rota ou um gatilho** que o abre: `?assistente=<id>` numa tela do catálogo, um botão de célula ou linha, ou uma
+     tarefa da caixa (o processo aponta para o assistente, `docs/gerenciador-de-processos.md`); a Posição do dia (porta
+     obrigatória) abre pelo gatilho do primeiro acesso depois das 5h;
+  2. **um botão** com o nome do verbo do assistente, o mesmo no botão, no cartão da tarefa e no Ctrl+K (verbo mais objeto,
+     do começo ao fim);
+  3. **uma entrada no Ctrl+K** (`lib/navegacao/acoes.ts`) para todo assistente que a pessoa abre sem partir de uma linha ou
+     tarefa; o que depende de uma linha entra pela busca como "ir à tela" com o contexto, e a **porta obrigatória** é a única
+     exceção declarada, com o motivo no teste;
+  4. **uma permissão** (`modulo × ação × escopo`) conferida em `exigirPermissao()` na Server Action e na RLS, **mais** o teste de
+     matriz dos quatro perfis; nenhum assistente grava com a `service_role`; o Administrador não age em nome de ninguém (H5).
+- **O teste:** o inventário vira dado (lista de ids em `lib/navegacao/`, espelho de `docs/assistentes-e-popups.md`); o teste
+  falha se um id do inventário não tiver as quatro marcas, se uma ação do catálogo não estiver no inventário (e vice-versa,
+  critério (a)) ou se um assistente `em-breve` aparecer para o Administrador ou a Diretoria (critério (b)). As exceções
+  conhecidas entram na lista do próprio teste, **com o motivo, e a lista só encolhe**, como as pendências do olho
+  (`lib/qualidade/esqueleto-global.test.ts`).
+- **Estado de hoje (leitura do inventário):** o catálogo tem 11 ações; faltam no Ctrl+K, entre os que não partem de uma linha,
+  Lançar situação, Lançar o dia, Dar baixa, Confirmar a carteira, Trocar CR, Criar ordem de carregamento, Cadastrar parceiro,
+  Nova locação, Cadastrar pessoa e Fechar o mês. Nada disso é código desta entrada: **só documentação**.
+- **Alternativas descartadas:** testar só as ações do catálogo (deixa o assistente sem Ctrl+K passar despercebido); exigir
+  Ctrl+K da porta obrigatória (ela não pode ser aberta por escolha).
+- **Quem decidiu:** a confirmar por Alexandre (extensão pedida na rodada de 12/11/2026, junto do inventário).
+
 ## 11/11/2026 — Auditoria de exposição e a regra da documentação sem dado sensível
 
 - **Decisão (Alexandre):** o repositório **continua público**; **não vira privado** e o **histórico não é
@@ -214,7 +244,7 @@ Lote de conferência de `docs/cr-regras.md` (divergências 5 e 6). Decisões e h
   - (a) catálogo e inventário não divergem;
   - (b) nenhuma tela "em breve" para Administrador e Diretoria;
   - (c) matriz catálogo × 4 perfis, inclusive por endereço digitado, mais pgTAP de RLS;
-  - (d) toda ação tem rota, botão, entrada no Ctrl+K e permissão;
+  - (d) toda ação tem rota, botão, entrada no Ctrl+K e permissão; **estendido em 12/11/2026: todo assistente do inventário `docs/assistentes-e-popups.md` cumpre o mesmo critério** (ver a entrada de 12/11/2026 acima);
   - (e) toda rota tem `error.tsx`, carregamento e os estados vazio, sem permissão e sem dados ainda;
   - (f) 1366, 1092, 820 e 390 sem rolagem lateral da página;
   - (g) navegação sem beco e links em todo código de placa, operação, CR, parceiro e pessoa;
