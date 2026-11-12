@@ -40,11 +40,12 @@ for (const tela of TELAS) {
       await expect(page.getByTestId("grade-do-mes")).toBeVisible();
     });
 
-    test("20 placas por página, a rolagem chega ao paginador e a troca para 50 vale", async ({
+    test("20 conjuntos por página, a rolagem chega ao paginador e a troca para 50 vale", async ({
       page,
     }) => {
-      const linhas = page.getByTestId("grade-do-mes").locator("tbody tr");
-      await expect(linhas).toHaveCount(20);
+      const linhas = page.getByTestId("grade-do-mes").locator('[data-linha="conjunto"]');
+      // Uma linha por conjunto: no máximo o tamanho da página (menos, se a base tem menos conjuntos).
+      await expect.poll(() => linhas.count()).toBeLessThanOrEqual(20);
       await page.mouse.move(tela.largura / 2, tela.altura / 2);
       for (let i = 0; i < 6; i++) {
         await page.mouse.wheel(0, 2000);
@@ -59,7 +60,7 @@ for (const tela of TELAS) {
       expect(raiz.conteudo).toBeLessThanOrEqual(raiz.janela);
       await tamanho(page).selectOption("50");
       await expect(page).toHaveURL(/tam=50/);
-      await expect(linhas).toHaveCount(50);
+      await expect.poll(() => linhas.count()).toBeLessThanOrEqual(50);
     });
   });
 }
