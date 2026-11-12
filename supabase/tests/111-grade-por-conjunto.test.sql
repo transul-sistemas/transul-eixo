@@ -10,7 +10,7 @@
 begin;
 \ir apoio/como_usuario.psql
 
-select plan(62);
+select plan(64);
 
 create function pg_temp.id(p_nome text) returns uuid language sql as $$
   select nullif(current_setting('t.' || lower(regexp_replace(p_nome, '[^A-Za-z0-9]', '_', 'g')), true), '')::uuid
@@ -305,6 +305,16 @@ select is(
 select is(
   (nucleo.grade_por_conjunto('2026-01-01', '{"grupo": "impedida"}')->'chips'->>'em-atividade')::int, 1,
   'chips: a contagem de cada grupo ignora a seleção do próprio filtro de grupo'
+);
+select is(
+  (select array_agg(l->>'placa' order by l->>'placa')
+     from jsonb_array_elements(nucleo.grade_por_conjunto('2026-01-01', '{"grupo": "impedida"}')->'linhas') l),
+  array['GCJ1A01'], 'chips: as linhas devolvidas pelo filtro são só as do grupo impedida (a página, não só a contagem)'
+);
+select is(
+  (select array_agg(l->>'placa' order by l->>'placa')
+     from jsonb_array_elements(nucleo.grade_por_conjunto('2026-01-01', '{"grupo": "patio"}')->'linhas') l),
+  array['GCJ1A04', 'GCJ1A05', 'GCJ1A07'], 'chips: o filtro de pátio traz os três conjuntos no pátio'
 );
 select is(
   (nucleo.grade_por_conjunto('2026-01-01', '{"busca": "gcj1b03"}')->>'total')::int, 1,
