@@ -1,15 +1,14 @@
 -- Frota › Acompanhamento v2, fatia A1: a grade por conjunto e a medida "X de Y conjuntos com lançamento hoje".
 --
---  * A linha da grade passa a ser o conjunto: o cavalo ou o caminhão (com os implementos engatados no
---    mês, recuados embaixo). Cavalo que nunca engatou no mês é o conjunto 'Caminhão'; quem teve implemento
---    no mês e terminou sem nenhum é 'Sem implemento' (regra de 12/11/2026). A situação do cavalo vale para o conjunto: o implemento engatado herda a
+--  * A linha da grade passa a ser o conjunto: o cavalo que teve implemento engatado no mês, com os
+--    implementos recuados embaixo. A situação do cavalo vale para o conjunto: o implemento engatado herda a
 --    sigla do cavalo (a herança é calculada por nucleo.situacao_no_dia, nunca gravada). A célula de um dia
 --    vale pelo fim do dia (hoje, agora): engatar de manhã põe o implemento no conjunto naquele dia;
 --    desatrelar à tarde o tira naquele mesmo dia.
 --  * O selo por célula conta os eventos do dia do cavalo (a herança dispensa contar os do implemento) e
 --    marca se algum foi manual e se algum foi lançado depois do dia (correção tardia).
---  * "Fora de conjunto" lista, em página própria, só o que não forma conjunto: implemento solto (sem
---    engate no mês), apoio e equipamento.
+--  * "Fora de conjunto" lista, em página própria, o que não esteve em conjunto no mês: cavalo sem
+--    implemento, caminhão, apoio, equipamento e implemento solto.
 --  * Os totais (total de conjuntos, contagem dos chips, X e Y) saem prontos do banco.
 --  * Sem motorista nesta fatia (A6). Nenhuma função aqui é SECURITY DEFINER: vale a RLS de quem chama.
 -- Nenhuma tabela nova.
@@ -90,9 +89,9 @@ revoke all on function nucleo.dias_do_implemento(uuid, uuid, date, date) from pu
 comment on function nucleo.dias_do_implemento(uuid, uuid, date, date) is
   'Os dias de um implemento sob um cavalo: engatado (pelo fim do dia) e a sigla herdada do cavalo; fora do conjunto, sem sigla.';
 
--- Os conjuntos da grade do mês: cavalos e caminhões (sem baixa antes do mês) que já existiam até o fim do
--- mês (têm evento de situação), pelos filtros de busca (placa do cavalo ou de um implemento) e de tipo de
--- CR; sem o filtro de grupo, para a contagem dos chips. Com a RLS de quem consulta.
+-- Os conjuntos da grade do mês: cavalos (sem baixa antes do mês) que tiveram composição no mês, pelos
+-- filtros de busca (placa do cavalo ou de um implemento) e de tipo de CR; sem o filtro de grupo, para a
+-- contagem dos chips. Com a RLS de quem consulta.
 create function nucleo.conjuntos_da_grade(p_inicio date, p_busca text, p_tipo_de_cr text)
 returns table (
   ativo_id uuid, placa text, modelo text, ano integer, operacao text, sigla text, grupo text, tipos_de_cr text[]
@@ -112,11 +111,11 @@ as $$
     from nucleo.leitura_da_placa l
     cross join t
     cross join lateral (select nucleo.tipos_de_cr_do_ativo(l.ativo_id, t.ref) as tipos) x
-   where l.tipo in ('cavalo', 'caminhao')
+   where l.tipo = 'cavalo'
      and (l.baixada_em is null or l.baixada_em >= t.de)
      and exists (
-       select 1 from nucleo.evento_de_status e
-        where e.ativo_id = l.ativo_id and e.excluido_em is null and e.em < t.ate
+       select 1 from nucleo.composicao c
+        where c.cavalo_id = l.ativo_id and c.excluido_em is null and c.periodo && tstzrange(t.de, t.ate, '[)')
      )
      and (p_tipo_de_cr is null or p_tipo_de_cr = any (x.tipos))
      and (t.busca = ''
@@ -131,11 +130,11 @@ as $$
 $$;
 revoke all on function nucleo.conjuntos_da_grade(date, text, text) from public;
 comment on function nucleo.conjuntos_da_grade(date, text, text) is
-  'Os conjuntos (cavalos e caminhões que já existiam no mês) da grade do Acompanhamento, pelos filtros, com a RLS de quem consulta.';
+  'Os conjuntos (cavalos com composição no mês) da grade do Acompanhamento, pelos filtros, com a RLS de quem consulta.';
 
--- "X de Y conjuntos com lançamento": Y são os conjuntos ativos no dia (cavalo ou caminhão que já existia e
--- não foi baixado antes do dia); X são os que têm ao menos um evento de situação do cavalo (ou do caminhão)
--- com a hora naquele dia, de qualquer origem. Definição em docs/glossario.md.
+-- "X de Y conjuntos com lançamento": Y são os conjuntos ativos no dia (cavalo não baixado antes do dia, com
+-- composição vigente em algum momento dele); X são os que têm ao menos um evento de situação do cavalo com a
+-- hora naquele dia, de qualquer origem. Definição em docs/glossario.md.
 create function nucleo.conjuntos_com_lancamento_no_dia(p_dia date)
 returns table (x bigint, y bigint)
 language plpgsql
@@ -158,11 +157,11 @@ begin
           )))::bigint,
          count(*)::bigint
     from nucleo.leitura_da_placa a
-   where a.tipo in ('cavalo', 'caminhao')
+   where a.tipo = 'cavalo'
      and (a.baixada_em is null or a.baixada_em >= v_inicio)
      and exists (
-       select 1 from nucleo.evento_de_status e
-        where e.ativo_id = a.ativo_id and e.excluido_em is null and e.em < v_fim
+       select 1 from nucleo.composicao c
+        where c.cavalo_id = a.ativo_id and c.excluido_em is null and c.periodo && tstzrange(v_inicio, v_fim, '[)')
      );
 end;
 $$;
@@ -233,13 +232,7 @@ begin
       select c.placa, c.ativo_id, jsonb_build_object(
         'ativo_id', c.ativo_id, 'placa', c.placa, 'modelo', c.modelo, 'ano', c.ano, 'operacao', c.operacao,
         'sigla_atual', c.sigla, 'grupo_atual', c.grupo, 'tipos_de_cr', to_jsonb(c.tipos_de_cr),
-        'nome_do_conjunto', case
-          when exists (
-            select 1 from nucleo.composicao m
-             where m.cavalo_id = c.ativo_id and m.excluido_em is null and m.periodo && tstzrange(v_de, v_ate, '[)')
-          ) then coalesce(nucleo.nome_do_conjunto(c.ativo_id, nucleo.instante_do_dia(least(v_fim - 1, v_hoje))), 'Sem implemento')
-          else 'Caminhão'
-        end,
+        'nome_do_conjunto', nucleo.nome_do_conjunto(c.ativo_id, nucleo.instante_do_dia(least(v_fim - 1, v_hoje))),
         'dias', nucleo.dias_do_ativo(c.ativo_id, v_inicio, v_fim),
         'implementos', (
           select coalesce(jsonb_agg(jsonb_build_object(
@@ -262,11 +255,10 @@ begin
        offset (v_pagina - 1) * v_tam limit v_tam
     ) p;
 
-  -- Fora de conjunto: só o que não forma conjunto (implemento solto, apoio e equipamento sem composição no mês).
+  -- Fora de conjunto: o que não esteve em conjunto no mês (cavalo ou implemento sem composição no mês).
   select count(*)::integer into v_fora_total
     from nucleo.leitura_da_placa l
-   where l.tipo not in ('cavalo', 'caminhao')
-     and (l.baixada_em is null or l.baixada_em >= v_de)
+   where (l.baixada_em is null or l.baixada_em >= v_de)
      and not exists (
        select 1 from nucleo.composicao c
         where (c.cavalo_id = l.ativo_id or c.implemento_id = l.ativo_id)
@@ -286,8 +278,7 @@ begin
         'dias', nucleo.dias_do_ativo(l.ativo_id, v_inicio, v_fim)
       ) as linha
         from nucleo.leitura_da_placa l
-       where l.tipo not in ('cavalo', 'caminhao')
-         and (l.baixada_em is null or l.baixada_em >= v_de)
+       where (l.baixada_em is null or l.baixada_em >= v_de)
          and not exists (
            select 1 from nucleo.composicao c
             where (c.cavalo_id = l.ativo_id or c.implemento_id = l.ativo_id)
@@ -312,7 +303,7 @@ end;
 $$;
 revoke all on function nucleo.grade_por_conjunto(date, jsonb, integer, integer) from public;
 comment on function nucleo.grade_por_conjunto(date, jsonb, integer, integer) is
-  'A grade do Acompanhamento por conjunto: uma linha por cavalo ou caminhão (implementos recuados, herdando a situação do cavalo; sem engate é o conjunto Caminhão), a seção fora de conjunto (implemento solto, apoio e equipamento), a contagem dos chips e o X de Y de hoje; paginada no banco (placa, desempate pelo id), com a RLS de quem consulta.';
+  'A grade do Acompanhamento por conjunto: uma linha por cavalo com composição no mês (implementos recuados, herdando a situação do cavalo), a seção fora de conjunto, a contagem dos chips e o X de Y de hoje; paginada no banco (placa, desempate pelo id), com a RLS de quem consulta.';
 
 -- ---------------------------------------------------------------------------------------------
 -- O que o app executa (a lista de exceções, com o porquê de cada uma)
