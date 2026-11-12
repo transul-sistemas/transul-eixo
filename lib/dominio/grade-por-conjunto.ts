@@ -160,3 +160,17 @@ export function medidaDoDia(x: number, y: number): MedidaDoDia {
   if (y <= 0) return { tipo: "vazia" };
   return { tipo: "medida", x, y, completa: x >= y };
 }
+
+/**
+ * O período de um implemento engatado no conjunto, para a dica do chip e o painel. Engatar e desatrelar no
+ * mesmo dia (ou um fim anterior ao início, que não deve existir) vira "no mesmo dia", nunca "até" anterior a "de".
+ */
+export function rotuloDoPeriodoDoEngate(
+  de: string,
+  ate: string | null,
+  formatar: (dia: string) => string,
+): string {
+  if (ate === null) return `engatado desde ${formatar(de)}`;
+  if (ate <= de) return `engatado em ${formatar(de)} e desatrelado no mesmo dia`;
+  return `engatado de ${formatar(de)} a ${formatar(ate)}`;
+}

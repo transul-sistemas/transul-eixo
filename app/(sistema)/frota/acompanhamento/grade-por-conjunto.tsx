@@ -29,6 +29,7 @@ import {
   type DiaDaColuna,
   diasDoMes,
   rotuloDaCausa,
+  rotuloDoPeriodoDoEngate,
   rotuloDoSelo,
 } from "@/lib/dominio/grade-por-conjunto";
 import { ehSigla, NOMES_DAS_SIGLAS, tomDaSigla } from "@/lib/dominio/status";
@@ -278,9 +279,7 @@ function textoDoModelo(modelo: string, ano: number | null): string {
 }
 
 function periodoDoEngate(i: ImplementoDoConjunto): string {
-  return i.engatadoAte === null
-    ? `engatado desde ${formatarData(i.engatadoDe)}`
-    : `engatado de ${formatarData(i.engatadoDe)} a ${formatarData(i.engatadoAte)}`;
+  return rotuloDoPeriodoDoEngate(i.engatadoDe, i.engatadoAte, formatarData);
 }
 
 function OlhoDaLinha({ placa, detalhes }: { placa: string; detalhes: DetalheDoItem[] }) {
