@@ -43,7 +43,8 @@ describe("buscarTelas: nomes", () => {
 
 describe("buscarTelas: modos do Acompanhamento da Frota (Ctrl+K)", () => {
   const modos = [
-    { id: "grade", nome: "Grade" },
+    { id: "grade", nome: "Grade · Conjuntos" },
+    { id: "soltas", nome: "Grade · Soltas" },
     { id: "agora", nome: "Agora" },
     { id: "censo", nome: "Censo" },
     { id: "mapa", nome: "Mapa" },
@@ -73,12 +74,13 @@ describe("buscarTelas: modos do Acompanhamento da Frota (Ctrl+K)", () => {
     expect(resultado[0]?.rota).toBe("/frota/acompanhamento?modo=mapa");
     expect(resultado).toHaveLength(1);
   });
-  it("buscar Acompanhamento acha a tela e também os quatro modos", () => {
+  it("buscar Acompanhamento acha a tela e também os cinco modos", () => {
     const rotas = buscarTelas("acompanhamento", "Administrador").map((r) => r.rota);
     expect(rotas[0]).toBe("/frota/acompanhamento");
     expect(rotas).toEqual(
       expect.arrayContaining([
         "/frota/acompanhamento?modo=grade",
+        "/frota/acompanhamento?modo=soltas",
         "/frota/acompanhamento?modo=agora",
         "/frota/acompanhamento?modo=censo",
         "/frota/acompanhamento?modo=mapa",

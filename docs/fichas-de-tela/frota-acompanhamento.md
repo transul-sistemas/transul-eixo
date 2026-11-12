@@ -1,6 +1,6 @@
 # Ficha: Frota › Acompanhamento (a grade por conjunto)
 
-Escrita em 11/11/2026. **Só desenho: a grade por conjunto não está construída** (hoje a grade é por placa; fatia A1 de
+Escrita em 11/11/2026. **A grade por conjunto está construída em ramo, aguardando o checkpoint** (fatia A1, 12/11/2026; antes era por placa; fatia A1 de
 `docs/superpowers/plans/2026-11-11-acompanhamento-v2.md`). Desenho de origem: `docs/acompanhamento-v2.md`, item (a).
 Referência de layout (inspiração, dados fictícios): o artefato do Acompanhamento, arquivo `Main.dc.html`.
 
@@ -9,7 +9,7 @@ Referência de layout (inspiração, dados fictícios): o artefato do Acompanham
 "Cada conjunto da frota, em cada dia do mês, estava fazendo o quê, e quem ainda não lançou o dia de hoje?"
 
 A unidade da linha é o conjunto (o cavalo com os implementos engatados), porque é o conjunto que roda, carrega e
-fatura. A pergunta nunca é "como está a placa AAA" isolada: a placa solta só aparece na seção "Fora de conjunto".
+fatura. A pergunta nunca é "como está a placa AAA" isolada: o cavalo sem implemento é o conjunto "Caminhão" (e quem terminou o mês sem implemento é "Sem implemento"); só o que não forma conjunto (implemento solto, apoio e equipamento) aparece na seção "Fora de conjunto".
 
 ## 2. Quem usa e que decisão toma
 
@@ -60,7 +60,7 @@ quando algum foi manual ou correção tardia) e a medida única **"X de Y conjun
 
 - Sem evento no mês: "Nenhum lançamento em novembro de 2026. As placas nascem em PÁT; lance a primeira situação do
   dia para ver a grade se mover." Botão: **Lançar o dia**.
-- Sem conjunto montado: "Nenhum conjunto montado ainda. Cavalo sem implemento aparece como caminhão." Botão:
+- Sem conjunto montado: "Nenhum conjunto montado ainda." Cavalo sem implemento aparece como o conjunto "Caminhão". Botão:
   **Montar conjunto** (abre o assistente de composição em Placas).
 - Nunca "0 de 0 conjuntos" nem disponibilidade de 0%: sem Y, a medida mostra "Sem dados ainda: depende de conjuntos
   ativos no dia".
@@ -86,9 +86,9 @@ contagem de linhas.
 
 A grade **preenche a largura do cartão** e só rola por dentro (`docs/padrao-de-telas.md`):
 
-- colunas dos dias com `repeat(var(--dias), minmax(40px, 1fr))` e teto de cerca de 80 px por célula; **o número de
+- colunas dos dias com `repeat(var(--dias), minmax(34px, 1fr))` (decisão de Alexandre, 12/11/2026: a sigla de três letras em 12 px cabe em 34 px) e teto de cerca de 80 px por célula; **o número de
   colunas segue os dias do mês** (28 a 31; o protótipo mostra 9 dias só para caber no desenho);
-- a **primeira coluna** (conjunto, com os implementos embaixo) tem largura fixa e é **sticky**;
+- a **primeira coluna** (conjunto, com os implementos embaixo) tem largura fixa de **12 rem** e é **sticky**;
 - em tela estreita (1092 px) a grade **rola dentro do cartão**, com o **cabeçalho dos dias e a primeira coluna
   fixos**; a **página nunca ganha rolagem horizontal**;
 - **densidade Compacto ou Confortável** lembrada por usuário; **dia da semana** no cabeçalho, **fim de semana** com
@@ -101,7 +101,7 @@ A grade **preenche a largura do cartão** e só rola por dentro (`docs/padrao-de
 
 - Rota: `/frota/acompanhamento` (modo Grade, `?modo=grade`). Módulo Frota (cor `#4338CA`).
 - Quem vê: Administrador, Diretoria e Gestor de frota (escopo da carteira). Operacional não.
-- Estado no catálogo: **pronta** (grade por placa). A grade por conjunto é a fatia A1: ainda desenho.
+- Estado no catálogo: **pronta**. A grade por conjunto (A1) está em ramo (`a1-grade-por-conjunto`), sem motorista (fatia A6) e sem disponibilidade do dia.
 
 ## Estados e rótulos de vigência
 
@@ -151,3 +151,9 @@ com o motivo.
 SVG avulso); os **dados são reais** (o protótipo é fictício); o **mapa é real**, com a linha pela rodovia (onde
 houver mapa); moeda, data e números pelos componentes de `components/formato/`; **20 por página e olhinho em toda
 linha** (o protótipo mostra poucas linhas). Específico desta tela: os rótulos em maiúsculas do protótipo ("VEÍCULO", "MOTORISTA", "CONJUNTO E MOTORISTA") viram letra minúscula normal (regra de textos da interface); a grade tem 20 conjuntos por página, cabeçalho e primeira coluna fixos e o olhinho no fim da linha.
+
+## Decisão de 12/11/2026: largura da grade em 1366 px
+
+- **Em 1366 px a barra lateral recolhe sozinha** (como no modo foco) na grade do Acompanhamento; o mínimo do dia continua **34 px**. Sem a barra, a grade de 31 dias **cabe sem rolagem** (cerca de 1.294 px de cartão).
+- **Abaixo de 1280 px** a grade rola **por dentro** do cartão, com a coluna do conjunto (12 rem) e o cabeçalho dos dias fixos; a página nunca ganha rolagem lateral.
+- **Estado:** decidido; a implementação (recolher a barra em 1366) entra no lote de ajustes que Alexandre mandar depois de testar a prévia. O e2e de 1366 passa a exigir "cabe e preenche" quando a barra estiver recolhida.

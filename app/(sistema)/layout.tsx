@@ -57,16 +57,17 @@ function BarraLateralReservada() {
     <div
       aria-hidden
       data-barra-reservada=""
-      className="border-border bg-sidebar shrink-0 max-lg:hidden lg:sticky lg:top-0 lg:h-screen lg:w-72 lg:border-r"
+      className="border-border bg-sidebar shrink-0 group-has-[[data-grade-fixa]]/casca:max-[1439px]:hidden max-lg:hidden lg:sticky lg:top-0 lg:h-screen lg:w-72 lg:border-r"
     />
   );
 }
 
-// A página rola sozinha (o menu e o topo ficam fixos). Só o modo foco, que esconde menu e topo para a
-// tabela ocupar a tela, trava a altura na da janela: aí a tabela é o que rola (10/11/2026).
+// A página rola sozinha (o menu e o topo ficam fixos). O modo foco, que esconde menu e topo para a tabela
+// ocupar a tela, e a grade do Acompanhamento (`data-grade-fixa`: a página nunca rola na vertical e, abaixo de
+// 1440 px, a barra lateral recolhe sozinha) travam a altura na da janela: aí a tabela é o que rola.
 export default function LayoutDoSistema({ children }: { children: ReactNode }) {
   return (
-    <div className="group/casca flex min-h-screen flex-1 has-[[data-modo-foco]]:h-dvh has-[[data-modo-foco]]:min-h-0 has-[[data-modo-foco]]:flex-none has-[[data-modo-foco]]:overflow-hidden">
+    <div className="group/casca flex min-h-screen flex-1 has-[[data-grade-fixa]]:h-dvh has-[[data-grade-fixa]]:min-h-0 has-[[data-grade-fixa]]:flex-none has-[[data-grade-fixa]]:overflow-hidden has-[[data-modo-foco]]:h-dvh has-[[data-modo-foco]]:min-h-0 has-[[data-modo-foco]]:flex-none has-[[data-modo-foco]]:overflow-hidden">
       <a
         href="#conteudo"
         className="focus:bg-primary focus:text-primary-foreground focus:ring-ring/50 sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:rounded-lg focus:px-3 focus:py-2 focus:text-sm focus:ring-3 focus:outline-none"

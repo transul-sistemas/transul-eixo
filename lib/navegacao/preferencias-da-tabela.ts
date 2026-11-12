@@ -113,3 +113,56 @@ export function lerTamanhoLembrado(valor: string | undefined, padrao: number): n
   const tam = Number(valor);
   return (TAMANHOS_DE_PAGINA as readonly number[]).includes(tam) ? tam : padrao;
 }
+
+// A densidade das grades de tempo (Acompanhamento, Movimento, Escala): compacta ou confortável, lembrada por
+// pessoa neste navegador num cookie próprio (o servidor já desenha do jeito certo); no login passa para o banco.
+export const NOME_DO_COOKIE_DA_DENSIDADE_DA_GRADE = "eixo-densidade-da-grade";
+
+/** Nunca lança: cookie ausente ou adulterado devolve a densidade compacta. */
+export function lerDensidadeLembrada(valor: string | undefined): Densidade {
+  return (DENSIDADES as readonly (string | undefined)[]).includes(valor)
+    ? (valor as Densidade)
+    : "compacta";
+}
+
+/** O texto para `document.cookie` da densidade da grade (um ano, em toda a aplicação). */
+export function montarCookieDaDensidade(densidade: Densidade, protocolo: string): string {
+  const partes = [
+    `${NOME_DO_COOKIE_DA_DENSIDADE_DA_GRADE}=${densidade}`,
+    "path=/",
+    `max-age=${UM_ANO_EM_SEGUNDOS}`,
+    "SameSite=Lax",
+  ];
+  if (protocolo === "https:") partes.push("Secure");
+  return partes.join("; ");
+}
+
+// O tamanho da página da grade do Acompanhamento ("auto", 20, 50 ou 100): cookie próprio, porque o Auto não
+// existe nas outras listas e a escolha de uma não pode mudar a da outra.
+export const NOME_DO_COOKIE_DO_TAMANHO_DA_GRADE = "eixo-tam-grade";
+
+// A altura da janela, para o servidor contar quantas linhas cabem no modo Auto (a página nunca rola na
+// vertical). A janela grava e regrava ao redimensionar; sem cookie, vale uma janela de 1366 × 768.
+export const NOME_DO_COOKIE_DA_ALTURA_DA_JANELA = "eixo-altura-da-janela";
+const ALTURA_MINIMA = 300;
+const ALTURA_MAXIMA = 4000;
+const ALTURA_PADRAO = 768;
+
+/** Nunca lança: ausente, quebrado ou fora do plausível devolve a altura padrão (768). */
+export function lerAlturaDaJanela(valor: string | undefined): number {
+  if (valor === undefined || !/^\d{3,4}$/.test(valor)) return ALTURA_PADRAO;
+  const n = Number(valor);
+  return n >= ALTURA_MINIMA && n <= ALTURA_MAXIMA ? n : ALTURA_PADRAO;
+}
+
+/** O texto para `document.cookie` da altura da janela (inteira, para baixo). */
+export function montarCookieDaAltura(altura: number, protocolo: string): string {
+  const partes = [
+    `${NOME_DO_COOKIE_DA_ALTURA_DA_JANELA}=${Math.floor(altura)}`,
+    "path=/",
+    `max-age=${UM_ANO_EM_SEGUNDOS}`,
+    "SameSite=Lax",
+  ];
+  if (protocolo === "https:") partes.push("Secure");
+  return partes.join("; ");
+}

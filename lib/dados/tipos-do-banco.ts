@@ -1795,6 +1795,16 @@ isOneToOne: false
 "confirmar_carteira":
 { Args: { "p_chave"?: string,"p_itens": Json,"p_mes": string }; Returns: Json
                            },
+"conjuntos_com_lancamento_no_dia":
+{ Args: { "p_dia": string }; Returns: {
+              "x": number,"y": number
+            }[]
+                           },
+"conjuntos_da_grade":
+{ Args: { "p_busca": string,"p_inicio": string,"p_tipo_de_cr": string }; Returns: {
+              "ano": number,"ativo_id": string,"grupo": string,"modelo": string,"operacao": string,"placa": string,"sigla": string,"tipos_de_cr": (string)[]
+            }[]
+                           },
 "contar_chips_de_placas":
 { Args: { "p_baixadas": boolean,"p_busca": string,"p_grupos": (string)[],"p_para_receber"?: boolean,"p_siglas": (string)[],"p_tipos": (string)[] }; Returns: {
               "chip": string,"quantidade": number
@@ -1852,6 +1862,12 @@ isOneToOne: false
 "dia_do_corte_da_competencia":
 { Args: Record<PropertyKey, never>; Returns: number
                            },
+"dias_do_ativo":
+{ Args: { "p_ativo_id": string,"p_fim": string,"p_inicio": string }; Returns: Json
+                           },
+"dias_do_conjunto":
+{ Args: { "p_cavalo_id": string,"p_fim": string,"p_inicio": string }; Returns: Json
+                           },
 "disponibilizar_placa":
 { Args: { "p_ativo_id": string,"p_chave"?: string,"p_em"?: string,"p_motivo": string,"p_para_gestor_id": string,"p_pendencias": (string)[],"p_versao": number }; Returns: string
                            },
@@ -1900,8 +1916,14 @@ isOneToOne: false
 "garagem_em":
 { Args: { "p_ativo_id": string,"p_em": string }; Returns: string
                            },
+"grade_de_soltas":
+{ Args: { "p_filtros"?: Json,"p_mes": string,"p_pagina"?: number,"p_tam"?: number }; Returns: Json
+                           },
 "grade_do_acompanhamento":
 { Args: { "p_busca"?: string,"p_mes": string,"p_pagina"?: number,"p_tam"?: number,"p_tipos"?: (string)[] }; Returns: Json
+                           },
+"grade_por_conjunto":
+{ Args: { "p_filtros"?: Json,"p_mes": string,"p_pagina"?: number,"p_tam"?: number }; Returns: Json
                            },
 "gravar_campo":
 { Args: { "p_ativo_id": string,"p_campo": string,"p_motivo": string,"p_origem": Database["config"]['Enums']["origem_do_campo"],"p_valor": Json }; Returns: undefined
@@ -2234,6 +2256,16 @@ isOneToOne: false
               "ativo_id": string,"dia": string,"sigla": string
             }[]
                            },
+"soltas_com_situacao_no_dia":
+{ Args: { "p_dia": string }; Returns: {
+              "x": number,"y": number
+            }[]
+                           },
+"soltas_da_grade":
+{ Args: { "p_busca": string,"p_inicio": string,"p_tipo_de_cr": string }; Returns: {
+              "ano": number,"ativo_id": string,"baixada_em": string,"grupo": string,"modelo": string,"operacao": string,"placa": string,"sigla": string,"tipo": string,"tipos_de_cr": (string)[]
+            }[]
+                           },
 "staging_tem_dtneg":
 { Args: Record<PropertyKey, never>; Returns: boolean
                            },
@@ -2251,6 +2283,9 @@ isOneToOne: false
                            },
 "tipo_do_cr_pela_unidade":
 { Args: { "p_unidade": string,"p_veiculo_obrigatorio": boolean }; Returns: Database["nucleo"]['Enums']["tipo_de_cr"]
+                           },
+"tipos_de_cr_do_ativo":
+{ Args: { "p_ativo_id": string,"p_em": string }; Returns: (string)[]
                            },
 "ultima_correcao_tardia_em":
 { Args: { "p_ativo_id": string }; Returns: string

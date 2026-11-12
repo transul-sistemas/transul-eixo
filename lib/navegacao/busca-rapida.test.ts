@@ -36,21 +36,20 @@ describe("montarGrupos: com termo", () => {
       disponivel: true,
     });
   });
-  it("acha os quatro modos do Acompanhamento da Frota, cada um com o seu ?modo=", () => {
-    for (const [nome, id] of [
-      ["grade", "grade"],
-      ["agora", "agora"],
-      ["censo", "censo"],
-      ["mapa", "mapa"],
+  it("acha os cinco modos do Acompanhamento da Frota, cada um com o seu ?modo=", () => {
+    for (const [nome, id, titulo] of [
+      ["conjuntos", "grade", "Grade · Conjuntos"],
+      ["soltas", "soltas", "Grade · Soltas"],
+      ["agora", "agora", "Agora"],
+      ["censo", "censo", "Censo"],
+      ["mapa", "mapa", "Mapa"],
     ] as const) {
       const item = achatar(montarGrupos(nome, "Administrador", SEM_CONTEXTO)).find(
         (i) => i.tipo === "modo",
       );
       expect(item, `modo ${nome}`).toBeDefined();
       expect(item?.rota).toBe(`/frota/acompanhamento?modo=${id}`);
-      expect(item?.rotulo).toBe(
-        `Frota › Acompanhamento › ${nome[0]?.toUpperCase()}${nome.slice(1)}`,
-      );
+      expect(item?.rotulo).toBe(`Frota › Acompanhamento › ${titulo}`);
     }
   });
   it("mapa acha o modo e a tela Mapa do sistema, cada um com a sua rota", () => {

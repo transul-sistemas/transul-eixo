@@ -103,11 +103,12 @@ Definições do desenho de 11/11/2026 (`docs/gerenciador-de-processos.md` e `doc
 
 ## Acompanhamento v2
 
-Definições do desenho de 11/11/2026 (`docs/acompanhamento-v2.md`). Ainda não construído.
+Definições do desenho de 11/11/2026 (`docs/acompanhamento-v2.md`). A grade por conjunto e o "X de Y" estão construídos (fatia A1, 12/11/2026); o resto ainda é desenho.
 
 | Termo | O que é |
 | --- | --- |
-| Conjuntos com lançamento hoje | "X de Y": **Y** são os conjuntos ativos no dia (cavalo não baixado com composição vigente) e **X** são os que têm ao menos um evento de situação com a hora naquele dia, de qualquer origem. Os programados não contam. |
+| Conjuntos com lançamento hoje | "X de Y": **Y** são os conjuntos ativos no dia (cavalo ou caminhão que já existia e não foi baixado antes do dia; cavalo sem implemento é o conjunto "Caminhão") e **X** são os que têm ao menos um evento de situação **do cavalo (ou do caminhão)** com a hora naquele dia, de qualquer origem (manual, operacional, Sankhya ou derivada). Os programados não contam. Os dois números saem de `nucleo.conjuntos_com_lancamento_no_dia(p_dia)`, com a RLS de quem consulta; a tela nunca soma. Sem Y, a medida mostra "Sem dados ainda: depende de conjuntos ativos no dia" (nunca "0 de 0"). (H) Conta só o evento do cavalo, porque o implemento herda a situação dele; confirmar com Alexandre. |
+| Linha da grade por conjunto | O cavalo ou o caminhão, com os implementos engatados no mês recuados embaixo. A situação do cavalo vale para o conjunto; a célula de um dia vale pelo fim do dia (hoje, pelo agora), então engatar de manhã põe o implemento no conjunto naquele dia e desatrelar à tarde o tira naquele mesmo dia. **Nome:** a nomenclatura (carroceria × configuração) quando há implemento; cavalo que não engatou nada no mês é o conjunto **Caminhão**; quem teve implemento no mês e terminou sem nenhum é **Sem implemento** (regra de 12/11/2026). "Fora de conjunto" é só o que não forma conjunto: implemento solto, apoio e equipamento. Os chips contam os conjuntos por grupo de situação do cavalo, no banco. |
 | Situação programada | Situação marcada para um dia futuro. Fica fora do realizado (não conta em "X de Y", na disponibilidade nem no resultado) e vira tarefa de confirmar no dia. |
 | Correção tardia | Lançamento de situação em dia anterior a hoje, com motivo, marcado e contado no selo da célula. Em mês fechado exige permissão. |
 | Esperado até a data | Meta do conjunto × dias decorridos ÷ dias do mês. O mês em curso leva o rótulo "mês em curso" e não é classificado como crítico sem dado lançado. |

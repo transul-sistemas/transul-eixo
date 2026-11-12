@@ -21,6 +21,11 @@ interface Props {
   lista?: boolean;
   /** Modo foco: esconde a barra lateral e o topo para a tabela ocupar a tela. */
   emFoco?: boolean;
+  /**
+   * Grade que cabe na janela: a página trava na altura da janela e nunca rola na vertical (a grade é o que
+   * rola, por dentro), e abaixo de 1440 px a barra lateral recolhe sozinha. Só vale com `lista`.
+   */
+  alturaFixa?: boolean;
 }
 
 /**
@@ -38,11 +43,13 @@ export function PaginaDeLeitura({
   dadosAte,
   lista = false,
   emFoco = false,
+  alturaFixa = false,
 }: Props) {
   return (
     <div
       data-tela-de-lista={lista ? "" : undefined}
       data-modo-foco={lista && emFoco ? "" : undefined}
+      data-grade-fixa={lista && alturaFixa ? "" : undefined}
       className={cn(
         "flex flex-1 flex-col gap-5 px-4 py-6 sm:px-8",
         lista && "min-h-0 lg:gap-4 lg:py-4",
