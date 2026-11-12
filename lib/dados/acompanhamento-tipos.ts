@@ -18,8 +18,11 @@ export interface CelulaDoConjunto {
   dia: string;
   sigla: string | null;
   grupo: string | null;
-  /** O implemento engatado que impede o conjunto neste dia ("impedido por <placa> · <sigla>"); nulo se não há. */
-  causa?: { ativoId: string; placa: string } | null;
+  /**
+   * Os implementos engatados que impedem o conjunto neste dia, na ordem da posição (vazio se nenhum):
+   * "impedido por <placa> · <sigla>" com uma peça, "impedido por N peças: ..." com mais.
+   */
+  causas?: { ativoId: string; placa: string; sigla: string }[];
   /** Quantos eventos de situação o dia teve (o selo). */
   eventos: number;
   manual: boolean;

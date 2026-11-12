@@ -11,12 +11,12 @@ import {
 const dia = (
   n: number,
   sigla: string | null,
-  causa: { ativo_id: string; placa: string } | null = null,
+  causas: { ativo_id: string; placa: string; sigla: string }[] = [],
 ) => ({
   dia: `2026-11-${String(n).padStart(2, "0")}`,
   sigla,
   grupo: sigla ? "em-atividade" : null,
-  causa,
+  causas,
   eventos: 0,
   manual: false,
   tardia: false,
@@ -50,7 +50,13 @@ const RESPOSTA = {
       grupo_atual: "impedida",
       tipos_de_cr: ["frota"],
       nome_do_conjunto: "Simples",
-      dias: [dia(1, "ETc"), dia(2, "MAc", { ativo_id: "i1", placa: "BBB1B11" })],
+      dias: [
+        dia(1, "ETc"),
+        dia(2, "MAc", [
+          { ativo_id: "i1", placa: "BBB1B11", sigla: "MAc" },
+          { ativo_id: "i2", placa: "BBB1B12", sigla: "DOC" },
+        ]),
+      ],
       implementos: [
         {
           ativo_id: "i1",
@@ -142,8 +148,12 @@ describe("lerGradePorConjunto", () => {
       nomeDoConjunto: "Simples",
       tiposDeCr: ["frota"],
     });
-    expect(g.linhas[0]?.dias[0]?.causa).toBeNull();
-    expect(g.linhas[0]?.dias[1]?.causa).toEqual({ ativoId: "i1", placa: "BBB1B11" });
+    expect(g.linhas[0]?.dias[0]?.causas).toEqual([]);
+    // Duas peças impedindo no mesmo dia: todas as causas chegam, na ordem.
+    expect(g.linhas[0]?.dias[1]?.causas).toEqual([
+      { ativoId: "i1", placa: "BBB1B11", sigla: "MAc" },
+      { ativoId: "i2", placa: "BBB1B12", sigla: "DOC" },
+    ]);
     expect(g.linhas[0]?.implementos[0]).toMatchObject({
       ativoId: "i1",
       posicao: 1,

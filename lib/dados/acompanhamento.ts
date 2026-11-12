@@ -88,7 +88,7 @@ interface CelulaDoBanco {
   dia: string;
   sigla: string | null;
   grupo: string | null;
-  causa?: { ativo_id: string; placa: string } | null;
+  causas?: { ativo_id: string; placa: string; sigla: string }[];
   eventos: number;
   manual: boolean;
   tardia: boolean;
@@ -181,8 +181,10 @@ function dias(celulas: CelulaDoBanco[]): CelulaDoConjunto[] {
     dia: c.dia,
     sigla: c.sigla,
     grupo: c.grupo,
-    ...(c.causa !== undefined
-      ? { causa: c.causa === null ? null : { ativoId: c.causa.ativo_id, placa: c.causa.placa } }
+    ...(c.causas !== undefined
+      ? {
+          causas: c.causas.map((x) => ({ ativoId: x.ativo_id, placa: x.placa, sigla: x.sigla })),
+        }
       : {}),
     eventos: c.eventos,
     manual: c.manual,

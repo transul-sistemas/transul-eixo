@@ -157,7 +157,7 @@ test("a célula de um dia impedido por implemento diz a causa na dica", async ({
   if ((await impedidas.count()) > 0) {
     await expect(impedidas.first()).toHaveAttribute(
       "title",
-      /impedido por [A-Z0-9]{7} · [A-Za-zÀ-ú]{3}/,
+      /impedido por ([A-Z0-9]{7} · [A-Za-zÀ-ú]{3}|\d+ peças: [A-Z0-9]{7} [A-Za-zÀ-ú]{3}(, [A-Z0-9]{7} [A-Za-zÀ-ú]{3})+)/,
     );
   }
 });
