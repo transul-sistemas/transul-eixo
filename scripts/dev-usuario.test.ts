@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
   enderecoLocal,
+  escolherPessoaDemo,
   lerArgumentosDoUsuario,
   lerLoginDePessoaDemo,
   perfilDaPessoaDemo,
@@ -132,5 +133,25 @@ describe("o --pessoa nunca mostra CPF nem a senha", () => {
   it("a ligação à pessoa Demo só procura por nome e não imprime documento", () => {
     expect(texto).toContain("lerLoginDePessoaDemo(");
     expect(texto).not.toMatch(/console\.\w+\([^)]*(documento|cpf)/i);
+  });
+});
+
+describe("escolherPessoaDemo: o mesmo nome Demo pode ser de duas pessoas (gestor e funcionário)", () => {
+  const gestor = { id: "g", gestor: true };
+  const funcionario = { id: "f", gestor: false };
+  it("um nome só, uma pessoa só", () => {
+    expect(escolherPessoaDemo([funcionario], null)).toBe(funcionario);
+    expect(escolherPessoaDemo([gestor], "gestor_de_frota")).toBe(gestor);
+  });
+  it("nome repetido: sem perfil, vale o gestor; com operacional, vale quem não é gestor", () => {
+    expect(escolherPessoaDemo([funcionario, gestor], null)).toBe(gestor);
+    expect(escolherPessoaDemo([funcionario, gestor], "gestor_de_frota")).toBe(gestor);
+    expect(escolherPessoaDemo([gestor, funcionario], "operacional")).toBe(funcionario);
+  });
+  it("sem como decidir, pede o perfil", () => {
+    expect(() => escolherPessoaDemo([funcionario, { id: "f2", gestor: false }], null)).toThrow(
+      /--perfil/,
+    );
+    expect(() => escolherPessoaDemo([], null)).toThrow(/demo:carregar/);
   });
 });

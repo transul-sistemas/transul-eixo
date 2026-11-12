@@ -106,6 +106,27 @@ export function lerLoginDePessoaDemo(
   return { pessoa: nome, perfil, email };
 }
 
+/**
+ * Entre as pessoas com o mesmo nome Demo (um gestor e um funcionário podem coincidir), escolhe a do login:
+ * sem perfil, o gestor; com operacional, quem não é gestor. Sem como decidir, pede o perfil.
+ */
+export function escolherPessoaDemo<T extends { gestor: boolean }>(
+  achadas: readonly T[],
+  pedido: CodigoDoPerfil | null,
+): T {
+  if (achadas.length === 0) {
+    throw new ErroDoEixo(
+      "Não há pessoa Demo com esse nome: carregue a demonstração (pnpm demo:carregar) e confira o nome.",
+    );
+  }
+  if (achadas.length === 1) return achadas[0]!;
+  const candidatas = achadas.filter((p) => (pedido === "operacional" ? !p.gestor : p.gestor));
+  if (candidatas.length === 1) return candidatas[0]!;
+  throw new ErroDoEixo(
+    "Há mais de uma pessoa com esse nome: diga o perfil com --perfil (gestor_de_frota ou operacional).",
+  );
+}
+
 /** O perfil do login da pessoa Demo: o pedido, ou gestor de frota para quem tem o papel, ou operacional. */
 export function perfilDaPessoaDemo(
   temPapelDeGestor: boolean,
@@ -169,28 +190,22 @@ function lerSenhaSemEco(pergunta: string): Promise<string> {
 }
 
 /** A pessoa Demo pelo nome (nunca pelo CPF): o id, se tem o papel de gestor e se o e-mail já é de outra pessoa. */
-async function acharPessoaDemo(nome: string, email: string) {
+async function acharPessoaDemo(nome: string, email: string, pedido: CodigoDoPerfil | null) {
   return comBanco(async (banco) => {
     const { rows } = await banco.query<{ id: string; gestor: boolean }>(
       `select p.id, exists (select 1 from nucleo.papel_da_pessoa pp where pp.pessoa_id = p.id and pp.papel = 'gestor_de_frota') as gestor
          from nucleo.pessoa p where p.nome = $1 and p.excluido_em is null`,
       [nome],
     );
-    if (rows.length === 0) {
-      throw new ErroDoEixo(
-        "Não há pessoa Demo com esse nome: carregue a demonstração (pnpm demo:carregar) e confira o nome.",
-      );
-    }
-    if (rows.length > 1)
-      throw new ErroDoEixo("Há mais de uma pessoa com esse nome: use um nome único.");
+    const escolhida = escolherPessoaDemo(rows, pedido);
     const ocupado = await banco.query<{ pessoa_id: string }>(
       `select u.pessoa_id from nucleo.usuario u join auth.users a on a.id = u.auth_user_id where lower(a.email) = $1`,
       [email],
     );
-    if (ocupado.rows[0] && ocupado.rows[0].pessoa_id !== rows[0]!.id) {
+    if (ocupado.rows[0] && ocupado.rows[0].pessoa_id !== escolhida.id) {
       throw new ErroDoEixo("Esse e-mail já está ligado a outra pessoa: escolha outro com --email.");
     }
-    return rows[0]!;
+    return escolhida;
   });
 }
 
@@ -205,7 +220,7 @@ async function principal() {
   }
   let pessoaDemoId: string | null = null;
   if (demo) {
-    const achada = await acharPessoaDemo(demo.pessoa, email);
+    const achada = await acharPessoaDemo(demo.pessoa, email, demo.perfil);
     pessoaDemoId = achada.id;
     perfil = perfilDaPessoaDemo(achada.gestor, demo.perfil);
   }
