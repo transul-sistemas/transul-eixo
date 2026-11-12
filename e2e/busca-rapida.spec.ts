@@ -97,7 +97,8 @@ test.describe("busca rápida: encontrar e abrir", () => {
   });
 
   for (const [nome, id] of [
-    ["Grade", "grade"],
+    ["Grade · Conjuntos", "grade"],
+    ["Grade · Soltas", "soltas"],
     ["Agora", "agora"],
     ["Censo", "censo"],
     ["Mapa", "mapa"],
