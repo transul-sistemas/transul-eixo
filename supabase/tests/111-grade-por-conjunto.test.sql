@@ -1,8 +1,10 @@
 -- Frota › Acompanhamento v2, fatia A1: a grade por conjunto e a medida "X de Y conjuntos com lançamento hoje".
---  * Uma linha por conjunto (o cavalo com os implementos engatados no mês); o implemento herda a situação
---    do cavalo; engatar e desatrelar no meio do mês muda a linha no dia certo (o dia vale pelo fim do dia).
---  * "Fora de conjunto": o que não esteve em conjunto no mês (cavalo sem implemento, caminhão, apoio,
---    implemento solto), em seção própria, paginada no banco.
+--  * Uma linha por conjunto, UMA PEÇA SÓ (12/11/2026): o cavalo (ou o caminhão) é a cara; os implementos
+--    engatados no mês vêm como chips (placa, engatado de/até), sem células próprias. A situação do dia é a do
+--    cavalo, exceto quando um implemento engatado NAQUELE dia está impedido: aí o conjunto fica impedido e
+--    a célula traz a causa (a placa do implemento). O dia vale pelo fim do dia.
+--  * Aba "Soltas": implemento sem cavalo engatado no mês, apoio e equipamento, com a própria grade, chips
+--    e a medida "X de Y soltas com situação hoje".
 --  * Contagem dos chips, total, X e Y vêm do banco (nunca somados no navegador).
 --  * RLS por perfil, sempre com a chave do usuário (armadilha 9); nenhuma função é SECURITY DEFINER.
 --  * Sem motorista: a fatia A6 trata disso.
@@ -10,7 +12,7 @@
 begin;
 \ir apoio/como_usuario.psql
 
-select plan(64);
+select plan(83);
 
 create function pg_temp.id(p_nome text) returns uuid language sql as $$
   select nullif(current_setting('t.' || lower(regexp_replace(p_nome, '[^A-Za-z0-9]', '_', 'g')), true), '')::uuid
@@ -86,9 +88,9 @@ $$;
 create function pg_temp.celula(p_grade jsonb, p_placa text, p_dia int) returns jsonb language sql as $$
   select pg_temp.linha(p_grade, p_placa)->'dias'->(p_dia - 1)
 $$;
--- A célula (1 a 31) de um implemento, pela placa do implemento (em qualquer conjunto da grade).
-create function pg_temp.celula_do_implemento(p_grade jsonb, p_placa text, p_dia int) returns jsonb language sql as $$
-  select i->'dias'->(p_dia - 1)
+-- O chip de um implemento, pela placa do implemento (em qualquer conjunto da grade).
+create function pg_temp.chip(p_grade jsonb, p_placa text) returns jsonb language sql as $$
+  select i
     from jsonb_array_elements(p_grade->'linhas') l, jsonb_array_elements(l->'implementos') i
    where i->>'placa' = p_placa
 $$;
@@ -113,7 +115,9 @@ $$;
 -- ---- dados -------------------------------------------------------------------------------------
 -- Gestor A: conjunto kA (iA1 desde 02/01 12h; iA2 de 10/01 09h a 20/01 15h), conjunto kB (iB1 desde 15/01),
 --   conjunto kD (iD de 03/01 a 12/01: solto no fim do mês), conjunto 'Caminhão' kS (cavalo que nunca engatou) e
---   cam (caminhão); fora de conjunto: iL (implemento solto) e ap (apoio).
+--   cam (caminhão); soltas: iL (implemento solto) e ap (apoio).
+--   iB1 fica impedido (MAc) em 20/01 estando engatado: o conjunto B fica impedido, com a causa.
+--   iA2 entra em MAN em 22/01, já desatrelado: NÃO impede o conjunto A.
 -- Gestor C: conjunto kC (iC desde 05/01).
 -- Regra de 12/11/2026: cavalo sem implemento é o conjunto 'Caminhão'; só implemento solto, apoio e
 -- equipamento ficam em 'Fora de conjunto'.
@@ -147,6 +151,8 @@ select nucleo.registrar_evento(pg_temp.id('kA'), 'ETc', '2026-01-03 10:00-03');
 select nucleo.desatrelar(pg_temp.id('kA'), '2026-01-20 15:00-03', array[pg_temp.id('iA2')]);
 select nucleo.registrar_evento(pg_temp.id('kA'), 'MAc', '2026-01-25 10:00-03');
 select nucleo.registrar_evento(pg_temp.id('kB'), 'ETc', '2026-01-16 10:00-03');
+select nucleo.registrar_evento(pg_temp.id('iB1'), 'MAc', '2026-01-20 10:00-03');
+select nucleo.registrar_evento(pg_temp.id('iA2'), 'MAN', '2026-01-22 10:00-03');
 select pg_temp.disparar();
 
 -- ---- privilégios e segurança ---------------------------------------------------------------------
@@ -157,7 +163,10 @@ select ok(
        'nucleo.conjuntos_com_lancamento_no_dia(date)',
        'nucleo.conjuntos_da_grade(date,text,text)',
        'nucleo.dias_do_ativo(uuid,date,date)',
-       'nucleo.dias_do_implemento(uuid,uuid,date,date)']::regprocedure[]) f),
+       'nucleo.dias_do_conjunto(uuid,date,date)',
+       'nucleo.soltas_da_grade(date,text,text)',
+       'nucleo.grade_de_soltas(date,jsonb,integer,integer)',
+       'nucleo.soltas_com_situacao_no_dia(date)']::regprocedure[]) f),
   'authenticated executa as funções da grade por conjunto; anon não'
 );
 select ok(
@@ -166,7 +175,10 @@ select ok(
        'nucleo.conjuntos_com_lancamento_no_dia(date)',
        'nucleo.conjuntos_da_grade(date,text,text)',
        'nucleo.dias_do_ativo(uuid,date,date)',
-       'nucleo.dias_do_implemento(uuid,uuid,date,date)']::regprocedure[])),
+       'nucleo.dias_do_conjunto(uuid,date,date)',
+       'nucleo.soltas_da_grade(date,text,text)',
+       'nucleo.grade_de_soltas(date,jsonb,integer,integer)',
+       'nucleo.soltas_com_situacao_no_dia(date)']::regprocedure[])),
   'todas rodam com a RLS de quem chama (nenhuma é SECURITY DEFINER)'
 );
 
@@ -217,53 +229,70 @@ select is(
   'grade: o tipo do CR vigente do cavalo B é Acionista'
 );
 
--- ---- herança, engate e desengate no meio do mês --------------------------------------------------
+-- ---- a situação do conjunto, os chips dos implementos e a causa ----------------------------------------
 select is(
   pg_temp.celula(current_setting('t.grade')::jsonb, 'GCJ1A01', 4)->>'sigla', 'ETc',
-  'herança: o cavalo está em ETc no dia 4'
+  'conjunto: a célula do dia mostra a situação do cavalo (ETc no dia 4)'
 );
 select is(
-  pg_temp.celula_do_implemento(current_setting('t.grade')::jsonb, 'GCJ1B01', 4)->>'sigla', 'ETc',
-  'herança: o implemento engatado herda a sigla do cavalo (ETc no dia 4)'
+  pg_temp.celula(current_setting('t.grade')::jsonb, 'GCJ1A01', 2)->>'sigla', 'PÁT',
+  'conjunto: no dia do engate (02/01, 12h) o conjunto mostra a situação do cavalo (PÁT)'
 );
 select is(
-  pg_temp.celula_do_implemento(current_setting('t.grade')::jsonb, 'GCJ1B01', 2)->>'sigla',
-  pg_temp.celula(current_setting('t.grade')::jsonb, 'GCJ1A01', 2)->>'sigla',
-  'herança: no dia do engate (02/01, 12h) o implemento já tem a sigla do cavalo (PÁT)'
+  (pg_temp.chip(current_setting('t.grade')::jsonb, 'GCJ1B01') ? 'dias'), false,
+  'peça só: o implemento não tem células próprias, só o chip'
 );
 select is(
-  (pg_temp.celula_do_implemento(current_setting('t.grade')::jsonb, 'GCJ1B01', 1)->>'engatado')::boolean, false,
-  'engate: antes do dia do engate o implemento não está no conjunto'
-);
-select is(pg_temp.celula_do_implemento(current_setting('t.grade')::jsonb, 'GCJ1B01', 1)->>'sigla', null,
-  'engate: antes do engate o implemento não herda sigla nenhuma');
-select is(
-  (pg_temp.celula_do_implemento(current_setting('t.grade')::jsonb, 'GCJ1B02', 9)->>'engatado')::boolean, false,
-  'engate no meio do mês: o dia 9 ainda fica fora do conjunto'
+  pg_temp.chip(current_setting('t.grade')::jsonb, 'GCJ1B01')->>'engatado_de', '2026-01-02',
+  'chip: o implemento A1 está engatado desde o dia 2'
 );
 select is(
-  pg_temp.celula_do_implemento(current_setting('t.grade')::jsonb, 'GCJ1B02', 10)->>'sigla', 'ETc',
-  'engate no meio do mês: a linha muda no dia 10, o do engate'
+  pg_temp.chip(current_setting('t.grade')::jsonb, 'GCJ1B01')->>'engatado_ate', null,
+  'chip: sem desengate, o engatado até fica em aberto'
 );
 select is(
-  pg_temp.celula_do_implemento(current_setting('t.grade')::jsonb, 'GCJ1B02', 19)->>'sigla', 'ETc',
-  'desengate: o dia 19 ainda é do conjunto'
+  pg_temp.chip(current_setting('t.grade')::jsonb, 'GCJ1B02')->>'engatado_de', '2026-01-10',
+  'engate no meio do mês: o implemento A2 entra no dia 10, o do engate'
 );
 select is(
-  (pg_temp.celula_do_implemento(current_setting('t.grade')::jsonb, 'GCJ1B02', 20)->>'engatado')::boolean, false,
-  'desengate no meio do mês: a linha muda no dia 20, o do desengate (o dia vale pelo fim do dia)'
+  pg_temp.chip(current_setting('t.grade')::jsonb, 'GCJ1B02')->>'engatado_ate', '2026-01-19',
+  'desengate no meio do mês: o último dia dele no conjunto é o 19 (o dia vale pelo fim do dia)'
+);
+select is(
+  pg_temp.chip(current_setting('t.grade')::jsonb, 'GCJ1B06')->>'engatado_ate', '2026-01-11',
+  'desengate à tarde de 12/01: o último dia no conjunto D é o 11'
 );
 select is(
   pg_temp.celula(current_setting('t.grade')::jsonb, 'GCJ1A01', 26)->>'sigla', 'MAc',
   'situação: o cavalo em MAc (impedida) no dia 26'
 );
 select is(
-  pg_temp.celula_do_implemento(current_setting('t.grade')::jsonb, 'GCJ1B01', 26)->>'sigla', 'MAc',
-  'herança: o conjunto inteiro fica impedido, e o implemento engatado mostra MAc'
+  pg_temp.celula(current_setting('t.grade')::jsonb, 'GCJ1A01', 26)->'causa', 'null'::jsonb,
+  'causa: cavalo impedido por si mesmo não tem causa de implemento'
 );
 select is(
   pg_temp.celula(current_setting('t.grade')::jsonb, 'GCJ1A01', 26)->>'grupo', 'impedida',
   'situação: o grupo da célula MAc é impedida (o tom sai do grupo e da sigla)'
+);
+select is(
+  pg_temp.celula(current_setting('t.grade')::jsonb, 'GCJ1A02', 19)->>'sigla', 'ETc',
+  'conjunto B: no dia 19 o implemento ainda está bem e vale a situação do cavalo (ETc)'
+);
+select is(
+  pg_temp.celula(current_setting('t.grade')::jsonb, 'GCJ1A02', 20)->>'sigla', 'MAc',
+  'conjunto B: no dia 20 o implemento engatado impede o conjunto (MAc)'
+);
+select is(
+  pg_temp.celula(current_setting('t.grade')::jsonb, 'GCJ1A02', 20)->'causa'->>'placa', 'GCJ1B03',
+  'causa: o conjunto B está impedido pelo implemento GCJ1B03'
+);
+select is(
+  pg_temp.celula(current_setting('t.grade')::jsonb, 'GCJ1A02', 20)->>'grupo', 'impedida',
+  'conjunto B: o grupo da célula é impedida'
+);
+select is(
+  pg_temp.celula(current_setting('t.grade')::jsonb, 'GCJ1A01', 22)->>'sigla', 'ETc',
+  'conjunto A: o implemento A2 em MAN no dia 22 já está desatrelado e NÃO impede o conjunto'
 );
 
 -- ---- selo de lançamentos por célula ------------------------------------------------------------------
@@ -280,36 +309,27 @@ select is(
   'selo: dia sem lançamento não leva marca de correção tardia'
 );
 
--- ---- fora de conjunto, chips e paginação -----------------------------------------------------------------
+-- ---- chips e paginação dos conjuntos -----------------------------------------------------------------
 select is(
-  (current_setting('t.grade')::jsonb->'fora'->>'total')::int, 2,
-  'fora de conjunto: só o apoio e o implemento solto do Gestor A'
+  current_setting('t.grade')::jsonb->'chips', '{"todos": 5, "em-atividade": 0, "atencao": 0, "impedida": 2, "patio": 3, "fora": 0}'::jsonb,
+  'chips: a contagem por grupo vem do banco (kA e kB impedidos, três no pátio)'
 );
 select is(
-  (select array_agg(l->>'placa' order by l->>'placa') from jsonb_array_elements(current_setting('t.grade')::jsonb->'fora'->'linhas') l),
-  array['GCJ1A06', 'GCJ1B05'], 'fora de conjunto: uma linha por placa, ordenada'
+  (current_setting('t.grade')::jsonb ? 'fora'), false,
+  'conjuntos: a seção fora de conjunto saiu da grade (virou a aba Soltas)'
 );
 select is(
-  (select count(*) from jsonb_array_elements(current_setting('t.grade')::jsonb->'fora'->'linhas') l
-    where l->>'placa' in ('GCJ1A01', 'GCJ1B01', 'GCJ1A04', 'GCJ1A05', 'GCJ1B06')),
-  0::bigint, 'fora de conjunto: quem forma conjunto (inclusive o cavalo sem implemento e o caminhão) não aparece aqui'
+  (nucleo.grade_por_conjunto('2026-01-01', '{"grupo": "impedida"}')->>'total')::int, 2,
+  'chips: filtrar pelo grupo impedida deixa os dois conjuntos impedidos'
 );
 select is(
-  current_setting('t.grade')::jsonb->'chips', '{"todos": 5, "em-atividade": 1, "atencao": 0, "impedida": 1, "patio": 3, "fora": 0}'::jsonb,
-  'chips: a contagem por grupo vem do banco (kA impedido, kB em atividade, três no pátio)'
-);
-select is(
-  (nucleo.grade_por_conjunto('2026-01-01', '{"grupo": "impedida"}')->>'total')::int, 1,
-  'chips: filtrar pelo grupo impedida deixa só o conjunto impedido'
-);
-select is(
-  (nucleo.grade_por_conjunto('2026-01-01', '{"grupo": "impedida"}')->'chips'->>'em-atividade')::int, 1,
+  (nucleo.grade_por_conjunto('2026-01-01', '{"grupo": "impedida"}')->'chips'->>'patio')::int, 3,
   'chips: a contagem de cada grupo ignora a seleção do próprio filtro de grupo'
 );
 select is(
   (select array_agg(l->>'placa' order by l->>'placa')
      from jsonb_array_elements(nucleo.grade_por_conjunto('2026-01-01', '{"grupo": "impedida"}')->'linhas') l),
-  array['GCJ1A01'], 'chips: as linhas devolvidas pelo filtro são só as do grupo impedida (a página, não só a contagem)'
+  array['GCJ1A01', 'GCJ1A02'], 'chips: as linhas devolvidas pelo filtro são só as do grupo impedida (a página, não só a contagem)'
 );
 select is(
   (select array_agg(l->>'placa' order by l->>'placa')
@@ -337,8 +357,8 @@ select is(
   'paginação: cinco páginas de um conjunto'
 );
 select is(
-  (nucleo.grade_por_conjunto('2026-01-01', '{"fora_pagina": 2}', 1, 1)->'fora'->'linhas'->0->>'placa'), 'GCJ1B05',
-  'paginação: a seção "fora de conjunto" tem página própria'
+  nucleo.grade_por_conjunto('2026-01-01', '{}', 1, 2)->>'paginas', '3',
+  'paginação: cinco conjuntos em páginas de dois dão três páginas'
 );
 select is(
   pg_temp.erro_de($$select nucleo.grade_por_conjunto('2026-01-01', '{"grupo": "azul"}')$$), '22023',
@@ -364,10 +384,78 @@ select results_eq(
   $$select x, y from nucleo.conjuntos_com_lancamento_no_dia('2026-01-16')$$, $$values (1::bigint, 5::bigint)$$,
   'X de Y no dia 16: o lançamento do conjunto B conta: 1 de 5'
 );
+select results_eq(
+  $$select x, y from nucleo.conjuntos_com_lancamento_no_dia('2026-01-20')$$, $$values (0::bigint, 5::bigint)$$,
+  'X de Y no dia 20: o evento do implemento (MAc em B1) não conta, só o do cavalo: 0 de 5'
+);
 select is(
   pg_temp.erro_de(format('select * from nucleo.conjuntos_com_lancamento_no_dia(%L)', ((now() at time zone 'America/Sao_Paulo')::date + 1)::text)),
   '22023', 'X de Y: dia que ainda não chegou é recusado'
 );
+reset role;
+
+-- ---- aba Soltas: implemento sem cavalo engatado no mês, apoio e equipamento ----------------------------------
+select tests.como(pg_temp.id('auth_Gestor A'));
+select set_config('t.soltas', nucleo.grade_de_soltas('2026-01-01')::text, true);
+select is((current_setting('t.soltas')::jsonb->>'total')::int, 2, 'soltas: o apoio e o implemento solto do Gestor A');
+select is(
+  (select array_agg(l->>'placa' order by l->>'placa') from jsonb_array_elements(current_setting('t.soltas')::jsonb->'linhas') l),
+  array['GCJ1A06', 'GCJ1B05'], 'soltas: uma linha por placa, ordenada'
+);
+select is(
+  (select count(*) from jsonb_array_elements(current_setting('t.soltas')::jsonb->'linhas') l
+    where l->>'placa' in ('GCJ1A01', 'GCJ1B01', 'GCJ1A04', 'GCJ1A05', 'GCJ1B06', 'GCJ1B02')),
+  0::bigint, 'soltas: quem formou conjunto no mês (cavalo, caminhão e implemento engatado) não aparece aqui'
+);
+select is(jsonb_array_length(current_setting('t.soltas')::jsonb->'linhas'->0->'dias'), 31, 'soltas: janeiro tem 31 colunas');
+select is(
+  current_setting('t.soltas')::jsonb->'chips', '{"todos": 2, "em-atividade": 0, "atencao": 0, "impedida": 0, "patio": 2, "fora": 0}'::jsonb,
+  'soltas: os chips contam por grupo no banco'
+);
+select is(
+  (nucleo.grade_de_soltas('2026-01-01', '{"grupo": "patio"}')->>'total')::int, 2,
+  'soltas: o filtro de pátio traz as duas'
+);
+select is(
+  (nucleo.grade_de_soltas('2026-01-01', '{"grupo": "impedida"}')->>'total')::int, 0,
+  'soltas: o filtro de impedida não traz nenhuma'
+);
+select is(
+  nucleo.grade_de_soltas('2026-01-01', '{}', 2, 1)->'linhas'->0->>'placa', 'GCJ1B05',
+  'soltas: a página 2 com uma linha por página traz a segunda'
+);
+select is(
+  pg_temp.erro_de($$select nucleo.grade_de_soltas('2026-01-01', '{"grupo": "azul"}')$$), '22023',
+  'soltas: grupo desconhecido é recusado'
+);
+select results_eq(
+  $$select x, y from nucleo.soltas_com_situacao_no_dia('2026-01-02')$$, $$values (2::bigint, 2::bigint)$$,
+  'X de Y soltas no dia 2: as duas nasceram nesse dia, com o lançamento inicial: 2 de 2'
+);
+select results_eq(
+  $$select x, y from nucleo.soltas_com_situacao_no_dia('2026-01-04')$$, $$values (0::bigint, 2::bigint)$$,
+  'X de Y soltas no dia 4: 0 de 2'
+);
+reset role;
+select tests.como(pg_temp.id('auth_Adm'));
+select is(
+  nucleo.lancar_situacao_do_dia(pg_temp.id('ap'), 'MAN', '2026-01-16')->>'sigla', 'MAN',
+  'lançar: o Administrador lança MAN no apoio no dia 16'
+);
+select results_eq(
+  $$select x, y from nucleo.soltas_com_situacao_no_dia('2026-01-16')$$, $$values (1::bigint, 2::bigint)$$,
+  'X de Y soltas no dia 16: depois do lançamento no apoio, 1 de 2'
+);
+select is(
+  pg_temp.erro_de(format('select * from nucleo.soltas_com_situacao_no_dia(%L)', ((now() at time zone 'America/Sao_Paulo')::date + 1)::text)),
+  '22023', 'X de Y soltas: dia que ainda não chegou é recusado'
+);
+reset role;
+select tests.como(pg_temp.id('auth_Gestor C'));
+select is((nucleo.grade_de_soltas('2026-01-01')->>'total')::int, 0, 'RLS: o Gestor C não tem placa solta');
+reset role;
+select tests.como(pg_temp.id('auth_Oper'));
+select is((nucleo.grade_de_soltas('2026-01-01')->>'total')::int, 0, 'RLS: o Operacional sem custódia não vê solta');
 reset role;
 
 select tests.como(pg_temp.id('auth_Adm'));
