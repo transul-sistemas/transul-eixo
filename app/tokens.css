@@ -87,6 +87,10 @@
   --status-fora-1-texto: #4a5568;
   --status-fora-2: #c3c9d4;
   --status-fora-2-texto: #343c4b;
+  /* grade por conjunto (A1): fim de semana e coluna de hoje; sempre com rótulo, nunca só a cor */
+  --grade-fim-de-semana: color-mix(in srgb, var(--texto) 5%, var(--superficie));
+  --grade-hoje: var(--acao-suave);
+  --grade-hoje-borda: var(--acao);
 }
 
 .dark {
@@ -170,4 +174,8 @@
   --status-fora-1-texto: #d3d9e6;
   --status-fora-2: #444e63;
   --status-fora-2-texto: #ffffff;
+  /* grade por conjunto (A1) */
+  --grade-fim-de-semana: color-mix(in srgb, var(--texto) 7%, var(--superficie));
+  --grade-hoje: var(--acao-suave);
+  --grade-hoje-borda: var(--acao);
 }

@@ -113,3 +113,26 @@ export function lerTamanhoLembrado(valor: string | undefined, padrao: number): n
   const tam = Number(valor);
   return (TAMANHOS_DE_PAGINA as readonly number[]).includes(tam) ? tam : padrao;
 }
+
+// A densidade das grades de tempo (Acompanhamento, Movimento, Escala): compacta ou confortável, lembrada por
+// pessoa neste navegador num cookie próprio (o servidor já desenha do jeito certo); no login passa para o banco.
+export const NOME_DO_COOKIE_DA_DENSIDADE_DA_GRADE = "eixo-densidade-da-grade";
+
+/** Nunca lança: cookie ausente ou adulterado devolve a densidade compacta. */
+export function lerDensidadeLembrada(valor: string | undefined): Densidade {
+  return (DENSIDADES as readonly (string | undefined)[]).includes(valor)
+    ? (valor as Densidade)
+    : "compacta";
+}
+
+/** O texto para `document.cookie` da densidade da grade (um ano, em toda a aplicação). */
+export function montarCookieDaDensidade(densidade: Densidade, protocolo: string): string {
+  const partes = [
+    `${NOME_DO_COOKIE_DA_DENSIDADE_DA_GRADE}=${densidade}`,
+    "path=/",
+    `max-age=${UM_ANO_EM_SEGUNDOS}`,
+    "SameSite=Lax",
+  ];
+  if (protocolo === "https:") partes.push("Secure");
+  return partes.join("; ");
+}

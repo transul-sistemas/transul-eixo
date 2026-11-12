@@ -48,6 +48,10 @@ const nomes = [
   ...status.flatMap((s) => [`--status-${s}`, `--status-${s}-suave`]),
   // Os tons de cada sigla (A5): fundo e texto, vindos da régua (TONS_DE_STATUS).
   ...TONS_DE_STATUS.flatMap((t) => [`--status-${t}`, `--status-${t}-texto`]),
+  // A grade por conjunto (A1): o fim de semana e a coluna de hoje.
+  "--grade-fim-de-semana",
+  "--grade-hoje",
+  "--grade-hoje-borda",
 ];
 
 describe("tokens do Eixo", () => {

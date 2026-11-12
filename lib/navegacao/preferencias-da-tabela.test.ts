@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
+  lerDensidadeLembrada,
+  montarCookieDaDensidade,
+  NOME_DO_COOKIE_DA_DENSIDADE_DA_GRADE,
   lerTamanhoLembrado,
   lerPreferencias,
   montarCookie,
@@ -163,5 +166,24 @@ describe("tamanho de página lembrado (cookie único das listas)", () => {
     for (const ruim of [undefined, "", "25", "7", "9999", "x", "50.5", "-20"]) {
       expect(lerTamanhoLembrado(ruim, 20)).toBe(20);
     }
+  });
+});
+
+describe("densidade da grade lembrada (cookie próprio, por pessoa)", () => {
+  it("aceita compacta e confortável; o resto volta à compacta", () => {
+    expect(lerDensidadeLembrada("confortavel")).toBe("confortavel");
+    expect(lerDensidadeLembrada("compacta")).toBe("compacta");
+    for (const ruim of [undefined, "", "grande", "COMPACTA", "{}", "confortável"]) {
+      expect(lerDensidadeLembrada(ruim)).toBe("compacta");
+    }
+  });
+  it("o cookie vale por um ano em toda a aplicação, e o valor gravado é o que a leitura entende", () => {
+    const cookie = montarCookieDaDensidade("confortavel", "http:");
+    expect(cookie.startsWith(`${NOME_DO_COOKIE_DA_DENSIDADE_DA_GRADE}=confortavel;`)).toBe(true);
+    expect(cookie).toContain("path=/");
+    expect(cookie).toContain("max-age=31536000");
+    expect(cookie).not.toContain("Secure");
+    expect(montarCookieDaDensidade("compacta", "https:")).toContain("; Secure");
+    expect(lerDensidadeLembrada(cookie.split(";")[0]!.split("=")[1])).toBe("confortavel");
   });
 });
