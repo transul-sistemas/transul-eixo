@@ -8,6 +8,9 @@
 //    (só dentro da transação) o login de um Administrador que já exista: os dados obedecem às regras.
 //  * Idempotente: cada área confere o seu marcador (placa ZDM..., CPF/CNPJ da faixa, origem "demo") e
 //    pula o que já existe.
+//  * Cenários de observação (12/11/2026): pedidos em atraso e em conferência, movimento dos últimos dias,
+//    vínculos com história, uma exceção de cada tipo possível, a "Operação Demo" (sem lançamentos de
+//    receita nem custo, que somariam aos totais reais) e a faixa "banco em demonstração" (config.parametro).
 //  * `--ensaio`: faz tudo, mostra as contagens por área e desfaz (ROLLBACK). Não deixa nada.
 //  * Recusa qualquer banco que não seja o local. Só mostra agregados: nenhum CPF, nome ou placa.
 import { pathToFileURL } from "node:url";
@@ -15,7 +18,12 @@ import pg from "pg";
 
 import { enderecoDoBancoLocal } from "./banco-local.ts";
 import {
+  CHAVE_DA_FAIXA_DEMO,
+  NUMEROS_DOS_CENARIOS,
   codcencusDemo,
+  planoDosPedidos,
+  planoDosVinculos,
+  roteiroDoMovimento,
   PREFIXO_DA_PLACA_DEMO,
   PREFIXO_DO_RENAVAM_DEMO,
   abastecimentosDaDemo,
@@ -380,6 +388,514 @@ async function carregarFrota(c: pg.Client, hoje: string): Promise<string> {
   return "carregada";
 }
 
+// ---------------------------------------------------------------------------------------------
+// Cenários de observação (12/11/2026). Tudo pelas funções atômicas e pelos caminhos que o app usa
+// (tabelas com RLS, como o Administrador); nada é apagado, e só placas ZDM, CRs DEMO-n e a
+// "Operação Demo" são tocados. Cada cenário confere o seu marcador e pula o que já existe.
+// ---------------------------------------------------------------------------------------------
+
+/** Roda como o `authenticated` (o papel do app) dentro da transação: a RLS e os gatilhos valem. */
+async function comoUsuario<T>(c: pg.Client, fazer: () => Promise<T>): Promise<T> {
+  await c.query("set local role authenticated");
+  try {
+    return await fazer();
+  } finally {
+    await c.query("reset role").catch(() => undefined);
+  }
+}
+
+/** Roda sem usuário (como a carga e os workers), e depois volta a assumir o Administrador. */
+async function comoSistema<T>(c: pg.Client, fazer: () => Promise<T>): Promise<T> {
+  await c.query(
+    `select set_config('request.jwt.claims', '', true), set_config('request.jwt.claim.sub', '', true)`,
+  );
+  try {
+    return await fazer();
+  } finally {
+    await assumirAdministrador(c);
+  }
+}
+
+const NOME_DA_OPERACAO_DEMO = "Operação Demo";
+
+async function operacoesDaFrota(c: pg.Client): Promise<string[]> {
+  return (
+    await c.query<{ id: string }>(
+      `select id from nucleo.operacao where excluido_em is null and tipo = 'operacao' and not parada and nome <> $1 order by nome, id`,
+      [NOME_DA_OPERACAO_DEMO],
+    )
+  ).rows.map((r) => r.id);
+}
+
+async function garantirGestoresDemo(c: pg.Client): Promise<string[]> {
+  const gestores: string[] = [];
+  for (let g = 0; g < 5; g++) {
+    const id = await garantirPessoa(c, nomeDeDemo(g), cpfFicticio(g + 1));
+    await c.query(
+      `insert into nucleo.papel_da_pessoa (pessoa_id, papel) values ($1, 'gestor_de_frota') on conflict do nothing`,
+      [id],
+    );
+    gestores.push(id);
+  }
+  return gestores;
+}
+
+async function ativoDaPlacaDemo(c: pg.Client, n: number): Promise<string | null> {
+  const r = await um<{ ativo_id: string } | undefined>(
+    c,
+    `select ativo_id from nucleo.placa_do_ativo where placa = $1 and excluido_em is null`,
+    [placaDemo(n)],
+  );
+  return r?.ativo_id ?? null;
+}
+
+async function exigirAtivoDaPlacaDemo(c: pg.Client, n: number): Promise<string> {
+  const id = await ativoDaPlacaDemo(c, n);
+  if (!id) throw new ErroDoEixo(`A placa ${n} da demonstração não existe: carregue a frota antes.`);
+  return id;
+}
+
+/** O CR de frota fictício número n (criado pelo "+" do cadastro, criar_cr), ou o que já existe. */
+async function crDeFrotaDemo(c: pg.Client, n: number): Promise<string> {
+  const existente = await um<{ id: string } | undefined>(
+    c,
+    `select id from nucleo.cr where codigo = $1`,
+    [`DEMO-${n}`],
+  );
+  if (existente) return existente.id;
+  return (
+    await um<{ id: string }>(c, `select nucleo.criar_cr($1::bigint, $2, $3) as id`, [
+      codcencusDemo(n),
+      `DEMO-${n}`,
+      `Demo frota ${n}`,
+    ])
+  ).id;
+}
+
+/** Cria CR pelo caminho de Cadastros (INSERT com RLS), com os sinais dados; devolve o id. */
+async function crDeCadastrosDemo(
+  c: pg.Client,
+  n: number,
+  nome: string,
+  sinais: {
+    participaDaFrota: boolean;
+    veiculoObrigatorio?: boolean;
+    unidade?: string;
+    adFrota?: string;
+  },
+): Promise<string> {
+  const existente = await um<{ id: string } | undefined>(
+    c,
+    `select id from nucleo.cr where codigo = $1`,
+    [`DEMO-${n}`],
+  );
+  if (existente) return existente.id;
+  return comoUsuario(c, async () => {
+    const r = await um<{ id: string }>(
+      c,
+      `insert into nucleo.cr (codcencus, codigo, nome, participa_da_frota, veiculo_obrigatorio, unidade_gerencial, ad_frota)
+       values ($1, $2, $3, $4, $5, $6, $7) returning id`,
+      [
+        codcencusDemo(n),
+        `DEMO-${n}`,
+        nome,
+        sinais.participaDaFrota,
+        sinais.veiculoObrigatorio ?? null,
+        sinais.unidade ?? null,
+        sinais.adFrota ?? null,
+      ],
+    );
+    return r.id;
+  });
+}
+
+async function renavamDemo(c: pg.Client, n: number): Promise<string> {
+  const prefixo = PREFIXO_DO_RENAVAM_DEMO + String(n).padStart(5, "0");
+  return (
+    await um<{ r: string }>(
+      c,
+      `select $1::text || d::text as r from generate_series(0, 9) d where nucleo.renavam_valido($1::text || d::text) limit 1`,
+      [prefixo],
+    )
+  ).r;
+}
+
+/** Cadastra o cavalo da demonstração número n (cadastrar_ativo) com o CR e a operação dados. */
+async function cadastrarCavaloDemo(
+  c: pg.Client,
+  n: number,
+  crId: string,
+  operacaoId: string,
+  gestorId: string,
+  em: string,
+): Promise<string> {
+  const a = await um<{ id: string }>(
+    c,
+    `select nucleo.cadastrar_ativo(
+       p_tipo => 'cavalo'::nucleo.tipo_de_ativo, p_renavam => $1, p_placa => $2, p_gestor_id => $3::uuid,
+       p_cr_id => $4::uuid, p_operacao_id => $5::uuid, p_em => $6::timestamptz
+     ) as id`,
+    [await renavamDemo(c, n), placaDemo(n), gestorId, crId, operacaoId, em],
+  );
+  return a.id;
+}
+
+/** O cavalo com cadastro pendente (sem RENAVAM), gravado como a carga da v1 grava: só a placa ZDM do cenário. */
+async function cadastrarCavaloPendenteDaCarga(
+  c: pg.Client,
+  n: number,
+  crId: string,
+  operacaoId: string,
+  gestorId: string,
+  em: string,
+): Promise<void> {
+  await comoSistema(c, async () => {
+    const a = await um<{ id: string }>(
+      c,
+      `insert into nucleo.ativo (tipo, cadastro_pendente) values ('cavalo', true) returning id`,
+    );
+    await c.query(
+      `insert into nucleo.placa_do_ativo (ativo_id, placa, inicio, inicio_origem) values ($1, $2, $3::timestamptz, 'informada')`,
+      [a.id, placaDemo(n), em],
+    );
+    await c.query(
+      `insert into nucleo.posse_do_ativo (ativo_id, regime, inicio, inicio_origem) values ($1, 'propria', $2::timestamptz, 'informada')`,
+      [a.id, em],
+    );
+    await c.query(
+      `insert into nucleo.gestor_da_carteira (ativo_id, gestor_id, inicio, inicio_origem) values ($1, $2, $3::timestamptz, 'informada')`,
+      [a.id, gestorId, em],
+    );
+    await c.query(`select nucleo.registrar_evento($1::uuid, 'PÁT', $2::timestamptz)`, [a.id, em]);
+    await c.query(
+      `insert into nucleo.cr_do_ativo (ativo_id, cr_id, inicio, inicio_origem) values ($1, $2, $3::timestamptz, 'informada')`,
+      [a.id, crId, em],
+    );
+    await c.query(
+      `insert into nucleo.placa_na_operacao (ativo_id, operacao_id, inicio, inicio_origem) values ($1, $2, $3::timestamptz, 'informada')`,
+      [a.id, operacaoId, em],
+    );
+  });
+}
+
+/** Encerra o CR vigente e a operação vigente da placa em `quando` e abre os novos (história de vínculos). */
+async function trocarVinculos(
+  c: pg.Client,
+  ativoId: string,
+  novoCrId: string,
+  novaOperacaoId: string,
+  quando: string,
+): Promise<void> {
+  await comoUsuario(c, async () => {
+    await c.query(
+      `update nucleo.cr_do_ativo set fim = $2::timestamptz, fim_origem = 'informada' where ativo_id = $1 and fim is null and excluido_em is null`,
+      [ativoId, quando],
+    );
+    await c.query(
+      `insert into nucleo.cr_do_ativo (ativo_id, cr_id, inicio, inicio_origem) values ($1, $2, $3::timestamptz, 'informada')`,
+      [ativoId, novoCrId, quando],
+    );
+    await c.query(
+      `update nucleo.placa_na_operacao set fim = $2::timestamptz, fim_origem = 'informada' where ativo_id = $1 and fim is null and excluido_em is null`,
+      [ativoId, quando],
+    );
+    await c.query(
+      `insert into nucleo.placa_na_operacao (ativo_id, operacao_id, inicio, inicio_origem) values ($1, $2, $3::timestamptz, 'informada')`,
+      [ativoId, novaOperacaoId, quando],
+    );
+  });
+}
+
+/** Tarefas: pedidos de transferência (pendentes, atrasados e em conferência com pendências abertas). */
+export async function carregarPedidosEmAtraso(c: pg.Client, hoje: string): Promise<number> {
+  const gestores = await garantirGestoresDemo(c);
+  let novos = 0;
+  for (const p of planoDosPedidos()) {
+    const ativo = await exigirAtivoDaPlacaDemo(c, p.cavalo);
+    const jaTem = await um<{ n: string }>(
+      c,
+      `select count(*)::text as n from nucleo.transferencia where ativo_id = $1 and excluido_em is null`,
+      [ativo],
+    );
+    if (Number(jaTem.n) > 0) continue;
+    const dono = await um<{ gestor_id: string }>(
+      c,
+      `select gestor_id from nucleo.gestor_da_carteira where ativo_id = $1 and fim is null and excluido_em is null`,
+      [ativo],
+    );
+    const destino = gestores[(gestores.indexOf(dono.gestor_id) + 1) % gestores.length]!;
+    const versao = (
+      await um<{ v: number }>(c, `select versao as v from nucleo.ativo where id = $1`, [ativo])
+    ).v;
+    const aberto = hora(somarDias(hoje, -p.diasAbertos), "09:00");
+    const pedido = await um<{ id: string }>(
+      c,
+      `select nucleo.disponibilizar_placa($1::uuid, $2::uuid, $3, $4::text[], $5::integer, $6::timestamptz) as id`,
+      [ativo, destino, "Demo: pedido para a observação de atrasos", p.pendencias, versao, aberto],
+    );
+    if (p.situacao === "em_conferencia") {
+      // Só o gestor de destino recebe pelo app, e os gestores Demo não têm login: a recepção entra como a
+      // carga (sem usuário), o caminho do sistema que a própria função prevê, e volta ao Administrador.
+      await comoSistema(c, async () => {
+        await c.query(`select nucleo.receber_transferencia($1::uuid, $2::timestamptz)`, [
+          pedido.id,
+          hora(somarDias(hoje, -p.diasAbertos + 1), "10:00"),
+        ]);
+      });
+    }
+    novos++;
+  }
+  return novos;
+}
+
+/** Movimento: situações dos últimos dias, inclusive hoje, com siglas diferentes. */
+export async function carregarMovimento(c: pg.Client, hoje: string): Promise<number> {
+  const primeiro = await exigirAtivoDaPlacaDemo(c, 11);
+  const jaTem = await um<{ n: string }>(
+    c,
+    `select count(*)::text as n from nucleo.evento_de_status
+      where ativo_id = $1 and origem = 'manual' and excluido_em is null and em >= nucleo.instante_do_dia($2::date)`,
+    [primeiro, somarDias(hoje, -2)],
+  );
+  if (Number(jaTem.n) > 0) return 0;
+  let n = 0;
+  for (let cavalo = 11; cavalo <= 25; cavalo++) {
+    const ativo = await exigirAtivoDaPlacaDemo(c, cavalo);
+    for (const l of roteiroDoMovimento(cavalo)) {
+      await c.query(`select nucleo.lancar_situacao_do_dia($1::uuid, $2, $3::date)`, [
+        ativo,
+        l.sigla,
+        somarDias(hoje, -l.diasAtras),
+      ]);
+      n++;
+    }
+  }
+  return n;
+}
+
+/** Vínculos com história: 6 placas com CR e operação trocados (duas há pouco) e os casos de borda. */
+export async function carregarVinculosComHistoria(c: pg.Client, hoje: string): Promise<number> {
+  const gestores = await garantirGestoresDemo(c);
+  const operacoes = await operacoesDaFrota(c);
+  if (operacoes.length < 2) throw new ErroDoEixo("Faltam operações para a história dos vínculos.");
+  let placas = 0;
+  for (const [i, v] of planoDosVinculos().entries()) {
+    if (await ativoDaPlacaDemo(c, v.placa)) continue;
+    const inicio = hora(somarDias(hoje, -v.inicioHaDias), "08:00");
+    const antigo = await crDeFrotaDemo(c, v.crAntigo);
+    const ativo = await cadastrarCavaloDemo(
+      c,
+      v.placa,
+      antigo,
+      operacoes[v.operacaoAntiga % operacoes.length]!,
+      gestores[i % 4]!,
+      inicio,
+    );
+    await trocarVinculos(
+      c,
+      ativo,
+      await crDeFrotaDemo(c, v.crAtual),
+      operacoes[v.operacaoAtual % operacoes.length]!,
+      hora(somarDias(hoje, -v.trocaHaDias), "12:00"),
+    );
+    placas++;
+  }
+
+  // Uma placa com CR de frota e CR de acionista ao mesmo tempo (a exceção de 06/11/2026: sem alerta).
+  const fa = NUMEROS_DOS_CENARIOS.placaComFrotaEAcionista;
+  if (!(await ativoDaPlacaDemo(c, fa.placa))) {
+    const inicio = hora(somarDias(hoje, -60), "08:00");
+    const ativo = await cadastrarCavaloDemo(
+      c,
+      fa.placa,
+      await crDeFrotaDemo(c, fa.crFrota),
+      operacoes[0]!,
+      gestores[0]!,
+      inicio,
+    );
+    const acionista = await crDeCadastrosDemo(c, fa.crAcionista, "Demo acionista", {
+      participaDaFrota: false,
+      unidade: "acionista",
+    });
+    await comoUsuario(c, async () => {
+      await c.query(
+        `insert into nucleo.cr_do_ativo (ativo_id, cr_id, inicio, inicio_origem) values ($1, $2, $3::timestamptz, 'informada')`,
+        [ativo, acionista, inicio],
+      );
+    });
+    placas++;
+  }
+  return placas;
+}
+
+/** Fila de exceções: uma de cada tipo que dá para abrir, só com placas ZDM, CRs DEMO-n e lançamento DEMO-. */
+export async function carregarExcecoes(c: pg.Client, hoje: string): Promise<number> {
+  const gestores = await garantirGestoresDemo(c);
+  const operacoes = await operacoesDaFrota(c);
+  const antes = (
+    await um<{ n: string }>(c, `select count(*)::text as n from nucleo.fila_de_excecoes`)
+  ).n;
+  const n = NUMEROS_DOS_CENARIOS;
+
+  // Dois CRs do mesmo tipo ao mesmo tempo (abre sozinha pelo gatilho do vínculo).
+  if (!(await ativoDaPlacaDemo(c, n.placaComDoisCr.placa))) {
+    const inicio = hora(somarDias(hoje, -45), "08:00");
+    const ativo = await cadastrarCavaloDemo(
+      c,
+      n.placaComDoisCr.placa,
+      await crDeFrotaDemo(c, n.placaComDoisCr.crAtual),
+      operacoes[1 % operacoes.length]!,
+      gestores[1]!,
+      inicio,
+    );
+    const segundo = await crDeFrotaDemo(c, n.placaComDoisCr.crDuplicado);
+    await comoUsuario(c, async () => {
+      await c.query(
+        `insert into nucleo.cr_do_ativo (ativo_id, cr_id, inicio, inicio_origem) values ($1, $2, $3::timestamptz, 'informada')`,
+        [ativo, segundo, hora(somarDias(hoje, -30), "08:00")],
+      );
+    });
+  }
+
+  // Cadastro pendente: o cavalo sem RENAVAM, do jeito da carga inicial (a única forma: o RENAVAM é chave
+  // e o cadastrar_ativo não grava a marca). Entra como o sistema, só esta placa ZDM; o gatilho abre a exceção.
+  if (!(await ativoDaPlacaDemo(c, n.placaDeCadastroIncompleto.placa))) {
+    await cadastrarCavaloPendenteDaCarga(
+      c,
+      n.placaDeCadastroIncompleto.placa,
+      await crDeFrotaDemo(c, n.placaDeCadastroIncompleto.cr),
+      operacoes[2 % operacoes.length]!,
+      gestores[2]!,
+      hora(somarDias(hoje, -30), "08:00"),
+    );
+  }
+
+  // Placa sem CR: o CR da placa terminou e não veio outro (alerta sem_cr).
+  if (!(await ativoDaPlacaDemo(c, n.placaSemCr.placa))) {
+    const ativo = await cadastrarCavaloDemo(
+      c,
+      n.placaSemCr.placa,
+      await crDeFrotaDemo(c, n.placaSemCr.cr),
+      operacoes[3 % operacoes.length]!,
+      gestores[3]!,
+      hora(somarDias(hoje, -50), "08:00"),
+    );
+    await comoUsuario(c, async () => {
+      await c.query(
+        `update nucleo.cr_do_ativo set fim = $2::timestamptz, fim_origem = 'informada' where ativo_id = $1 and fim is null and excluido_em is null`,
+        [ativo, hora(somarDias(hoje, -10), "12:00")],
+      );
+    });
+  }
+
+  // CR de serviço sem operação (alerta cr_sem_operacao) e CR de frota que diverge da unidade (fila).
+  await crDeCadastrosDemo(c, n.crDeServicoSemOperacao, "Demo serviço sem operação", {
+    participaDaFrota: false,
+  });
+  await crDeCadastrosDemo(c, n.crQueDivergeDaUnidade, "Demo frota que diverge", {
+    participaDaFrota: true,
+    veiculoObrigatorio: true,
+    unidade: "frota",
+    adFrota: "N",
+  });
+
+  // Data fora de faixa: um lançamento DEMO- no staging, fora da faixa (nunca entra em total algum).
+  // A função que abre a exceção varre todo o staging: só roda se não houver lançamento REAL por registrar.
+  const jaTemData = await um<{ n: string }>(
+    c,
+    `select count(*)::text as n from nucleo.fila_de_excecoes where lancamento_origem_id = 'DEMO-DATA-FORA-DE-FAIXA'`,
+  );
+  if (Number(jaTemData.n) === 0) {
+    const reaisPorRegistrar = await um<{ n: string }>(
+      c,
+      `select count(*)::text as n from staging.despesa d
+        where d.invalidado_em is null and d.provisao is distinct from 'PROVISAO'
+          and d.dt_competencia is not null and not nucleo.data_na_faixa(d.dt_competencia)
+          and d.origem_id <> 'DEMO-DATA-FORA-DE-FAIXA'
+          and not exists (select 1 from nucleo.fila_de_excecoes f
+                           where f.lancamento_origem_id = d.origem_id and f.assunto = 'data_fora_de_faixa')`,
+    );
+    if (Number(reaisPorRegistrar.n) === 0) {
+      await c.query(
+        `insert into staging.despesa (origem_id, nufin, dt_competencia, provisao)
+         values ('DEMO-DATA-FORA-DE-FAIXA', 'DEMO-1', date '2019-12-31', null) on conflict (origem_id) do nothing`,
+      );
+      await c.query(`select nucleo.registrar_excecoes_de_data()`);
+    }
+  }
+  const depois = (
+    await um<{ n: string }>(c, `select count(*)::text as n from nucleo.fila_de_excecoes`)
+  ).n;
+  return Number(depois) - Number(antes);
+}
+
+/** Operações: a "Operação Demo" com 8 placas e CRs de frota e de serviço fictícios (sem lançamentos). */
+export async function carregarOperacaoDemo(c: pg.Client, hoje: string): Promise<number> {
+  const gestores = await garantirGestoresDemo(c);
+  const n = NUMEROS_DOS_CENARIOS.operacaoDemo;
+  let operacao = (
+    await c.query<{ id: string }>(
+      `select id from nucleo.operacao where nome = $1 and excluido_em is null`,
+      [NOME_DA_OPERACAO_DEMO],
+    )
+  ).rows[0]?.id;
+  if (!operacao) {
+    operacao = await comoUsuario(c, async () => {
+      const r = await um<{ id: string }>(
+        c,
+        `insert into nucleo.operacao (nome, tipo, base_cidade, base_uf) values ($1, 'operacao', 'São Luís', 'MA') returning id`,
+        [NOME_DA_OPERACAO_DEMO],
+      );
+      return r.id;
+    });
+  }
+  let novas = 0;
+  for (let i = 0; i < n.placas; i++) {
+    const numero = n.placaInicial + i;
+    if (await ativoDaPlacaDemo(c, numero)) continue;
+    await cadastrarCavaloDemo(
+      c,
+      numero,
+      await crDeFrotaDemo(c, numero),
+      operacao,
+      gestores[i % 4]!,
+      hora(somarDias(hoje, -60), "08:00"),
+    );
+    novas++;
+  }
+  for (const [k, crN] of n.crsDeServico.entries()) {
+    const cr = await crDeCadastrosDemo(c, crN, `Demo serviço ${k + 1}`, {
+      participaDaFrota: false,
+    });
+    const ligado = await um<{ n: string }>(
+      c,
+      `select count(*)::text as n from nucleo.cr_de_servico_na_operacao where cr_id = $1 and excluido_em is null`,
+      [cr],
+    );
+    if (Number(ligado.n) > 0) continue;
+    await comoUsuario(c, async () => {
+      await c.query(
+        `insert into nucleo.cr_de_servico_na_operacao (cr_id, operacao_id, inicio, inicio_origem) values ($1, $2, $3::timestamptz, 'informada')`,
+        [cr, operacao, hora(somarDias(hoje, -60), "08:00")],
+      );
+    });
+  }
+  return novas;
+}
+
+/** Liga a faixa "banco em demonstração" (a restauração do backup real a remove, pois o real não a tem). */
+export async function ligarFaixaDaDemo(c: pg.Client): Promise<void> {
+  await comoUsuario(c, async () => {
+    await c.query(
+      `insert into config.parametro (chave, valor, descricao) values ($1, 'sim', $2) on conflict (chave) do nothing`,
+      [
+        CHAVE_DA_FAIXA_DEMO,
+        "Liga a faixa fixa que avisa que o banco tem dados fictícios de demonstração misturados com os reais. Só a carga de demonstração a grava; a restauração do backup real a remove.",
+      ],
+    );
+  });
+}
+
 /** O abastecimento fica no staging (que entra no backup); idempotente por origem_id. */
 export async function carregarAbastecimento(c: pg.Client, hoje: string): Promise<number> {
   const placas = Array.from({ length: 10 }, (_, i) => placaDemo(i + 1));
@@ -425,10 +941,39 @@ export async function resumoDaDemo(c: pg.Client): Promise<ResumoDaDemo> {
      union all select 'parceiros: locações', count(*)::text from parceiros.locacao where ativo_id in (select ativo_id from demo) and excluido_em is null
      union all select 'abastecimento: abastecimentos', count(*)::text from staging.abastecimento where origem = 'demo'
      union all select 'fila: exceções abertas da demo', count(*)::text from nucleo.fila_de_excecoes where resolvida_em is null and (ativo_id in (select ativo_id from demo) or cr_id in (select id from nucleo.cr where codigo like 'DEMO-%'))
-     union all select 'abastecimento: placas', count(distinct placa)::text from staging.abastecimento where origem = 'demo'`,
+     union all select 'abastecimento: placas', count(distinct placa)::text from staging.abastecimento where origem = 'demo'
+     union all select 'tarefas: pedidos em conferência', count(*)::text from nucleo.transferencia where situacao = 'em_conferencia' and excluido_em is null and ativo_id in (select ativo_id from demo)
+     union all select 'tarefas: pedidos atrasados (mais de 5 dias abertos)', count(*)::text from nucleo.transferencia where situacao in ('pendente', 'em_conferencia') and excluido_em is null and criado_em < now() - interval '5 days' and ativo_id in (select ativo_id from demo)
+     union all select 'tarefas: pendências abertas nos pedidos', count(*)::text from nucleo.transferencia_pendencia p join nucleo.transferencia t on t.id = p.transferencia_id where p.resposta is null and p.excluido_em is null and t.excluido_em is null and t.situacao in ('pendente', 'em_conferencia') and t.ativo_id in (select ativo_id from demo)
+     union all select 'tarefas: gestores Demo com a carteira do mês a confirmar', count(distinct g.gestor_id)::text from nucleo.gestor_da_carteira g join nucleo.pessoa pe on pe.id = g.gestor_id where pe.nome like 'Demo %' and g.fim is null and g.excluido_em is null and g.ativo_id in (select ativo_id from demo) and not exists (select 1 from nucleo.confirmacao_da_carteira cc where cc.gestor_id = g.gestor_id and cc.ativo_id = g.ativo_id and cc.mes = date_trunc('month', nucleo.hoje_em_sao_paulo())::date)
+     union all select 'vínculos: placas com CR encerrado e CR vigente', count(*)::text from (select v.ativo_id from nucleo.cr_do_ativo v where v.excluido_em is null and v.ativo_id in (select ativo_id from demo) group by v.ativo_id having count(*) filter (where v.fim is not null) > 0 and count(*) filter (where v.fim is null) > 0) x
+     union all select 'vínculos: trocas de CR nos últimos 14 dias', count(*)::text from nucleo.cr_do_ativo v where v.excluido_em is null and v.fim is not null and v.fim >= now() - interval '14 days' and v.ativo_id in (select ativo_id from demo)
+     union all select 'vínculos: placas com mais de um CR vigente', count(*)::text from (select v.ativo_id from nucleo.cr_do_ativo v where v.excluido_em is null and v.fim is null and v.ativo_id in (select ativo_id from demo) group by v.ativo_id having count(*) > 1) x
+     union all select 'vínculos: placas da demo sem CR vigente', count(*)::text from demo d where not exists (select 1 from nucleo.cr_do_ativo v where v.ativo_id = d.ativo_id and v.excluido_em is null and v.fim is null)
+     union all select 'vínculos: CRs de serviço da demo sem operação', count(*)::text from nucleo.cr c where c.codigo like 'DEMO-%' and c.tipo = 'servico' and not exists (select 1 from nucleo.cr_de_servico_na_operacao s where s.cr_id = c.id and s.excluido_em is null)
+     union all select 'movimento: eventos de situação nos últimos 30 dias', count(*)::text from nucleo.evento_de_status e where e.excluido_em is null and e.em >= now() - interval '30 days' and e.ativo_id in (select ativo_id from demo)
+     union all select 'movimento: eventos de hoje', count(*)::text from nucleo.evento_de_status e where e.excluido_em is null and e.em >= nucleo.instante_do_dia(nucleo.hoje_em_sao_paulo()) and e.ativo_id in (select ativo_id from demo)
+     union all select 'movimento: siglas diferentes', count(distinct e.sigla)::text from nucleo.evento_de_status e where e.excluido_em is null and e.sigla is not null and e.ativo_id in (select ativo_id from demo)
+     union all select 'movimento: correções tardias (lançadas mais de 7 dias depois do fato)', count(*)::text from nucleo.evento_de_status e where e.excluido_em is null and e.registrado_em - e.em > interval '7 days' and e.ativo_id in (select ativo_id from demo)
+     union all select 'operações: placas da Operação Demo', count(*)::text from nucleo.placa_na_operacao pn join nucleo.operacao o on o.id = pn.operacao_id where o.nome = 'Operação Demo' and pn.fim is null and pn.excluido_em is null
+     union all select 'operações: CRs de serviço da Operação Demo', count(*)::text from nucleo.cr_de_servico_na_operacao s join nucleo.operacao o on o.id = s.operacao_id where o.nome = 'Operação Demo' and s.excluido_em is null
+     union all select 'faixa: parâmetro ligado', count(*)::text from config.parametro where chave = '${CHAVE_DA_FAIXA_DEMO}'`,
     [`${PREFIXO_DA_PLACA_DEMO}%`],
   );
-  return Object.fromEntries(rows.map((r) => [r.item, Number(r.n)]));
+  const resumo = Object.fromEntries(rows.map((r) => [r.item, Number(r.n)]));
+  // A fila da demonstração por assunto (só placas ZDM, CRs DEMO-n e o lançamento DEMO-).
+  const porAssunto = await c.query<{ assunto: string; n: string }>(
+    `select coalesce(f.assunto, 'outra') as assunto, count(*)::text as n
+       from nucleo.fila_de_excecoes f
+      where f.resolvida_em is null
+        and (f.ativo_id in (select ativo_id from nucleo.placa_do_ativo where placa like $1 and excluido_em is null)
+             or f.cr_id in (select id from nucleo.cr where codigo like 'DEMO-%')
+             or f.lancamento_origem_id like 'DEMO-%')
+      group by 1 order by 1`,
+    [`${PREFIXO_DA_PLACA_DEMO}%`],
+  );
+  for (const r of porAssunto.rows) resumo[`fila da demo: ${r.assunto}`] = Number(r.n);
+  return resumo;
 }
 
 export async function carregarDemo(
@@ -442,6 +987,15 @@ export async function carregarDemo(
   areas["pessoas e escala"] = `${await carregarPessoasEEscala(c, hoje)} marcações novas`;
   areas["frota, operacional, acompanhamento, pedidos e locação"] = await carregarFrota(c, hoje);
   const abastecimento = await carregarAbastecimento(c, hoje);
+  areas["tarefas: pedidos em atraso e em conferência"] =
+    `${await carregarPedidosEmAtraso(c, hoje)} pedidos novos`;
+  areas["movimento: situações dos últimos dias"] =
+    `${await carregarMovimento(c, hoje)} lançamentos novos`;
+  areas["vínculos com história"] = `${await carregarVinculosComHistoria(c, hoje)} placas novas`;
+  areas["fila de exceções"] = `${await carregarExcecoes(c, hoje)} exceções novas`;
+  areas["Operação Demo (sem lançamentos)"] = `${await carregarOperacaoDemo(c, hoje)} placas novas`;
+  await ligarFaixaDaDemo(c);
+  areas["faixa de demonstração"] = "ligada";
   await c.query("set constraints all immediate");
   return { areas, abastecimento };
 }
