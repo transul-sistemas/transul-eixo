@@ -40,6 +40,8 @@ export interface Tela {
   readonly ficha?: true;
   /** O que o selo de contagem do item conta, para o leitor de tela ("3 para receber"). */
   readonly contador?: string;
+  /** Indicador de teste: a tela só aparece e só abre para o Administrador (TELAS_SO_DO_ADMINISTRADOR). */
+  readonly selo?: "Teste";
 }
 
 export interface ModuloDoCatalogo {
@@ -69,6 +71,7 @@ interface DadosDaTela {
   atalhos?: readonly AtalhoDaTela[];
   ficha?: true;
   contador?: string;
+  selo?: "Teste";
 }
 
 function modulo(
@@ -103,6 +106,16 @@ export const CATALOGO: readonly ModuloDoCatalogo[] = [
       dispositivos: TODOS,
       descricao: "Reúne o que espera a sua ação, como a aprovação de casos.",
       estado: "pronto",
+    },
+    {
+      slug: "meu-dia",
+      nome: "Meu dia",
+      icone: "IconListCheck",
+      dispositivos: DESKTOP_E_TABLET,
+      descricao:
+        "Guia o dia do gestor de frota: recebe as placas em lote e leva às próximas tarefas.",
+      estado: "pronto",
+      selo: "Teste",
     },
     {
       slug: "resumo-do-dia",

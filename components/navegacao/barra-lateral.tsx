@@ -142,6 +142,14 @@ function ItemDaTela({
           Estrutura
         </span>
       ) : null}
+      {tela.selo ? (
+        <span
+          title="Tela em teste: só o Administrador a vê"
+          className="text-muted-foreground border-border rounded border px-1 text-[0.6875rem] leading-4"
+        >
+          {tela.selo}
+        </span>
+      ) : null}
       {quantidade ? <Contador id={tela.id} quantidade={quantidade} rotulo={tela.contador} /> : null}
     </>
   );
