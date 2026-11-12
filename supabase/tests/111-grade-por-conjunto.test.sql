@@ -12,7 +12,7 @@
 begin;
 \ir apoio/como_usuario.psql
 
-select plan(81);
+select plan(82);
 
 create function pg_temp.id(p_nome text) returns uuid language sql as $$
   select nullif(current_setting('t.' || lower(regexp_replace(p_nome, '[^A-Za-z0-9]', '_', 'g')), true), '')::uuid
@@ -407,6 +407,11 @@ select is(
 select is(
   (nucleo.grade_de_soltas('2026-01-01', '{"grupo": "patio"}')->>'total')::int, 2,
   'soltas: o filtro de pátio traz as duas'
+);
+select is(
+  (select array_agg(l->>'placa' order by l->>'placa')
+     from jsonb_array_elements(nucleo.grade_de_soltas('2026-01-01', '{"grupo": "patio"}')->'linhas') l),
+  array['GCJ1A06', 'GCJ1B05'], 'soltas: as linhas devolvidas pelo filtro de pátio são as das duas (a página, não só a contagem)'
 );
 select is(
   (nucleo.grade_de_soltas('2026-01-01', '{"grupo": "impedida"}')->>'total')::int, 0,
