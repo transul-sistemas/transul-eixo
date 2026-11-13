@@ -6,8 +6,10 @@ import { montarMapa } from "./mapa-do-sistema";
 import { PERFIS, TELAS_SO_DO_ADMINISTRADOR } from "./perfis";
 import { modulosVisiveis, podeAbrir, rotaInicialDoModulo } from "./visibilidade";
 
-// Meu dia atrás de um indicador de teste: só o Administrador o vê (menu, Ctrl+K, mapa) e o abre (rota).
-// Critério (d) do inventário: rota, entrada no menu e no Ctrl+K, permissão.
+// Meu dia atrás de um indicador de teste. O Administrador a vê sempre. O Gestor de frota a vê (menu,
+// Ctrl+K, mapa e rota) só enquanto o parâmetro banco_em_demonstracao está LIGADO; desligado (banco real),
+// só o Administrador. Diretoria e Operacional nunca. Critério (d) do inventário: rota, menu, Ctrl+K,
+// permissão; cada um provado para os quatro perfis nas duas situações do parâmetro.
 
 const ROTA = "/inicio/meu-dia";
 const tela = () => {
@@ -17,58 +19,80 @@ const tela = () => {
 };
 const contexto = { fixados: [], recentes: [] };
 
-describe("Meu dia (indicador de teste só para o Administrador)", () => {
+/** Quem deve ver, dada a situação do parâmetro. */
+const devePoder = (perfil: (typeof PERFIS)[number], emDemonstracao: boolean) =>
+  perfil === "Administrador" || (perfil === "Gestor de frota" && emDemonstracao);
+
+const SITUACOES = [true, false] as const;
+const nome = (em: boolean) => (em ? "parâmetro ligado" : "parâmetro desligado");
+
+describe("Meu dia (indicador de teste)", () => {
   it("está no catálogo, no módulo Início, com o selo Teste", () => {
     expect(tela().id).toBe("inicio.meu-dia");
     expect(tela().selo).toBe("Teste");
     expect(TELAS_SO_DO_ADMINISTRADOR).toContain("inicio.meu-dia");
   });
 
-  it("só o Administrador abre; os outros três perfis não", () => {
+  for (const em of SITUACOES) {
+    describe(nome(em), () => {
+      it("abre para quem deve", () => {
+        for (const perfil of PERFIS) {
+          expect(podeAbrir(perfil, tela(), em), perfil).toBe(devePoder(perfil, em));
+        }
+      });
+
+      it("aparece no menu de quem deve", () => {
+        for (const perfil of PERFIS) {
+          const ids = modulosVisiveis(perfil, undefined, em).flatMap((m) => m.telas.map((t) => t.id));
+          expect(ids.includes("inicio.meu-dia"), perfil).toBe(devePoder(perfil, em));
+        }
+      });
+
+      it("aparece no Ctrl+K de quem deve", () => {
+        for (const perfil of PERFIS) {
+          const itens = montarGrupos("meu dia", perfil, contexto, undefined, undefined, em).flatMap(
+            (g) => g.itens,
+          );
+          expect(
+            itens.some((i) => i.id === "inicio.meu-dia"),
+            perfil,
+          ).toBe(devePoder(perfil, em));
+        }
+      });
+
+      it("a rota segue para quem deve e responde como não encontrada para os demais", () => {
+        for (const perfil of PERFIS) {
+          const decisao = decidirAcesso(ROTA, "", {
+            temUsuario: true,
+            temVinculo: true,
+            perfil,
+            podeVerModulo: true,
+            emDemonstracao: em,
+          });
+          expect(decisao.tipo, perfil).toBe(devePoder(perfil, em) ? "seguir" : "nao-encontrada");
+        }
+      });
+
+      it("aparece no mapa do sistema de quem deve", () => {
+        for (const perfil of PERFIS) {
+          const ids = montarMapa(perfil, "todos", undefined, em).modulos.flatMap((m) =>
+            m.telas.map((t) => t.tela.id),
+          );
+          expect(ids.includes("inicio.meu-dia"), perfil).toBe(devePoder(perfil, em));
+        }
+      });
+
+      it("não vira a primeira tela do Início de ninguém: Tarefas continua na frente", () => {
+        for (const perfil of PERFIS) {
+          expect(rotaInicialDoModulo(perfil, "inicio", undefined, em)).toBe("/inicio/tarefas");
+        }
+      });
+    });
+  }
+
+  it("sem informar o parâmetro, vale o desligado (só o Administrador)", () => {
     for (const perfil of PERFIS) {
       expect(podeAbrir(perfil, tela()), perfil).toBe(perfil === "Administrador");
-    }
-  });
-
-  it("só o Administrador vê no menu", () => {
-    for (const perfil of PERFIS) {
-      const ids = modulosVisiveis(perfil).flatMap((m) => m.telas.map((t) => t.id));
-      expect(ids.includes("inicio.meu-dia"), perfil).toBe(perfil === "Administrador");
-    }
-  });
-
-  it("só o Administrador acha no Ctrl+K", () => {
-    for (const perfil of PERFIS) {
-      const itens = montarGrupos("meu dia", perfil, contexto).flatMap((g) => g.itens);
-      expect(
-        itens.some((i) => i.id === "inicio.meu-dia"),
-        perfil,
-      ).toBe(perfil === "Administrador");
-    }
-  });
-
-  it("a rota responde como não encontrada para os demais e segue para o Administrador", () => {
-    for (const perfil of PERFIS) {
-      const decisao = decidirAcesso(ROTA, "", {
-        temUsuario: true,
-        temVinculo: true,
-        perfil,
-        podeVerModulo: true,
-      });
-      expect(decisao.tipo, perfil).toBe(perfil === "Administrador" ? "seguir" : "nao-encontrada");
-    }
-  });
-
-  it("não aparece no mapa do sistema de quem não a abre", () => {
-    for (const perfil of PERFIS) {
-      const ids = montarMapa(perfil).modulos.flatMap((m) => m.telas.map((t) => t.tela.id));
-      expect(ids.includes("inicio.meu-dia"), perfil).toBe(perfil === "Administrador");
-    }
-  });
-
-  it("não vira a primeira tela do Início de ninguém: Tarefas continua na frente", () => {
-    for (const perfil of PERFIS) {
-      expect(rotaInicialDoModulo(perfil, "inicio")).toBe("/inicio/tarefas");
     }
   });
 

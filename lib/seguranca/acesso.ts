@@ -41,6 +41,8 @@ export interface EstadoDoPedido {
   perfil?: Perfil | null;
   podeVerModulo?: boolean;
   inativo?: boolean;
+  /** O parâmetro banco_em_demonstracao está ligado (lido pelo proxy só quando a tela o pede). */
+  emDemonstracao?: boolean;
 }
 
 export type Decisao =
@@ -78,7 +80,7 @@ export function decidirAcesso(caminho: string, busca: string, estado: EstadoDoPe
   if (moduloDoCaminho(caminho) && !estado.podeVerModulo) return { tipo: "nao-encontrada" };
   // Tela fora do recorte do perfil no módulo (o Operacional em Pessoas só tem a Escala): 404.
   const tela = (acharTela(caminho) ?? acharFicha(caminho))?.tela;
-  if (estado.perfil && tela && !telaLiberada(estado.perfil, tela))
+  if (estado.perfil && tela && !telaLiberada(estado.perfil, tela, estado.emDemonstracao === true))
     return { tipo: "nao-encontrada" };
   // Tela esqueleto (estrutura sem dados): só quem acompanha a obra (Administrador e Diretoria) a abre.
   if (estado.perfil && tela?.estado === "esqueleto" && !veEsqueleto(estado.perfil))
