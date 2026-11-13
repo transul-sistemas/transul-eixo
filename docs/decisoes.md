@@ -8,6 +8,14 @@ Modelo de entrada:
 
 ---
 
+## 13/11/2026 — Nível 2, banco (agente de banco, modo autônomo): hipóteses registradas
+
+Cada linha é uma hipótese escolhida pela forma mais simples, a revisar por Alexandre (branch `n2-banco`).
+
+- **A6, motorista do conjunto** em tabela própria (`pessoas.motorista_do_conjunto`, vigência `[início, fim)`, um por conjunto e um conjunto por motorista), não em `pessoas.vinculo` (que liga pessoa a operação). Sem a coluna `turno` (dois motoristas por conjunto fora).
+- **A6, quem grava:** Pessoas › editar (escopo tudo) ou o gestor da carteira do conjunto (status do dia com Frota › criar; vínculo e substituição com Frota › editar). **Quem lê as tabelas:** só Pessoas › ver em escopo tudo (o Operacional de filial não lê); o gestor lê pelas funções recortadas (nome e código).
+- **A6, FRD = feriado** (nome a confirmar); os totais do mês agrupam trabalho (TBV, TBE, TBX), folga, férias, atestado, feriado e falta.
+- **A6, Indicar substituto** não cria escala do substituto: a substituição é o registro; a tarefa é a leitura `nucleo.ferias_sem_substituto()` (férias FE na escala do titular nos próximos `dias_para_indicar_substituto` = 10 dias) e não entra em `tarefas_do_usuario`. Encerrar na data do início cancela (exclusão lógica com motivo).
 ## 13/11/2026 — Nível 1, banco (agente de banco, modo autônomo): hipóteses registradas
 
 Cada linha é uma hipótese escolhida pela forma mais simples, a revisar por Alexandre (branch `n1-banco`).
