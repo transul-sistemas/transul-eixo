@@ -1,13 +1,19 @@
-import { IconChevronLeft, IconChevronRight } from "@tabler/icons-react";
+import { IconChevronLeft, IconChevronRight, IconDownload } from "@tabler/icons-react";
 import Link from "next/link";
 import { connection } from "next/server";
 import { formatarData, hojeEmSaoPaulo } from "@/components/formato/data";
 import { formatarInteiro } from "@/components/formato/numero";
 import { PaginaDeLeitura } from "@/components/layout/pagina-de-leitura";
 import { Placa } from "@/components/placa";
+import { BotaoDoOlho } from "@/components/tabela/botao-do-olho";
 import { EsqueletoDaTabela, ListaVazia } from "@/components/tabela/estados";
 import { modoDosDados } from "@/lib/dados/fonte";
-import { type ExcecoesAbertas, lerExcecoes, type LinhaDeExcecao } from "@/lib/dados/tarefas";
+import {
+  type ExcecoesAbertas,
+  lerExcecoes,
+  lerExcecoesDaDemonstracao,
+  type LinhaDeExcecao,
+} from "@/lib/dados/tarefas";
 import { enderecoDaFila, nomeDoAssunto, ROTA_DA_FILA } from "@/lib/dominio/tarefas";
 import { acharTela } from "@/lib/navegacao/catalogo";
 import { type EstadoDaFila, lerFila } from "@/lib/navegacao/excecoes";
@@ -62,7 +68,7 @@ function Tipos({ fila, estado }: { fila: ExcecoesAbertas; estado: EstadoDaFila }
   return (
     <nav aria-label="Tipo de exceção" className="flex flex-wrap items-center gap-2">
       <Link
-        href={enderecoDaFila({ assunto: null, pagina: 1 })}
+        href={enderecoDaFila({ assunto: null, pagina: 1, demo: estado.demo })}
         aria-current={estado.assunto === null ? "page" : undefined}
         className={cn(
           classeDoLink,
@@ -74,7 +80,7 @@ function Tipos({ fila, estado }: { fila: ExcecoesAbertas; estado: EstadoDaFila }
       {fila.tipos.map((t) => (
         <Link
           key={t.assunto}
-          href={enderecoDaFila({ assunto: t.assunto, pagina: 1 })}
+          href={enderecoDaFila({ assunto: t.assunto, pagina: 1, demo: estado.demo })}
           aria-current={estado.assunto === t.assunto ? "page" : undefined}
           className={cn(
             classeDoLink,
@@ -84,6 +90,17 @@ function Tipos({ fila, estado }: { fila: ExcecoesAbertas; estado: EstadoDaFila }
           {nomeDoAssunto(t.assunto)} ({formatarInteiro(t.n)})
         </Link>
       ))}
+      <Link
+        href={enderecoDaFila({ ...estado, pagina: 1, demo: !estado.demo })}
+        aria-pressed={estado.demo}
+        data-filtro-demo=""
+        className={cn(
+          classeDoLink,
+          estado.demo && "bg-primary text-primary-foreground hover:bg-primary",
+        )}
+      >
+        Demo
+      </Link>
     </nav>
   );
 }
@@ -92,6 +109,11 @@ function enderecoDoAssistente(estado: EstadoDaFila, placa: string): string {
   const base = enderecoDaFila(estado);
   const separador = base.includes("?") ? "&" : "?";
   return `${base}${separador}assistente=corrigir-placa&placa=${encodeURIComponent(placa)}`;
+}
+
+/** O nome do item da linha (placa, pessoa, CR ou o documento), para o olho e o leitor de tela. */
+function nomeDoItem(l: LinhaDeExcecao): string {
+  return l.placa ?? l.pessoaNome ?? (l.cr !== null ? `CR ${l.cr}` : rotuloDoDocumento(l.assunto));
 }
 
 function Linha({ l, estado }: { l: LinhaDeExcecao; estado: EstadoDaFila }) {
@@ -120,6 +142,20 @@ function Linha({ l, estado }: { l: LinhaDeExcecao; estado: EstadoDaFila }) {
         ) : (
           <span className="text-muted-foreground text-sm">Sem ação nesta tela</span>
         )}
+      </td>
+      <td className={cn(celula, "w-14 text-right")}>
+        <BotaoDoOlho
+          item={nomeDoItem(l)}
+          {...(l.placa !== null ? { hrefDaFicha: `/frota/placas/${l.placa}` } : {})}
+          titulo={l.placa !== null ? <Placa placa={l.placa} tamanho="m" /> : nomeDoItem(l)}
+          detalhes={[
+            { rotulo: "Tipo", valor: nomeDoAssunto(l.assunto) },
+            { rotulo: "O que falta", valor: l.descricao },
+            { rotulo: "Desde", valor: formatarData(l.criadoEm) },
+            ...(l.cr !== null ? [{ rotulo: "CR", valor: l.cr }] : []),
+            ...(l.pessoaNome !== null ? [{ rotulo: "Pessoa", valor: l.pessoaNome }] : []),
+          ]}
+        />
       </td>
     </tr>
   );
@@ -166,7 +202,7 @@ async function Conteudo({ parametros }: { parametros: URLSearchParams }) {
   const estado = lerFila(parametros);
   const hoje = hojeEmSaoPaulo(new Date());
   const [fila, dadosDosAssistentes] = await Promise.all([
-    lerExcecoes(estado),
+    estado.demo ? lerExcecoesDaDemonstracao(estado) : lerExcecoes(estado),
     carregarDadosDosAssistentes({
       assistente: parametros.get("assistente"),
       placa: parametros.get("placa"),
@@ -178,18 +214,36 @@ async function Conteudo({ parametros }: { parametros: URLSearchParams }) {
     <PaginaDeLeitura
       titulo={titulo}
       descricao={descricao}
-      acoes={dadosDosAssistentes ? <AssistentesDaFrota dados={dadosDosAssistentes} /> : undefined}
+      acoes={
+        <>
+          <a
+            href={`${ROTA_DA_FILA}/csv${enderecoDaFila({ ...estado, pagina: 1 }).slice(ROTA_DA_FILA.length)}`}
+            download
+            className={classeDoLink}
+          >
+            <IconDownload aria-hidden className="size-4" />
+            Exportar CSV
+          </a>
+          {dadosDosAssistentes ? <AssistentesDaFrota dados={dadosDosAssistentes} /> : null}
+        </>
+      }
     >
       {fila.tipos.length > 0 ? <Tipos fila={fila} estado={estado} /> : null}
       {fila.total === 0 ? (
         <ListaVazia
-          titulo={estado.assunto ? "Nenhuma exceção deste tipo" : "Nenhuma exceção em aberto"}
+          titulo={
+            estado.demo
+              ? "Nenhuma exceção da demonstração"
+              : estado.assunto
+                ? "Nenhuma exceção deste tipo"
+                : "Nenhuma exceção em aberto"
+          }
           descricao={
             estado.assunto
               ? "Escolha outro tipo, ou veja todas as exceções."
               : "Quando o cadastro deixar um dado a completar, a exceção aparece aqui para você resolver."
           }
-          {...(estado.assunto ? { hrefLimpar: ROTA_DA_FILA } : {})}
+          {...(estado.assunto || estado.demo ? { hrefLimpar: ROTA_DA_FILA } : {})}
         />
       ) : (
         <>
@@ -215,6 +269,9 @@ async function Conteudo({ parametros }: { parametros: URLSearchParams }) {
                   </th>
                   <th scope="col" className={cn(celula, "text-right font-medium")}>
                     Ação
+                  </th>
+                  <th scope="col" className={cn(celula, "w-14 text-right font-medium")}>
+                    Detalhes
                   </th>
                 </tr>
               </thead>

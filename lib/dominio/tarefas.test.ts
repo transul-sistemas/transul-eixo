@@ -106,5 +106,6 @@ describe("a fila de exceções", () => {
       "/frota/excecoes?assunto=cadastro_incompleto",
     );
     expect(enderecoDaFila({ assunto: null, pagina: 3 })).toBe("/frota/excecoes?pagina=3");
+    expect(enderecoDaFila({ assunto: null, pagina: 1, demo: true })).toBe("/frota/excecoes?demo=1");
   });
 });
