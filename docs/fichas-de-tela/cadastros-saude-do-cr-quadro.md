@@ -76,6 +76,7 @@ Cada botão abre o assistente certo, com o contexto, e vira tarefa.
 
 ## Rota e estado
 
+- **Construída (Fase 1, n1-tela, 13/11/2026):** ver `cadastros-saude-do-cr.md`.
 - Rota proposta: `/cadastros/saude-do-cr` (a mesma da ficha C1).
 - Módulo Cadastros. Quem vê: Administrador, Diretoria e analista de cadastro; o Gestor de frota vê só os CRs das placas dele.
 - Estado no catálogo: **esqueleto**.

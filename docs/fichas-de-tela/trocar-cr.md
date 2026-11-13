@@ -75,6 +75,7 @@ mês fechado, e cria a tarefa de conferência do líder que recebe. Nada é apag
 
 ## Rota e estado
 
+- **Construída (Fase 1, n1-tela, 13/11/2026):** popup `?assistente=trocar-cr` na lista e na ficha da placa (botão "Trocar CR", só no banco), no Ctrl+K e no resolvedor "Escolher o CR" da Saúde do CR. Passos: CR atual, Novo CR, Data e motivo, Conferir (antes encerrado, depois vigente). Grava `nucleo.trocar_cr`.
 - Rota proposta: popup (wizard central) aberto da ficha da placa (aba CRs), da ficha do CR e da ficha da operação, e por
   `?trocar-cr=<placa>`; sem rota própria. Módulo Frota (a placa) e Cadastros (o CR).
 - Quem vê: Gestor de frota (da carteira) e Administrador (pedido); Diretoria pela tarefa.

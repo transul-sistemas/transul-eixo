@@ -78,6 +78,7 @@ tela também sabe lidar com o futuro (Programado) e com o passado (correção ta
 
 ## Rota e estado
 
+- **Construída (Fase 1, n1-tela, 13/11/2026):** Lançar situação (com hora opcional e "Corrigir o último evento"), "Lançar o dia" pelo número do dia no cabeçalho (tudo ou nada, com os recusados) e o Programado na célula futura (programar, confirmar, cancelar).
 - Rota proposta: popup sobre `/frota/acompanhamento` (`?lancar=<conjunto>&dia=aaaa-mm-dd`), sem rota própria.
 - Módulo Frota. Quem vê: Gestor de frota (escreve), Administrador (escreve e corrige); Diretoria só pela tarefa.
 - Estado no catálogo: **esqueleto** do wizard novo (hoje existe o mini-wizard lateral de 2 passos, a aposentar).
