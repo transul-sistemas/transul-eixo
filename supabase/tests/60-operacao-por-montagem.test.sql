@@ -257,11 +257,11 @@ select lives_ok(
     values (pg_temp.id('S2'), pg_temp.op('Grãos'), '2026-01-10 00:00-03', 'informada')$$,
   'vários CRs de serviço na mesma operação (hipótese)'
 );
-select throws_ok(
+-- V0 (13/11/2026, migration 20261117200000): o vínculo CR-operação vale para todo CR (H1).
+select lives_ok(
   $$insert into nucleo.cr_de_servico_na_operacao (cr_id, operacao_id, inicio, inicio_origem)
     values (pg_temp.id('A1'), pg_temp.op('Grãos'), '2026-01-10 00:00-03', 'informada')$$,
-  '23514', 'Só CR de serviço entra na operação como serviço; as placas entram pelo vínculo placa-operação.',
-  'CR de frota não entra como serviço'
+  'CR de frota também entra no vínculo CR-operação (V0)'
 );
 select throws_ok(
   $$insert into nucleo.cr_de_servico_na_operacao (cr_id, operacao_id, inicio, inicio_origem)

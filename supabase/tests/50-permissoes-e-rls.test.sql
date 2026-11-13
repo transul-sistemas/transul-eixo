@@ -204,7 +204,15 @@ select set_eq(
     'nucleo.confirmacao_da_carteira.confirmacao_da_carteira_ler',
     -- Posição do dia, M2 (testadas em 114-posicao-do-dia.test.sql).
     'config.cidade.cidade_ler', 'config.cidade.cidade_criar', 'config.cidade.cidade_alterar',
-    'nucleo.posicao_do_conjunto.posicao_do_conjunto_ler', 'nucleo.liberacao_da_posicao.liberacao_da_posicao_ler'
+    'nucleo.posicao_do_conjunto.posicao_do_conjunto_ler', 'nucleo.liberacao_da_posicao.liberacao_da_posicao_ler',
+    -- Trocar CR, V0 (testada em 115-trocar-cr.test.sql).
+    'nucleo.troca_de_cr.troca_de_cr_ler',
+    -- Baixa com quatro olhos, S4 (testada em 116-baixa-com-quatro-olhos.test.sql).
+    'nucleo.pedido_de_baixa.pedido_de_baixa_ler',
+    -- Saúde do CR, CR1 (testadas em 117-saude-do-cr.test.sql).
+    'nucleo.classificacao_de_centro.classificacao_de_centro_ler', 'nucleo.dono_de_problema.dono_de_problema_ler',
+    -- Programado, A2 (testada em 118-lancar-o-dia.test.sql).
+    'nucleo.situacao_programada.situacao_programada_ler'
   ],
   'as políticas de cada tabela, com o nome de cada uma (todas testadas abaixo ou na matriz)'
 );

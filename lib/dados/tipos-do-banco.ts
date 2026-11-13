@@ -515,6 +515,44 @@ isOneToOne: false
       referencedColumns: ["ativo_id"]
     }
                   ]
+                },"classificacao_de_centro": {
+                  Row: {
+                    "classificado_em": string,"classificado_por": string | null,"codcencus": string,"cr_id": string | null,"decisao": string,"id": string,"motivo": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "classificado_em"?: string,"classificado_por"?: string | null,"codcencus": string,"cr_id"?: string | null,"decisao": string,"id"?: string,"motivo": string
+                  }
+                  Update: {
+                    "classificado_em"?: string,"classificado_por"?: string | null,"codcencus"?: string,"cr_id"?: string | null,"decisao"?: string,"id"?: string,"motivo"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "classificacao_de_centro_classificado_por_fkey"
+      columns: ["classificado_por"]
+isOneToOne: false
+      referencedRelation: "pessoa"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "classificacao_de_centro_classificado_por_fkey"
+      columns: ["classificado_por"]
+isOneToOne: false
+      referencedRelation: "pessoa_para_leitura"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "classificacao_de_centro_cr_id_fkey"
+      columns: ["cr_id"]
+isOneToOne: false
+      referencedRelation: "alerta_de_cr"
+      referencedColumns: ["cr_id"]
+    },{
+      foreignKeyName: "classificacao_de_centro_cr_id_fkey"
+      columns: ["cr_id"]
+isOneToOne: false
+      referencedRelation: "cr"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"composicao": {
                   Row: {
                     "cavalo_id": string,"cavalo_tipo": Database["nucleo"]['Enums']["tipo_de_ativo"],"criado_em": string,"excluido_em": string | null,"excluido_por": string | null,"fim": string | null,"fim_origem": Database["config"]['Enums']["origem_da_data"] | null,"id": string,"implemento_id": string,"implemento_tipo": Database["nucleo"]['Enums']["tipo_de_ativo"],"inicio": string,"inicio_origem": Database["config"]['Enums']["origem_da_data"],"motivo_da_exclusao": string | null,"operacao_na_saida_id": string | null,"periodo": unknown,"posicao": number,"versao": number
@@ -827,6 +865,44 @@ isOneToOne: false
 isOneToOne: false
       referencedRelation: "operacao_do_ativo"
       referencedColumns: ["ativo_id"]
+    }
+                  ]
+                },"dono_de_problema": {
+                  Row: {
+                    "atribuido_em": string,"atribuido_por": string | null,"dono_id": string,"excluido_em": string | null,"excluido_por": string | null,"id": string,"motivo_da_exclusao": string | null,"prazo": string | null,"problema": string,"referencia": string,"versao": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "atribuido_em"?: string,"atribuido_por"?: string | null,"dono_id": string,"excluido_em"?: string | null,"excluido_por"?: string | null,"id"?: string,"motivo_da_exclusao"?: string | null,"prazo"?: string | null,"problema": string,"referencia": string,"versao"?: number
+                  }
+                  Update: {
+                    "atribuido_em"?: string,"atribuido_por"?: string | null,"dono_id"?: string,"excluido_em"?: string | null,"excluido_por"?: string | null,"id"?: string,"motivo_da_exclusao"?: string | null,"prazo"?: string | null,"problema"?: string,"referencia"?: string,"versao"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "dono_de_problema_atribuido_por_fkey"
+      columns: ["atribuido_por"]
+isOneToOne: false
+      referencedRelation: "pessoa"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "dono_de_problema_atribuido_por_fkey"
+      columns: ["atribuido_por"]
+isOneToOne: false
+      referencedRelation: "pessoa_para_leitura"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "dono_de_problema_dono_id_fkey"
+      columns: ["dono_id"]
+isOneToOne: false
+      referencedRelation: "pessoa"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "dono_de_problema_dono_id_fkey"
+      columns: ["dono_id"]
+isOneToOne: false
+      referencedRelation: "pessoa_para_leitura"
+      referencedColumns: ["id"]
     }
                   ]
                 },"estado_de_status": {
@@ -1183,6 +1259,68 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"pedido_de_baixa": {
+                  Row: {
+                    "ativo_id": string,"decidido_em": string | null,"decidido_por": string | null,"documento": string | null,"em": string,"id": string,"justificativa": string,"motivo": string,"motivo_da_decisao": string | null,"pedido_em": string,"pedido_por": string,"sigla": string,"situacao": string,"versao": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "ativo_id": string,"decidido_em"?: string | null,"decidido_por"?: string | null,"documento"?: string | null,"em": string,"id"?: string,"justificativa": string,"motivo": string,"motivo_da_decisao"?: string | null,"pedido_em"?: string,"pedido_por": string,"sigla": string,"situacao"?: string,"versao"?: number
+                  }
+                  Update: {
+                    "ativo_id"?: string,"decidido_em"?: string | null,"decidido_por"?: string | null,"documento"?: string | null,"em"?: string,"id"?: string,"justificativa"?: string,"motivo"?: string,"motivo_da_decisao"?: string | null,"pedido_em"?: string,"pedido_por"?: string,"sigla"?: string,"situacao"?: string,"versao"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "pedido_de_baixa_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: false
+      referencedRelation: "alerta_de_vinculo"
+      referencedColumns: ["ativo_id"]
+    },{
+      foreignKeyName: "pedido_de_baixa_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: false
+      referencedRelation: "ativo"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "pedido_de_baixa_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: false
+      referencedRelation: "campo_pendente"
+      referencedColumns: ["ativo_id"]
+    },{
+      foreignKeyName: "pedido_de_baixa_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: false
+      referencedRelation: "operacao_do_ativo"
+      referencedColumns: ["ativo_id"]
+    },{
+      foreignKeyName: "pedido_de_baixa_decidido_por_fkey"
+      columns: ["decidido_por"]
+isOneToOne: false
+      referencedRelation: "pessoa"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "pedido_de_baixa_decidido_por_fkey"
+      columns: ["decidido_por"]
+isOneToOne: false
+      referencedRelation: "pessoa_para_leitura"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "pedido_de_baixa_pedido_por_fkey"
+      columns: ["pedido_por"]
+isOneToOne: false
+      referencedRelation: "pessoa"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "pedido_de_baixa_pedido_por_fkey"
+      columns: ["pedido_por"]
+isOneToOne: false
+      referencedRelation: "pessoa_para_leitura"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"pessoa": {
                   Row: {
                     "cadastro_pendente": boolean,"codparc": number | null,"criado_em": string,"documento_mascarado": string | null,"email": string | null,"excluido_em": string | null,"excluido_por": string | null,"id": string,"motivo_da_exclusao": string | null,"nome": string,"versao": number
@@ -1461,6 +1599,74 @@ isOneToOne: false
       referencedColumns: ["campo"]
     }
                   ]
+                },"situacao_programada": {
+                  Row: {
+                    "ativo_id": string,"decidido_em": string | null,"decidido_por": string | null,"dia": string,"evento_id": string | null,"hora": string,"id": string,"motivo_do_cancelamento": string | null,"programado_em": string,"programado_por": string | null,"sigla": string,"situacao": string,"versao": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "ativo_id": string,"decidido_em"?: string | null,"decidido_por"?: string | null,"dia": string,"evento_id"?: string | null,"hora": string,"id"?: string,"motivo_do_cancelamento"?: string | null,"programado_em"?: string,"programado_por"?: string | null,"sigla": string,"situacao"?: string,"versao"?: number
+                  }
+                  Update: {
+                    "ativo_id"?: string,"decidido_em"?: string | null,"decidido_por"?: string | null,"dia"?: string,"evento_id"?: string | null,"hora"?: string,"id"?: string,"motivo_do_cancelamento"?: string | null,"programado_em"?: string,"programado_por"?: string | null,"sigla"?: string,"situacao"?: string,"versao"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "situacao_programada_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: false
+      referencedRelation: "alerta_de_vinculo"
+      referencedColumns: ["ativo_id"]
+    },{
+      foreignKeyName: "situacao_programada_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: false
+      referencedRelation: "ativo"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "situacao_programada_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: false
+      referencedRelation: "campo_pendente"
+      referencedColumns: ["ativo_id"]
+    },{
+      foreignKeyName: "situacao_programada_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: false
+      referencedRelation: "operacao_do_ativo"
+      referencedColumns: ["ativo_id"]
+    },{
+      foreignKeyName: "situacao_programada_decidido_por_fkey"
+      columns: ["decidido_por"]
+isOneToOne: false
+      referencedRelation: "pessoa"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "situacao_programada_decidido_por_fkey"
+      columns: ["decidido_por"]
+isOneToOne: false
+      referencedRelation: "pessoa_para_leitura"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "situacao_programada_evento_id_fkey"
+      columns: ["evento_id"]
+isOneToOne: false
+      referencedRelation: "evento_de_status"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "situacao_programada_programado_por_fkey"
+      columns: ["programado_por"]
+isOneToOne: false
+      referencedRelation: "pessoa"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "situacao_programada_programado_por_fkey"
+      columns: ["programado_por"]
+isOneToOne: false
+      referencedRelation: "pessoa_para_leitura"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"transferencia": {
                   Row: {
                     "ativo_id": string,"cancelada_em": string | null,"concluida_em": string | null,"criado_em": string,"de_gestor_id": string,"devolvida_em": string | null,"excluido_em": string | null,"excluido_por": string | null,"id": string,"motivo": string,"motivo_da_devolucao": string | null,"motivo_da_exclusao": string | null,"para_gestor_id": string,"recebida_em": string | null,"situacao": string,"versao": number
@@ -1552,6 +1758,92 @@ isOneToOne: false
       columns: ["transferencia_id"]
 isOneToOne: false
       referencedRelation: "transferencia"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"troca_de_cr": {
+                  Row: {
+                    "ativo_id": string,"correcao_tardia": boolean,"cr_antigo_id": string | null,"cr_novo_id": string,"em": string,"feita_em": string,"feita_por": string | null,"id": string,"motivo": string,"operacao_antiga_id": string | null,"operacao_nova_id": string | null,"origem_da_data": Database["config"]['Enums']["origem_da_data"]
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "ativo_id": string,"correcao_tardia": boolean,"cr_antigo_id"?: string | null,"cr_novo_id": string,"em": string,"feita_em"?: string,"feita_por"?: string | null,"id"?: string,"motivo": string,"operacao_antiga_id"?: string | null,"operacao_nova_id"?: string | null,"origem_da_data": Database["config"]['Enums']["origem_da_data"]
+                  }
+                  Update: {
+                    "ativo_id"?: string,"correcao_tardia"?: boolean,"cr_antigo_id"?: string | null,"cr_novo_id"?: string,"em"?: string,"feita_em"?: string,"feita_por"?: string | null,"id"?: string,"motivo"?: string,"operacao_antiga_id"?: string | null,"operacao_nova_id"?: string | null,"origem_da_data"?: Database["config"]['Enums']["origem_da_data"]
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "troca_de_cr_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: false
+      referencedRelation: "alerta_de_vinculo"
+      referencedColumns: ["ativo_id"]
+    },{
+      foreignKeyName: "troca_de_cr_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: false
+      referencedRelation: "ativo"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "troca_de_cr_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: false
+      referencedRelation: "campo_pendente"
+      referencedColumns: ["ativo_id"]
+    },{
+      foreignKeyName: "troca_de_cr_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: false
+      referencedRelation: "operacao_do_ativo"
+      referencedColumns: ["ativo_id"]
+    },{
+      foreignKeyName: "troca_de_cr_cr_antigo_id_fkey"
+      columns: ["cr_antigo_id"]
+isOneToOne: false
+      referencedRelation: "alerta_de_cr"
+      referencedColumns: ["cr_id"]
+    },{
+      foreignKeyName: "troca_de_cr_cr_antigo_id_fkey"
+      columns: ["cr_antigo_id"]
+isOneToOne: false
+      referencedRelation: "cr"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "troca_de_cr_cr_novo_id_fkey"
+      columns: ["cr_novo_id"]
+isOneToOne: false
+      referencedRelation: "alerta_de_cr"
+      referencedColumns: ["cr_id"]
+    },{
+      foreignKeyName: "troca_de_cr_cr_novo_id_fkey"
+      columns: ["cr_novo_id"]
+isOneToOne: false
+      referencedRelation: "cr"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "troca_de_cr_feita_por_fkey"
+      columns: ["feita_por"]
+isOneToOne: false
+      referencedRelation: "pessoa"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "troca_de_cr_feita_por_fkey"
+      columns: ["feita_por"]
+isOneToOne: false
+      referencedRelation: "pessoa_para_leitura"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "troca_de_cr_operacao_antiga_id_fkey"
+      columns: ["operacao_antiga_id"]
+isOneToOne: false
+      referencedRelation: "operacao"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "troca_de_cr_operacao_nova_id_fkey"
+      columns: ["operacao_nova_id"]
+isOneToOne: false
+      referencedRelation: "operacao"
       referencedColumns: ["id"]
     }
                   ]
@@ -1828,8 +2120,14 @@ isOneToOne: false
 "analise_da_frota":
 { Args: { "p_agrupamento"?: string,"p_filial"?: string,"p_mes": string,"p_operacao_id"?: string }; Returns: Json
                            },
+"aprovar_baixa":
+{ Args: { "p_chave"?: string,"p_pedido_id": string,"p_versao": number }; Returns: string
+                           },
 "ativo_da_placa":
 { Args: { "p_placa": string }; Returns: string
+                           },
+"atribuir_dono":
+{ Args: { "p_chave"?: string,"p_dono_id": string,"p_prazo": string,"p_problema": string,"p_referencia": string }; Returns: string
                            },
 "atualizar_leitura_vencida":
 { Args: Record<PropertyKey, never>; Returns: number
@@ -1860,6 +2158,12 @@ isOneToOne: false
 "cancelar_pedido":
 { Args: { "p_chave"?: string,"p_em"?: string,"p_transferencia_id": string,"p_versao": number }; Returns: string
                            },
+"cancelar_pedido_de_baixa":
+{ Args: { "p_chave"?: string,"p_pedido_id": string }; Returns: string
+                           },
+"cancelar_situacao_programada":
+{ Args: { "p_chave"?: string,"p_motivo": string,"p_programada_id": string }; Returns: string
+                           },
 "carteira_do_mes":
 { Args: { "p_filtro"?: string,"p_mes": string,"p_pagina"?: number,"p_tam"?: number }; Returns: Json
                            },
@@ -1875,6 +2179,9 @@ isOneToOne: false
 { Args: { "p_dia": string,"p_tipos"?: (string)[] }; Returns: {
               "grupo": string,"nome": string,"quantidade": number,"sigla": string
             }[]
+                           },
+"classificar_centro_sem_cr":
+{ Args: { "p_chave"?: string,"p_codcencus": string,"p_codigo": string,"p_decisao": string,"p_motivo": string,"p_nome": string }; Returns: string
                            },
 "competencia_gerencial":
 { Args: { "p_dia_corte": number,"p_dtentsai": string,"p_dtneg": string,"p_menor_dtneg_de_origem"?: string,"p_provisao"?: boolean }; Returns: string
@@ -1899,8 +2206,34 @@ isOneToOne: false
 "conferir_conjunto":
 { Args: { "p_cavalo_id": string }; Returns: undefined
                            },
+"conferir_decisao_da_baixa":
+{ Args: { "p_pedido_id": string,"p_versao": number }; Returns: {
+              "ativo_id": string,
+"decidido_em": string | null,
+"decidido_por": string | null,
+"documento": string | null,
+"em": string,
+"id": string,
+"justificativa": string,
+"motivo": string,
+"motivo_da_decisao": string | null,
+"pedido_em": string,
+"pedido_por": string,
+"sigla": string,
+"situacao": string,
+"versao": number
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "pedido_de_baixa"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
 "confirmar_carteira":
 { Args: { "p_chave"?: string,"p_itens": Json,"p_mes": string }; Returns: Json
+                           },
+"confirmar_situacao_programada":
+{ Args: { "p_chave"?: string,"p_programada_id": string,"p_versao": number }; Returns: string
                            },
 "conjuntos_com_lancamento_no_dia":
 { Args: { "p_dia": string }; Returns: {
@@ -1931,6 +2264,9 @@ isOneToOne: false
 "corrigir_campo":
 { Args: { "p_ativo_id": string,"p_campo": string,"p_chave"?: string,"p_motivo": string,"p_valor": Json,"p_versao"?: number }; Returns: string
                            },
+"corrigir_ultimo_evento":
+{ Args: { "p_chave"?: string,"p_evento_id": string,"p_motivo": string,"p_nova_sigla"?: string }; Returns: string
+                           },
 "cr_da_operacao_no_mes":
 { Args: { "p_mes": string }; Returns: {
               "codcencus": string,"cr_id": string,"frota": boolean,"operacao_id": string
@@ -1944,6 +2280,11 @@ isOneToOne: false
                            },
 "criar_ordem_de_carregamento":
 { Args: { "p_ativo_id": string,"p_chave"?: string,"p_data_prevista": string,"p_destino": string,"p_em"?: string,"p_operacao_id": string }; Returns: Json
+                           },
+"crs_da_placa":
+{ Args: { "p_ativo_id": string,"p_incluir_historico"?: boolean }; Returns: {
+              "codigo": string,"cr_id": string,"fim": string,"fim_origem": string,"inicio": string,"inicio_origem": string,"nome": string,"operacao": string,"operacao_id": string,"tipo": string,"versao": number,"vigente": boolean,"vinculo_id": string
+            }[]
                            },
 "crs_ocupados":
 { Args: Record<PropertyKey, never>; Returns: string[]
@@ -1994,6 +2335,11 @@ isOneToOne: false
 "distancia_improvavel":
 { Args: { "p_cidade_de": number,"p_cidade_para": number,"p_dias"?: number }; Returns: Json
                            },
+"divergencias_de_operacao":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "ativo_id": string,"operacao_da_placa": string,"operacao_da_placa_id": string,"operacao_do_cr": string,"operacao_do_cr_id": string,"placa": string
+            }[]
+                           },
 "documento_valido":
 { Args: { "p_texto": string }; Returns: boolean
                            },
@@ -2008,6 +2354,9 @@ isOneToOne: false
                            },
 "encerrar_locacao":
 { Args: { "p_chave"?: string,"p_fim": string,"p_locacao_id": string,"p_motivo": string,"p_versao": number }; Returns: Json
+                           },
+"encerrar_vinculo_de_cr":
+{ Args: { "p_chave"?: string,"p_em": string,"p_motivo": string,"p_versao": number,"p_vinculo_id": string }; Returns: string
                            },
 "engatar":
 { Args: { "p_cavalo_id": string,"p_em": string,"p_implemento_id": string,"p_posicao": number }; Returns: string
@@ -2062,8 +2411,14 @@ isOneToOne: false
               "em": string,"sigla": string
             }[]
                            },
+"historia_do_cr":
+{ Args: { "p_cr_id": string }; Returns: Json
+                           },
 "hoje_em_sao_paulo":
 { Args: Record<PropertyKey, never>; Returns: string
+                           },
+"impacto_da_baixa":
+{ Args: { "p_ativo_id": string,"p_em": string }; Returns: Json
                            },
 "inicio_do_pat":
 { Args: { "p_ativo_id": string }; Returns: string
@@ -2074,11 +2429,20 @@ isOneToOne: false
 "justificar_diferenca":
 { Args: { "p_chave"?: string,"p_cr_id": string,"p_mes": string,"p_motivo": string }; Returns: Json
                            },
+"lancar_o_dia_em_lote":
+{ Args: { "p_ativos": (string)[],"p_chave"?: string,"p_dia": string,"p_hora": string,"p_sigla": string }; Returns: Json
+                           },
 "lancar_situacao_do_dia":
 { Args: { "p_ativo_id": string,"p_chave"?: string,"p_dia": string,"p_sigla": string }; Returns: Json
                            },
+"lancar_situacao_na_hora":
+{ Args: { "p_ativo_id": string,"p_em": string,"p_sigla": string }; Returns: string
+                           },
 "liberar_posicao_do_dia":
 { Args: { "p_chave"?: string,"p_dia": string,"p_gestor_id": string,"p_motivo": string }; Returns: string
+                           },
+"ligar_cr_a_operacao":
+{ Args: { "p_chave"?: string,"p_cr_id": string,"p_em": string,"p_motivo": string,"p_operacao_id": string }; Returns: string
                            },
 "linha_calculada_da_placa":
 { Args: { "p_ativo_id": string,"p_em"?: string }; Returns: {
@@ -2168,6 +2532,9 @@ isOneToOne: false
 "opcoes_da_analise":
 { Args: Record<PropertyKey, never>; Returns: Json
                            },
+"operacao_do_cr_em":
+{ Args: { "p_cr_id": string,"p_em": string }; Returns: string
+                           },
 "operacao_e_degrau_em":
 { Args: { "p_ativo_id": string,"p_em": string }; Returns: {
               "degrau": string,"operacao_id": string
@@ -2203,11 +2570,19 @@ isOneToOne: false
 "pedido_para_agir":
 { Args: { "p_mensagem": string,"p_transferencia_id": string }; Returns: Record<string, unknown>
                            },
+"pedidos_de_baixa":
+{ Args: { "p_situacao"?: string }; Returns: {
+              "ativo_id": string,"atrasado": boolean,"decidido_em": string,"decidido_por_nome": string,"documento": string,"em": string,"id": string,"justificativa": string,"motivo": string,"motivo_da_decisao": string,"pedido_em": string,"pedido_por": string,"pedido_por_nome": string,"placa": string,"prazo_ate": string,"sigla": string,"situacao": string,"versao": number
+            }[]
+                           },
 "pedidos_do_meu_dia":
 { Args: { "p_todos"?: boolean }; Returns: Json
                            },
 "pedidos_para_receber":
 { Args: Record<PropertyKey, never>; Returns: Json
+                           },
+"pedir_baixa":
+{ Args: { "p_ativo_id": string,"p_chave"?: string,"p_documento": string,"p_em": string,"p_justificativa": string,"p_motivo": string }; Returns: string
                            },
 "periodo_do_mes":
 { Args: { "p_mes": string }; Returns: unknown
@@ -2277,6 +2652,9 @@ isOneToOne: false
               "ativo_id": string,"origem": string,"parceiro_id": string
             }[]
                            },
+"placas_e_crs_da_operacao":
+{ Args: { "p_incluir_historico"?: boolean,"p_operacao_id": string }; Returns: Json
+                           },
 "placas_filtradas":
 { Args: { "p_baixadas": boolean,"p_busca": string,"p_grupos": (string)[],"p_para_receber"?: boolean,"p_siglas": (string)[],"p_tipos": (string)[] }; Returns: {
               "alertas": (string)[] | null,
@@ -2308,6 +2686,9 @@ isOneToOne: false
         isOneToOne: false
         isSetofReturn: true
       } },
+"pode_gravar_cadastro_de_cr":
+{ Args: Record<PropertyKey, never>; Returns: boolean
+                           },
 "porta_da_posicao":
 { Args: Record<PropertyKey, never>; Returns: Json
                            },
@@ -2316,6 +2697,12 @@ isOneToOne: false
                            },
 "posicoes_do_dia":
 { Args: { "p_dia"?: string }; Returns: Json
+                           },
+"problemas_da_saude_do_cr":
+{ Args: { "p_pagina"?: number,"p_problema": string,"p_tamanho"?: number }; Returns: Json
+                           },
+"programar_situacao":
+{ Args: { "p_ativo_id": string,"p_chave"?: string,"p_dia": string,"p_hora": string,"p_sigla": string }; Returns: string
                            },
 "proximo_recalculo_do_ativo":
 { Args: { "p_ativo_id": string,"p_em"?: string }; Returns: string
@@ -2340,6 +2727,9 @@ isOneToOne: false
                            },
 "reconstruir_leitura_das_placas":
 { Args: Record<PropertyKey, never>; Returns: number
+                           },
+"recusar_baixa":
+{ Args: { "p_chave"?: string,"p_motivo": string,"p_pedido_id": string,"p_versao": number }; Returns: string
                            },
 "registrar_baixa":
 { Args: { "p_ativo_id": string,"p_em": string,"p_motivo": string,"p_sigla": string }; Returns: undefined
@@ -2368,6 +2758,9 @@ isOneToOne: false
 "resultado_da_operacao":
 { Args: { "p_fim": string,"p_inicio": string,"p_operacao": string }; Returns: Json
                            },
+"resumo_da_saude_do_cr":
+{ Args: Record<PropertyKey, never>; Returns: Json
+                           },
 "revogar_correcao":
 { Args: { "p_correcao_id": string,"p_motivo": string }; Returns: undefined
                            },
@@ -2375,6 +2768,9 @@ isOneToOne: false
 { Args: { "p_ate": string,"p_ativo_id": string,"p_de": string }; Returns: {
               "cidade": string,"cidade_id": number,"dia": string,"latitude": number,"longitude": number,"origem": string,"sem_sinal": boolean,"uf": string
             }[]
+                           },
+"sigla_da_baixa":
+{ Args: { "p_motivo": string }; Returns: string
                            },
 "sigla_valida":
 { Args: { "p_em_conjunto": boolean,"p_sigla": string,"p_tipo": Database["nucleo"]['Enums']["tipo_de_ativo"] }; Returns: boolean
@@ -2408,6 +2804,11 @@ isOneToOne: false
               "ativo_id": string,"dia": string,"sigla": string
             }[]
                            },
+"situacoes_programadas":
+{ Args: { "p_ate": string,"p_de": string }; Returns: {
+              "ativo_id": string,"dia": string,"grupo": string,"hora": string,"id": string,"placa": string,"sigla": string,"versao": number
+            }[]
+                           },
 "soltas_com_situacao_no_dia":
 { Args: { "p_dia": string }; Returns: {
               "x": number,"y": number
@@ -2438,6 +2839,9 @@ isOneToOne: false
                            },
 "tipos_de_cr_do_ativo":
 { Args: { "p_ativo_id": string,"p_em": string }; Returns: (string)[]
+                           },
+"trocar_cr":
+{ Args: { "p_ativo_id": string,"p_chave"?: string,"p_cr_novo_id": string,"p_em": string,"p_motivo": string,"p_origem_da_data": Database["config"]['Enums']["origem_da_data"],"p_versao": number }; Returns: string
                            },
 "ultima_correcao_tardia_em":
 { Args: { "p_ativo_id": string }; Returns: string

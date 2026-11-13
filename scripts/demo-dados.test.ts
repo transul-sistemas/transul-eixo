@@ -1,6 +1,8 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
+  CIDADES_DA_DEMO,
+  posicaoDeOntem,
   PREFIXO_DA_PLACA_DEMO,
   abastecimentosDaDemo,
   NUMEROS_DOS_CENARIOS,
@@ -266,6 +268,35 @@ describe("cenários de observação (12/11/2026)", () => {
     expect(todas.size).toBeGreaterThanOrEqual(8);
     expect(() => roteiroDoMovimento(10)).toThrow();
     expect(() => roteiroDoMovimento(26)).toThrow();
+  });
+});
+
+describe("Nível 1 (13/11/2026): posição, troca, baixa e lançamento sem CR", () => {
+  it("as cidades da demonstração são fictícias, com id fora da faixa da tabela real, e uma sem coordenada", () => {
+    for (const c of CIDADES_DA_DEMO) {
+      expect(c.nome).toMatch(/^Cidade Demo /);
+      expect(c.id).toBeGreaterThan(9_900_000);
+    }
+    expect(CIDADES_DA_DEMO.some((c) => c.latitude === null)).toBe(true);
+  });
+  it("a posição de ontem alterna as cidades e deixa um conjunto em cinco sem sinal", () => {
+    const posicoes = Array.from({ length: 10 }, (_, i) => posicaoDeOntem(i));
+    expect(posicoes.filter((p) => p.semSinal)).toHaveLength(2);
+    for (const p of posicoes)
+      expect(p.semSinal ? p.cidadeId === null : p.cidadeId !== null).toBe(true);
+  });
+  it("as placas dos cenários novos não colidem com as dos outros cenários", () => {
+    const n = NUMEROS_DOS_CENARIOS;
+    const usadas = [
+      n.placaComDoisCr.placa,
+      n.placaComFrotaEAcionista.placa,
+      n.placaDeCadastroIncompleto.placa,
+      n.placaSemCr.placa,
+      ...Array.from({ length: n.operacaoDemo.placas }, (_, i) => n.operacaoDemo.placaInicial + i),
+    ];
+    expect(usadas).not.toContain(n.placaDaTrocaDeCr.placa);
+    expect(usadas).not.toContain(n.placaDaBaixaPedida.placa);
+    expect(n.centroSemCr).toMatch(/^99/);
   });
 });
 
