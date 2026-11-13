@@ -2,11 +2,9 @@
 
 import { useCallback, useRef, useState } from "react";
 import type { Resolver } from "react-hook-form";
-import { Etiqueta } from "@/components/etiqueta";
 import { formatarInteiro } from "@/components/formato/numero";
 import { useUsuarioDaSessao } from "@/components/navegacao/usuario-da-sessao";
 import { Placa } from "@/components/placa";
-import { BotaoDoOlho } from "@/components/tabela/botao-do-olho";
 import { Assistente } from "@/components/wizard/assistente";
 import { CLASSE_DO_CAMPO } from "@/components/wizard/campos";
 import {
@@ -31,6 +29,8 @@ import {
   receberPlacaAcao,
 } from "../../frota/placas/acoes";
 import { errosDoResolvedor } from "../../frota/placas/assistentes/erros-do-resolvedor";
+import { registrarPlacaSemCrAcao } from "./acoes";
+import { ColunaDoCr, ColunaDoEnvio, OlhinhoDoPedido, PendenciasDoPedido } from "./colunas-do-lote";
 
 // Receber placas em lote (Meu dia, tarefa 1): um popup central; para cada placa um pedido independente
 // com Aceitar, Com pendências ou Recusar (motivo obrigatório). Usa só as funções atômicas que já existem
@@ -63,44 +63,18 @@ const CHAMADAS: ChamadasDoLote = {
   receber: (dados, chaveDeEnvio) => receberPlacaAcao({ chaveDeEnvio, dados }),
   concluir: (dados, chaveDeEnvio) => concluirRecebimentoAcao({ chaveDeEnvio, dados }),
   devolver: (dados, chaveDeEnvio) => devolverPlacaAcao({ chaveDeEnvio, dados }),
+  // Placa aceita sem CR vigente: abre a exceção "placa sem CR" (a mesma chave a cada tentativa).
+  registrarSemCr: (dados, chaveDeEnvio) => registrarPlacaSemCrAcao({ chaveDeEnvio, dados }),
 };
-
-function ColunaDoCr({ linha }: { linha: LinhaDoPedido }) {
-  if (linha.crs === null) {
-    return (
-      <span className="text-muted-foreground text-xs">
-        CR não lido agora. Abra a ficha da placa para conferir.
-      </span>
-    );
-  }
-  if (linha.crs.length === 0) {
-    return (
-      <div className="flex flex-col gap-0.5">
-        <Etiqueta status="atencao">Sem CR vigente</Etiqueta>
-        <span className="text-muted-foreground text-xs">Falta o CR no cadastro da placa.</span>
-      </div>
-    );
-  }
-  return (
-    <ul className="flex flex-col gap-1">
-      {linha.crs.map((cr) => (
-        <li key={cr.codigo} className="flex flex-wrap items-center gap-1.5">
-          <Etiqueta status="em-atividade">Vigente</Etiqueta>
-          <span className="text-sm tabular-nums">{cr.codigo}</span>
-          <span className="text-muted-foreground text-xs">
-            {linha.operacao ? `Operação ${linha.operacao}` : cr.nome}
-          </span>
-        </li>
-      ))}
-    </ul>
-  );
-}
 
 export function ReceberPlacasEmLote({
   linhas,
+  hoje,
   aoFechar,
 }: {
   linhas: LinhaDoPedido[];
+  /** Hoje em São Paulo (`aaaa-mm-dd`): de onde vem o "há N dias" de cada pedido. */
+  hoje: string;
   aoFechar: () => void;
 }) {
   const usuario = useUsuarioDaSessao();
@@ -114,6 +88,7 @@ export function ReceberPlacasEmLote({
       pedido,
       decisao: (v.itens?.[i]?.decisao || null) as Decisao | null,
       motivo: v.itens?.[i]?.motivo ?? "",
+      crs: linhas[i]?.crs ?? null,
     }));
 
   const resolver: Resolver<Valores> = async (valores) => {
@@ -163,6 +138,7 @@ export function ReceberPlacasEmLote({
         pedido,
         decisao: (valores.itens?.[i]?.decisao || null) as Decisao | null,
         motivo: valores.itens?.[i]?.motivo ?? "",
+        crs: linhas[i]?.crs ?? null,
       }));
       const feitos = await executarLote(itens, CHAMADAS, progresso.current, novaChaveDeEnvio);
       setResultados(feitos);
@@ -170,7 +146,7 @@ export function ReceberPlacasEmLote({
       if (resumo.falhas > 0) return erroDaAcao("falha", { mensagem: resumo.texto });
       return { ok: true, linha: feitos };
     },
-    [pedidos],
+    [pedidos, linhas],
   );
 
   const resumoFinal = resumoDoLote(resultados);
@@ -302,20 +278,14 @@ export function ReceberPlacasEmLote({
                             </span>
                           ) : null}
                         </th>
-                        <td className="px-3 py-2">{pedido.deGestor}</td>
+                        <td className="px-3 py-2">
+                          <ColunaDoEnvio linha={linha} hoje={hoje} />
+                        </td>
                         <td className="px-3 py-2">
                           <ColunaDoCr linha={linha} />
                         </td>
                         <td className="px-3 py-2">
-                          {pedido.pendenciasConhecidas.length === 0 ? (
-                            <span className="text-muted-foreground">Nenhuma</span>
-                          ) : (
-                            <ul className="list-disc pl-4">
-                              {pedido.pendenciasConhecidas.map((p) => (
-                                <li key={p.id}>{p.texto}</li>
-                              ))}
-                            </ul>
-                          )}
+                          <PendenciasDoPedido linha={linha} />
                         </td>
                         <td className="min-w-64 px-3 py-2">
                           <div
@@ -359,29 +329,7 @@ export function ReceberPlacasEmLote({
                           ) : null}
                         </td>
                         <td className="px-3 py-2">
-                          <BotaoDoOlho
-                            item={pedido.placa}
-                            hrefDaFicha={`/frota/placas/${pedido.placa}`}
-                            titulo={<Placa placa={pedido.placa} tamanho="m" />}
-                            detalhes={[
-                              { rotulo: "Enviada por", valor: pedido.deGestor },
-                              { rotulo: "Motivo do envio", valor: pedido.motivo },
-                              {
-                                rotulo: "CR vigente",
-                                valor:
-                                  linha.crs === null
-                                    ? "Não lido agora"
-                                    : linha.crs.length === 0
-                                      ? "Sem CR vigente"
-                                      : linha.crs.map((c) => c.codigo).join(", "),
-                              },
-                              { rotulo: "Operação", valor: linha.operacao ?? "Sem operação" },
-                              {
-                                rotulo: "Pendências",
-                                valor: String(pedido.pendenciasConhecidas.length),
-                              },
-                            ]}
-                          />
+                          <OlhinhoDoPedido linha={linha} />
                         </td>
                       </tr>
                     );

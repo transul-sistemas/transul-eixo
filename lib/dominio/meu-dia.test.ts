@@ -126,7 +126,7 @@ function chamadasFalsas(falhas: Record<string, string> = {}) {
     receber: fazer("receber"),
     concluir: fazer("concluir"),
     devolver: fazer("devolver"),
-    registrarSemCr: fazer("registrar_sem_cr"),
+    registrarSemCr: fazer("registrar_sem_cr") as ChamadasDoLote["registrarSemCr"],
   };
   return { chamadas, ligacoes };
 }
@@ -336,7 +336,7 @@ describe("precisaRegistrarSemCr", () => {
     expect(precisaRegistrarSemCr("aceitar", [])).toBe(true);
     expect(precisaRegistrarSemCr("aceitar_com_pendencias", [])).toBe(true);
     expect(precisaRegistrarSemCr("recusar", [])).toBe(false);
-    expect(precisaRegistrarSemCr("aceitar", [{ codigo: "CR1", nome: "x" }])).toBe(false);
+    expect(precisaRegistrarSemCr("aceitar", [{ codigo: "CR1" }])).toBe(false);
   });
   it("CR não lido (null) não é 'sem CR': o banco confere de novo por dentro", () => {
     expect(precisaRegistrarSemCr("aceitar", null)).toBe(true);

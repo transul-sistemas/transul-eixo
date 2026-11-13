@@ -9,6 +9,7 @@ import { ListaVazia } from "@/components/tabela/estados";
 import { Button } from "@/components/ui/button";
 import type { LinhaDoPedido } from "@/lib/dominio/meu-dia";
 import type { Tarefa } from "@/lib/dominio/tarefas";
+import { PedidosEmLeitura } from "./pedidos-em-leitura";
 import { ReceberPlacasEmLote } from "./receber-placas-em-lote";
 
 // A fila guiada do dia: só aparece o que há a fazer. O primeiro passo (Receber placas) abre sozinho, em
@@ -24,9 +25,20 @@ interface Props {
   outras: Tarefa[];
   /** As outras tarefas não puderam ser lidas (o aviso diz isso; nunca finge que não há nada). */
   outrasIndisponiveis: boolean;
+  /** Hoje em São Paulo (`aaaa-mm-dd`), para o "há N dias" de cada pedido. */
+  hoje: string;
+  /** O Administrador vê a fila e os dados, sem os botões de decidir: só o gestor de destino decide. */
+  somenteLeitura?: boolean;
 }
 
-export function FilaDoDia({ linhas, semCarteira, outras, outrasIndisponiveis }: Props) {
+export function FilaDoDia({
+  linhas,
+  semCarteira,
+  outras,
+  outrasIndisponiveis,
+  hoje,
+  somenteLeitura = false,
+}: Props) {
   const router = useRouter();
   // O popup abre sozinho depois da hidratação (o assistente só monta no navegador).
   const montado = useSyncExternalStore(
@@ -35,8 +47,9 @@ export function FilaDoDia({ linhas, semCarteira, outras, outrasIndisponiveis }: 
     () => false,
   );
   const [fechado, setFechado] = useState(false);
-  const aberto = montado && !fechado && linhas.length > 0;
-  const total = (linhas.length > 0 ? 1 : 0) + outras.length;
+  const aberto = montado && !fechado && linhas.length > 0 && !somenteLeitura;
+  const decidindo = linhas.length > 0 && !somenteLeitura;
+  const total = (decidindo ? 1 : 0) + outras.length;
 
   function aoFechar() {
     setFechado(true);
@@ -46,7 +59,8 @@ export function FilaDoDia({ linhas, semCarteira, outras, outrasIndisponiveis }: 
 
   return (
     <div className="flex flex-col gap-4">
-      {semCarteira ? (
+      {somenteLeitura ? <PedidosEmLeitura linhas={linhas} hoje={hoje} /> : null}
+      {semCarteira && !somenteLeitura ? (
         <p
           role="status"
           className="text-muted-foreground border-border rounded-lg border p-3 text-sm"
@@ -61,14 +75,18 @@ export function FilaDoDia({ linhas, semCarteira, outras, outrasIndisponiveis }: 
         </p>
       ) : null}
 
-      {total === 0 && !outrasIndisponiveis ? (
+      {total === 0 && !outrasIndisponiveis && !(somenteLeitura && linhas.length > 0) ? (
         <ListaVazia
           titulo="Nada espera você agora"
-          descricao="Nenhuma placa espera a sua decisão. Siga para o Acompanhamento da frota."
+          descricao={
+            somenteLeitura
+              ? "Nenhum pedido de transferência está aberto. Siga para o Acompanhamento da frota."
+              : "Nenhuma placa espera a sua decisão. Siga para o Acompanhamento da frota."
+          }
         />
       ) : (
         <ol aria-label="Tarefas do seu dia" className="flex flex-col gap-3">
-          {linhas.length > 0 ? (
+          {decidindo ? (
             <li className="border-border bg-card flex flex-wrap items-center gap-4 rounded-xl border px-4 py-3">
               <span
                 aria-hidden
@@ -91,7 +109,7 @@ export function FilaDoDia({ linhas, semCarteira, outras, outrasIndisponiveis }: 
                 Receber placas
               </Button>
             </li>
-          ) : (
+          ) : somenteLeitura ? null : (
             <li className="text-muted-foreground flex items-center gap-2 text-sm">
               <IconCircleCheck aria-hidden className="size-4" />
               Nenhuma placa espera a sua decisão.
@@ -123,7 +141,7 @@ export function FilaDoDia({ linhas, semCarteira, outras, outrasIndisponiveis }: 
         </ol>
       )}
 
-      {aberto ? <ReceberPlacasEmLote linhas={linhas} aoFechar={aoFechar} /> : null}
+      {aberto ? <ReceberPlacasEmLote linhas={linhas} hoje={hoje} aoFechar={aoFechar} /> : null}
     </div>
   );
 }

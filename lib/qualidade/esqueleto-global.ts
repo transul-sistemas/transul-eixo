@@ -57,7 +57,7 @@ export function estruturasForaDoPadrao(): string[] {
 
 /** O que mostra uma tabela de dados, no componente padrão ou em tabela própria. */
 const TABELA = /<(TabelaDeDados|TabelaDePlacas|table)\b/;
-const OLHO = /BotaoDoOlho|IconEye/;
+const OLHO = /BotaoDoOlho|IconEye|OlhinhoDoPedido/;
 
 /** Os arquivos de tela (e a tela esqueleto) com tabela de dados, mas sem o olho. */
 export function tabelasSemOlho(): string[] {
