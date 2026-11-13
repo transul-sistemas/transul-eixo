@@ -2,7 +2,6 @@
 // Para atualizar: `pnpm exec supabase start` e `pnpm db:tipos`. O CI falha se estiver defasado.
 
 
-
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[]
 
 export type Database = {
@@ -67,6 +66,20 @@ isOneToOne: false
                   }
                   Update: {
                     "criado_em"?: string,"excluido_em"?: string | null,"excluido_por"?: string | null,"id"?: string,"motivo_da_exclusao"?: string | null,"nome"?: string,"versao"?: number
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"cidade": {
+                  Row: {
+                    "estado": string | null,"id": number,"latitude": number | null,"longitude": number | null,"nome": string,"regiao": string | null,"uf": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "estado"?: string | null,"id": number,"latitude"?: number | null,"longitude"?: number | null,"nome": string,"regiao"?: string | null,"uf": string
+                  }
+                  Update: {
+                    "estado"?: string | null,"id"?: number,"latitude"?: number | null,"longitude"?: number | null,"nome"?: string,"regiao"?: string | null,"uf"?: string
                   }
                   Relationships: [
                     
@@ -1072,6 +1085,44 @@ isOneToOne: true
       referencedColumns: ["ativo_id"]
     }
                   ]
+                },"liberacao_da_posicao": {
+                  Row: {
+                    "dia": string,"gestor_id": string,"id": string,"liberado_em": string,"liberado_por": string,"motivo": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "dia": string,"gestor_id": string,"id"?: string,"liberado_em"?: string,"liberado_por": string,"motivo": string
+                  }
+                  Update: {
+                    "dia"?: string,"gestor_id"?: string,"id"?: string,"liberado_em"?: string,"liberado_por"?: string,"motivo"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "liberacao_da_posicao_gestor_id_fkey"
+      columns: ["gestor_id"]
+isOneToOne: false
+      referencedRelation: "pessoa"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "liberacao_da_posicao_gestor_id_fkey"
+      columns: ["gestor_id"]
+isOneToOne: false
+      referencedRelation: "pessoa_para_leitura"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "liberacao_da_posicao_liberado_por_fkey"
+      columns: ["liberado_por"]
+isOneToOne: false
+      referencedRelation: "pessoa"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "liberacao_da_posicao_liberado_por_fkey"
+      columns: ["liberado_por"]
+isOneToOne: false
+      referencedRelation: "pessoa_para_leitura"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"meta_do_conjunto": {
                   Row: {
                     "cavalo_id": string,"cavalo_tipo": Database["nucleo"]['Enums']["tipo_de_ativo"],"criado_em": string,"excluido_em": string | null,"excluido_por": string | null,"fim": string | null,"fim_origem": Database["config"]['Enums']["origem_da_data"] | null,"id": string,"inicio": string,"inicio_origem": Database["config"]['Enums']["origem_da_data"],"motivo_da_exclusao": string | null,"periodo": unknown,"valor": number,"versao": number
@@ -1263,6 +1314,56 @@ isOneToOne: false
       columns: ["operacao_id"]
 isOneToOne: false
       referencedRelation: "operacao"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"posicao_do_conjunto": {
+                  Row: {
+                    "ativo_id": string,"cidade_id": number | null,"confirmou_alerta": boolean,"dia": string,"excluido_em": string | null,"excluido_por": string | null,"id": string,"motivo": string | null,"motivo_da_exclusao": string | null,"origem": string,"registrado_em": string,"registrado_por": string | null,"sem_sinal": boolean,"versao": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "ativo_id": string,"cidade_id"?: number | null,"confirmou_alerta"?: boolean,"dia": string,"excluido_em"?: string | null,"excluido_por"?: string | null,"id"?: string,"motivo"?: string | null,"motivo_da_exclusao"?: string | null,"origem": string,"registrado_em"?: string,"registrado_por"?: string | null,"sem_sinal"?: boolean,"versao"?: number
+                  }
+                  Update: {
+                    "ativo_id"?: string,"cidade_id"?: number | null,"confirmou_alerta"?: boolean,"dia"?: string,"excluido_em"?: string | null,"excluido_por"?: string | null,"id"?: string,"motivo"?: string | null,"motivo_da_exclusao"?: string | null,"origem"?: string,"registrado_em"?: string,"registrado_por"?: string | null,"sem_sinal"?: boolean,"versao"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "posicao_do_conjunto_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: false
+      referencedRelation: "alerta_de_vinculo"
+      referencedColumns: ["ativo_id"]
+    },{
+      foreignKeyName: "posicao_do_conjunto_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: false
+      referencedRelation: "ativo"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "posicao_do_conjunto_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: false
+      referencedRelation: "campo_pendente"
+      referencedColumns: ["ativo_id"]
+    },{
+      foreignKeyName: "posicao_do_conjunto_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: false
+      referencedRelation: "operacao_do_ativo"
+      referencedColumns: ["ativo_id"]
+    },{
+      foreignKeyName: "posicao_do_conjunto_registrado_por_fkey"
+      columns: ["registrado_por"]
+isOneToOne: false
+      referencedRelation: "pessoa"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "posicao_do_conjunto_registrado_por_fkey"
+      columns: ["registrado_por"]
+isOneToOne: false
+      referencedRelation: "pessoa_para_leitura"
       referencedColumns: ["id"]
     }
                   ]
@@ -1736,6 +1837,11 @@ isOneToOne: false
 "avancar_no_patio":
 { Args: { "p_acao": string,"p_ativo_id": string,"p_chave"?: string,"p_em"?: string,"p_motivo"?: string }; Returns: Json
                            },
+"buscar_cidades":
+{ Args: { "p_busca": string,"p_limite"?: number }; Returns: {
+              "id": number,"nome": string,"uf": string
+            }[]
+                           },
 "cadastrar_ativo":
 { Args: { "p_ano_fabricacao"?: number,"p_carroceria_id"?: string,"p_chassi"?: string,"p_chave"?: string,"p_codigo_fipe"?: string,"p_cr_id": string,"p_eixos"?: number,"p_em"?: string,"p_funcao"?: Database["nucleo"]['Enums']["funcao_do_implemento"],"p_gestor_id": string,"p_modelo_id"?: string,"p_numero_de_serie"?: string,"p_operacao_id": string,"p_pessoa_dona_id"?: string,"p_placa": string,"p_regime"?: Database["nucleo"]['Enums']["regime_de_posse"],"p_renavam": string,"p_situacao_inicial"?: string,"p_tipo": Database["nucleo"]['Enums']["tipo_de_ativo"],"p_valor_fipe"?: number,"p_valor_fipe_referencia"?: string,"p_valor_manual"?: number,"p_valor_manual_em"?: string,"p_valor_manual_fonte"?: string }; Returns: string
                            },
@@ -1806,6 +1912,11 @@ isOneToOne: false
               "ano": number,"ativo_id": string,"grupo": string,"modelo": string,"operacao": string,"placa": string,"sigla": string,"tipos_de_cr": (string)[]
             }[]
                            },
+"conjuntos_da_minha_carteira":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "ativo_id": string,"garagem": string,"grupo": string,"operacao_id": string,"placa": string,"sigla": string,"tipo": string
+            }[]
+                           },
 "contar_chips_de_placas":
 { Args: { "p_baixadas": boolean,"p_busca": string,"p_grupos": (string)[],"p_para_receber"?: boolean,"p_siglas": (string)[],"p_tipos": (string)[] }; Returns: {
               "chip": string,"quantidade": number
@@ -1860,6 +1971,9 @@ isOneToOne: false
 "devolver_placa":
 { Args: { "p_chave"?: string,"p_em"?: string,"p_motivo": string,"p_transferencia_id": string,"p_versao": number }; Returns: string
                            },
+"dia_da_posicao":
+{ Args: { "p_em": string }; Returns: string
+                           },
 "dia_do_corte_da_competencia":
 { Args: Record<PropertyKey, never>; Returns: number
                            },
@@ -1877,8 +1991,14 @@ isOneToOne: false
 "disponibilizar_placa":
 { Args: { "p_ativo_id": string,"p_chave"?: string,"p_em"?: string,"p_motivo": string,"p_para_gestor_id": string,"p_pendencias": (string)[],"p_versao": number }; Returns: string
                            },
+"distancia_improvavel":
+{ Args: { "p_cidade_de": number,"p_cidade_para": number,"p_dias"?: number }; Returns: Json
+                           },
 "documento_valido":
 { Args: { "p_texto": string }; Returns: boolean
+                           },
+"e_lider_do_gestor":
+{ Args: { "p_gestor": string,"p_lider": string }; Returns: boolean
                            },
 "editar_pessoa":
 { Args: { "p_email"?: string,"p_funcao"?: string,"p_inicio"?: string,"p_nome": string,"p_operacao"?: string,"p_pessoa": string,"p_versao": number }; Returns: Json
@@ -1922,6 +2042,9 @@ isOneToOne: false
 "garagem_em":
 { Args: { "p_ativo_id": string,"p_em": string }; Returns: string
                            },
+"gestores_com_posicao_pendente":
+{ Args: { "p_dia"?: string }; Returns: Json
+                           },
 "grade_de_soltas":
 { Args: { "p_filtros"?: Json,"p_mes": string,"p_pagina"?: number,"p_tam"?: number }; Returns: Json
                            },
@@ -1953,6 +2076,9 @@ isOneToOne: false
                            },
 "lancar_situacao_do_dia":
 { Args: { "p_ativo_id": string,"p_chave"?: string,"p_dia": string,"p_sigla": string }; Returns: Json
+                           },
+"liberar_posicao_do_dia":
+{ Args: { "p_chave"?: string,"p_dia": string,"p_gestor_id": string,"p_motivo": string }; Returns: string
                            },
 "linha_calculada_da_placa":
 { Args: { "p_ativo_id": string,"p_em"?: string }; Returns: {
@@ -2182,8 +2308,14 @@ isOneToOne: false
         isOneToOne: false
         isSetofReturn: true
       } },
+"porta_da_posicao":
+{ Args: Record<PropertyKey, never>; Returns: Json
+                           },
 "posicao_na_fila":
 { Args: { "p_chegada_id": string }; Returns: number
+                           },
+"posicoes_do_dia":
+{ Args: { "p_dia"?: string }; Returns: Json
                            },
 "proximo_recalculo_do_ativo":
 { Args: { "p_ativo_id": string,"p_em"?: string }; Returns: string
@@ -2227,6 +2359,9 @@ isOneToOne: false
 "registrar_placa_aceita_sem_cr":
 { Args: { "p_chave"?: string,"p_transferencia_id": string }; Returns: string
                            },
+"registrar_posicao_do_dia":
+{ Args: { "p_ativo_id": string,"p_chave"?: string,"p_cidade_id": number,"p_confirmou_alerta": boolean,"p_dia": string,"p_motivo": string,"p_sem_sinal": boolean,"p_sigla": string,"p_versao": number }; Returns: string
+                           },
 "renavam_valido":
 { Args: { "p_texto": string }; Returns: boolean
                            },
@@ -2235,6 +2370,11 @@ isOneToOne: false
                            },
 "revogar_correcao":
 { Args: { "p_correcao_id": string,"p_motivo": string }; Returns: undefined
+                           },
+"serie_de_posicoes":
+{ Args: { "p_ate": string,"p_ativo_id": string,"p_de": string }; Returns: {
+              "cidade": string,"cidade_id": number,"dia": string,"latitude": number,"longitude": number,"origem": string,"sem_sinal": boolean,"uf": string
+            }[]
                            },
 "sigla_valida":
 { Args: { "p_em_conjunto": boolean,"p_sigla": string,"p_tipo": Database["nucleo"]['Enums']["tipo_de_ativo"] }; Returns: boolean

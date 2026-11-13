@@ -201,7 +201,10 @@ select set_eq(
     -- 3.9a: a leitura mantida das placas (equivalência com ve_ativo no pgTAP 81).
     'nucleo.leitura_da_placa.leitura_da_placa_ler',
     -- Carteira mensal (testada em 86-carteira-mensal.test.sql).
-    'nucleo.confirmacao_da_carteira.confirmacao_da_carteira_ler'
+    'nucleo.confirmacao_da_carteira.confirmacao_da_carteira_ler',
+    -- Posição do dia, M2 (testadas em 114-posicao-do-dia.test.sql).
+    'config.cidade.cidade_ler', 'config.cidade.cidade_criar', 'config.cidade.cidade_alterar',
+    'nucleo.posicao_do_conjunto.posicao_do_conjunto_ler', 'nucleo.liberacao_da_posicao.liberacao_da_posicao_ler'
   ],
   'as políticas de cada tabela, com o nome de cada uma (todas testadas abaixo ou na matriz)'
 );
