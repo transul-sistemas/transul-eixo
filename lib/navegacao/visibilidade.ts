@@ -28,6 +28,11 @@ export function telaLiberada(
   return recorte === undefined || recorte.includes(tela.id);
 }
 
+/** A rota é de uma tela em teste (a decisão depende do parâmetro banco_em_demonstracao). */
+export function ehTelaEmTeste(tela: Pick<Tela, "id"> | undefined): boolean {
+  return tela !== undefined && TELAS_SO_DO_ADMINISTRADOR.includes(tela.id);
+}
+
 export function veEmBreve(perfil: Perfil): boolean {
   return PERFIS_QUE_VEEM_EM_BREVE.includes(perfil);
 }

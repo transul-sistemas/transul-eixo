@@ -27,8 +27,16 @@ const classeDoChip =
  * O índice vivo do sistema: módulos e telas com o estado, o link e os perfis que veem cada tela.
  * Tudo vem do catálogo (`lib/navegacao/catalogo.ts`); a pessoa vê só o que o perfil dela abre.
  */
-export function PaginaDoMapa({ perfil, filtro }: { perfil: Perfil; filtro: FiltroDoMapa }) {
-  const mapa = montarMapa(perfil, filtro);
+export function PaginaDoMapa({
+  perfil,
+  filtro,
+  emDemonstracao = false,
+}: {
+  perfil: Perfil;
+  filtro: FiltroDoMapa;
+  emDemonstracao?: boolean;
+}) {
+  const mapa = montarMapa(perfil, filtro, undefined, emDemonstracao);
   const tela = acharTela(ROTA_DO_MAPA)?.tela;
   const filtrosComTela = FILTROS.filter((f) => f.id === "todos" || mapa.contagem[f.id] > 0);
   return (

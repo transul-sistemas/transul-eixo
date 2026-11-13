@@ -1,6 +1,9 @@
 import { createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
+import { CHAVE_DA_FAIXA } from "@/lib/dados/faixa-da-demonstracao";
+import { acharTela } from "@/lib/navegacao/catalogo";
 import { decidirFicha } from "@/lib/navegacao/proxy-da-ficha";
+import { ehTelaEmTeste } from "@/lib/navegacao/visibilidade";
 import { type Decisao, decidirAcesso, moduloDoCaminho, rotaPublica } from "@/lib/seguranca/acesso";
 import { perfilDoCodigo } from "@/lib/seguranca/sessao";
 import {
@@ -67,12 +70,26 @@ export async function proxy(pedido: NextRequest) {
     }
   }
 
+  // Tela em teste: o Administrador entra sempre; os outros perfis só com o banco em demonstração. O
+  // parâmetro é lido com a chave do usuário (RLS), e só quando a rota é de tela em teste.
+  let emDemonstracao = false;
+  if (temVinculo && perfil !== "Administrador" && ehTelaEmTeste(acharTela(caminho)?.tela)) {
+    const { data: parametro, error: erroDoParametro } = await supabase
+      .schema("config")
+      .from("parametro")
+      .select("valor")
+      .eq("chave", CHAVE_DA_FAIXA)
+      .maybeSingle();
+    emDemonstracao = !erroDoParametro && parametro?.valor === "sim";
+  }
+
   const decisao = decidirAcesso(caminho, pedido.nextUrl.search, {
     temUsuario: usuario !== null,
     temVinculo,
     perfil,
     podeVerModulo,
     inativo,
+    emDemonstracao,
   });
   if (decisao.tipo === "sair") await supabase.auth.signOut({ scope: "local" });
 
