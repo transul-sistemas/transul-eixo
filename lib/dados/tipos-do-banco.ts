@@ -1868,6 +1868,11 @@ isOneToOne: false
 "dias_do_conjunto":
 { Args: { "p_cavalo_id": string,"p_fim": string,"p_inicio": string }; Returns: Json
                            },
+"dias_dos_conjuntos":
+{ Args: { "p_cavalos": (string)[],"p_fim": string,"p_inicio": string }; Returns: {
+              "cavalo_id": string,"dias": Json
+            }[]
+                           },
 "disponibilizar_placa":
 { Args: { "p_ativo_id": string,"p_chave"?: string,"p_em"?: string,"p_motivo": string,"p_para_gestor_id": string,"p_pendencias": (string)[],"p_versao": number }; Returns: string
                            },
