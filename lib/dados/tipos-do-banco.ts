@@ -2,6 +2,7 @@
 // Para atualizar: `pnpm exec supabase start` e `pnpm db:tipos`. O CI falha se estiver defasado.
 
 
+
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[]
 
 export type Database = {
@@ -2071,6 +2072,9 @@ isOneToOne: false
 "pedido_para_agir":
 { Args: { "p_mensagem": string,"p_transferencia_id": string }; Returns: Record<string, unknown>
                            },
+"pedidos_do_meu_dia":
+{ Args: { "p_todos"?: boolean }; Returns: Json
+                           },
 "pedidos_para_receber":
 { Args: Record<PropertyKey, never>; Returns: Json
                            },
@@ -2214,6 +2218,9 @@ isOneToOne: false
                            },
 "registrar_excecoes_de_data":
 { Args: Record<PropertyKey, never>; Returns: number
+                           },
+"registrar_placa_aceita_sem_cr":
+{ Args: { "p_chave"?: string,"p_transferencia_id": string }; Returns: string
                            },
 "renavam_valido":
 { Args: { "p_texto": string }; Returns: boolean
