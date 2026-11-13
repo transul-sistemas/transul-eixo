@@ -1183,6 +1183,68 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"pedido_de_baixa": {
+                  Row: {
+                    "ativo_id": string,"decidido_em": string | null,"decidido_por": string | null,"documento": string | null,"em": string,"id": string,"justificativa": string,"motivo": string,"motivo_da_decisao": string | null,"pedido_em": string,"pedido_por": string,"sigla": string,"situacao": string,"versao": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "ativo_id": string,"decidido_em"?: string | null,"decidido_por"?: string | null,"documento"?: string | null,"em": string,"id"?: string,"justificativa": string,"motivo": string,"motivo_da_decisao"?: string | null,"pedido_em"?: string,"pedido_por": string,"sigla": string,"situacao"?: string,"versao"?: number
+                  }
+                  Update: {
+                    "ativo_id"?: string,"decidido_em"?: string | null,"decidido_por"?: string | null,"documento"?: string | null,"em"?: string,"id"?: string,"justificativa"?: string,"motivo"?: string,"motivo_da_decisao"?: string | null,"pedido_em"?: string,"pedido_por"?: string,"sigla"?: string,"situacao"?: string,"versao"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "pedido_de_baixa_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: false
+      referencedRelation: "alerta_de_vinculo"
+      referencedColumns: ["ativo_id"]
+    },{
+      foreignKeyName: "pedido_de_baixa_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: false
+      referencedRelation: "ativo"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "pedido_de_baixa_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: false
+      referencedRelation: "campo_pendente"
+      referencedColumns: ["ativo_id"]
+    },{
+      foreignKeyName: "pedido_de_baixa_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: false
+      referencedRelation: "operacao_do_ativo"
+      referencedColumns: ["ativo_id"]
+    },{
+      foreignKeyName: "pedido_de_baixa_decidido_por_fkey"
+      columns: ["decidido_por"]
+isOneToOne: false
+      referencedRelation: "pessoa"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "pedido_de_baixa_decidido_por_fkey"
+      columns: ["decidido_por"]
+isOneToOne: false
+      referencedRelation: "pessoa_para_leitura"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "pedido_de_baixa_pedido_por_fkey"
+      columns: ["pedido_por"]
+isOneToOne: false
+      referencedRelation: "pessoa"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "pedido_de_baixa_pedido_por_fkey"
+      columns: ["pedido_por"]
+isOneToOne: false
+      referencedRelation: "pessoa_para_leitura"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"pessoa": {
                   Row: {
                     "cadastro_pendente": boolean,"codparc": number | null,"criado_em": string,"documento_mascarado": string | null,"email": string | null,"excluido_em": string | null,"excluido_por": string | null,"id": string,"motivo_da_exclusao": string | null,"nome": string,"versao": number
@@ -1914,6 +1976,9 @@ isOneToOne: false
 "analise_da_frota":
 { Args: { "p_agrupamento"?: string,"p_filial"?: string,"p_mes": string,"p_operacao_id"?: string }; Returns: Json
                            },
+"aprovar_baixa":
+{ Args: { "p_chave"?: string,"p_pedido_id": string,"p_versao": number }; Returns: string
+                           },
 "ativo_da_placa":
 { Args: { "p_placa": string }; Returns: string
                            },
@@ -1945,6 +2010,9 @@ isOneToOne: false
                            },
 "cancelar_pedido":
 { Args: { "p_chave"?: string,"p_em"?: string,"p_transferencia_id": string,"p_versao": number }; Returns: string
+                           },
+"cancelar_pedido_de_baixa":
+{ Args: { "p_chave"?: string,"p_pedido_id": string }; Returns: string
                            },
 "carteira_do_mes":
 { Args: { "p_filtro"?: string,"p_mes": string,"p_pagina"?: number,"p_tam"?: number }; Returns: Json
@@ -1985,6 +2053,29 @@ isOneToOne: false
 "conferir_conjunto":
 { Args: { "p_cavalo_id": string }; Returns: undefined
                            },
+"conferir_decisao_da_baixa":
+{ Args: { "p_pedido_id": string,"p_versao": number }; Returns: {
+              "ativo_id": string,
+"decidido_em": string | null,
+"decidido_por": string | null,
+"documento": string | null,
+"em": string,
+"id": string,
+"justificativa": string,
+"motivo": string,
+"motivo_da_decisao": string | null,
+"pedido_em": string,
+"pedido_por": string,
+"sigla": string,
+"situacao": string,
+"versao": number
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "pedido_de_baixa"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
 "confirmar_carteira":
 { Args: { "p_chave"?: string,"p_itens": Json,"p_mes": string }; Returns: Json
                            },
@@ -2164,6 +2255,9 @@ isOneToOne: false
 "hoje_em_sao_paulo":
 { Args: Record<PropertyKey, never>; Returns: string
                            },
+"impacto_da_baixa":
+{ Args: { "p_ativo_id": string,"p_em": string }; Returns: Json
+                           },
 "inicio_do_pat":
 { Args: { "p_ativo_id": string }; Returns: string
                            },
@@ -2305,11 +2399,19 @@ isOneToOne: false
 "pedido_para_agir":
 { Args: { "p_mensagem": string,"p_transferencia_id": string }; Returns: Record<string, unknown>
                            },
+"pedidos_de_baixa":
+{ Args: { "p_situacao"?: string }; Returns: {
+              "ativo_id": string,"atrasado": boolean,"decidido_em": string,"decidido_por_nome": string,"documento": string,"em": string,"id": string,"justificativa": string,"motivo": string,"motivo_da_decisao": string,"pedido_em": string,"pedido_por": string,"pedido_por_nome": string,"placa": string,"prazo_ate": string,"sigla": string,"situacao": string,"versao": number
+            }[]
+                           },
 "pedidos_do_meu_dia":
 { Args: { "p_todos"?: boolean }; Returns: Json
                            },
 "pedidos_para_receber":
 { Args: Record<PropertyKey, never>; Returns: Json
+                           },
+"pedir_baixa":
+{ Args: { "p_ativo_id": string,"p_chave"?: string,"p_documento": string,"p_em": string,"p_justificativa": string,"p_motivo": string }; Returns: string
                            },
 "periodo_do_mes":
 { Args: { "p_mes": string }; Returns: unknown
@@ -2446,6 +2548,9 @@ isOneToOne: false
 "reconstruir_leitura_das_placas":
 { Args: Record<PropertyKey, never>; Returns: number
                            },
+"recusar_baixa":
+{ Args: { "p_chave"?: string,"p_motivo": string,"p_pedido_id": string,"p_versao": number }; Returns: string
+                           },
 "registrar_baixa":
 { Args: { "p_ativo_id": string,"p_em": string,"p_motivo": string,"p_sigla": string }; Returns: undefined
                            },
@@ -2480,6 +2585,9 @@ isOneToOne: false
 { Args: { "p_ate": string,"p_ativo_id": string,"p_de": string }; Returns: {
               "cidade": string,"cidade_id": number,"dia": string,"latitude": number,"longitude": number,"origem": string,"sem_sinal": boolean,"uf": string
             }[]
+                           },
+"sigla_da_baixa":
+{ Args: { "p_motivo": string }; Returns: string
                            },
 "sigla_valida":
 { Args: { "p_em_conjunto": boolean,"p_sigla": string,"p_tipo": Database["nucleo"]['Enums']["tipo_de_ativo"] }; Returns: boolean
