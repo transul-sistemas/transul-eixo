@@ -1883,7 +1883,357 @@ function abastecimentoProvisorio(estado: Estado) {
   };
 }
 
+// ---------- Resumo do dia, Livro do acionista e Auditoria ----------
+
+const GRUPOS_DA_REGUA = [
+  { id: "em-atividade", nome: "Em atividade", siglas: ["ETc", "ETv", "CAr", "DEs"] },
+  { id: "atencao", nome: "Atenção", siglas: ["DOp", "ACe", "CAn", "ADe"] },
+  { id: "impedida", nome: "Impedida", siglas: ["MAc", "MAt", "MAN", "SIN", "DOC"] },
+  { id: "patio", nome: "Pátio", siglas: ["PÁT"] },
+  { id: "fora", nome: "Fora", siglas: ["ALU", "EMP", "VEN"] },
+];
+
+function resumoDoDia(estado: Estado, hoje: string) {
+  const placas = Array.from({ length: 60 }, (_, i) => {
+    const s = sorte(`${hoje}-placa-${i}`);
+    const grupo = s < 0.55 ? 0 : s < 0.7 ? 1 : s < 0.82 ? 2 : s < 0.95 ? 3 : 4;
+    const g = GRUPOS_DA_REGUA[grupo]!;
+    const sigla = g.siglas[Math.floor(sorte(`sig-${hoje}-${i}`) * g.siglas.length)]!;
+    return {
+      placa: `ZDM${String(2000 + i).slice(-4)}`,
+      grupo: g.id,
+      nomeDoGrupo: g.nome,
+      sigla,
+      paradaHa:
+        g.id === "patio" || g.id === "impedida" ? Math.round(60 + sorte(`p${i}`) * 4000) : null,
+      op: OPERACOES_DE_EXEMPLO[i % OPERACOES_DE_EXEMPLO.length]!,
+      gestor: `Gestor Demo ${String((i % 5) + 1).padStart(2, "0")}`,
+    };
+  });
+  const pedem = placas
+    .filter((p) => p.grupo === "impedida" || p.grupo === "patio" || p.grupo === "atencao")
+    .sort((a, b) => (b.paradaHa ?? 0) - (a.paradaHa ?? 0) || a.placa.localeCompare(b.placa));
+  const conta = (g: string) => placas.filter((p) => p.grupo === g).length;
+  const colunas: Coluna[] = [
+    { id: "placa", rotulo: "Placa", formato: "placa" },
+    { id: "situacao", rotulo: "Situação", formato: "texto" },
+    { id: "paradaHa", rotulo: "Parada há", formato: "duracao" },
+    { id: "operacao", rotulo: "Operação", formato: "texto" },
+    { id: "gestor", rotulo: "Gestor", formato: "texto" },
+  ];
+  return {
+    mes: null,
+    meses: [],
+    kpis: [
+      kpi("em-atividade", "Placas em atividade", conta("em-atividade"), "inteiro"),
+      kpi("impedidas", "Placas impedidas", conta("impedida"), "inteiro"),
+      kpi("patio", "Placas no pátio", conta("patio"), "inteiro"),
+      kpi("fila", "Fila do totem", 4, "inteiro"),
+      kpi("pendencias", "Pendências abertas", pedem.length, "inteiro"),
+    ],
+    graficos: [
+      {
+        id: "regua",
+        titulo: "Placas por situação hoje",
+        descricao: "A régua de status inteira, com a contagem de cada sigla.",
+        tipo: "barras",
+        categorias: GRUPOS_DA_REGUA.flatMap((g) => g.siglas),
+        series: [
+          {
+            nome: "Placas",
+            tipo: "barra",
+            valores: GRUPOS_DA_REGUA.flatMap((g) => g.siglas).map(
+              (s) => placas.filter((p) => p.sigla === s).length,
+            ),
+          },
+        ],
+        formato: "inteiro",
+        colunas: 12,
+      },
+      {
+        id: "grupos",
+        titulo: "Por grupo da régua",
+        tipo: "rosca",
+        categorias: GRUPOS_DA_REGUA.map((g) => g.nome),
+        series: [
+          { nome: "Placas", tipo: "barra", valores: GRUPOS_DA_REGUA.map((g) => conta(g.id)) },
+        ],
+        formato: "inteiro",
+        colunas: 4,
+      },
+      {
+        id: "operacoes",
+        titulo: "Em atividade por operação",
+        tipo: "barras",
+        deitado: true,
+        categorias: OPERACOES_DE_EXEMPLO.map((o) => o.nome),
+        series: [
+          {
+            nome: "Em atividade",
+            tipo: "barra",
+            valores: OPERACOES_DE_EXEMPLO.map(
+              (o) => placas.filter((p) => p.op.id === o.id && p.grupo === "em-atividade").length,
+            ),
+          },
+        ],
+        formato: "inteiro",
+        colunas: 8,
+      },
+    ],
+    ...tabela(
+      estado,
+      "O que pede atenção hoje",
+      "pendência",
+      colunas,
+      pedem.map((p) => ({
+        id: p.placa,
+        item: p.placa,
+        grupo: p.grupo,
+        href: `/frota/placas/${p.placa}`,
+        celulas: {
+          placa: p.placa,
+          situacao: `${p.sigla} · ${p.nomeDoGrupo}`,
+          paradaHa: p.paradaHa,
+          operacao: p.op.nome,
+          gestor: p.gestor,
+        },
+      })),
+      GRUPOS_DA_REGUA.slice(1, 4).map((g) => ({ id: g.id, nome: g.nome })),
+    ),
+    opcoes: {},
+    avisos: [],
+  };
+}
+
+function livroDoAcionista(estado: Estado, hoje: string) {
+  const { mes, meses } = mesDaLeitura(estado, hoje);
+  const acionistas = Array.from(
+    { length: 6 },
+    (_, i) => `Acionista Demo ${String(i + 1).padStart(2, "0")}`,
+  );
+  const lancamentos = acionistas.flatMap((a, i) =>
+    [0, 1, 2].map((k) => {
+      const credito = k < 2;
+      const v = reais(2000 + sorte(`${a}-${mes}-${k}`) * 14000);
+      return {
+        id: `${i}-${k}`,
+        acionista: a,
+        descricao: credito
+          ? k === 0
+            ? "Receita das placas no mês"
+            : "Ajuste de conciliação"
+          : "Custos rateados",
+        valor: credito ? v : -v,
+      };
+    }),
+  );
+  const saldoDe = (a: string) =>
+    soma(lancamentos.filter((l) => l.acionista === a).map((l) => l.valor));
+  const colunas: Coluna[] = [
+    { id: "acionista", rotulo: "Acionista", formato: "texto" },
+    { id: "mes", rotulo: "Mês", formato: "mes" },
+    { id: "descricao", rotulo: "Descrição", formato: "texto" },
+    { id: "valor", rotulo: "Valor", formato: "moeda" },
+  ];
+  const aPagar = soma(acionistas.map(saldoDe).filter((s) => s > 0));
+  return {
+    mes,
+    meses,
+    kpis: [
+      kpi("acionistas", "Acionistas", acionistas.length, "inteiro"),
+      kpi("a-pagar", "A pagar no mês", aPagar, "moeda"),
+      kpi("pago", "Pago no mês", reais(aPagar * 0.6), "moeda"),
+      kpi("saldo", "Saldo acumulado", soma(acionistas.map(saldoDe)), "moeda"),
+    ],
+    graficos: [
+      {
+        id: "saldo",
+        titulo: "Saldo por acionista",
+        descricao: "O saldo do mês de cada acionista.",
+        tipo: "barras",
+        categorias: acionistas,
+        series: [{ nome: "Saldo", tipo: "barra", valores: acionistas.map(saldoDe) }],
+        formato: "moeda",
+        colunas: 12,
+      },
+      {
+        id: "lancamentos",
+        titulo: "Créditos e débitos",
+        tipo: "barras",
+        categorias: acionistas,
+        series: [
+          {
+            nome: "Créditos",
+            tipo: "barra",
+            valores: acionistas.map((a) =>
+              soma(lancamentos.filter((l) => l.acionista === a && l.valor > 0).map((l) => l.valor)),
+            ),
+          },
+          {
+            nome: "Débitos",
+            tipo: "barra",
+            cor: "negativo",
+            valores: acionistas.map((a) =>
+              soma(lancamentos.filter((l) => l.acionista === a && l.valor < 0).map((l) => l.valor)),
+            ),
+          },
+        ],
+        formato: "moeda",
+        colunas: 8,
+      },
+      {
+        id: "placas",
+        titulo: "Placas por acionista",
+        tipo: "rosca",
+        categorias: acionistas,
+        series: [
+          {
+            nome: "Placas",
+            tipo: "barra",
+            valores: acionistas.map((a) => 2 + Math.floor(sorte(a) * 6)),
+          },
+        ],
+        formato: "inteiro",
+        colunas: 4,
+      },
+    ],
+    ...tabela(
+      estado,
+      "Lançamentos",
+      "lançamento",
+      colunas,
+      lancamentos.map((l) => ({
+        id: l.id,
+        item: `${l.descricao} de ${l.acionista}`,
+        grupo: l.valor >= 0 ? "credito" : "debito",
+        celulas: { acionista: l.acionista, mes, descricao: l.descricao, valor: l.valor },
+      })),
+      [
+        { id: "credito", nome: "Créditos" },
+        { id: "debito", nome: "Débitos" },
+      ],
+    ),
+    opcoes: {},
+    avisos: ["Valores fictícios de demonstração; o livro real sai da conciliação do mês."],
+  };
+}
+
+const MODULOS_DA_AUDITORIA = ["Frota", "Operacional", "Pessoas", "Resultados", "Cadastros"];
+const ACOES_DA_AUDITORIA = ["inclusão", "edição", "exclusão"];
+
+function auditoria(estado: Estado, hoje: string) {
+  const eventos = Array.from({ length: 120 }, (_, i) => {
+    const dia = diaDe(hoje, -Math.floor(i / 8));
+    const hora = String(7 + (i % 11)).padStart(2, "0");
+    return {
+      id: `e${1000 - i}`,
+      quando: `${dia}T${hora}:${String((i * 7) % 60).padStart(2, "0")}:00-03:00`,
+      dia,
+      pessoa: `Usuário Demo ${String((i % 7) + 1).padStart(2, "0")}`,
+      modulo: MODULOS_DA_AUDITORIA[i % MODULOS_DA_AUDITORIA.length]!,
+      acao: ACOES_DA_AUDITORIA[Math.floor(sorte(`ac-${i}`) * 3)]!,
+      registro: i % 2 === 0 ? `ZDM${String(3000 + i).slice(-4)}` : `Registro ${4000 + i}`,
+    };
+  });
+  const dias = [...new Set(eventos.map((e) => e.dia))].reverse();
+  const colunas: Coluna[] = [
+    { id: "quando", rotulo: "Quando", formato: "data-e-hora" },
+    { id: "pessoa", rotulo: "Pessoa", formato: "texto" },
+    { id: "modulo", rotulo: "Módulo", formato: "texto" },
+    { id: "acao", rotulo: "Ação", formato: "texto" },
+    { id: "registro", rotulo: "Registro", formato: "texto" },
+  ];
+  return {
+    mes: null,
+    meses: [],
+    kpis: [
+      kpi("eventos", "Eventos no período", eventos.length, "inteiro", "Últimos 15 dias"),
+      kpi("pessoas", "Pessoas ativas", new Set(eventos.map((e) => e.pessoa)).size, "inteiro"),
+      kpi("alteracoes", "Alterações", eventos.filter((e) => e.acao === "edição").length, "inteiro"),
+      kpi("recusas", "Acessos recusados", 0, "inteiro"),
+    ],
+    graficos: [
+      {
+        id: "por-dia",
+        titulo: "Eventos por dia",
+        descricao: "Quem fez o quê, quando e por quê.",
+        tipo: "barras",
+        categorias: dias.map((d) => `${d.slice(8, 10)}/${d.slice(5, 7)}`),
+        series: [
+          {
+            nome: "Eventos",
+            tipo: "barra",
+            valores: dias.map((d) => eventos.filter((e) => e.dia === d).length),
+          },
+        ],
+        formato: "inteiro",
+        colunas: 12,
+      },
+      {
+        id: "modulo",
+        titulo: "Por módulo",
+        descricao: "Onde mais se mexe.",
+        tipo: "barras",
+        deitado: true,
+        categorias: MODULOS_DA_AUDITORIA,
+        series: [
+          {
+            nome: "Eventos",
+            tipo: "barra",
+            valores: MODULOS_DA_AUDITORIA.map((m) => eventos.filter((e) => e.modulo === m).length),
+          },
+        ],
+        formato: "inteiro",
+        colunas: 6,
+      },
+      {
+        id: "acao",
+        titulo: "Por ação",
+        tipo: "rosca",
+        categorias: ACOES_DA_AUDITORIA,
+        series: [
+          {
+            nome: "Eventos",
+            tipo: "barra",
+            valores: ACOES_DA_AUDITORIA.map((a) => eventos.filter((e) => e.acao === a).length),
+          },
+        ],
+        formato: "inteiro",
+        colunas: 6,
+      },
+    ],
+    ...tabela(
+      estado,
+      "Eventos",
+      "evento",
+      colunas,
+      eventos.map((e) => ({
+        id: e.id,
+        item: `${e.acao} em ${e.registro}`,
+        grupo: e.acao === "inclusão" ? "inclusao" : e.acao === "edição" ? "edicao" : "exclusao",
+        celulas: {
+          quando: e.quando,
+          pessoa: e.pessoa,
+          modulo: e.modulo,
+          acao: e.acao,
+          registro: e.registro,
+        },
+      })),
+      [
+        { id: "inclusao", nome: "Inclusões" },
+        { id: "edicao", nome: "Edições" },
+        { id: "exclusao", nome: "Exclusões" },
+      ],
+    ),
+    opcoes: {},
+    avisos: [],
+  };
+}
+
 const LEITORES: Record<string, (estado: Estado, hoje: string) => unknown> = {
+  "inicio.resumo-do-dia": resumoDoDia,
+  "parceiros.livro-do-acionista": livroDoAcionista,
+  "admin.auditoria": auditoria,
   "operacoes.comparativo": comparativo,
   "operacoes.analise": analiseDasOperacoes,
   "resultados.por-operacao": porOperacao,

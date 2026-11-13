@@ -123,7 +123,7 @@ export const CATALOGO: readonly ModuloDoCatalogo[] = [
       icone: "IconSunHigh",
       dispositivos: DESKTOP_E_TABLET,
       descricao: "Mostra, em uma página, como a operação está hoje.",
-      estado: "esqueleto",
+      estado: "pronto",
     },
     {
       slug: "mapa-do-sistema",
@@ -339,7 +339,7 @@ export const CATALOGO: readonly ModuloDoCatalogo[] = [
       icone: "IconBook",
       dispositivos: DESKTOP,
       descricao: "Mostra o livro do acionista e os seus lançamentos.",
-      estado: "esqueleto",
+      estado: "pronto",
     },
     {
       slug: "locacao",
@@ -426,7 +426,7 @@ export const CATALOGO: readonly ModuloDoCatalogo[] = [
       icone: "IconHistory",
       dispositivos: DESKTOP,
       descricao: "Mostra quem fez o quê, quando e por quê.",
-      estado: "esqueleto",
+      estado: "pronto",
     },
     {
       slug: "demonstracao",

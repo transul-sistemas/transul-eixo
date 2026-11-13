@@ -132,7 +132,7 @@ describe("modulosVisiveis (catálogo real)", () => {
   it("com as cinco telas da Frota prontas, o Gestor de frota vê as cinco; o Operacional vê Pátio, Totem, Ordens de carregamento e a Escala", () => {
     expect(modulosVisiveis("Gestor de frota").map((m) => [m.id, m.telas.map((t) => t.id)])).toEqual(
       [
-        ["inicio", ["inicio.tarefas", "inicio.mapa-do-sistema"]],
+        ["inicio", ["inicio.tarefas", "inicio.resumo-do-dia", "inicio.mapa-do-sistema"]],
         [
           "frota",
           [
@@ -147,7 +147,7 @@ describe("modulosVisiveis (catálogo real)", () => {
       ],
     );
     expect(modulosVisiveis("Operacional").map((m) => [m.id, m.telas.map((t) => t.id)])).toEqual([
-      ["inicio", ["inicio.tarefas", "inicio.mapa-do-sistema"]],
+      ["inicio", ["inicio.tarefas", "inicio.resumo-do-dia", "inicio.mapa-do-sistema"]],
       [
         "operacional",
         [

@@ -32,7 +32,7 @@ import {
 import { temPermissao } from "@/lib/seguranca/exigir-permissao";
 import { exigirSessao } from "@/lib/seguranca/sessao-do-servidor";
 import { cn } from "@/lib/utils";
-import type { Modulo } from "@/lib/visual/tons";
+import { MODULOS, type Modulo } from "@/lib/visual/tons";
 import { BotaoDoAssistenteDoPainel } from "./assistente-do-painel";
 import { TabelaDoPainel } from "./tabela-do-painel";
 
@@ -58,7 +58,10 @@ function cabecalho(rota: string) {
   return {
     titulo: achada.tela.nome,
     descricao: achada.tela.descricao,
-    modulo: achada.modulo.id as Modulo,
+    // Início não tem cor de módulo própria: os gráficos usam o cinza de Cadastros.
+    modulo: ((MODULOS as readonly string[]).includes(achada.modulo.id)
+      ? achada.modulo.id
+      : "cadastros") as Modulo,
   };
 }
 

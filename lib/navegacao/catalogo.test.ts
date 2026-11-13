@@ -87,6 +87,7 @@ describe("catálogo: telas", () => {
     expect(prontas).toEqual([
       "inicio.tarefas",
       "inicio.meu-dia",
+      "inicio.resumo-do-dia",
       "inicio.mapa-do-sistema",
       "frota.acompanhamento",
       "frota.placas",
@@ -110,6 +111,7 @@ describe("catálogo: telas", () => {
       "pessoas.analise",
       "parceiros.lista",
       "parceiros.conciliacao",
+      "parceiros.livro-do-acionista",
       "parceiros.locacao",
       "resultados.visao-geral",
       "resultados.por-operacao",
@@ -119,11 +121,12 @@ describe("catálogo: telas", () => {
       "cadastros.catalogos",
       "cadastros.saude-do-cr",
       "admin.usuarios-e-perfis",
+      "admin.auditoria",
       "admin.demonstracao",
     ]);
     expect(telas.filter((t) => t.estado === "restrito")).toEqual([]);
     expect(telas.filter((t) => t.estado === "em-breve")).toEqual([]);
-    expect(telas.filter((t) => t.estado === "esqueleto")).toHaveLength(3);
+    expect(telas.filter((t) => t.estado === "esqueleto")).toHaveLength(0);
     expect(acharTela("/inicio/mapa-do-sistema")?.tela.estado).toBe("pronto");
   });
 });

@@ -26,6 +26,9 @@ import type {
 
 /** A função do banco de cada tela de painel (`nucleo.<nome>`, a criar pelo agente de banco). */
 export const FUNCOES_DOS_PAINEIS = {
+  "inicio.resumo-do-dia": "resumo_do_dia",
+  "parceiros.livro-do-acionista": "livro_do_acionista",
+  "admin.auditoria": "eventos_de_auditoria",
   "operacoes.comparativo": "comparativo_das_operacoes",
   "operacoes.analise": "analise_das_operacoes",
   "resultados.por-operacao": "resultado_por_operacao",

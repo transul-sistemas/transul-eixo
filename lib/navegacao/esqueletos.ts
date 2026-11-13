@@ -38,81 +38,8 @@ export interface EsqueletoDaTela {
   readonly cruzadas: readonly string[];
 }
 
-const k = (id: string, rotulo: string): KpiDoEsqueleto => ({ id, rotulo });
-
-export const ESQUELETOS: Readonly<Record<string, EsqueletoDaTela>> = {
-  "inicio.resumo-do-dia": {
-    fonte: "as leituras do Acompanhamento, do Pátio e da Carteira",
-    acoes: ["Atualizar o resumo"],
-    kpis: [
-      k("em-atividade", "Placas em atividade"),
-      k("impedidas", "Placas impedidas"),
-      k("patio", "Placas no pátio"),
-      k("fila", "Fila do totem"),
-      k("pendencias", "Pendências abertas"),
-    ],
-    principal: {
-      titulo: "Placas por situação hoje",
-      descricao: "A régua de status inteira, com a contagem de cada sigla.",
-    },
-    apoio: [
-      { titulo: "Pátio e fila", descricao: "Quem espera e há quanto tempo.", colunas: 4 },
-      { titulo: "Carteira do mês", descricao: "Placas confirmadas e a confirmar.", colunas: 4 },
-      { titulo: "Pendências", descricao: "Alertas abertos por tipo.", colunas: 4 },
-    ],
-    tabela: {
-      titulo: "O que pede atenção hoje",
-      item: "pendência",
-      colunas: ["Placa", "Situação", "Parada há", "Operação", "Gestor"],
-    },
-    cruzadas: ["placa", "operação"],
-  },
-  "parceiros.livro-do-acionista": {
-    fonte: "a conciliação do mês e o saldo acumulado por acionista (a calcular no banco)",
-    acoes: ["Registrar lançamento"],
-    kpis: [
-      k("acionistas", "Acionistas"),
-      k("a-pagar", "A pagar no mês"),
-      k("pago", "Pago no mês"),
-      k("saldo", "Saldo acumulado"),
-    ],
-    principal: {
-      titulo: "Saldo por acionista",
-      descricao: "O saldo acumulado de cada acionista, mês a mês.",
-    },
-    apoio: [
-      { titulo: "Lançamentos do mês", descricao: "Créditos e débitos por acionista.", colunas: 8 },
-      { titulo: "Placas por acionista", descricao: "A frota de cada um.", colunas: 4 },
-    ],
-    tabela: {
-      titulo: "Lançamentos",
-      item: "lançamento",
-      colunas: ["Acionista", "Mês", "Descrição", "Valor", "Saldo"],
-    },
-    cruzadas: ["parceiro", "placa"],
-  },
-  "admin.auditoria": {
-    fonte: "a leitura paginada de auditoria.evento, com RLS (Parte B)",
-    acoes: ["Exportar em CSV"],
-    kpis: [
-      k("eventos", "Eventos no período"),
-      k("pessoas", "Pessoas ativas"),
-      k("alteracoes", "Alterações"),
-      k("recusas", "Acessos recusados"),
-    ],
-    principal: {
-      titulo: "Eventos por dia",
-      descricao: "Quem fez o quê, quando e por quê.",
-    },
-    apoio: [
-      { titulo: "Por módulo", descricao: "Onde mais se mexe.", colunas: 6 },
-      { titulo: "Por pessoa", descricao: "Quem mais registra.", colunas: 6 },
-    ],
-    tabela: {
-      titulo: "Eventos",
-      item: "evento",
-      colunas: ["Quando", "Pessoa", "Módulo", "Ação", "Registro"],
-    },
-    cruzadas: ["pessoa", "placa", "operação"],
-  },
-};
+/**
+ * Nenhuma tela está como esqueleto ao fim da Fase 1 (13/11/2026): todas leem pela tela de painel. A
+ * estrutura fica para a próxima tela que nascer sem fonte.
+ */
+export const ESQUELETOS: Readonly<Record<string, EsqueletoDaTela>> = {};
