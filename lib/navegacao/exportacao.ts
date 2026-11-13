@@ -21,6 +21,8 @@ export const LISTAS_DE_PAINEL = [
   "resultados.fechamentos",
   "resultados.ajustes",
   "admin.auditoria",
+  "admin.processos",
+  "admin.painel-de-processos",
 ] as const;
 
 /** As listas com tabela própria: cada uma tem o seu exportador (lib/exportacao/exportadores.ts). */

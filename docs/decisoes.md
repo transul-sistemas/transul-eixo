@@ -1887,3 +1887,9 @@ Registro de direção, só em texto: nenhum código nem migration. Não muda a f
 - **Baixa:** a decisão mora na caixa de Tarefas ("Baixas pedidas"); só a Diretoria vê "Decidir baixa" e só o Gestor de frota vê "Cancelar pedido de baixa"; o Administrador lê. O documento é uma referência em texto (sem upload nesta fase).
 - **Saúde do CR:** tela nova no catálogo (`/cadastros/saude-do-cr`); o dono do "Atribuir dono" sai da lista de gestores do catálogo (hipótese: o banco espera a pessoa).
 - **Trocar CR e Pedir baixa na ficha:** só aparecem no modo banco (`comVinculos`), para o e2e de exemplo não mudar.
+
+## 13/11/2026 — n3-tela: hipóteses da Fase 1, nível 3 (agente de tela, modo autônomo)
+
+- **Exportar CSV:** toda lista do catálogo tem o botão no fim da barra de consulta (`PaginaDeLeitura exportar=`); o arquivo sai de `/exportar/<id da tela>` com a sessão de quem pede, a lista inteira (100 por vez, teto de 10.000 linhas, cabeçalho `x-eixo-cortado`). Acompanhamento, Escala, Análise da Frota, Visão geral, Meu dia, Totem, Mapa do sistema e Demonstração não são lista (`TELAS_SEM_LISTA`).
+- **Processos e responsáveis / Painel de processos:** telas de painel em `/admin`, lendo `nucleo.processos_e_responsaveis` e `nucleo.painel_de_processos` (contrato único do painel); até o n3-banco, o exemplo fora de produção. Reatribuir grava `nucleo.reatribuir_tarefa` e Delegar `nucleo.delegar_tarefas` (nomes propostos; o projeto fala em `processos.reatribuir` e `processos.delegar`). Permissão: Administração › editar.
+- **Ação na linha das telas de painel:** a linha traz `acoes` (assistente + valores) e o botão abre o popup já preenchido (`?assistente=<id>&pre.<campo>=`); o rascunho fica por registro; fechar tira os `pre.` da URL.

@@ -6,6 +6,8 @@ import { urlDaEntradaAnterior } from "@/components/navegacao/historico-do-navega
 import { entradaAnteriorEhALista } from "@/lib/navegacao/espiar";
 
 export const PARAMETRO_DO_ASSISTENTE = "assistente";
+/** Campo preenchido pela ação da linha: `?assistente=<id>&pre.<campo>=<valor>`. */
+export const PREFIXO_DO_PREENCHIDO = "pre.";
 
 /**
  * O assistente aberto na URL (`?assistente=<id>`), com a mesma disciplina do painel de espiar:
@@ -35,7 +37,13 @@ export function useAssistenteNaUrl(id: string) {
     (aberta: boolean) => {
       const novos = new URLSearchParams(parametros.toString());
       if (aberta) novos.set(PARAMETRO_DO_ASSISTENTE, id);
-      else novos.delete(PARAMETRO_DO_ASSISTENTE);
+      else {
+        novos.delete(PARAMETRO_DO_ASSISTENTE);
+        // Os valores que a ação da linha preencheu (`pre.<campo>`) saem junto com o assistente.
+        for (const chave of [...novos.keys()]) {
+          if (chave.startsWith(PREFIXO_DO_PREENCHIDO)) novos.delete(chave);
+        }
+      }
       const texto = novos.toString();
       return texto ? `${rota}?${texto}` : rota;
     },

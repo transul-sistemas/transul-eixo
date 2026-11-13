@@ -1,10 +1,12 @@
+import { gravarNoExemploDoN3, LEITORES_DO_N3 } from "./paineis-n3";
+
 // Os dados de exemplo das telas de painel da Fase 1: fazem o papel das funções do banco que ainda não
 // existem (nucleo.resultado_por_operacao, nucleo.fechamentos_do_mes, ...), no MESMO formato que elas
 // devolverão (dinheiro em reais, como o banco guarda). Tudo fictício e determinístico. Só entra por
 // lib/dados/fonte-de-exemplo.ts, em desenvolvimento e testes.
 
-type Valor = number | string | null;
-type Formato =
+export type Valor = number | string | null;
+export type Formato =
   | "moeda"
   | "inteiro"
   | "percentual"
@@ -18,7 +20,7 @@ type Formato =
   | "texto"
   | "placa";
 
-interface Estado {
+export interface Estado {
   mes: string | null;
   filtro: string | null;
   busca: string;
@@ -26,16 +28,17 @@ interface Estado {
   tam: number;
 }
 
-interface LinhaBruta {
+export interface LinhaBruta {
   id: string;
   item: string;
   grupo: string;
   celulas: Record<string, Valor>;
   detalhes?: { rotulo: string; valor: Valor; formato: Formato }[];
   href?: string;
+  acoes?: { assistente: string; rotulo: string; valores: Record<string, string> }[];
 }
 
-interface Coluna {
+export interface Coluna {
   id: string;
   rotulo: string;
   formato: Formato;
@@ -44,7 +47,7 @@ interface Coluna {
 // ---------- Utilitários ----------
 
 /** Número pseudoaleatório estável entre 0 e 1 a partir de um texto. */
-function sorte(texto: string): number {
+export function sorte(texto: string): number {
   let h = 2166136261;
   for (let i = 0; i < texto.length; i++) {
     h ^= texto.charCodeAt(i);
@@ -52,20 +55,21 @@ function sorte(texto: string): number {
   }
   return ((h >>> 0) % 100000) / 100000;
 }
-const reais = (n: number) => Math.round(n * 100) / 100;
+export const reais = (n: number) => Math.round(n * 100) / 100;
 const pct = (parte: number, todo: number) =>
   todo === 0 ? null : Math.round((parte / todo) * 1000) / 10;
-const soma = (l: number[]) => reais(l.reduce((a, b) => a + b, 0));
+export const soma = (l: number[]) => reais(l.reduce((a, b) => a + b, 0));
 
-function mesDe(hoje: string, deslocamento: number): string {
+export function mesDe(hoje: string, deslocamento: number): string {
   const [a, m] = hoje.split("-").map(Number) as [number, number];
   const total = a * 12 + (m - 1) + deslocamento;
   return `${Math.floor(total / 12)}-${String((total % 12) + 1).padStart(2, "0")}`;
 }
 /** Os 12 meses fechados até o mês anterior a hoje, do mais novo ao mais antigo. */
-const mesesAte = (hoje: string, n = 12) => Array.from({ length: n }, (_, i) => mesDe(hoje, -1 - i));
+export const mesesAte = (hoje: string, n = 12) =>
+  Array.from({ length: n }, (_, i) => mesDe(hoje, -1 - i));
 const nomeDoMes = (mes: string) => `${mes.slice(5, 7)}/${mes.slice(0, 4)}`;
-function diaDe(hoje: string, deslocamento: number): string {
+export function diaDe(hoje: string, deslocamento: number): string {
   const d = new Date(`${hoje}T12:00:00Z`);
   d.setUTCDate(d.getUTCDate() + deslocamento);
   return d.toISOString().slice(0, 10);
@@ -95,7 +99,7 @@ export const PESSOAS_DE_EXEMPLO = Array.from({ length: 30 }, (_, i) => {
 const MOTORISTAS = PESSOAS_DE_EXEMPLO.filter((p) => p.funcao === "Motorista");
 
 /** Filtra pelo chip e pela busca, conta os chips, ordena (já vem ordenado, desempate pelo id) e pagina. */
-function tabela(
+export function tabela(
   estado: Estado,
   titulo: string,
   item: string,
@@ -129,6 +133,7 @@ function tabela(
             formato: c.formato,
           })),
         ...(l.href ? { href: l.href } : {}),
+        ...(l.acoes ? { acoes: l.acoes } : {}),
       })),
       total: noFiltro.length,
       pagina,
@@ -140,7 +145,13 @@ function tabela(
 
 const opcoesDasOperacoes = () => OPERACOES_DE_EXEMPLO.map((o) => ({ id: o.id, nome: o.nome }));
 const opcoesDosMeses = (meses: string[]) => meses.map((m) => ({ id: m, nome: nomeDoMes(m) }));
-const kpi = (id: string, rotulo: string, valor: Valor, formato: Formato, apoio?: string) => ({
+export const kpi = (
+  id: string,
+  rotulo: string,
+  valor: Valor,
+  formato: Formato,
+  apoio?: string,
+) => ({
   id,
   rotulo,
   valor,
@@ -150,7 +161,7 @@ const kpi = (id: string, rotulo: string, valor: Valor, formato: Formato, apoio?:
 
 // ---------- O que os assistentes gravam (em memória, por processo) ----------
 
-interface Gravados {
+export interface Gravados {
   fechados: Map<string, { em: string; reaberturas: number }>;
   reabertos: Map<string, { motivo: string; vezes: number }>;
   ajustes: {
@@ -177,10 +188,15 @@ interface Gravados {
     valor: number;
   }[];
   chaves: Map<string, unknown>;
+  /** N3: as tarefas reatribuídas (tarefa → novo dono) e as delegações (substituições com período). */
+  reatribuidas?: Map<string, string>;
+  delegacoes?: { deId: string; paraId: string; inicio: string; fim: string; motivo: string }[];
+  /** N3: o que se gravou nas telas novas (conciliação do mês, encerrar substituição...). */
+  extras?: Map<string, unknown[]>;
 }
 
 const GLOBAL = globalThis as unknown as { __eixoPaineis?: Gravados };
-function gravados(): Gravados {
+export function gravados(): Gravados {
   GLOBAL.__eixoPaineis ??= {
     fechados: new Map(),
     reabertos: new Map(),
@@ -216,7 +232,7 @@ function resultadoDaOperacao(opId: string, mes: string) {
   return { receitaCte, receitaNfse, receita, custoFrota, custoServico, margem, placas };
 }
 
-function mesDaLeitura(estado: Estado, hoje: string) {
+export function mesDaLeitura(estado: Estado, hoje: string) {
   const meses = mesesAte(hoje);
   const mes = estado.mes && meses.includes(estado.mes) ? estado.mes : meses[0]!;
   return { mes, meses };
@@ -2257,6 +2273,7 @@ function auditoria(estado: Estado, hoje: string) {
 }
 
 const LEITORES: Record<string, (estado: Estado, hoje: string) => unknown> = {
+  ...LEITORES_DO_N3,
   "inicio.resumo-do-dia": resumoDoDia,
   "parceiros.livro-do-acionista": livroDoAcionista,
   "admin.auditoria": auditoria,
@@ -2370,8 +2387,11 @@ export function gravarPainelDeExemplo(
       linha = { id: novo.id };
       break;
     }
-    default:
-      return { ok: false, mensagem: "Assistente desconhecido." };
+    default: {
+      const r = gravarNoExemploDoN3(id, dados, hoje);
+      if (!r.ok) return r;
+      linha = r.linha;
+    }
   }
   g.chaves.set(chave, linha);
   return { ok: true, linha };

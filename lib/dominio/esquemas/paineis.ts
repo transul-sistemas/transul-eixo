@@ -14,6 +14,8 @@ export interface CampoDoAssistente {
   tipo: TipoDoCampo;
   /** Seleção: a chave das opções que a leitura da tela entrega (`opcoes.<chave>`), ou opções fixas. */
   opcoes?: string | readonly { id: string; nome: string }[];
+  /** Seleção com busca: um campo de texto filtra as opções (lista de pessoas, por exemplo). */
+  buscavel?: boolean;
   ajuda?: string;
 }
 
@@ -30,7 +32,10 @@ export interface AssistenteDoPainel {
   concluido: string;
   /** Lançamento provisório (sem fonte definitiva ainda): o popup avisa. */
   provisorio?: boolean;
-  permissao: { modulo: "resultados" | "pessoas" | "frota"; acao: "criar" | "editar" };
+  permissao: {
+    modulo: "resultados" | "pessoas" | "frota" | "admin" | "parceiros" | "cadastros" | "inicio";
+    acao: "criar" | "editar";
+  };
   passos: readonly PassoDoPainel[];
   efeitos: readonly string[];
   /** A função do banco que grava (`nucleo.<nome>`). */
@@ -170,6 +175,32 @@ export const ESQUEMAS_DOS_PAINEIS = {
       .int()
       .min(1, { message: "Informe o valor maior que zero." }),
   }),
+  "reatribuir-tarefa": z.object({
+    tarefa: z.string().regex(/^[^:]+:\d+$/, { message: "Escolha a tarefa." }),
+    pessoaId: ID,
+    motivo: MOTIVO,
+  }),
+  "delegar-tarefas": z
+    .object({
+      deId: ID,
+      paraId: ID,
+      inicio: DIA,
+      fim: DIA,
+      motivo: z
+        .string()
+        .trim()
+        .min(3, { message: "Diga o motivo (férias, viagem...)." })
+        .max(200, { message: "Use até 200 caracteres." }),
+    })
+    .refine((d) => d.paraId !== d.deId, {
+      message: "Quem cobre precisa ser outra pessoa.",
+      path: ["paraId"],
+    })
+    // Período [início, fim): o fim é o dia em que a pessoa volta, sempre depois do início.
+    .refine((d) => d.fim > d.inicio, {
+      message: "O fim fica depois do início (é o dia em que a pessoa volta).",
+      path: ["fim"],
+    }),
 } as const;
 
 export type IdDoAssistenteDoPainel = keyof typeof ESQUEMAS_DOS_PAINEIS;
@@ -400,6 +431,87 @@ export const ASSISTENTES_DOS_PAINEIS: Record<IdDoAssistenteDoPainel, AssistenteD
     funcao: "lancar_abastecimento_provisorio",
     rotas: ["/frota/abastecimento"],
   },
+  "reatribuir-tarefa": {
+    id: "reatribuir-tarefa",
+    titulo: "Reatribuir tarefa",
+    concluido: "Tarefa reatribuída.",
+    permissao: { modulo: "admin", acao: "editar" },
+    passos: [
+      {
+        id: "tarefa",
+        titulo: "Tarefa e novo dono",
+        campos: [
+          { id: "tarefa", rotulo: "Tarefa", tipo: "selecao", opcoes: "tarefas" },
+          {
+            id: "pessoaId",
+            rotulo: "Novo dono",
+            tipo: "selecao",
+            opcoes: "pessoas",
+            buscavel: true,
+          },
+        ],
+      },
+      {
+        id: "motivo",
+        titulo: "Motivo",
+        campos: [{ id: "motivo", rotulo: "Por que reatribuir", tipo: "area" }],
+      },
+    ],
+    efeitos: [
+      "Quem recebe passa a ser o dono da tarefa, com o mesmo prazo; o motivo fica no histórico.",
+      "Reatribuir não age em nome de ninguém: o novo dono é quem conclui a tarefa.",
+    ],
+    funcao: "reatribuir_tarefa",
+    rotas: ["/admin/painel-de-processos", "/admin/processos", "/inicio/tarefas"],
+  },
+  "delegar-tarefas": {
+    id: "delegar-tarefas",
+    titulo: "Delegar tarefas",
+    concluido: "Tarefas delegadas.",
+    permissao: { modulo: "admin", acao: "editar" },
+    passos: [
+      {
+        id: "quem",
+        titulo: "Quem cobre",
+        campos: [
+          {
+            id: "deId",
+            rotulo: "Quem se ausenta",
+            tipo: "selecao",
+            opcoes: "pessoas",
+            buscavel: true,
+          },
+          {
+            id: "paraId",
+            rotulo: "Quem cobre",
+            tipo: "selecao",
+            opcoes: "pessoas",
+            buscavel: true,
+          },
+        ],
+      },
+      {
+        id: "periodo",
+        titulo: "Período",
+        campos: [
+          { id: "inicio", rotulo: "Início", tipo: "data" },
+          {
+            id: "fim",
+            rotulo: "Volta",
+            tipo: "data",
+            ajuda: "O dia em que a pessoa volta (não entra no período).",
+          },
+          { id: "motivo", rotulo: "Motivo", tipo: "texto" },
+        ],
+      },
+    ],
+    efeitos: [
+      "As tarefas de quem se ausenta vão para quem cobre durante o período e voltam sozinhas no fim.",
+      "Fora do período, a tarefa volta ao dono; nada é apagado.",
+    ],
+    funcao: "delegar_tarefas",
+    rotas: ["/admin/processos", "/admin/painel-de-processos", "/inicio/tarefas"],
+  },
 };
 
 /** Os valores iniciais do formulário de um assistente (data de hoje nos campos de data). */
@@ -488,6 +600,25 @@ export function argumentosDoBanco(
         p_km: dados.hodometro,
         p_combustivel: null,
         p_posto: null,
+        p_chave: chave,
+      };
+    case "reatribuir-tarefa": {
+      const [tarefaId, versao] = String(dados.tarefa).split(":");
+      return {
+        p_tarefa_id: tarefaId,
+        p_versao: Number(versao),
+        p_pessoa_id: dados.pessoaId,
+        p_motivo: dados.motivo,
+        p_chave: chave,
+      };
+    }
+    case "delegar-tarefas":
+      return {
+        p_de: dados.deId,
+        p_para: dados.paraId,
+        p_inicio: dados.inicio,
+        p_fim: dados.fim,
+        p_motivo: dados.motivo,
         p_chave: chave,
       };
   }

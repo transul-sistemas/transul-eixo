@@ -421,6 +421,23 @@ export const CATALOGO: readonly ModuloDoCatalogo[] = [
       estado: "pronto",
     },
     {
+      slug: "processos",
+      nome: "Processos e responsáveis",
+      icone: "IconSitemap",
+      dispositivos: DESKTOP,
+      descricao:
+        "Mostra cada processo, passo a passo, com o papel, o responsável, o prazo e quem cobre quem.",
+      estado: "pronto",
+    },
+    {
+      slug: "painel-de-processos",
+      nome: "Painel de processos",
+      icone: "IconLayoutDashboard",
+      dispositivos: DESKTOP,
+      descricao: "Mostra as tarefas abertas, os prazos vencidos e os gargalos de cada etapa.",
+      estado: "pronto",
+    },
+    {
       slug: "auditoria",
       nome: "Auditoria",
       icone: "IconHistory",

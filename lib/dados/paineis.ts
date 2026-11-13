@@ -51,6 +51,9 @@ export const FUNCOES_DOS_PAINEIS = {
   "pessoas.campanhas": "campanhas_das_pessoas",
   "pessoas.analise": "analise_das_pessoas",
   "frota.abastecimento-provisorio": "abastecimento_do_mes_v2",
+  // N3 (a criar pelo agente de banco do N3; até lá, o exemplo fora de produção).
+  "admin.processos": "processos_e_responsaveis",
+  "admin.painel-de-processos": "painel_de_processos",
 } as const;
 
 export type IdDoPainel = keyof typeof FUNCOES_DOS_PAINEIS;
@@ -319,6 +322,17 @@ export function normalizarLeitura(
             return { rotulo: String(d.rotulo), valor: valor(d.valor, formato), formato };
           }),
           ...(l.href ? { href: String(l.href) } : {}),
+          ...(Array.isArray(l.acoes) && l.acoes.length > 0
+            ? {
+                acoes: lista(l.acoes).map((a) => ({
+                  assistente: String(a.assistente),
+                  rotulo: String(a.rotulo),
+                  valores: Object.fromEntries(
+                    Object.entries((a.valores ?? {}) as Bruto).map(([k, v]) => [k, String(v)]),
+                  ),
+                })),
+              }
+            : {}),
         };
       }),
       total: Number(t.total ?? 0),

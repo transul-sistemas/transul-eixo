@@ -316,6 +316,14 @@ export async function TelaDePainel({
             tabela={leitura.tabela}
             enderecoDaPagina={(pagina) => enderecoDoPainel(rota, { ...estado, pagina })}
             enderecoDoTamanho={(tam) => enderecoDoPainel(rota, { ...estado, tam, pagina: 1 })}
+            enderecoDaAcao={(acao) => {
+              if (!(permitidos as readonly string[]).includes(acao.assistente)) return null;
+              const p = new URLSearchParams(enderecoDoPainel(rota, estado).split("?")[1] ?? "");
+              p.set("assistente", acao.assistente);
+              for (const [campo, valor] of Object.entries(acao.valores))
+                p.set(`pre.${campo}`, valor);
+              return `${rota}?${p.toString()}`;
+            }}
             hrefLimpar={
               estado.filtro || estado.busca
                 ? enderecoDoPainel(rota, { ...estado, filtro: null, busca: "", pagina: 1 })

@@ -277,6 +277,28 @@ export const ACOES: readonly AcaoDoCatalogo[] = [
     descricao: "Aprova ou recusa um ajuste pedido; só a Diretoria, e quem pediu não decide.",
     rota: "/resultados/ajustes?assistente=decidir-ajuste",
   },
+  {
+    id: "admin.reatribuir-tarefa",
+    nome: "Reatribuir tarefa",
+    icone: "IconUsers",
+    modulo: "admin",
+    permissao: { modulo: "admin", acao: "criar" },
+    estado: "pronto",
+    descricao:
+      "Passa a tarefa a outra pessoa, com o motivo; quem recebe vira o dono e conclui a tarefa.",
+    rota: "/admin/painel-de-processos?assistente=reatribuir-tarefa",
+  },
+  {
+    id: "admin.delegar-tarefas",
+    nome: "Delegar tarefas",
+    icone: "IconUsers",
+    modulo: "admin",
+    permissao: { modulo: "admin", acao: "criar" },
+    estado: "pronto",
+    descricao:
+      "Diz quem cobre quem e por quanto tempo: as tarefas vão ao substituto no período e voltam no fim.",
+    rota: "/admin/processos?assistente=delegar-tarefas",
+  },
 ];
 
 function nomeDoModulo(id: IdDoModulo): string {
