@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import Link from "next/link";
 import { connection } from "next/server";
+import { Suspense } from "react";
 import { formatarMes } from "@/components/formato/data";
 import { Moeda } from "@/components/formato/moeda";
 import {
@@ -13,6 +14,7 @@ import { BarraDeConsultaDaPagina } from "@/components/layout/barra-de-consulta";
 import { FaixaDeKpis } from "@/components/layout/faixa-de-kpis";
 import { AvisoDeDadosCongelados } from "@/components/layout/aviso-de-dados-congelados";
 import { PaginaDeLeitura } from "@/components/layout/pagina-de-leitura";
+import { SecaoDoPainel } from "@/components/paineis/secao-do-painel";
 import { EsqueletoDaTabela, ListaVazia } from "@/components/tabela/estados";
 import { Paginador } from "@/components/tabela/paginador";
 import { lerAbastecimentoDoMes } from "@/lib/dados/abastecimento";
@@ -164,6 +166,14 @@ export async function PaginaDoAbastecimento({ searchParams }: { searchParams: Pa
   const { titulo, descricao } = cabecalho();
   return (
     <PaginaDeLeitura lista titulo={titulo} descricao={descricao} consulta={<Barra />}>
+      {/* Abastecimento v2: o lançamento à mão (provisório) e a lista dos lançados, nos dois modos. */}
+      <Suspense fallback={<EsqueletoDaTabela linhas={3} rotulo="Carregando os lançados à mão" />}>
+        <SecaoDoPainel
+          id="frota.abastecimento-provisorio"
+          rota={ROTA_DO_ABASTECIMENTO}
+          assistentes={["lancar-abastecimento"]}
+        />
+      </Suspense>
       {modoDosDados() !== "banco" ? (
         <ListaVazia
           titulo="O Abastecimento lê só do banco"
