@@ -1155,7 +1155,7 @@ const NOMES_DO_STATUS: Record<string, string> = {
   TBV: "Trabalhou em viagem",
   TBE: "Trabalhou na base",
   FOL: "Folga",
-  FER: "Férias",
+  FÉR: "Férias",
   ATS: "Atestado",
   FRD: "Feriado",
   FLT: "Falta",
@@ -1167,7 +1167,7 @@ const GRUPO_DO_STATUS: Record<string, string> = {
   TBX: "trabalhando",
   FOL: "folga",
   FRD: "folga",
-  FER: "ferias",
+  FÉR: "ferias",
   ATS: "afastado",
   FLT: "afastado",
 };
@@ -1184,7 +1184,7 @@ function statusDoDia(pessoaId: string, dia: string): string | null {
       : s < 0.84
         ? "FOL"
         : s < 0.92
-          ? "FER"
+          ? "FÉR"
           : s < 0.97
             ? "ATS"
             : "FLT";
@@ -1195,9 +1195,7 @@ function statusDiario(estado: Estado, hoje: string) {
   const dia = hoje;
   const linhas = MOTORISTAS.map((p) => {
     const codigo = statusDoDia(p.id, dia);
-    const sub = g.substitutos.find(
-      (s) => s.motoristaId === p.id && s.inicio <= dia && dia <= s.fim,
-    );
+    const sub = g.substitutos.find((s) => s.motoristaId === p.id && s.inicio <= dia && dia < s.fim);
     const nomeDoSub = sub
       ? (PESSOAS_DE_EXEMPLO.find((x) => x.id === sub.substitutoId)?.nome ?? null)
       : null;

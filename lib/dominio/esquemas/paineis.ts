@@ -52,7 +52,7 @@ export const CODIGOS_DO_STATUS_DO_DIA = [
   { id: "TBV", nome: "TBV · trabalhou em viagem" },
   { id: "TBE", nome: "TBE · trabalhou em escala de base" },
   { id: "FOL", nome: "FOL · folga" },
-  { id: "FER", nome: "FÉR · férias" },
+  { id: "FÉR", nome: "FÉR · férias" },
   { id: "ATS", nome: "ATS · atestado" },
   { id: "FRD", nome: "FRD · feriado" },
   { id: "FLT", nome: "FLT · falta" },
@@ -86,13 +86,24 @@ export const ESQUEMAS_DOS_PAINEIS = {
     observacao: z.string().max(200, { message: "Use até 200 caracteres." }),
   }),
   "indicar-substituto": z
-    .object({ motoristaId: ID, substitutoId: ID, inicio: DIA, fim: DIA })
+    .object({
+      motoristaId: ID,
+      substitutoId: ID,
+      inicio: DIA,
+      fim: DIA,
+      motivo: z
+        .string()
+        .trim()
+        .min(3, { message: "Diga o motivo (férias, atestado...)." })
+        .max(200, { message: "Use até 200 caracteres." }),
+    })
     .refine((d) => d.substitutoId !== d.motoristaId, {
       message: "O substituto precisa ser outra pessoa.",
       path: ["substitutoId"],
     })
-    .refine((d) => d.fim >= d.inicio, {
-      message: "O fim não pode ser antes do início.",
+    // Período [início, fim): o fim é o dia em que o titular volta, sempre depois do início.
+    .refine((d) => d.fim > d.inicio, {
+      message: "O fim fica depois do início (é o dia em que o titular volta).",
       path: ["fim"],
     }),
   "lancar-abastecimento": z.object({
@@ -208,7 +219,11 @@ export const ASSISTENTES_DOS_PAINEIS: Record<IdDoAssistenteDoPainel, AssistenteD
             tipo: "selecao",
             opcoes: CODIGOS_DO_STATUS_DO_DIA,
           },
-          { id: "observacao", rotulo: "Observação (opcional)", tipo: "texto" },
+          {
+            id: "observacao",
+            rotulo: "Motivo da correção (só ao trocar um dia já lançado)",
+            tipo: "texto",
+          },
         ],
       },
     ],
@@ -216,7 +231,7 @@ export const ASSISTENTES_DOS_PAINEIS: Record<IdDoAssistenteDoPainel, AssistenteD
       "O status do dia é o realizado: a escala do mês continua como planejado.",
       "Folga ou férias sem substituto deixa o conjunto sem motorista (SMo).",
     ],
-    funcao: "registrar_status_do_dia",
+    funcao: "lancar_status_do_motorista",
     rotas: ["/pessoas/status-diario", "/pessoas/escala", "/frota/acompanhamento"],
   },
   "indicar-substituto": {
@@ -231,7 +246,13 @@ export const ASSISTENTES_DOS_PAINEIS: Record<IdDoAssistenteDoPainel, AssistenteD
         campos: [
           { id: "motoristaId", rotulo: "Motorista ausente", tipo: "selecao", opcoes: "motoristas" },
           { id: "inicio", rotulo: "Início", tipo: "data" },
-          { id: "fim", rotulo: "Fim", tipo: "data" },
+          {
+            id: "fim",
+            rotulo: "Volta do titular",
+            tipo: "data",
+            ajuda: "O dia em que o titular volta (não entra no período).",
+          },
+          { id: "motivo", rotulo: "Motivo", tipo: "texto" },
         ],
       },
       {
@@ -317,15 +338,17 @@ export function argumentosDoBanco(
         p_pessoa_id: dados.pessoaId,
         p_dia: dados.dia,
         p_codigo: dados.codigo,
-        p_observacao: dados.observacao || null,
+        p_versao: null,
+        p_motivo: dados.observacao || null,
         p_chave: chave,
       };
     case "indicar-substituto":
       return {
-        p_motorista_id: dados.motoristaId,
+        p_titular_id: dados.motoristaId,
         p_substituto_id: dados.substitutoId,
         p_inicio: dados.inicio,
         p_fim: dados.fim,
+        p_motivo: dados.motivo,
         p_chave: chave,
       };
     case "lancar-abastecimento":

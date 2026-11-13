@@ -41,15 +41,23 @@ describe("assistentes das telas de painel", () => {
 
   it("o substituto é outra pessoa e o fim não vem antes do início", () => {
     const e = ESQUEMAS_DOS_PAINEIS["indicar-substituto"];
-    const base = { motoristaId: "a", substitutoId: "b", inicio: "2026-11-10", fim: "2026-11-20" };
+    const base = {
+      motoristaId: "a",
+      substitutoId: "b",
+      inicio: "2026-11-10",
+      fim: "2026-11-20",
+      motivo: "Férias",
+    };
     expect(e.safeParse(base).success).toBe(true);
     const mesmo = e.safeParse({ ...base, substitutoId: "a" });
     expect(mesmo.success).toBe(false);
     expect(mesmo.error?.issues[0]?.path).toEqual(["substitutoId"]);
     const invertido = e.safeParse({ ...base, fim: "2026-11-09" });
     expect(invertido.error?.issues[0]?.path).toEqual(["fim"]);
-    // Um dia só vale (início igual ao fim: intervalo fechado nos dois dias).
-    expect(e.safeParse({ ...base, fim: "2026-11-10" }).success).toBe(true);
+    // [início, fim): fim igual ao início é período vazio; o dia seguinte é um dia de substituição.
+    expect(e.safeParse({ ...base, fim: "2026-11-10" }).success).toBe(false);
+    expect(e.safeParse({ ...base, fim: "2026-11-11" }).success).toBe(true);
+    expect(e.safeParse({ ...base, motivo: " " }).success).toBe(false);
   });
 
   it("o pedido de ajuste pede valor maior que zero e justificativa", () => {
