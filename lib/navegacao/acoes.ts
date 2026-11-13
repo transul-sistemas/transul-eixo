@@ -151,6 +151,50 @@ export const ACOES: readonly AcaoDoCatalogo[] = [
       "Recusa a placa recebida de outro gestor, com o motivo; ela continua na carteira de quem enviou.",
     rota: "/frota/placas?assistente=devolver-placa",
   },
+  {
+    id: "frota.lancar-o-dia",
+    nome: "Lançar o dia",
+    icone: "IconChecklist",
+    modulo: "frota",
+    permissao: { modulo: "frota", acao: "criar" },
+    estado: "pronto",
+    descricao:
+      "Lança a mesma situação e a mesma hora para vários conjuntos de uma vez, tudo ou nada.",
+    rota: "/frota/acompanhamento?assistente=lancar-o-dia",
+  },
+  {
+    id: "frota.trocar-cr",
+    nome: "Trocar CR",
+    icone: "IconArrowsExchange",
+    modulo: "frota",
+    permissao: { modulo: "frota", acao: "criar" },
+    estado: "pronto",
+    descricao:
+      "Fecha o CR vigente da placa e abre o novo na mesma data, sem buraco; a placa muda de operação.",
+    rota: "/frota/placas?assistente=trocar-cr",
+  },
+  {
+    id: "frota.pedir-baixa",
+    nome: "Pedir baixa",
+    icone: "IconArrowBackUp",
+    modulo: "frota",
+    permissao: { modulo: "frota", acao: "criar" },
+    estado: "pronto",
+    descricao:
+      "Pede a baixa da placa (venda, sinistro, sucata ou devolução); a Diretoria aprova, e quem pede não aprova.",
+    rota: "/frota/placas?assistente=pedir-baixa",
+  },
+  {
+    id: "cadastros.resolver-saude-do-cr",
+    nome: "Resolver a saúde do CR",
+    icone: "IconListDetails",
+    modulo: "cadastros",
+    permissao: { modulo: "cadastros", acao: "criar" },
+    estado: "pronto",
+    descricao:
+      "Abre a Saúde do CR: placa sem CR, CR sem operação, dois CRs do mesmo tipo e lançamento sem CR.",
+    rota: "/cadastros/saude-do-cr",
+  },
 ];
 
 function nomeDoModulo(id: IdDoModulo): string {

@@ -401,6 +401,15 @@ export const CATALOGO: readonly ModuloDoCatalogo[] = [
       descricao: "Mantém catálogos, regras e parâmetros, como o dia do corte da competência.",
       estado: "pronto",
     },
+    {
+      slug: "saude-do-cr",
+      nome: "Saúde do CR",
+      icone: "IconListDetails",
+      dispositivos: DESKTOP,
+      descricao:
+        "Placa sem CR, CR sem operação, dois CRs do mesmo tipo e lançamento sem CR, com dono e prazo.",
+      estado: "pronto",
+    },
   ]),
   modulo("admin", "Administração", "IconSettings", "admin", [
     {

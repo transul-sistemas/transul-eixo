@@ -17,6 +17,10 @@ describe("ações dos assistentes da Frota", () => {
       "frota.corrigir-placa",
       "frota.cancelar-pedido",
       "frota.devolver-placa",
+      "frota.lancar-o-dia",
+      "frota.trocar-cr",
+      "frota.pedir-baixa",
+      "cadastros.resolver-saude-do-cr",
     ]);
     expect(ACOES.map((a) => a.nome)).toEqual([
       "Cadastrar placa",
@@ -31,6 +35,10 @@ describe("ações dos assistentes da Frota", () => {
       "Corrigir placa",
       "Cancelar pedido",
       "Devolver placa",
+      "Lançar o dia",
+      "Trocar CR",
+      "Pedir baixa",
+      "Resolver a saúde do CR",
     ]);
     expect(ACOES.every((a) => a.estado === "pronto")).toBe(true);
   });
@@ -49,6 +57,10 @@ describe("ações dos assistentes da Frota", () => {
       "frota.corrigir-placa": "/frota/placas?assistente=corrigir-placa",
       "frota.cancelar-pedido": "/frota/placas?assistente=cancelar-pedido",
       "frota.devolver-placa": "/frota/placas?assistente=devolver-placa",
+      "frota.lancar-o-dia": "/frota/acompanhamento?assistente=lancar-o-dia",
+      "frota.trocar-cr": "/frota/placas?assistente=trocar-cr",
+      "frota.pedir-baixa": "/frota/placas?assistente=pedir-baixa",
+      "cadastros.resolver-saude-do-cr": "/cadastros/saude-do-cr",
     });
   });
   it("cada ação pertence a um módulo do catálogo, e a permissão é a desse módulo", () => {

@@ -1,59 +1,19 @@
 import { type ResultadoDaAcao, sucesso } from "@/lib/wizard/resultado";
 import { type ClienteDeEscrita, resultadoDoErro } from "./escrita-do-banco";
+import type { ProblemaDaSaude, ResumoDaSaudeDoCr, PaginaDoProblema } from "./saude-do-cr-tipos";
+
+export type {
+  ProblemaDaSaude,
+  ResumoDaSaudeDoCr,
+  LinhaDoProblema,
+  PaginaDoProblema,
+} from "./saude-do-cr-tipos";
 
 // CR1, Saúde do CR (como no quadro). Funções do banco (migration 20261117400000_saude_do_cr.sql):
 //  nucleo.resumo_da_saude_do_cr() · nucleo.problemas_da_saude_do_cr(p_problema, p_pagina, p_tamanho)
 //  25 Escolher o CR: nucleo.trocar_cr (lib/dados/vinculos-de-cr.ts)
 //  26 nucleo.ligar_cr_a_operacao · 27 nucleo.encerrar_vinculo_de_cr · 28 nucleo.classificar_centro_sem_cr
 //  29 nucleo.atribuir_dono
-
-export type ProblemaDaSaude =
-  "placa_sem_cr" | "cr_sem_operacao" | "dois_do_mesmo_tipo" | "lancamento_sem_cr";
-
-export interface ResumoDaSaudeDoCr {
-  cartoes: {
-    crs_ativos: number;
-    placas_sem_cr: number;
-    crs_sem_operacao: number;
-    placas_com_dois_do_mesmo_tipo: number;
-    centros_sem_cr: number;
-  };
-  problemas: {
-    problema: ProblemaDaSaude;
-    quantidade: number;
-    dono: string | null;
-    prazo_dias: number | null;
-  }[];
-}
-
-/** A linha de um problema: os campos variam com o problema; dono e prazo são os atribuídos (ou nulos). */
-export interface LinhaDoProblema {
-  ativo_id?: string;
-  placa?: string;
-  tipo?: string;
-  gestor?: string | null;
-  operacao?: string | null;
-  cr_id?: string;
-  codigo?: string;
-  nome?: string | null;
-  codcencus?: string | number | null;
-  tipo_de_cr?: string;
-  crs?: { vinculo_id: string; versao: number; cr_id: string; codigo: string; inicio: string }[];
-  lancamentos?: number;
-  valor?: number;
-  ultima_competencia?: string | null;
-  dono: string | null;
-  dono_id: string | null;
-  prazo: string | null;
-}
-
-export interface PaginaDoProblema {
-  problema: ProblemaDaSaude;
-  total: number;
-  pagina: number;
-  tamanho: number;
-  linhas: LinhaDoProblema[];
-}
 
 async function ler<T>(
   cliente: ClienteDeEscrita,
