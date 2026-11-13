@@ -2235,6 +2235,9 @@ isOneToOne: false
 "confirmar_situacao_programada":
 { Args: { "p_chave"?: string,"p_programada_id": string,"p_versao": number }; Returns: string
                            },
+"conjunto_do_motorista_em":
+{ Args: { "p_dia": string,"p_pessoa_id": string }; Returns: string
+                           },
 "conjuntos_com_lancamento_no_dia":
 { Args: { "p_dia": string }; Returns: {
               "x": number,"y": number
@@ -2346,6 +2349,9 @@ isOneToOne: false
 "e_lider_do_gestor":
 { Args: { "p_gestor": string,"p_lider": string }; Returns: boolean
                            },
+"e_motorista_em":
+{ Args: { "p_dia": string,"p_pessoa_id": string }; Returns: boolean
+                           },
 "editar_pessoa":
 { Args: { "p_email"?: string,"p_funcao"?: string,"p_inicio"?: string,"p_nome": string,"p_operacao"?: string,"p_pessoa": string,"p_versao": number }; Returns: Json
                            },
@@ -2354,6 +2360,12 @@ isOneToOne: false
                            },
 "encerrar_locacao":
 { Args: { "p_chave"?: string,"p_fim": string,"p_locacao_id": string,"p_motivo": string,"p_versao": number }; Returns: Json
+                           },
+"encerrar_motorista_do_conjunto":
+{ Args: { "p_chave"?: string,"p_fim": string,"p_vinculo_id": string }; Returns: string
+                           },
+"encerrar_substituicao":
+{ Args: { "p_chave"?: string,"p_fim": string,"p_motivo": string,"p_substituicao_id": string }; Returns: string
                            },
 "encerrar_vinculo_de_cr":
 { Args: { "p_chave"?: string,"p_em": string,"p_motivo": string,"p_versao": number,"p_vinculo_id": string }; Returns: string
@@ -2372,6 +2384,11 @@ isOneToOne: false
                            },
 "excecoes_abertas":
 { Args: { "p_assunto": string,"p_pagina": number,"p_tamanho": number }; Returns: Json
+                           },
+"ferias_sem_substituto":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "ativo_id": string,"dias": number,"nome": string,"placa": string,"primeiro_dia": string,"titular_id": string,"ultimo_dia": string
+            }[]
                            },
 "ficha_da_operacao":
 { Args: { "p_mes"?: string,"p_operacao": string }; Returns: Json
@@ -2420,6 +2437,9 @@ isOneToOne: false
 "impacto_da_baixa":
 { Args: { "p_ativo_id": string,"p_em": string }; Returns: Json
                            },
+"indicar_substituto":
+{ Args: { "p_chave"?: string,"p_fim": string,"p_inicio": string,"p_motivo": string,"p_substituto_id": string,"p_titular_id": string }; Returns: string
+                           },
 "inicio_do_pat":
 { Args: { "p_ativo_id": string }; Returns: string
                            },
@@ -2437,6 +2457,9 @@ isOneToOne: false
                            },
 "lancar_situacao_na_hora":
 { Args: { "p_ativo_id": string,"p_em": string,"p_sigla": string }; Returns: string
+                           },
+"lancar_status_do_motorista":
+{ Args: { "p_chave"?: string,"p_codigo": string,"p_dia": string,"p_motivo"?: string,"p_pessoa_id": string,"p_versao"?: number }; Returns: string
                            },
 "liberar_posicao_do_dia":
 { Args: { "p_chave"?: string,"p_dia": string,"p_gestor_id": string,"p_motivo": string }; Returns: string
@@ -2485,6 +2508,11 @@ isOneToOne: false
 "linha_de_receita":
 { Args: { "p_codtipoper": number,"p_serie": string,"p_status_cte": string,"p_tipo_documento": string }; Returns: string
                            },
+"linha_do_motorista":
+{ Args: { "p_ate": string,"p_de": string }; Returns: {
+              "ativo_id": string,"dia": string,"escala": string,"nome": string,"pessoa_id": string,"placa": string,"realizado": string,"substituto": boolean,"sugestao": string
+            }[]
+                           },
 "linhas_divergentes":
 { Args: Record<PropertyKey, never>; Returns: {
               "ativo_id": string,"motivo": string
@@ -2510,6 +2538,12 @@ isOneToOne: false
                            },
 "meta_do_conjunto_de":
 { Args: { "p_ativo_id": string,"p_em"?: string }; Returns: number
+                           },
+"motorista_do_conjunto_no_mes":
+{ Args: { "p_ativo_id": string,"p_mes": string }; Returns: Json
+                           },
+"motoristas_no_dia":
+{ Args: { "p_dia": string }; Returns: Json
                            },
 "mudar_tipo_do_ativo":
 { Args: { "p_ativo_id": string,"p_motivo": string,"p_tipo": Database["nucleo"]['Enums']["tipo_de_ativo"] }; Returns: undefined
@@ -2689,6 +2723,9 @@ isOneToOne: false
 "pode_gravar_cadastro_de_cr":
 { Args: Record<PropertyKey, never>; Returns: boolean
                            },
+"pode_no_motorista_do_conjunto":
+{ Args: { "p_acao_na_frota": string,"p_ativo_id": string }; Returns: boolean
+                           },
 "porta_da_posicao":
 { Args: Record<PropertyKey, never>; Returns: Json
                            },
@@ -2848,6 +2885,9 @@ isOneToOne: false
                            },
 "ultimo_mes_completo_do_staging":
 { Args: Record<PropertyKey, never>; Returns: string
+                           },
+"vincular_motorista":
+{ Args: { "p_ativo_id": string,"p_chave"?: string,"p_inicio": string,"p_pessoa_id": string }; Returns: string
                            },
 "vincular_usuario":
 { Args: { "p_email": string,"p_perfil": string,"p_pessoa_id": string }; Returns: undefined

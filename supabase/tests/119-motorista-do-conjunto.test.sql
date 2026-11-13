@@ -14,7 +14,7 @@ begin;
 \ir apoio/como_usuario.psql
 \ir apoio/transferencia.psql
 
-select plan(42);
+select plan(44);
 
 select pg_temp.pessoa('Gestor A', 119000001, 'gestor_de_frota', true);
 select pg_temp.pessoa('Gestor B', 119000002, 'gestor_de_frota', true);
@@ -158,12 +158,17 @@ reset role;
 select tests.como(pg_temp.id('auth_Gestor A'));
 select is((select count(*) from pessoas.status_do_motorista) + (select count(*) from pessoas.motorista_do_conjunto)
         + (select count(*) from pessoas.substituicao_do_motorista), 0::bigint,
-  '41. o gestor não lê as tabelas de Pessoas direto (só pela leitura recortada)');
+  '41. motorista_do_conjunto_ler, status_do_motorista_ler e substituicao_do_motorista_ler: o gestor não lê as tabelas de Pessoas direto (só pela leitura recortada)');
+select is((select count(*) from pessoas.codigo_do_motorista), 8::bigint, '44. codigo_do_motorista_ler: todo usuário lê o catálogo dos códigos');
 reset role;
 select tests.como(pg_temp.id('auth_Adm 119'));
 select ok((select count(*) from pessoas.status_do_motorista) > 0 and (select count(*) from pessoas.motorista_do_conjunto) > 0
        and (select count(*) from pessoas.substituicao_do_motorista) > 0,
   '42. o Administrador (Pessoas › ver) lê as tabelas');
+reset role;
+select tests.como(pg_temp.id('auth_Op 119 usuario'));
+select is((select count(*) from pessoas.status_do_motorista) + (select count(*) from pessoas.motorista_do_conjunto), 0::bigint,
+  '43. o Operacional (Pessoas › ver só da filial) não lê as tabelas do motorista');
 reset role;
 
 select * from finish();
