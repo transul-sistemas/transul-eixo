@@ -3,7 +3,7 @@ import { comBanco, sessaoDe } from "../e2e/apoio/usuarios-de-teste";
 
 // Frota › Acompanhamento e Frota › Carteira (primeira versão), o caminho principal de cada tela no modo
 // banco: a grade abre, uma célula de hoje lança PÁT pelo assistente (e o banco grava o evento), o Agora e
-// o Censo trazem a linha de total; o Gestor de frota confirma uma placa da carteira como "não confere",
+// o Censo trazem a linha de total; o Gestor de frota confirma uma placa da carteira como "não é minha" (não confere),
 // com a observação. Dados: `pnpm db:dev-dados`. Rodar de novo é seguro (lançar PÁT de novo e confirmar
 // de novo só trocam a resposta).
 
@@ -85,7 +85,8 @@ test.describe("Carteira (Gestor de frota)", () => {
 
     const caixa = dialogo(page, "Confirmar carteira");
     await expect(caixa).toBeVisible();
-    await caixa.getByRole("radio", { name: "Não confere" }).check();
+    await caixa.getByRole("radio", { name: "Não é minha" }).check();
+    await caixa.getByRole("button", { name: "Continuar" }).click();
     await caixa.getByRole("textbox").fill("Placa está no pátio de outra filial (teste e2e)");
     await caixa.getByRole("button", { name: "Continuar" }).click();
     await caixa.getByRole("button", { name: "Confirmar carteira" }).click();

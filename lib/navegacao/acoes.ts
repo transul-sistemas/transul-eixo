@@ -77,6 +77,17 @@ export const ACOES: readonly AcaoDoCatalogo[] = [
     rota: "/frota/placas?assistente=disponibilizar-placa",
   },
   {
+    id: "frota.confirmar-carteira",
+    nome: "Confirmar carteira",
+    icone: "IconChecklist",
+    modulo: "frota",
+    permissao: { modulo: "frota", acao: "criar" },
+    estado: "pronto",
+    descricao:
+      "Confirma, placa por placa, o que esteve com você no mês: está comigo, não é minha ou corrigir.",
+    rota: "/frota/carteira?assistente=confirmar-carteira",
+  },
+  {
     id: "frota.mudar-situacao",
     nome: "Mudar situação",
     icone: "IconArrowsExchange",

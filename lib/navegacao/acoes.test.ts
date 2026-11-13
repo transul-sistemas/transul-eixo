@@ -10,6 +10,7 @@ describe("ações dos assistentes da Frota", () => {
       "frota.concluir-recebimento",
       "frota.entregar-ao-operacional",
       "frota.disponibilizar-placa",
+      "frota.confirmar-carteira",
       "frota.mudar-situacao",
       "frota.engatar-implemento",
       "frota.desatrelar-implemento",
@@ -23,6 +24,7 @@ describe("ações dos assistentes da Frota", () => {
       "Concluir recebimento",
       "Entregar ao Operacional",
       "Enviar placa",
+      "Confirmar carteira",
       "Mudar situação",
       "Engatar implementos",
       "Desatrelar implemento",
@@ -32,7 +34,7 @@ describe("ações dos assistentes da Frota", () => {
     ]);
     expect(ACOES.every((a) => a.estado === "pronto")).toBe(true);
   });
-  it("cada ação leva à lista de placas com o assistente aberto (?assistente=)", () => {
+  it("cada ação leva à tela com o assistente aberto (?assistente=)", () => {
     const rotas = Object.fromEntries(ACOES.map((a) => [a.id, a.rota]));
     expect(rotas).toEqual({
       "frota.cadastrar-placa": "/frota/placas?assistente=cadastrar-placa",
@@ -40,6 +42,7 @@ describe("ações dos assistentes da Frota", () => {
       "frota.concluir-recebimento": "/frota/placas?assistente=concluir-recebimento",
       "frota.entregar-ao-operacional": "/frota/placas?assistente=entregar-ao-operacional",
       "frota.disponibilizar-placa": "/frota/placas?assistente=disponibilizar-placa",
+      "frota.confirmar-carteira": "/frota/carteira?assistente=confirmar-carteira",
       "frota.mudar-situacao": "/frota/placas?assistente=mudar-situacao",
       "frota.engatar-implemento": "/frota/placas?assistente=engatar-implemento",
       "frota.desatrelar-implemento": "/frota/placas?assistente=desatrelar-implemento",
