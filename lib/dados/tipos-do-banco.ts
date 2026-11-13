@@ -2872,6 +2872,9 @@ isOneToOne: false
 "resultado_da_operacao":
 { Args: { "p_fim": string,"p_inicio": string,"p_operacao": string }; Returns: Json
                            },
+"resultado_por_operacao":
+{ Args: { "p_mes"?: string }; Returns: Json
+                           },
 "resumo_da_saude_do_cr":
 { Args: Record<PropertyKey, never>; Returns: Json
                            },
@@ -2962,6 +2965,9 @@ isOneToOne: false
                            },
 "ultimo_mes_completo_do_staging":
 { Args: Record<PropertyKey, never>; Returns: string
+                           },
+"variacao_das_operacoes":
+{ Args: { "p_mes"?: string }; Returns: Json
                            },
 "vincular_motorista":
 { Args: { "p_ativo_id": string,"p_chave"?: string,"p_inicio": string,"p_pessoa_id": string }; Returns: string
