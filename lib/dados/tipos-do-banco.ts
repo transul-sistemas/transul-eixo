@@ -2200,6 +2200,9 @@ isOneToOne: false
 "avancar_no_patio":
 { Args: { "p_acao": string,"p_ativo_id": string,"p_chave"?: string,"p_em"?: string,"p_motivo"?: string }; Returns: Json
                            },
+"avancar_no_patio_em_lote":
+{ Args: { "p_acao": string,"p_ativos": (string)[],"p_chave"?: string,"p_motivo"?: string }; Returns: Json
+                           },
 "buscar_cidades":
 { Args: { "p_busca": string,"p_limite"?: number }; Returns: {
               "id": number,"nome": string,"uf": string
@@ -2516,6 +2519,9 @@ isOneToOne: false
                            },
 "justificar_diferenca":
 { Args: { "p_chave"?: string,"p_cr_id": string,"p_mes": string,"p_motivo": string }; Returns: Json
+                           },
+"kpis_do_operacional":
+{ Args: Record<PropertyKey, never>; Returns: Json
                            },
 "lancar_abastecimento_provisorio":
 { Args: { "p_ativo_id": string,"p_chave"?: string,"p_combustivel": string,"p_dia": string,"p_km": number,"p_litros": number,"p_posto": string,"p_valor": number }; Returns: string
