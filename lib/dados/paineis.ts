@@ -121,7 +121,7 @@ function grafico(g: Bruto): GraficoDoPainel {
 export function normalizarLeitura(
   bruto: unknown,
   origem: OrigemDoPainel,
-  funcao: string,
+  nomeDaFuncao: string,
 ): LeituraDoPainel {
   const b = (bruto ?? {}) as Bruto;
   const t = (b.tabela ?? {}) as Bruto;
@@ -137,7 +137,7 @@ export function normalizarLeitura(
   }
   return {
     origem,
-    funcao: `nucleo.${funcao}`,
+    funcao: `nucleo.${nomeDaFuncao}`,
     mes: typeof b.mes === "string" ? b.mes.slice(0, 7) : null,
     meses: textos(b.meses).map((m) => m.slice(0, 7)),
     kpis: lista(b.kpis).map((k) => {
@@ -187,9 +187,9 @@ export function normalizarLeitura(
 }
 
 /** A tela sem fonte ainda (produção, função do banco ausente): estrutura vazia, nenhum número inventado. */
-function semFonte(funcao: string, estado: EstadoDoPainel): LeituraDoPainel {
+function semFonte(nomeDaFuncao: string, estado: EstadoDoPainel): LeituraDoPainel {
   return {
-    ...normalizarLeitura({}, "sem-fonte", funcao),
+    ...normalizarLeitura({}, "sem-fonte", nomeDaFuncao),
     tabela: {
       titulo: "",
       item: "item",
