@@ -146,10 +146,16 @@ describe("catálogo: celular e tablet", () => {
 });
 
 describe("catálogo: modos do Acompanhamento da Frota", () => {
-  it("tem Grade, Agora, Censo e Mapa, guardados em ?modo= pelo id", () => {
+  it("tem Grade · Conjuntos, Grade · Soltas, Agora, Censo e Mapa, guardados em ?modo= pelo id", () => {
     const modos = acharTela("/frota/acompanhamento")?.tela.modos;
-    expect(modos?.map((m) => m.id)).toEqual(["grade", "agora", "censo", "mapa"]);
-    expect(modos?.map((m) => m.nome)).toEqual(["Grade", "Agora", "Censo", "Mapa"]);
+    expect(modos?.map((m) => m.id)).toEqual(["grade", "soltas", "agora", "censo", "mapa"]);
+    expect(modos?.map((m) => m.nome)).toEqual([
+      "Grade · Conjuntos",
+      "Grade · Soltas",
+      "Agora",
+      "Censo",
+      "Mapa",
+    ]);
   });
   it("nenhuma outra tela tem modos", () => {
     const comModos = todasAsTelas()

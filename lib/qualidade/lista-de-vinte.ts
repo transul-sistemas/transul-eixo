@@ -26,19 +26,25 @@ export function pastasSemPaginacaoPadrao(raiz = "app/(sistema)"): string[] {
   return [...comTabela].filter((p) => !comPaginacao.has(p)).sort();
 }
 
-/** As listas que não usam a tabela padrão (lista própria) e que, mesmo assim, têm de paginar. */
+/**
+ * As listas que não usam a tabela padrão (lista própria) e que, mesmo assim, têm de paginar. Uma lista
+ * pode estar em mais de um arquivo (a página lê o cookie; o modo desenha o paginador): vale o conjunto.
+ */
 export const LISTAS_PROPRIAS = [
-  "app/(sistema)/frota/acompanhamento/pagina-do-acompanhamento.tsx",
+  [
+    "app/(sistema)/frota/acompanhamento/pagina-do-acompanhamento.tsx",
+    "app/(sistema)/frota/acompanhamento/modo-grade.tsx",
+  ],
   "app/(sistema)/frota/carteira/pagina-da-carteira.tsx",
   "app/(sistema)/operacional/patio/pagina-do-patio.tsx",
   "app/(sistema)/operacional/ordens-de-carregamento/pagina-das-ordens.tsx",
-] as const;
+] as const satisfies readonly (string | readonly string[])[];
 
 export function listasPropriasSemPaginacaoPadrao(): string[] {
-  return LISTAS_PROPRIAS.filter((a) => {
-    const t = lerTexto(a);
+  return LISTAS_PROPRIAS.filter((lista) => {
+    const t = [lista].flat().map(lerTexto).join(" ");
     return !PAGINACAO_PADRAO.test(t) || !/NOME_DO_COOKIE_DO_TAMANHO/.test(t);
-  });
+  }).map((lista) => [lista].flat()[0] as string);
 }
 
 /** Os padrões de tabela (`PADRAO_*: PadraoDaTabela = { tam: N ...`) cujo tamanho não é 20. */

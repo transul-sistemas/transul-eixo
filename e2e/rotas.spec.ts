@@ -63,7 +63,13 @@ test.describe("fora do catálogo", () => {
 test.describe("modos do Acompanhamento", () => {
   // No modo exemplo, a tela existe mas lê só do banco: cada modo abre com a aba certa marcada e o
   // aviso de que não há dados de exemplo (o conteúdo de cada modo é conferido em e2e-banco/).
-  const nomes = { grade: "Grade", agora: "Agora", censo: "Censo", mapa: "Mapa" } as const;
+  const nomes = {
+    grade: "Grade · Conjuntos",
+    soltas: "Grade · Soltas",
+    agora: "Agora",
+    censo: "Censo",
+    mapa: "Mapa",
+  } as const;
   for (const [modo, nome] of Object.entries(nomes)) {
     test(`/frota/acompanhamento?modo=${modo} abre a tela`, async ({ page }) => {
       const resposta = await page.goto(`/frota/acompanhamento?modo=${modo}`);

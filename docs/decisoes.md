@@ -1813,6 +1813,10 @@ Registro de direção, só em texto: nenhum código nem migration. Não muda a f
 - **Atenção:** o backup de `real-com-staging` tem 48 migrations; depois de restaurá-lo, reaplique as novas com `supabase migration up --local`.
 
 
+## 13/11/2026 — Grade por conjunto: dias em lote (decisão)
+
+- **Causa e correção.** `/frota/acompanhamento?tam=100` estourava o limite (57014) porque `dias_do_conjunto` refazia a situação por dia e por conjunto, com a RLS (`ve_ativo`) em cada leitura: 8,7 s com 928 placas. A migration `20261116200000_grade_por_conjunto_rapida` cria `dias_dos_conjuntos` (estados, peças e eventos do mês lidos uma vez para a página) e faz `grade_por_conjunto` consultar os conjuntos uma só vez: 0,8 s, mesmo resultado (md5 igual em 7 chamadas; pgTAP 112 compara com `dias_do_conjunto` e limita a 1,5 s).
+
 ## 13/11/2026 — "status" responde o painel de estado (decisão)
 
 - **Regra.** Quando Alexandre escrever apenas "status", a resposta segue o formato curto de sete blocos (rodando agora, pronto para ver, fila, decisões dele, bloqueios e riscos, pendências dele, telas) e atualiza `painel/ESTADO.md` (pasta fora do Git).

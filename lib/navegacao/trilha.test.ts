@@ -15,11 +15,11 @@ describe("migalhas (a trilha: Módulo › Tela › Modo)", () => {
       { texto: "Mapa", atual: true },
     ]);
   });
-  it("os quatro modos do Acompanhamento aparecem pelo nome", () => {
-    const nomes = ["grade", "agora", "censo", "mapa"].map(
+  it("os cinco modos do Acompanhamento aparecem pelo nome", () => {
+    const nomes = ["grade", "soltas", "agora", "censo", "mapa"].map(
       (modo) => migalhas("/frota/acompanhamento", "Administrador", modo).at(-1)?.texto,
     );
-    expect(nomes).toEqual(["Grade", "Agora", "Censo", "Mapa"]);
+    expect(nomes).toEqual(["Grade · Conjuntos", "Grade · Soltas", "Agora", "Censo", "Mapa"]);
   });
   it("modo que não existe, ou numa tela sem modos, é ignorado", () => {
     expect(migalhas("/frota/acompanhamento", "Administrador", "xyz")).toHaveLength(2);

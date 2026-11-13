@@ -40,16 +40,14 @@ for (const tela of TELAS) {
       await expect(page.getByTestId("grade-do-mes")).toBeVisible();
     });
 
-    test("20 placas por página, a rolagem chega ao paginador e a troca para 50 vale", async ({
+    test("Auto cabe na janela, o paginador fica visível sem rolar a página e a troca para 50 vale", async ({
       page,
     }) => {
-      const linhas = page.getByTestId("grade-do-mes").locator("tbody tr");
-      await expect(linhas).toHaveCount(20);
-      await page.mouse.move(tela.largura / 2, tela.altura / 2);
-      for (let i = 0; i < 6; i++) {
-        await page.mouse.wheel(0, 2000);
-        await page.waitForTimeout(150);
-      }
+      const linhas = page.getByTestId("grade-do-mes").locator('[data-linha="conjunto"]');
+      // "Linhas: Auto" é o padrão: o que cabe na janela (de 3 a 100 linhas), nunca mais que isso.
+      await expect(tamanho(page)).toHaveValue("auto");
+      await expect.poll(() => linhas.count()).toBeLessThanOrEqual(100);
+      // A página não rola: o paginador já está à vista, sem mexer a roda do mouse.
       await expect(page.getByTestId("total-da-grade")).toBeInViewport({ ratio: 1 });
       await expect(tamanho(page)).toBeInViewport({ ratio: 1 });
       const raiz = await page.evaluate(() => {
@@ -59,7 +57,7 @@ for (const tela of TELAS) {
       expect(raiz.conteudo).toBeLessThanOrEqual(raiz.janela);
       await tamanho(page).selectOption("50");
       await expect(page).toHaveURL(/tam=50/);
-      await expect(linhas).toHaveCount(50);
+      await expect.poll(() => linhas.count()).toBeLessThanOrEqual(50);
     });
   });
 }

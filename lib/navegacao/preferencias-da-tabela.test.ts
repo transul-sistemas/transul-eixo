@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
+  lerAlturaDaJanela,
+  montarCookieDaAltura,
+  NOME_DO_COOKIE_DA_ALTURA_DA_JANELA,
+  lerDensidadeLembrada,
+  montarCookieDaDensidade,
+  NOME_DO_COOKIE_DA_DENSIDADE_DA_GRADE,
   lerTamanhoLembrado,
   lerPreferencias,
   montarCookie,
@@ -163,5 +169,46 @@ describe("tamanho de página lembrado (cookie único das listas)", () => {
     for (const ruim of [undefined, "", "25", "7", "9999", "x", "50.5", "-20"]) {
       expect(lerTamanhoLembrado(ruim, 20)).toBe(20);
     }
+  });
+});
+
+describe("densidade da grade lembrada (cookie próprio, por pessoa)", () => {
+  it("aceita compacta e confortável; o resto volta à compacta", () => {
+    expect(lerDensidadeLembrada("confortavel")).toBe("confortavel");
+    expect(lerDensidadeLembrada("compacta")).toBe("compacta");
+    for (const ruim of [undefined, "", "grande", "COMPACTA", "{}", "confortável"]) {
+      expect(lerDensidadeLembrada(ruim)).toBe("compacta");
+    }
+  });
+  it("o cookie vale por um ano em toda a aplicação, e o valor gravado é o que a leitura entende", () => {
+    const cookie = montarCookieDaDensidade("confortavel", "http:");
+    expect(cookie.startsWith(`${NOME_DO_COOKIE_DA_DENSIDADE_DA_GRADE}=confortavel;`)).toBe(true);
+    expect(cookie).toContain("path=/");
+    expect(cookie).toContain("max-age=31536000");
+    expect(cookie).not.toContain("Secure");
+    expect(montarCookieDaDensidade("compacta", "https:")).toContain("; Secure");
+    expect(lerDensidadeLembrada(cookie.split(";")[0]!.split("=")[1])).toBe("confortavel");
+  });
+});
+
+describe("altura da janela lembrada (cookie para o servidor contar as linhas do modo Auto)", () => {
+  it("aceita um inteiro plausível; o resto volta à janela padrão (768)", () => {
+    expect(lerAlturaDaJanela("900")).toBe(900);
+    expect(lerAlturaDaJanela("1080")).toBe(1080);
+    for (const ruim of [undefined, "", "abc", "12.5", "-700", "0", "200", "99999", "1e3"]) {
+      expect(lerAlturaDaJanela(ruim)).toBe(768);
+    }
+  });
+  it("o cookie vale por um ano em toda a aplicação e a leitura entende o que foi gravado", () => {
+    const cookie = montarCookieDaAltura(937, "http:");
+    expect(cookie.startsWith(`${NOME_DO_COOKIE_DA_ALTURA_DA_JANELA}=937;`)).toBe(true);
+    expect(cookie).toContain("path=/");
+    expect(cookie).toContain("max-age=31536000");
+    expect(cookie).not.toContain("Secure");
+    expect(montarCookieDaAltura(937, "https:")).toContain("; Secure");
+    expect(lerAlturaDaJanela(cookie.split(";")[0]!.split("=")[1])).toBe(937);
+  });
+  it("arredonda para baixo a altura quebrada do navegador", () => {
+    expect(montarCookieDaAltura(937.6, "http:")).toContain("=937;");
   });
 });

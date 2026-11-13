@@ -14,18 +14,28 @@ import { type ErroDoBanco, resultadoDoErro } from "./escrita-do-banco";
 import type {
   CarteiraConfirmada,
   CarteiraDoMes,
-  CelulaDaGrade,
-  GradeDoMes,
+  CelulaDoConjunto,
+  ChipsDaGrade,
+  GradeDeSoltas,
+  GradePorConjunto,
   LinhaDoAgora,
   LinhaDoCenso,
+  PlacaSolta,
   SituacaoLancada,
+  TipoDeCrDaGrade,
 } from "./acompanhamento-tipos";
 import type { TipoDeAtivo } from "./placas-tipos";
 
 export type {
-  CelulaDaGrade,
-  LinhaDaGrade,
-  GradeDoMes,
+  AlvoDoLancamento,
+  CelulaDoConjunto,
+  ChipsDaGrade,
+  ConjuntoDaGrade,
+  GradeDeSoltas,
+  GradePorConjunto,
+  ImplementoDoConjunto,
+  PlacaSolta,
+  TipoDeCrDaGrade,
   LinhaDoAgora,
   LinhaDoCenso,
   PlacaDaCarteira,
@@ -36,7 +46,7 @@ export type {
 
 // A leitura e a escrita do Acompanhamento e da Carteira (primeira versão): só o banco, com a sessão
 // de quem usa (a RLS decide o que cada perfil vê). Quem filtra, pagina, ordena e soma é o banco
-// (nucleo.grade_do_acompanhamento, agora_do_acompanhamento, censo_do_acompanhamento, carteira_do_mes);
+// (nucleo.grade_por_conjunto, agora_do_acompanhamento, censo_do_acompanhamento, carteira_do_mes);
 // aqui só se converte o formato. A escrita devolve sempre a linha ou um erro tipado.
 
 interface Resposta {
@@ -74,45 +84,186 @@ async function atualizarVencidas(c: ClienteDoAcompanhamento): Promise<void> {
 
 // ---------- Grade ----------
 
-interface LinhaDaGradeDoBanco {
+interface CelulaDoBanco {
+  dia: string;
+  sigla: string | null;
+  grupo: string | null;
+  causas?: { ativo_id: string; placa: string; sigla: string }[];
+  eventos: number;
+  manual: boolean;
+  tardia: boolean;
+}
+
+interface ImplementoDoBanco {
+  ativo_id: string;
+  placa: string;
+  modelo: string;
+  funcao: string | null;
+  posicao: number;
+  engatado_de: string;
+  engatado_ate: string | null;
+  sigla_atual: string;
+  grupo_atual: string | null;
+}
+
+interface ConjuntoDoBanco {
+  ativo_id: string;
+  placa: string;
+  modelo: string;
+  ano: number | null;
+  operacao: string | null;
+  sigla_atual: string;
+  grupo_atual: string | null;
+  tipos_de_cr: TipoDeCrDaGrade[];
+  nome_do_conjunto: string | null;
+  dias: CelulaDoBanco[];
+  implementos: ImplementoDoBanco[];
+}
+
+interface SoltaDoBanco {
   ativo_id: string;
   placa: string;
   tipo: TipoDeAtivo;
   modelo: string;
+  ano: number | null;
   operacao: string | null;
-  gestor: string | null;
-  em_conjunto: boolean;
-  dias: CelulaDaGrade[];
+  sigla_atual: string;
+  grupo_atual: string | null;
+  tipos_de_cr: TipoDeCrDaGrade[];
+  dias: CelulaDoBanco[];
 }
 
-export async function lerGrade(
-  filtros: { mes: string; busca: string; tipo: TipoDeAtivo | null; pagina: number; tam: number },
-  cliente: () => Promise<ClienteDoAcompanhamento> = clienteDaSessao,
-): Promise<GradeDoMes> {
-  const c = await cliente();
-  const g = await ler<Omit<GradeDoMes, "linhas"> & { linhas: LinhaDaGradeDoBanco[] }>(
-    c,
-    "grade_do_acompanhamento",
-    {
-      p_mes: `${filtros.mes}-01`,
-      p_busca: filtros.busca,
-      p_tipos: filtros.tipo ? [filtros.tipo] : [],
-      p_pagina: filtros.pagina,
-      p_tam: filtros.tam,
-    },
-  );
+interface CorpoDaGrade {
+  mes: string;
+  hoje: string;
+  dias_no_mes: number;
+  total: number;
+  pagina: number;
+  paginas: number;
+  tam: number;
+  chips: ChipsDaGrade;
+}
+
+type GradeDoBanco = CorpoDaGrade & {
+  linhas: ConjuntoDoBanco[];
+  lancamento_hoje: { x: number; y: number };
+};
+type SoltasDoBanco = CorpoDaGrade & {
+  linhas: SoltaDoBanco[];
+  situacao_hoje: { x: number; y: number };
+};
+
+/** Os filtros das grades (conjuntos e soltas): o estado da URL, sem o que é só de outros modos. */
+export interface FiltrosDaGrade {
+  mes: string;
+  busca: string;
+  tipoDeCr: TipoDeCrDaGrade | null;
+  grupo: Exclude<keyof ChipsDaGrade, "todos"> | null;
+  pagina: number;
+  tam: number;
+}
+
+function filtrosDoBanco(filtros: FiltrosDaGrade) {
   return {
-    ...g,
+    p_mes: `${filtros.mes}-01`,
+    p_filtros: {
+      busca: filtros.busca,
+      tipo_de_cr: filtros.tipoDeCr ?? "",
+      grupo: filtros.grupo ?? "",
+    },
+    p_pagina: filtros.pagina,
+    p_tam: filtros.tam,
+  };
+}
+
+function dias(celulas: CelulaDoBanco[]): CelulaDoConjunto[] {
+  return celulas.map((c) => ({
+    dia: c.dia,
+    sigla: c.sigla,
+    grupo: c.grupo,
+    ...(c.causas !== undefined
+      ? {
+          causas: c.causas.map((x) => ({ ativoId: x.ativo_id, placa: x.placa, sigla: x.sigla })),
+        }
+      : {}),
+    eventos: c.eventos,
+    manual: c.manual,
+    tardia: c.tardia,
+  }));
+}
+
+/** A grade por conjunto: filtra, pagina e conta no banco (`nucleo.grade_por_conjunto`); aqui só se converte. */
+export async function lerGradePorConjunto(
+  filtros: FiltrosDaGrade,
+  cliente: () => Promise<ClienteDoAcompanhamento> = clienteDaSessao,
+): Promise<GradePorConjunto> {
+  const c = await cliente();
+  const g = await ler<GradeDoBanco>(c, "grade_por_conjunto", filtrosDoBanco(filtros));
+  return {
+    mes: g.mes,
+    hoje: g.hoje,
+    diasNoMes: g.dias_no_mes,
     linhas: g.linhas.map((l) => ({
+      ativoId: l.ativo_id,
+      placa: l.placa,
+      modelo: l.modelo,
+      ano: l.ano,
+      operacao: l.operacao,
+      siglaAtual: l.sigla_atual,
+      grupoAtual: l.grupo_atual,
+      tiposDeCr: l.tipos_de_cr,
+      nomeDoConjunto: l.nome_do_conjunto,
+      dias: dias(l.dias),
+      implementos: l.implementos.map((i) => ({
+        ativoId: i.ativo_id,
+        placa: i.placa,
+        modelo: i.modelo,
+        funcao: i.funcao,
+        posicao: i.posicao,
+        engatadoDe: i.engatado_de,
+        engatadoAte: i.engatado_ate,
+        siglaAtual: i.sigla_atual,
+        grupoAtual: i.grupo_atual,
+      })),
+    })),
+    total: g.total,
+    pagina: g.pagina,
+    paginas: g.paginas,
+    tam: g.tam,
+    chips: g.chips,
+    lancamentoHoje: g.lancamento_hoje,
+  };
+}
+
+/** A aba Soltas: implemento sem cavalo engatado no mês, apoio e equipamento (`nucleo.grade_de_soltas`). */
+export async function lerGradeDeSoltas(
+  filtros: FiltrosDaGrade,
+  cliente: () => Promise<ClienteDoAcompanhamento> = clienteDaSessao,
+): Promise<GradeDeSoltas> {
+  const c = await cliente();
+  const g = await ler<SoltasDoBanco>(c, "grade_de_soltas", filtrosDoBanco(filtros));
+  return {
+    mes: g.mes,
+    hoje: g.hoje,
+    diasNoMes: g.dias_no_mes,
+    linhas: g.linhas.map((l): PlacaSolta => ({
       ativoId: l.ativo_id,
       placa: l.placa,
       tipo: l.tipo,
       modelo: l.modelo,
+      ano: l.ano,
       operacao: l.operacao,
-      gestor: l.gestor,
-      emConjunto: l.em_conjunto,
-      dias: l.dias,
+      siglaAtual: l.sigla_atual,
+      grupoAtual: l.grupo_atual,
+      tiposDeCr: l.tipos_de_cr,
+      dias: dias(l.dias),
     })),
+    total: g.total,
+    pagina: g.pagina,
+    paginas: g.paginas,
+    tam: g.tam,
+    chips: g.chips,
+    situacaoHoje: g.situacao_hoje,
   };
 }
 
