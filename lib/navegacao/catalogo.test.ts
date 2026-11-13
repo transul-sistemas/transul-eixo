@@ -97,13 +97,25 @@ describe("catálogo: telas", () => {
       "operacional.patio",
       "operacional.totem",
       "operacional.ordens-de-carregamento",
+      "operacional.analise",
       "operacoes.lista",
+      "operacoes.comparativo",
+      "operacoes.analise",
       "pessoas.lista",
       "pessoas.escala",
+      "pessoas.status-diario",
+      "pessoas.documentos",
+      "pessoas.diarias-e-premiacao",
+      "pessoas.campanhas",
+      "pessoas.analise",
       "parceiros.lista",
       "parceiros.conciliacao",
       "parceiros.locacao",
       "resultados.visao-geral",
+      "resultados.por-operacao",
+      "resultados.maturacao",
+      "resultados.fechamentos",
+      "resultados.ajustes",
       "cadastros.catalogos",
       "cadastros.saude-do-cr",
       "admin.usuarios-e-perfis",
@@ -111,7 +123,7 @@ describe("catálogo: telas", () => {
     ]);
     expect(telas.filter((t) => t.estado === "restrito")).toEqual([]);
     expect(telas.filter((t) => t.estado === "em-breve")).toEqual([]);
-    expect(telas.filter((t) => t.estado === "esqueleto")).toHaveLength(15);
+    expect(telas.filter((t) => t.estado === "esqueleto")).toHaveLength(3);
     expect(acharTela("/inicio/mapa-do-sistema")?.tela.estado).toBe("pronto");
   });
 });

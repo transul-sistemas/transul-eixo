@@ -1,8 +1,24 @@
-import { TelaDeEsqueleto } from "@/components/esqueleto/tela-de-esqueleto";
+import { Suspense } from "react";
 import { metadataDaTela } from "@/components/navegacao/tela-em-breve";
+import {
+  type ParametrosDaBusca,
+  TelaDePainel,
+  TelaDePainelCarregando,
+} from "@/components/paineis/tela-de-painel";
 
-export const metadata = metadataDaTela("/resultados/ajustes");
+const ROTA = "/resultados/ajustes";
 
-export default function Pagina() {
-  return <TelaDeEsqueleto rota="/resultados/ajustes" />;
+export const metadata = metadataDaTela(ROTA);
+
+export default function Pagina({ searchParams }: { searchParams: ParametrosDaBusca }) {
+  return (
+    <Suspense fallback={<TelaDePainelCarregando rota={ROTA} />}>
+      <TelaDePainel
+        id="resultados.ajustes"
+        rota={ROTA}
+        searchParams={searchParams}
+        assistentes={["pedir-ajuste"]}
+      />
+    </Suspense>
+  );
 }

@@ -150,7 +150,12 @@ describe("modulosVisiveis (catálogo real)", () => {
       ["inicio", ["inicio.tarefas", "inicio.mapa-do-sistema"]],
       [
         "operacional",
-        ["operacional.patio", "operacional.totem", "operacional.ordens-de-carregamento"],
+        [
+          "operacional.patio",
+          "operacional.totem",
+          "operacional.ordens-de-carregamento",
+          "operacional.analise",
+        ],
       ],
       ["pessoas", ["pessoas.escala"]],
     ]);
