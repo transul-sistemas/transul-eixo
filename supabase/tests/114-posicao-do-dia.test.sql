@@ -5,7 +5,7 @@
 --  * nucleo.registrar_posicao_do_dia: só o gestor vigente da carteira (o Administrador e a Diretoria não
 --    agem em nome dele, H5 e H6); "Sem sinal" exige motivo e abre a pendência posicao_pendente UMA vez; a
 --    resposta com cidade FECHA a pendência que o "Sem sinal" abriu (idempotente, duas rodadas).
---  * nucleo.liberar_posicao_do_dia: só o líder da operação (papel lider + operação em comum), com motivo;
+--  * nucleo.liberar_posicao_do_dia: só o líder da operação (vínculo vigente de função lider), com motivo;
 --    o que ficou sem resposta vira pendência, uma vez. Política liberacao_da_posicao_ler.
 --  * nucleo.distancia_improvavel: reta × fator contra o limite por dia; sem coordenada não alerta.
 --  * Políticas da cidade: cidade_ler, cidade_criar, cidade_alterar.
@@ -23,10 +23,9 @@ select pg_temp.pessoa('Lider L', 114000003, 'operacional', false);
 select pg_temp.pessoa('Oper O', 114000004, 'operacional', false);
 select pg_temp.pessoa('Adm', 114000005, 'administrador', false);
 select pg_temp.pessoa('Dir', 114000006, 'diretoria', false);
-insert into nucleo.papel_da_pessoa (pessoa_id, papel) values (pg_temp.id('Lider L'), 'lider');
 insert into nucleo.operacao (nome) values ('Op 114');
-insert into nucleo.usuario_operacao (usuario_id, operacao_id)
-values (pg_temp.id('Lider L'), (select id from nucleo.operacao where nome = 'Op 114'));
+insert into pessoas.vinculo (pessoa_id, operacao_id, funcao, inicio)
+values (pg_temp.id('Lider L'), (select id from nucleo.operacao where nome = 'Op 114'), 'lider', '2026-01-01');
 insert into nucleo.cr (codcencus, codigo, participa_da_frota, veiculo_obrigatorio) values
   (11401, 'K114A', true, true), (11402, 'K114B', true, true), (11403, 'K114C', true, true), (11404, 'K114D', true, true);
 select pg_temp.guardar('c1', nucleo.cadastrar_ativo(
@@ -42,7 +41,8 @@ select pg_temp.guardar('c3', nucleo.cadastrar_ativo(
   p_cr_id => (select id from nucleo.cr where codigo = 'K114C'),
   p_operacao_id => (select id from nucleo.operacao where nome = 'Op 114'), p_em => '2026-01-10 08:00-03'));
 select pg_temp.guardar('i1', nucleo.cadastrar_ativo(
-  p_tipo => 'implemento', p_renavam => pg_temp.renavam(11404), p_placa => 'FFF1144', p_gestor_id => pg_temp.id('Gestor A'),
+  p_tipo => 'implemento', p_funcao => 'semirreboque', p_eixos => 2::smallint,
+  p_carroceria_id => (select id from config.carroceria where nome = 'Graneleira'), p_renavam => pg_temp.renavam(11404), p_placa => 'FFF1144', p_gestor_id => pg_temp.id('Gestor A'),
   p_cr_id => (select id from nucleo.cr where codigo = 'K114D'),
   p_operacao_id => (select id from nucleo.operacao where nome = 'Op 114'), p_em => '2026-01-10 08:00-03'));
 select pg_temp.disparar();
@@ -170,14 +170,14 @@ reset role;
 
 -- ---- 5. RLS (posicao_do_conjunto_ler): a carteira, nunca a de outro ----
 select tests.como(pg_temp.id('auth_Gestor A'));
-select is((select count(*) from nucleo.posicao_do_conjunto where ativo_id = pg_temp.id('c1')), 4::bigint, '34. o gestor A lê as posições de c1');
+select is((select count(*) from nucleo.posicao_do_conjunto where ativo_id = pg_temp.id('c1')), 3::bigint, '34. o gestor A lê as posições de c1');
 reset role;
 select tests.como(pg_temp.id('auth_Gestor B'));
 select is((select count(*) from nucleo.posicao_do_conjunto where ativo_id = pg_temp.id('c1')), 0::bigint, '35. o gestor B não lê as de c1');
 select is((nucleo.posicoes_do_dia(pg_temp.d())->>'total')::int, 1, '36. o gestor B tem 1 conjunto (c3)');
 reset role;
 select tests.como(pg_temp.id('auth_Dir'));
-select is((select count(*) from nucleo.posicao_do_conjunto where ativo_id = pg_temp.id('c1')), 4::bigint, '37. a Diretoria lê tudo');
+select is((select count(*) from nucleo.posicao_do_conjunto where ativo_id = pg_temp.id('c1')), 3::bigint, '37. a Diretoria lê tudo');
 reset role;
 select tests.como(pg_temp.id('auth_Oper O'));
 select is((select count(*) from nucleo.posicao_do_conjunto where ativo_id = pg_temp.id('c1')), 0::bigint, '38. o Operacional sem a placa na filial não lê');
