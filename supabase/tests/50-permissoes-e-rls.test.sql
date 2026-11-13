@@ -208,7 +208,9 @@ select set_eq(
     -- Trocar CR, V0 (testada em 115-trocar-cr.test.sql).
     'nucleo.troca_de_cr.troca_de_cr_ler',
     -- Baixa com quatro olhos, S4 (testada em 116-baixa-com-quatro-olhos.test.sql).
-    'nucleo.pedido_de_baixa.pedido_de_baixa_ler'
+    'nucleo.pedido_de_baixa.pedido_de_baixa_ler',
+    -- Saúde do CR, CR1 (testadas em 117-saude-do-cr.test.sql).
+    'nucleo.classificacao_de_centro.classificacao_de_centro_ler', 'nucleo.dono_de_problema.dono_de_problema_ler'
   ],
   'as políticas de cada tabela, com o nome de cada uma (todas testadas abaixo ou na matriz)'
 );

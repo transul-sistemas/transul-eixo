@@ -515,6 +515,44 @@ isOneToOne: false
       referencedColumns: ["ativo_id"]
     }
                   ]
+                },"classificacao_de_centro": {
+                  Row: {
+                    "classificado_em": string,"classificado_por": string | null,"codcencus": string,"cr_id": string | null,"decisao": string,"id": string,"motivo": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "classificado_em"?: string,"classificado_por"?: string | null,"codcencus": string,"cr_id"?: string | null,"decisao": string,"id"?: string,"motivo": string
+                  }
+                  Update: {
+                    "classificado_em"?: string,"classificado_por"?: string | null,"codcencus"?: string,"cr_id"?: string | null,"decisao"?: string,"id"?: string,"motivo"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "classificacao_de_centro_classificado_por_fkey"
+      columns: ["classificado_por"]
+isOneToOne: false
+      referencedRelation: "pessoa"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "classificacao_de_centro_classificado_por_fkey"
+      columns: ["classificado_por"]
+isOneToOne: false
+      referencedRelation: "pessoa_para_leitura"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "classificacao_de_centro_cr_id_fkey"
+      columns: ["cr_id"]
+isOneToOne: false
+      referencedRelation: "alerta_de_cr"
+      referencedColumns: ["cr_id"]
+    },{
+      foreignKeyName: "classificacao_de_centro_cr_id_fkey"
+      columns: ["cr_id"]
+isOneToOne: false
+      referencedRelation: "cr"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"composicao": {
                   Row: {
                     "cavalo_id": string,"cavalo_tipo": Database["nucleo"]['Enums']["tipo_de_ativo"],"criado_em": string,"excluido_em": string | null,"excluido_por": string | null,"fim": string | null,"fim_origem": Database["config"]['Enums']["origem_da_data"] | null,"id": string,"implemento_id": string,"implemento_tipo": Database["nucleo"]['Enums']["tipo_de_ativo"],"inicio": string,"inicio_origem": Database["config"]['Enums']["origem_da_data"],"motivo_da_exclusao": string | null,"operacao_na_saida_id": string | null,"periodo": unknown,"posicao": number,"versao": number
@@ -827,6 +865,44 @@ isOneToOne: false
 isOneToOne: false
       referencedRelation: "operacao_do_ativo"
       referencedColumns: ["ativo_id"]
+    }
+                  ]
+                },"dono_de_problema": {
+                  Row: {
+                    "atribuido_em": string,"atribuido_por": string | null,"dono_id": string,"excluido_em": string | null,"excluido_por": string | null,"id": string,"motivo_da_exclusao": string | null,"prazo": string | null,"problema": string,"referencia": string,"versao": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "atribuido_em"?: string,"atribuido_por"?: string | null,"dono_id": string,"excluido_em"?: string | null,"excluido_por"?: string | null,"id"?: string,"motivo_da_exclusao"?: string | null,"prazo"?: string | null,"problema": string,"referencia": string,"versao"?: number
+                  }
+                  Update: {
+                    "atribuido_em"?: string,"atribuido_por"?: string | null,"dono_id"?: string,"excluido_em"?: string | null,"excluido_por"?: string | null,"id"?: string,"motivo_da_exclusao"?: string | null,"prazo"?: string | null,"problema"?: string,"referencia"?: string,"versao"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "dono_de_problema_atribuido_por_fkey"
+      columns: ["atribuido_por"]
+isOneToOne: false
+      referencedRelation: "pessoa"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "dono_de_problema_atribuido_por_fkey"
+      columns: ["atribuido_por"]
+isOneToOne: false
+      referencedRelation: "pessoa_para_leitura"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "dono_de_problema_dono_id_fkey"
+      columns: ["dono_id"]
+isOneToOne: false
+      referencedRelation: "pessoa"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "dono_de_problema_dono_id_fkey"
+      columns: ["dono_id"]
+isOneToOne: false
+      referencedRelation: "pessoa_para_leitura"
+      referencedColumns: ["id"]
     }
                   ]
                 },"estado_de_status": {
@@ -1982,6 +2058,9 @@ isOneToOne: false
 "ativo_da_placa":
 { Args: { "p_placa": string }; Returns: string
                            },
+"atribuir_dono":
+{ Args: { "p_chave"?: string,"p_dono_id": string,"p_prazo": string,"p_problema": string,"p_referencia": string }; Returns: string
+                           },
 "atualizar_leitura_vencida":
 { Args: Record<PropertyKey, never>; Returns: number
                            },
@@ -2029,6 +2108,9 @@ isOneToOne: false
 { Args: { "p_dia": string,"p_tipos"?: (string)[] }; Returns: {
               "grupo": string,"nome": string,"quantidade": number,"sigla": string
             }[]
+                           },
+"classificar_centro_sem_cr":
+{ Args: { "p_chave"?: string,"p_codcencus": string,"p_codigo": string,"p_decisao": string,"p_motivo": string,"p_nome": string }; Returns: string
                            },
 "competencia_gerencial":
 { Args: { "p_dia_corte": number,"p_dtentsai": string,"p_dtneg": string,"p_menor_dtneg_de_origem"?: string,"p_provisao"?: boolean }; Returns: string
@@ -2196,6 +2278,9 @@ isOneToOne: false
 "encerrar_locacao":
 { Args: { "p_chave"?: string,"p_fim": string,"p_locacao_id": string,"p_motivo": string,"p_versao": number }; Returns: Json
                            },
+"encerrar_vinculo_de_cr":
+{ Args: { "p_chave"?: string,"p_em": string,"p_motivo": string,"p_versao": number,"p_vinculo_id": string }; Returns: string
+                           },
 "engatar":
 { Args: { "p_cavalo_id": string,"p_em": string,"p_implemento_id": string,"p_posicao": number }; Returns: string
                            },
@@ -2272,6 +2357,9 @@ isOneToOne: false
                            },
 "liberar_posicao_do_dia":
 { Args: { "p_chave"?: string,"p_dia": string,"p_gestor_id": string,"p_motivo": string }; Returns: string
+                           },
+"ligar_cr_a_operacao":
+{ Args: { "p_chave"?: string,"p_cr_id": string,"p_em": string,"p_motivo": string,"p_operacao_id": string }; Returns: string
                            },
 "linha_calculada_da_placa":
 { Args: { "p_ativo_id": string,"p_em"?: string }; Returns: {
@@ -2515,6 +2603,9 @@ isOneToOne: false
         isOneToOne: false
         isSetofReturn: true
       } },
+"pode_gravar_cadastro_de_cr":
+{ Args: Record<PropertyKey, never>; Returns: boolean
+                           },
 "porta_da_posicao":
 { Args: Record<PropertyKey, never>; Returns: Json
                            },
@@ -2523,6 +2614,9 @@ isOneToOne: false
                            },
 "posicoes_do_dia":
 { Args: { "p_dia"?: string }; Returns: Json
+                           },
+"problemas_da_saude_do_cr":
+{ Args: { "p_pagina"?: number,"p_problema": string,"p_tamanho"?: number }; Returns: Json
                            },
 "proximo_recalculo_do_ativo":
 { Args: { "p_ativo_id": string,"p_em"?: string }; Returns: string
@@ -2577,6 +2671,9 @@ isOneToOne: false
                            },
 "resultado_da_operacao":
 { Args: { "p_fim": string,"p_inicio": string,"p_operacao": string }; Returns: Json
+                           },
+"resumo_da_saude_do_cr":
+{ Args: Record<PropertyKey, never>; Returns: Json
                            },
 "revogar_correcao":
 { Args: { "p_correcao_id": string,"p_motivo": string }; Returns: undefined
