@@ -463,7 +463,69 @@ isOneToOne: false
           }
         },"nucleo": {
           Tables: {
-            "ativo": {
+            "abastecimento_provisorio": {
+                  Row: {
+                    "ativo_id": string,"combustivel": string | null,"decidido_em": string | null,"decidido_por": string | null,"dia": string,"id": string,"km": number | null,"lancado_em": string,"lancado_por": string | null,"litros": number,"motivo_da_decisao": string | null,"origem_id_sankhya": string | null,"placa": string,"posto": string | null,"situacao": string,"valor": number | null,"versao": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "ativo_id": string,"combustivel"?: string | null,"decidido_em"?: string | null,"decidido_por"?: string | null,"dia": string,"id"?: string,"km"?: number | null,"lancado_em"?: string,"lancado_por"?: string | null,"litros": number,"motivo_da_decisao"?: string | null,"origem_id_sankhya"?: string | null,"placa": string,"posto"?: string | null,"situacao"?: string,"valor"?: number | null,"versao"?: number
+                  }
+                  Update: {
+                    "ativo_id"?: string,"combustivel"?: string | null,"decidido_em"?: string | null,"decidido_por"?: string | null,"dia"?: string,"id"?: string,"km"?: number | null,"lancado_em"?: string,"lancado_por"?: string | null,"litros"?: number,"motivo_da_decisao"?: string | null,"origem_id_sankhya"?: string | null,"placa"?: string,"posto"?: string | null,"situacao"?: string,"valor"?: number | null,"versao"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "abastecimento_provisorio_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: false
+      referencedRelation: "alerta_de_vinculo"
+      referencedColumns: ["ativo_id"]
+    },{
+      foreignKeyName: "abastecimento_provisorio_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: false
+      referencedRelation: "ativo"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "abastecimento_provisorio_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: false
+      referencedRelation: "campo_pendente"
+      referencedColumns: ["ativo_id"]
+    },{
+      foreignKeyName: "abastecimento_provisorio_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: false
+      referencedRelation: "operacao_do_ativo"
+      referencedColumns: ["ativo_id"]
+    },{
+      foreignKeyName: "abastecimento_provisorio_decidido_por_fkey"
+      columns: ["decidido_por"]
+isOneToOne: false
+      referencedRelation: "pessoa"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "abastecimento_provisorio_decidido_por_fkey"
+      columns: ["decidido_por"]
+isOneToOne: false
+      referencedRelation: "pessoa_para_leitura"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "abastecimento_provisorio_lancado_por_fkey"
+      columns: ["lancado_por"]
+isOneToOne: false
+      referencedRelation: "pessoa"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "abastecimento_provisorio_lancado_por_fkey"
+      columns: ["lancado_por"]
+isOneToOne: false
+      referencedRelation: "pessoa_para_leitura"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"ativo": {
                   Row: {
                     "ano_fabricacao": number | null,"ano_fabricacao_origem": Database["config"]['Enums']["origem_do_campo"] | null,"ano_modelo": number | null,"ano_modelo_origem": Database["config"]['Enums']["origem_do_campo"] | null,"cadastro_pendente": boolean,"carroceria_id": string | null,"carroceria_origem": Database["config"]['Enums']["origem_do_campo"] | null,"chassi": string | null,"cmt_kg": number | null,"cmt_kg_origem": Database["config"]['Enums']["origem_do_campo"] | null,"codigo_fipe": string | null,"codigo_fipe_origem": Database["config"]['Enums']["origem_do_campo"] | null,"codveiculo": number | null,"criado_em": string,"eixos": number | null,"eixos_origem": Database["config"]['Enums']["origem_do_campo"] | null,"excluido_em": string | null,"excluido_por": string | null,"funcao": Database["nucleo"]['Enums']["funcao_do_implemento"] | null,"id": string,"modelo_id": string | null,"modelo_origem": Database["config"]['Enums']["origem_do_campo"] | null,"motivo_da_exclusao": string | null,"numero_de_serie": string | null,"pbt_kg": number | null,"pbt_kg_origem": Database["config"]['Enums']["origem_do_campo"] | null,"renavam": string | null,"tara_kg": number | null,"tara_kg_origem": Database["config"]['Enums']["origem_do_campo"] | null,"tipo": Database["nucleo"]['Enums']["tipo_de_ativo"],"valor_fipe": number | null,"valor_fipe_origem": Database["config"]['Enums']["origem_do_campo"] | null,"valor_fipe_referencia": string | null,"valor_manual": number | null,"valor_manual_em": string | null,"valor_manual_fonte": string | null,"valor_manual_origem": Database["config"]['Enums']["origem_do_campo"] | null,"versao": number
                   }
@@ -2097,6 +2159,9 @@ isOneToOne: false
 "abastecimento_do_mes":
 { Args: { "p_busca"?: string,"p_mes"?: string,"p_ordem"?: string,"p_pagina"?: number,"p_tam"?: number }; Returns: Json
                            },
+"abastecimento_do_mes_v2":
+{ Args: { "p_busca"?: string,"p_mes"?: string,"p_ordem"?: string,"p_pagina"?: number,"p_tam"?: number }; Returns: Json
+                           },
 "agora_do_acompanhamento":
 { Args: { "p_agrupamento": string,"p_tipos"?: (string)[] }; Returns: {
               "atencao": number,"chave": string,"em_atividade": number,"fora": number,"impedida": number,"patio": number,"pendente": number,"rotulo": string,"total": number
@@ -2202,6 +2267,9 @@ isOneToOne: false
                            },
 "concluir_transferencia":
 { Args: { "p_em": string,"p_transferencia_id": string }; Returns: string
+                           },
+"conferir_abastecimento_provisorio":
+{ Args: { "p_chave"?: string,"p_decisao": string,"p_id": string,"p_motivo": string,"p_origem_id": string,"p_versao": number }; Returns: string
                            },
 "conferir_conjunto":
 { Args: { "p_cavalo_id": string }; Returns: undefined
@@ -2448,6 +2516,9 @@ isOneToOne: false
                            },
 "justificar_diferenca":
 { Args: { "p_chave"?: string,"p_cr_id": string,"p_mes": string,"p_motivo": string }; Returns: Json
+                           },
+"lancar_abastecimento_provisorio":
+{ Args: { "p_ativo_id": string,"p_chave"?: string,"p_combustivel": string,"p_dia": string,"p_km": number,"p_litros": number,"p_posto": string,"p_valor": number }; Returns: string
                            },
 "lancar_o_dia_em_lote":
 { Args: { "p_ativos": (string)[],"p_chave"?: string,"p_dia": string,"p_hora": string,"p_sigla": string }; Returns: Json
