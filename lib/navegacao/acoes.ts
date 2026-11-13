@@ -256,6 +256,27 @@ export const ACOES: readonly AcaoDoCatalogo[] = [
     descricao: "Indica quem assume o conjunto do motorista ausente, no período escolhido.",
     rota: "/pessoas/status-diario?assistente=indicar-substituto",
   },
+  {
+    id: "frota.conferir-abastecimento",
+    nome: "Conferir abastecimento",
+    icone: "IconChecklist",
+    modulo: "frota",
+    permissao: { modulo: "frota", acao: "criar" },
+    estado: "pronto",
+    descricao:
+      "Confere o lançamento provisório com o abastecimento do Sankhya, ou o descarta com o motivo.",
+    rota: "/frota/abastecimento?assistente=conferir-abastecimento",
+  },
+  {
+    id: "resultados.decidir-ajuste",
+    nome: "Decidir ajuste",
+    icone: "IconChecklist",
+    modulo: "resultados",
+    permissao: { modulo: "resultados", acao: "criar" },
+    estado: "pronto",
+    descricao: "Aprova ou recusa um ajuste pedido; só a Diretoria, e quem pediu não decide.",
+    rota: "/resultados/ajustes?assistente=decidir-ajuste",
+  },
 ];
 
 function nomeDoModulo(id: IdDoModulo): string {

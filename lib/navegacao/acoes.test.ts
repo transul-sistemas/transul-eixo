@@ -27,6 +27,8 @@ describe("ações dos assistentes da Frota", () => {
       "resultados.pedir-ajuste",
       "pessoas.registrar-status-do-dia",
       "pessoas.indicar-substituto",
+      "frota.conferir-abastecimento",
+      "resultados.decidir-ajuste",
     ]);
     expect(ACOES.map((a) => a.nome)).toEqual([
       "Cadastrar placa",
@@ -51,6 +53,8 @@ describe("ações dos assistentes da Frota", () => {
       "Pedir ajuste",
       "Registrar status do dia",
       "Indicar substituto",
+      "Conferir abastecimento",
+      "Decidir ajuste",
     ]);
     expect(ACOES.every((a) => a.estado === "pronto")).toBe(true);
   });
@@ -80,6 +84,8 @@ describe("ações dos assistentes da Frota", () => {
       "pessoas.registrar-status-do-dia":
         "/pessoas/status-diario?assistente=registrar-status-do-dia",
       "pessoas.indicar-substituto": "/pessoas/status-diario?assistente=indicar-substituto",
+      "frota.conferir-abastecimento": "/frota/abastecimento?assistente=conferir-abastecimento",
+      "resultados.decidir-ajuste": "/resultados/ajustes?assistente=decidir-ajuste",
     });
   });
   it("cada ação pertence a um módulo do catálogo, e a permissão é a desse módulo", () => {

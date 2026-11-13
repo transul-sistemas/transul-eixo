@@ -157,11 +157,15 @@ interface Gravados {
     numero: number;
     mes: string;
     operacaoId: string;
-    natureza: string;
+    linha: string;
     valor: number;
     justificativa: string;
     situacao: "pendente" | "aprovado" | "recusado";
   }[];
+  /** Os provisórios conferidos ou descartados (saem da lista). */
+  conferidos?: Set<number>;
+  /** As decisões da Diretoria sobre os ajustes (pelo número). */
+  decididos?: Map<number, "aprovado" | "recusado">;
   status: Map<string, string>;
   substitutos: { motoristaId: string; substitutoId: string; inicio: string; fim: string }[];
   abastecimentos: {
@@ -845,21 +849,29 @@ function ajustes(estado: Estado, hoje: string) {
       numero: 501 + i,
       mes: meses[i % 6]!,
       operacaoId: OPERACOES_DE_EXEMPLO[i % OPERACOES_DE_EXEMPLO.length]!.id,
-      natureza: s > 0.5 ? "custo" : "receita",
-      valor: reais(500 + s * 18000),
+      linha: s > 0.66 ? "custo_frota" : s > 0.33 ? "custo_servico" : "receita",
+      valor: reais((s > 0.5 ? -1 : 1) * (500 + s * 18000)),
       justificativa: "Lançamento classificado no CR errado no Sankhya.",
       situacao: (i % 4 === 0 ? "pendente" : i % 5 === 0 ? "recusado" : "aprovado") as
         "pendente" | "aprovado" | "recusado",
     };
   });
-  const todos = [...g.ajustes, ...iniciais].sort((a, b) => b.numero - a.numero);
+  const decididos = g.decididos ?? new Map<number, "aprovado" | "recusado">();
+  const todos = [...g.ajustes, ...iniciais]
+    .map((a) => ({ ...a, situacao: decididos.get(a.numero) ?? a.situacao }))
+    .sort((a, b) => b.numero - a.numero);
   const NOMES = { pendente: "Pendente", aprovado: "Aprovado", recusado: "Recusado" } as const;
+  const NOMES_DA_LINHA: Record<string, string> = {
+    receita: "Receita",
+    custo_frota: "Custo da frota",
+    custo_servico: "Custo de serviço",
+  };
   const nomeDaOp = (id: string) => OPERACOES_DE_EXEMPLO.find((o) => o.id === id)?.nome ?? "—";
   const colunas: Coluna[] = [
     { id: "ajuste", rotulo: "Ajuste", formato: "texto" },
     { id: "mes", rotulo: "Mês", formato: "mes" },
     { id: "operacao", rotulo: "Operação", formato: "texto" },
-    { id: "natureza", rotulo: "Natureza", formato: "texto" },
+    { id: "linha", rotulo: "Linha", formato: "texto" },
     { id: "valor", rotulo: "Valor", formato: "moeda" },
     { id: "situacao", rotulo: "Situação", formato: "texto" },
   ];
@@ -964,7 +976,7 @@ function ajustes(estado: Estado, hoje: string) {
           ajuste: `Ajuste ${a.numero}`,
           mes: a.mes,
           operacao: nomeDaOp(a.operacaoId),
-          natureza: a.natureza === "receita" ? "Receita" : "Custo",
+          linha: NOMES_DA_LINHA[a.linha] ?? a.linha,
           valor: a.valor,
           situacao: NOMES[a.situacao],
         },
@@ -979,7 +991,13 @@ function ajustes(estado: Estado, hoje: string) {
       })),
       (Object.keys(NOMES) as (keyof typeof NOMES)[]).map((k) => ({ id: k, nome: NOMES[k] })),
     ),
-    opcoes: { meses: opcoesDosMeses(meses), operacoes: opcoesDasOperacoes() },
+    opcoes: {
+      meses: opcoesDosMeses(meses),
+      operacoes: opcoesDasOperacoes(),
+      ajustesPedidos: todos
+        .filter((a) => a.situacao === "pendente")
+        .map((a) => ({ id: `${a.numero}:1`, nome: `Ajuste ${a.numero} · ${nomeDoMes(a.mes)}` })),
+    },
     avisos: [],
   };
 }
@@ -1841,7 +1859,10 @@ function analiseDasPessoas(estado: Estado, hoje: string) {
 // ---------- Abastecimento lançado à mão (provisório) ----------
 
 function abastecimentoProvisorio(estado: Estado) {
-  const lista = [...gravados().abastecimentos].sort((a, b) => b.id - a.id);
+  const conferidos = gravados().conferidos ?? new Set<number>();
+  const lista = [...gravados().abastecimentos]
+    .filter((a) => !conferidos.has(a.id))
+    .sort((a, b) => b.id - a.id);
   const colunas: Coluna[] = [
     { id: "placa", rotulo: "Placa", formato: "placa" },
     { id: "dia", rotulo: "Dia", formato: "data" },
@@ -1878,7 +1899,12 @@ function abastecimentoProvisorio(estado: Estado) {
       })),
       [],
     ),
-    opcoes: {},
+    opcoes: {
+      provisorios: lista.map((a) => ({
+        id: `${a.id}:1`,
+        nome: `${a.placa} · abastecimento ${a.id}`,
+      })),
+    },
     avisos: [],
   };
 }
@@ -2295,11 +2321,26 @@ export function gravarPainelDeExemplo(
         numero,
         mes: String(dados.mes),
         operacaoId: String(dados.operacaoId),
-        natureza: String(dados.natureza),
-        valor: Number(dados.valorCentavos) / 100,
+        linha: String(dados.linha),
+        valor: ((dados.sentido === "subtrair" ? -1 : 1) * Number(dados.valorCentavos)) / 100,
         justificativa: String(dados.justificativa),
         situacao: "pendente",
       });
+      linha = { numero };
+      break;
+    }
+    case "conferir-abastecimento": {
+      const id = Number(String(dados.provisorio).split(":")[0]);
+      g.conferidos ??= new Set();
+      g.conferidos.add(id);
+      linha = { id };
+      break;
+    }
+    case "decidir-ajuste": {
+      const numero = Number(String(dados.ajuste).split(":")[0]);
+      g.decididos ??= new Map();
+      if (g.decididos.has(numero)) return { ok: false, mensagem: "Este ajuste já foi decidido." };
+      g.decididos.set(numero, dados.decisao === "recusado" ? "recusado" : "aprovado");
       linha = { numero };
       break;
     }

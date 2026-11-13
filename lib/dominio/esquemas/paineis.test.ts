@@ -65,13 +65,14 @@ describe("assistentes das telas de painel", () => {
     const base = {
       mes: "2026-10",
       operacaoId: "op",
-      natureza: "custo",
+      linha: "custo_frota",
+      sentido: "subtrair",
       valorCentavos: 12345,
       justificativa: "Despesa classificada no CR errado.",
     };
     expect(e.safeParse(base).success).toBe(true);
     expect(e.safeParse({ ...base, valorCentavos: 0 }).success).toBe(false);
-    expect(e.safeParse({ ...base, natureza: "outra" }).success).toBe(false);
+    expect(e.safeParse({ ...base, linha: "custo" }).success).toBe(false);
   });
 
   it("lançar abastecimento normaliza a placa e confere os números", () => {
@@ -105,13 +106,36 @@ describe("assistentes das telas de painel", () => {
       {
         mes: "2026-10",
         operacaoId: "op",
-        natureza: "custo",
+        linha: "custo_frota",
+        sentido: "subtrair",
         valorCentavos: 12345,
         justificativa: "x",
       },
       "k",
     );
-    expect(ajuste.p_valor).toBe(123.45);
+    expect(ajuste.p_valor).toBe(-123.45);
+    expect(ajuste.p_linha).toBe("custo_frota");
+    expect(ajuste.p_cr_id).toBeNull();
     expect(ajuste.p_chave).toBe("k");
+  });
+
+  it("decidir ajuste: recusar pede motivo; o id e a versão vão separados ao banco", () => {
+    const e = ESQUEMAS_DOS_PAINEIS["decidir-ajuste"];
+    expect(e.safeParse({ ajuste: "abc:3", decisao: "recusado", motivo: "" }).success).toBe(false);
+    expect(e.safeParse({ ajuste: "abc:3", decisao: "aprovado", motivo: "" }).success).toBe(true);
+    expect(e.safeParse({ ajuste: "abc", decisao: "aprovado", motivo: "" }).success).toBe(false);
+    expect(
+      argumentosDoBanco(
+        "decidir-ajuste",
+        { ajuste: "abc:3", decisao: "aprovado", motivo: "" },
+        "k",
+      ),
+    ).toEqual({
+      p_ajuste_id: "abc",
+      p_versao: 3,
+      p_decisao: "aprovado",
+      p_motivo: null,
+      p_chave: "k",
+    });
   });
 });

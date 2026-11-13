@@ -17,7 +17,7 @@ export default function Pagina({ searchParams }: { searchParams: ParametrosDaBus
         id="resultados.ajustes"
         rota={ROTA}
         searchParams={searchParams}
-        assistentes={["pedir-ajuste"]}
+        assistentes={["pedir-ajuste", "decidir-ajuste"]}
       />
     </Suspense>
   );

@@ -59,9 +59,27 @@ export const CODIGOS_DO_STATUS_DO_DIA = [
   { id: "TBX", nome: "TBX · trabalhou em outra função" },
 ] as const;
 
-export const NATUREZAS_DO_AJUSTE = [
+/** A linha do resultado que o ajuste corrige (nucleo.pedir_ajuste). */
+export const LINHAS_DO_AJUSTE = [
   { id: "receita", nome: "Receita" },
-  { id: "custo", nome: "Custo" },
+  { id: "custo_frota", nome: "Custo da frota" },
+  { id: "custo_servico", nome: "Custo de serviço" },
+] as const;
+
+/** O ajuste tem sinal: soma ou subtrai do valor da linha. */
+export const SENTIDOS_DO_AJUSTE = [
+  { id: "somar", nome: "Somar à linha" },
+  { id: "subtrair", nome: "Subtrair da linha" },
+] as const;
+
+export const DECISOES_DO_PROVISORIO = [
+  { id: "conferido", nome: "Conferido com o Sankhya" },
+  { id: "descartado", nome: "Descartar o lançamento" },
+] as const;
+
+export const DECISOES_DO_AJUSTE = [
+  { id: "aprovado", nome: "Aprovar" },
+  { id: "recusado", nome: "Recusar" },
 ] as const;
 
 export const ESQUEMAS_DOS_PAINEIS = {
@@ -70,13 +88,41 @@ export const ESQUEMAS_DOS_PAINEIS = {
   "pedir-ajuste": z.object({
     mes: MES,
     operacaoId: ID,
-    natureza: z.enum(["receita", "custo"], { message: "Escolha receita ou custo." }),
+    linha: z.enum(["receita", "custo_frota", "custo_servico"], {
+      message: "Escolha a linha: receita, custo da frota ou custo de serviço.",
+    }),
+    sentido: z.enum(["somar", "subtrair"], { message: "Diga se o ajuste soma ou subtrai." }),
     valorCentavos: z
       .number({ message: "Informe o valor." })
       .int()
       .min(1, { message: "Informe o valor maior que zero." }),
     justificativa: MOTIVO,
   }),
+  "decidir-ajuste": z
+    .object({
+      ajuste: z.string().regex(/^[^:]+:\d+$/, { message: "Escolha o ajuste pedido." }),
+      decisao: z.enum(["aprovado", "recusado"], { message: "Escolha aprovar ou recusar." }),
+      motivo: z.string().trim().max(500, { message: "Use até 500 caracteres." }),
+    })
+    .refine((d) => d.decisao === "aprovado" || d.motivo.length > 0, {
+      message: "Recusar o ajuste pede o motivo.",
+      path: ["motivo"],
+    }),
+  "conferir-abastecimento": z
+    .object({
+      provisorio: z.string().regex(/^[^:]+:\d+$/, { message: "Escolha o lançamento provisório." }),
+      decisao: z.enum(["conferido", "descartado"], { message: "Escolha conferir ou descartar." }),
+      origemId: z.string().trim().max(60, { message: "Use até 60 caracteres." }),
+      motivo: z.string().trim().max(500, { message: "Use até 500 caracteres." }),
+    })
+    .refine((d) => d.decisao !== "conferido" || d.origemId.length > 0, {
+      message: "Informe o identificador do abastecimento no Sankhya.",
+      path: ["origemId"],
+    })
+    .refine((d) => d.decisao !== "descartado" || d.motivo.length > 0, {
+      message: "Descartar o lançamento pede o motivo.",
+      path: ["motivo"],
+    }),
   "registrar-status-do-dia": z.object({
     pessoaId: ID,
     dia: DIA,
@@ -184,7 +230,8 @@ export const ASSISTENTES_DOS_PAINEIS: Record<IdDoAssistenteDoPainel, AssistenteD
         campos: [
           { id: "mes", rotulo: "Mês", tipo: "selecao", opcoes: "meses" },
           { id: "operacaoId", rotulo: "Operação", tipo: "selecao", opcoes: "operacoes" },
-          { id: "natureza", rotulo: "Natureza", tipo: "selecao", opcoes: NATUREZAS_DO_AJUSTE },
+          { id: "linha", rotulo: "Linha do resultado", tipo: "selecao", opcoes: LINHAS_DO_AJUSTE },
+          { id: "sentido", rotulo: "Sentido", tipo: "selecao", opcoes: SENTIDOS_DO_AJUSTE },
           { id: "valorCentavos", rotulo: "Valor do ajuste", tipo: "moeda" },
         ],
       },
@@ -200,6 +247,63 @@ export const ASSISTENTES_DOS_PAINEIS: Record<IdDoAssistenteDoPainel, AssistenteD
     ],
     funcao: "pedir_ajuste",
     rotas: ["/resultados/ajustes"],
+  },
+  "decidir-ajuste": {
+    id: "decidir-ajuste",
+    titulo: "Decidir ajuste",
+    concluido: "Ajuste decidido.",
+    permissao: { modulo: "resultados", acao: "editar" },
+    passos: [
+      {
+        id: "decisao",
+        titulo: "Ajuste e decisão",
+        campos: [
+          { id: "ajuste", rotulo: "Ajuste pedido", tipo: "selecao", opcoes: "ajustesPedidos" },
+          { id: "decisao", rotulo: "Decisão", tipo: "selecao", opcoes: DECISOES_DO_AJUSTE },
+          { id: "motivo", rotulo: "Motivo (obrigatório para recusar)", tipo: "area" },
+        ],
+      },
+    ],
+    efeitos: [
+      "Só a Diretoria decide, e quem pediu o ajuste não decide.",
+      "Aprovado, o ajuste entra no resultado do mês ao lado do fato; recusado, fica registrado com o motivo.",
+    ],
+    funcao: "decidir_ajuste",
+    rotas: ["/resultados/ajustes", "/resultados/visao-geral"],
+  },
+  "conferir-abastecimento": {
+    id: "conferir-abastecimento",
+    titulo: "Conferir abastecimento",
+    concluido: "Abastecimento conferido.",
+    permissao: { modulo: "frota", acao: "criar" },
+    passos: [
+      {
+        id: "conferencia",
+        titulo: "Lançamento e decisão",
+        campos: [
+          {
+            id: "provisorio",
+            rotulo: "Lançamento provisório",
+            tipo: "selecao",
+            opcoes: "provisorios",
+          },
+          { id: "decisao", rotulo: "Decisão", tipo: "selecao", opcoes: DECISOES_DO_PROVISORIO },
+          {
+            id: "origemId",
+            rotulo: "Identificador no Sankhya (para conferir)",
+            tipo: "texto",
+            ajuda: "O abastecimento do Sankhya da mesma placa que corresponde a este lançamento.",
+          },
+          { id: "motivo", rotulo: "Motivo (obrigatório para descartar)", tipo: "area" },
+        ],
+      },
+    ],
+    efeitos: [
+      "Conferido, o lançamento sai dos provisórios: o abastecimento do Sankhya passa a valer.",
+      "Descartado, sai dos provisórios com o motivo; nada é apagado.",
+    ],
+    funcao: "conferir_abastecimento_provisorio",
+    rotas: ["/frota/abastecimento"],
   },
   "registrar-status-do-dia": {
     id: "registrar-status-do-dia",
@@ -328,11 +432,34 @@ export function argumentosDoBanco(
       return {
         p_mes: `${dados.mes}-01`,
         p_operacao_id: dados.operacaoId,
-        p_natureza: dados.natureza,
-        p_valor: reais(dados.valorCentavos),
+        p_cr_id: null,
+        p_linha: dados.linha,
+        // O banco guarda o ajuste com sinal.
+        p_valor: (dados.sentido === "subtrair" ? -1 : 1) * reais(dados.valorCentavos),
         p_justificativa: dados.justificativa,
         p_chave: chave,
       };
+    case "decidir-ajuste": {
+      const [ajusteId, versao] = String(dados.ajuste).split(":");
+      return {
+        p_ajuste_id: ajusteId,
+        p_versao: Number(versao),
+        p_decisao: dados.decisao,
+        p_motivo: dados.motivo || null,
+        p_chave: chave,
+      };
+    }
+    case "conferir-abastecimento": {
+      const [provisorioId, versao] = String(dados.provisorio).split(":");
+      return {
+        p_id: provisorioId,
+        p_versao: Number(versao),
+        p_decisao: dados.decisao,
+        p_origem_id: dados.decisao === "conferido" ? dados.origemId : null,
+        p_motivo: dados.motivo || null,
+        p_chave: chave,
+      };
+    }
     case "registrar-status-do-dia":
       return {
         p_pessoa_id: dados.pessoaId,

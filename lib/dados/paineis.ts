@@ -9,7 +9,11 @@ import { erroDaAcao, type ResultadoDaAcao, sucesso } from "@/lib/wizard/resultad
 import { type ErroDoBanco, resultadoDoErro } from "./escrita-do-banco";
 import {
   adaptarAbastecimentoProvisorio,
+  adaptarAjustes,
+  adaptarFechamentos,
+  adaptarMaturacao,
   adaptarResultadoPorOperacao,
+  adaptarStatusDiario,
   adaptarVariacaoDasOperacoes,
 } from "./paineis-adaptadores";
 import { gravarPainelPeloExemplo, lerPainelPeloExemplo, modoDosDados } from "./fonte";
@@ -38,10 +42,10 @@ export const FUNCOES_DOS_PAINEIS = {
   "operacoes.analise": "variacao_das_operacoes",
   "resultados.por-operacao": "resultado_por_operacao",
   "resultados.maturacao": "maturacao_da_divida",
-  "resultados.fechamentos": "fechamentos_do_mes",
+  "resultados.fechamentos": "fechamentos_do_resultado",
   "resultados.ajustes": "ajustes_do_resultado",
   "operacional.analise": "analise_do_operacional",
-  "pessoas.status-diario": "status_diario_das_pessoas",
+  "pessoas.status-diario": "motoristas_no_dia",
   "pessoas.documentos": "documentos_das_pessoas",
   "pessoas.diarias-e-premiacao": "diarias_e_premiacao",
   "pessoas.campanhas": "campanhas_das_pessoas",
@@ -56,23 +60,92 @@ export type IdDoPainel = keyof typeof FUNCOES_DOS_PAINEIS;
  * adaptador rearranja o JSON no formato da tela de painel. As demais seguem o contrato único.
  */
 interface Adaptador {
-  argumentos: (estado: EstadoDoPainel, mes: string | null) => Record<string, unknown>;
-  adaptar: (dados: unknown, estado: EstadoDoPainel) => unknown;
+  /** A leitura do banco: uma ou mais funções; devolve o dado bruto (ou o primeiro erro). */
+  ler: (c: ClienteDosPaineis, estado: EstadoDoPainel, hoje: string) => PromiseLike<Resposta>;
+  adaptar: (dados: unknown, estado: EstadoDoPainel, hoje: string) => unknown;
 }
+
+const umaFuncao =
+  (
+    funcao: string,
+    argumentos: (estado: EstadoDoPainel, p_mes: string | null) => Record<string, unknown>,
+  ) =>
+  (c: ClienteDosPaineis, estado: EstadoDoPainel) =>
+    c.schema("nucleo").rpc(funcao, argumentos(estado, estado.mes ? `${estado.mes}-01` : null));
+
 const SO_O_MES = (_e: EstadoDoPainel, p_mes: string | null) => ({ p_mes });
+
+/** Junta várias leituras; o primeiro erro vale para a tela inteira. */
+async function juntar(partes: Record<string, PromiseLike<Resposta>>): Promise<Resposta> {
+  const chaves = Object.keys(partes);
+  const respostas = await Promise.all(Object.values(partes));
+  const erro = respostas.find((r) => r.error)?.error ?? null;
+  if (erro) return { data: null, error: erro };
+  return { data: Object.fromEntries(chaves.map((k, i) => [k, respostas[i]?.data])), error: null };
+}
+
 const ADAPTADORES: Partial<Record<IdDoPainel, Adaptador>> = {
   "operacoes.comparativo": {
-    argumentos: SO_O_MES,
+    ler: umaFuncao("resultado_por_operacao", SO_O_MES),
     adaptar: (d, e) => adaptarResultadoPorOperacao(d, e, "comparativo"),
   },
   "resultados.por-operacao": {
-    argumentos: SO_O_MES,
+    ler: umaFuncao("resultado_por_operacao", SO_O_MES),
     adaptar: (d, e) => adaptarResultadoPorOperacao(d, e, "por-operacao"),
   },
-  "operacoes.analise": { argumentos: SO_O_MES, adaptar: adaptarVariacaoDasOperacoes },
+  "operacoes.analise": {
+    ler: umaFuncao("variacao_das_operacoes", SO_O_MES),
+    adaptar: adaptarVariacaoDasOperacoes,
+  },
   "frota.abastecimento-provisorio": {
-    argumentos: (_e, p_mes) => ({ p_mes, p_busca: null, p_ordem: "placa", p_pagina: 1, p_tam: 20 }),
+    ler: umaFuncao("abastecimento_do_mes_v2", (_e, p_mes) => ({
+      p_mes,
+      p_busca: null,
+      p_ordem: "placa",
+      p_pagina: 1,
+      p_tam: 20,
+    })),
     adaptar: adaptarAbastecimentoProvisorio,
+  },
+  "resultados.fechamentos": {
+    ler: umaFuncao("fechamentos_do_resultado", () => ({})),
+    adaptar: adaptarFechamentos,
+  },
+  "resultados.maturacao": {
+    ler: umaFuncao("maturacao_da_divida", (e) => ({ p_pagina: e.pagina, p_tam: e.tam })),
+    adaptar: (d) => adaptarMaturacao(d),
+  },
+  "resultados.ajustes": {
+    ler: async (c, e) => {
+      const r = await c.schema("nucleo").rpc("ajustes_do_resultado", {
+        p_mes: e.mes ? `${e.mes}-01` : null,
+        p_situacao:
+          e.filtro && ["pedido", "aprovado", "recusado"].includes(e.filtro) ? e.filtro : null,
+        p_pagina: e.pagina,
+        p_tam: e.tam,
+      });
+      if (r.error) return r;
+      return { data: { ajustes: r.data, operacoes: await operacoesParaEscolher(c) }, error: null };
+    },
+    adaptar: (d, e, hoje) => {
+      const x = d as { ajustes: unknown; operacoes: { id: string; nome: string }[] };
+      return adaptarAjustes(x.ajustes, e, x.operacoes, hoje);
+    },
+  },
+  "pessoas.status-diario": {
+    ler: (c, _e, hoje) =>
+      juntar({
+        contagem: c.schema("nucleo").rpc("motoristas_no_dia", { p_dia: hoje }),
+        linhas: c.schema("nucleo").rpc("linha_do_motorista", { p_de: hoje, p_ate: hoje }),
+        ferias: c.schema("nucleo").rpc("ferias_sem_substituto", {}),
+      }),
+    adaptar: (d, e) => {
+      const x = d as { contagem: unknown; linhas: unknown; ferias: unknown };
+      return adaptarStatusDiario(
+        { contagem: x.contagem, linhas: x.linhas ?? [], ferias: x.ferias ?? [] },
+        e,
+      );
+    },
   },
 };
 
@@ -82,33 +155,28 @@ interface Resposta {
 }
 
 /** O pedaço do cliente do Supabase que esta leitura usa (nos testes, um simulado com esta forma). */
+/** Uma consulta de tabela do PostgREST, encadeável e aguardável (só o que as leituras usam). */
+export interface ConsultaDosPaineis extends PromiseLike<Resposta> {
+  select(colunas: string): ConsultaDosPaineis;
+  eq(coluna: string, valor: unknown): ConsultaDosPaineis;
+  is(coluna: string, valor: null): ConsultaDosPaineis;
+  order(coluna: string): ConsultaDosPaineis;
+  limit(n: number): ConsultaDosPaineis;
+}
+
 export interface ClienteDosPaineis {
   schema(esquema: "nucleo"): {
     rpc(funcao: string, argumentos?: Record<string, unknown>): PromiseLike<Resposta>;
-    /** Só para achar o ativo vigente de uma placa (Lançar abastecimento). */
-    from?(tabela: "placa_do_ativo"): {
-      select(colunas: "ativo_id"): {
-        eq(
-          coluna: "placa",
-          valor: string,
-        ): {
-          is(
-            coluna: "excluido_em",
-            valor: null,
-          ): {
-            is(coluna: "fim", valor: null): { limit(n: 1): PromiseLike<Resposta> };
-          };
-        };
-      };
-    };
+    from?(tabela: string): ConsultaDosPaineis;
   };
 }
 
 /** O ativo vigente da placa, ou nulo (placa desconhecida ou fora do alcance de quem usa). */
 async function ativoDaPlaca(c: ClienteDosPaineis, placa: string): Promise<string | null> {
-  const consulta = c.schema("nucleo").from;
-  if (!consulta) return null;
-  const { data, error } = await consulta("placa_do_ativo")
+  const nucleo = c.schema("nucleo");
+  if (!nucleo.from) return null;
+  const { data, error } = await nucleo
+    .from("placa_do_ativo")
     .select("ativo_id")
     .eq("placa", placa)
     .is("excluido_em", null)
@@ -117,6 +185,22 @@ async function ativoDaPlaca(c: ClienteDosPaineis, placa: string): Promise<string
   if (error) return null;
   const linhas = (data as { ativo_id: string }[] | null) ?? [];
   return linhas[0]?.ativo_id ?? null;
+}
+
+/** As operações não arquivadas, pelo nome (a lista do "Pedir ajuste"). */
+async function operacoesParaEscolher(
+  c: ClienteDosPaineis,
+): Promise<{ id: string; nome: string }[]> {
+  const nucleo = c.schema("nucleo");
+  if (!nucleo.from) return [];
+  const { data, error } = await nucleo
+    .from("operacao")
+    .select("id, nome")
+    .is("excluido_em", null)
+    .order("nome")
+    .order("id");
+  if (error) return [];
+  return (data as { id: string; nome: string }[] | null) ?? [];
 }
 
 async function clienteDaSessao(): Promise<ClienteDosPaineis> {
@@ -275,27 +359,27 @@ export async function lerPainel(
     return normalizarLeitura(await lerPainelPeloExemplo(id, estado, hoje), "exemplo", funcao);
   }
   const c = await cliente();
-  const adaptar = ADAPTADORES[id];
-  const p_mes = estado.mes ? `${estado.mes}-01` : null;
-  const { data, error } = await c.schema("nucleo").rpc(
-    funcao,
-    adaptar
-      ? adaptar.argumentos(estado, p_mes)
-      : {
-          p_mes,
-          p_filtro: estado.filtro,
-          p_busca: estado.busca || null,
-          p_pagina: estado.pagina,
-          p_tam: estado.tam,
-        },
-  );
+  const adaptador = ADAPTADORES[id];
+  const { data, error } = adaptador
+    ? await adaptador.ler(c, estado, hoje)
+    : await c.schema("nucleo").rpc(funcao, {
+        p_mes: estado.mes ? `${estado.mes}-01` : null,
+        p_filtro: estado.filtro,
+        p_busca: estado.busca || null,
+        p_pagina: estado.pagina,
+        p_tam: estado.tam,
+      });
   if (error) {
     if (classificarFalha(error).causa !== "funcao_ausente") throw falhaDeLeitura(funcao, error);
     // PONTO (N2): a função ainda não existe no banco; o exemplo cobre fora de produção.
     if (emProducao()) return semFonte(funcao, estado);
     return normalizarLeitura(await lerPainelPeloExemplo(id, estado, hoje), "exemplo", funcao);
   }
-  return normalizarLeitura(adaptar ? adaptar.adaptar(data, estado) : data, "banco", funcao);
+  return normalizarLeitura(
+    adaptador ? adaptador.adaptar(data, estado, hoje) : data,
+    "banco",
+    funcao,
+  );
 }
 
 /** Grava o que o assistente do painel mandou (dados já validados pelo esquema). */

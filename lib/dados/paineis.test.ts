@@ -66,12 +66,12 @@ describe("leitura das telas de painel", () => {
   it("chama a função do banco da tela com o estado da URL", async () => {
     const c = cliente({ data: {}, error: null });
     await lerPainel(
-      "resultados.fechamentos",
+      "pessoas.documentos",
       { ...ESTADO, mes: "2026-10", pagina: 2 },
       HOJE,
       c.fabrica,
     );
-    expect(c.rpc).toHaveBeenCalledWith("fechamentos_do_mes", {
+    expect(c.rpc).toHaveBeenCalledWith("documentos_das_pessoas", {
       p_mes: "2026-10-01",
       p_filtro: null,
       p_busca: null,
@@ -163,6 +163,123 @@ describe("leitura das telas de painel", () => {
     expect(l.avisos[0]).toMatch(/acesso a Resultados/);
   });
 
+  it("Fechamentos: só o mês que pode fechar e ainda não fechou vira opção de Fechar mês", async () => {
+    const foto = {
+      versao: 1,
+      receita: 10,
+      custo: 5,
+      resultado: 5,
+      fechado_em: "2026-11-12T10:00:00-03:00",
+      fechado_por: "Diretoria",
+      reaberto_em: null,
+      reaberto_por: null,
+      motivo_da_reabertura: null,
+    };
+    const c = cliente({
+      data: {
+        mes_que_pode_fechar: "2026-10-01",
+        kpis: { fechados: 1, ultimo: null, diferenca_contra_o_vivo: 1.5, reaberturas: 0 },
+        linhas: [{ ...foto, id: "f1", mes: "2026-09-01", situacao: "fechado" }],
+      },
+      error: null,
+    });
+    const l = await lerPainel("resultados.fechamentos", ESTADO, HOJE, c.fabrica);
+    expect(c.rpc).toHaveBeenCalledWith("fechamentos_do_resultado", {});
+    expect(l.opcoes.mesesAbertos?.map((o) => o.id)).toEqual(["2026-10"]);
+    expect(l.opcoes.mesesFechados?.map((o) => o.id)).toEqual(["2026-09"]);
+    expect(l.kpis.find((k) => k.id === "diferenca")?.valor).toBe(150);
+  });
+
+  it("Status diário junta a contagem, a linha do motorista do dia e as férias sem substituto", async () => {
+    const respostas: Record<string, unknown> = {
+      motoristas_no_dia: {
+        dia: HOJE,
+        com_motorista: 2,
+        sem_motorista: 1,
+        sem_lancamento: 1,
+        por_codigo: { TBV: 1 },
+      },
+      linha_do_motorista: [
+        {
+          ativo_id: "a",
+          placa: "ZDM1A23",
+          dia: HOJE,
+          pessoa_id: "p",
+          nome: "Motorista Demo 01",
+          substituto: false,
+          realizado: "TBV",
+          escala: "T",
+          sugestao: "TBV",
+        },
+      ],
+      ferias_sem_substituto: [],
+    };
+    const rpc = vi.fn(async (funcao: string) => ({ data: respostas[funcao], error: null }));
+    const l = await lerPainel(
+      "pessoas.status-diario",
+      ESTADO,
+      HOJE,
+      async () => ({ schema: () => ({ rpc }) }) as never,
+    );
+    expect(rpc).toHaveBeenCalledWith("linha_do_motorista", { p_de: HOJE, p_ate: HOJE });
+    expect(l.origem).toBe("banco");
+    expect(l.kpis.find((k) => k.id === "sem")?.valor).toBe(1);
+    expect(l.opcoes.motoristas).toEqual([{ id: "p", nome: "Motorista Demo 01" }]);
+    expect(l.tabela.total).toBe(1);
+  });
+
+  it("Ajustes: a situação do chip vai ao banco e cada pedido vira opção id:versão", async () => {
+    const c = cliente({
+      data: {
+        mes: null,
+        kpis: { pendentes: 1, aprovados_no_mes: 0, recusados: 0, valor_ajustado: 0 },
+        contagens: { todas: 1, pedido: 1, aprovado: 0, recusado: 0 },
+        por_situacao: [],
+        por_operacao: [],
+        por_linha: [],
+        linhas: [
+          {
+            id: "aj1",
+            versao: 2,
+            numero: 7,
+            mes: "2026-10-01",
+            operacao_id: "op",
+            operacao: "Operação Demo A",
+            cr: null,
+            linha: "receita",
+            valor: -12.5,
+            justificativa: "x",
+            situacao: "pedido",
+            pedido_por: "Diretoria",
+            pedido_em: "2026-11-01T10:00:00-03:00",
+            decidido_por: null,
+            decidido_em: null,
+            motivo_da_decisao: null,
+          },
+        ],
+        total: 1,
+        pagina: 1,
+        paginas: 1,
+        tam: 20,
+      },
+      error: null,
+    });
+    const l = await lerPainel(
+      "resultados.ajustes",
+      { ...ESTADO, filtro: "pedido" },
+      HOJE,
+      c.fabrica,
+    );
+    expect(c.rpc).toHaveBeenCalledWith("ajustes_do_resultado", {
+      p_mes: null,
+      p_situacao: "pedido",
+      p_pagina: 1,
+      p_tam: 20,
+    });
+    expect(l.opcoes.ajustesPedidos?.[0]?.id).toBe("aj1:2");
+    expect(l.tabela.linhas[0]?.celulas.valor).toBe(-1250);
+  });
+
   it("outro erro do banco não vira exemplo: sobe como erro de leitura", async () => {
     const falha = cliente({ data: null, error: { code: "42501", message: "permission denied" } });
     await expect(lerPainel("pessoas.documentos", ESTADO, HOJE, falha.fabrica)).rejects.toThrow(
@@ -237,7 +354,8 @@ describe("gravação dos assistentes de painel (exemplo)", () => {
       {
         mes: "2026-10",
         operacaoId: "00000000-0000-4000-8000-000000000001",
-        natureza: "custo",
+        linha: "custo_frota",
+        sentido: "somar",
         valorCentavos: 50000,
         justificativa: "Despesa no CR errado.",
       },

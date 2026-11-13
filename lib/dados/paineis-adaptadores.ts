@@ -1,5 +1,11 @@
 import type { EstadoDoPainel } from "@/lib/navegacao/painel";
 import type {
+  AjustesDoResultado,
+  FechamentosDoResultado,
+  MaturacaoDaDivida,
+} from "./fechamento-tipos";
+import type { DiaDoMotorista, FeriasSemSubstituto, MotoristasNoDia } from "./motorista-tipos";
+import type {
   CascataDaOperacao,
   ResultadoPorOperacao,
   VariacaoDasOperacoes,
@@ -260,6 +266,7 @@ export function adaptarResultadoPorOperacao(
 
 interface ProvisorioDoBanco {
   id: string;
+  versao: number;
   placa: string;
   dia: string;
   litros: number;
@@ -330,7 +337,12 @@ export function adaptarAbastecimentoProvisorio(bruto: unknown, estado: EstadoDoP
       paginas: p.paginas,
       tam: estado.tam,
     },
-    opcoes: {},
+    opcoes: {
+      provisorios: prov.linhas.map((a) => ({
+        id: `${a.id}:${a.versao}`,
+        nome: `${a.placa} · ${a.dia.slice(8, 10)}/${a.dia.slice(5, 7)}/${a.dia.slice(0, 4)}`,
+      })),
+    },
     avisos: ["Os provisórios ficam fora do total do mês (o Sankhya é o fato) até a conferência."],
   };
 }
@@ -473,5 +485,438 @@ export function adaptarVariacaoDasOperacoes(bruto: unknown, estado: EstadoDoPain
     },
     opcoes: {},
     avisos: [],
+  };
+}
+
+// ---------- Resultados: Fechamentos, Ajustes e Maturação (fechamento-tipos.ts) ----------
+
+const nomeDoMesCurto = (mes: string) => `${mes.slice(5, 7)}/${mes.slice(0, 4)}`;
+
+/** nucleo.fechamentos_do_resultado → Resultados › Fechamentos (as fotos e o mês que pode fechar). */
+export function adaptarFechamentos(bruto: unknown, estado: EstadoDoPainel): Bruto {
+  const d = bruto as FechamentosDoResultado;
+  const NOMES = { fechado: "Fechado", reaberto: "Reaberto" } as const;
+  const fotos = d.linhas.map((f) => ({ ...f, mes: String(f.mes).slice(0, 7) }));
+  const fechados = fotos.filter((f) => f.situacao === "fechado");
+  const podeFechar = String(d.mes_que_pode_fechar).slice(0, 7);
+  const linhas: Linha[] = fotos.map((f) => ({
+    id: f.id,
+    item: `Fechamento de ${nomeDoMesCurto(f.mes)}`,
+    grupo: f.situacao,
+    celulas: {
+      mes: f.mes,
+      situacao: NOMES[f.situacao],
+      fechadoEm: f.fechado_em,
+      fechadoPor: f.fechado_por,
+      receita: f.receita,
+      custo: f.custo,
+      resultado: f.resultado,
+      motivo: f.motivo_da_reabertura,
+    },
+  }));
+  const p = paginar(
+    estado,
+    linhas,
+    (Object.keys(NOMES) as (keyof typeof NOMES)[]).map((k) => ({ id: k, nome: NOMES[k] })),
+  );
+  const cronologico = [...fechados].reverse();
+  return {
+    mes: null,
+    meses: [],
+    kpis: [
+      { id: "fechados", rotulo: "Meses fechados", valor: d.kpis.fechados, formato: "inteiro" },
+      {
+        id: "ultimo",
+        rotulo: "Último fechamento",
+        valor: d.kpis.ultimo ? String(d.kpis.ultimo.mes).slice(0, 7) : null,
+        formato: "mes",
+      },
+      {
+        id: "diferenca",
+        rotulo: "Diferença contra o vivo",
+        valor: d.kpis.diferenca_contra_o_vivo,
+        formato: "moeda",
+        apoio: "Visão geral de hoje menos a foto do último fechado",
+      },
+      { id: "reabertos", rotulo: "Reaberturas", valor: d.kpis.reaberturas, formato: "inteiro" },
+    ],
+    graficos: [
+      {
+        id: "foto",
+        titulo: "Foto de cada mês fechado",
+        descricao: "Receita, custo e resultado gravados no fechamento, que não mudam depois.",
+        tipo: "barras",
+        categorias: cronologico.map((f) => nomeDoMesCurto(f.mes)),
+        series: [
+          { nome: "Receita", tipo: "barra", valores: cronologico.map((f) => f.receita) },
+          { nome: "Custo", tipo: "barra", cor: "neutro", valores: cronologico.map((f) => f.custo) },
+          {
+            nome: "Resultado",
+            tipo: "linha",
+            cor: "acao",
+            valores: cronologico.map((f) => f.resultado),
+          },
+        ],
+        formato: "moeda",
+        colunas: 12,
+      },
+    ],
+    chips: p.chips,
+    tabela: {
+      titulo: "Fechamentos",
+      item: "fechamento",
+      colunas: [
+        { id: "mes", rotulo: "Mês", formato: "mes" },
+        { id: "situacao", rotulo: "Situação", formato: "texto" },
+        { id: "fechadoEm", rotulo: "Fechado em", formato: "data-e-hora" },
+        { id: "fechadoPor", rotulo: "Fechado por", formato: "texto" },
+        { id: "receita", rotulo: "Receita", formato: "moeda" },
+        { id: "custo", rotulo: "Custo", formato: "moeda" },
+        { id: "resultado", rotulo: "Resultado da foto", formato: "moeda" },
+        { id: "motivo", rotulo: "Motivo da reabertura", formato: "texto" },
+      ],
+      linhas: p.linhas,
+      total: p.total,
+      pagina: p.pagina,
+      paginas: p.paginas,
+      tam: estado.tam,
+    },
+    opcoes: {
+      // Só o último mês cujo corte passou pode fechar (nucleo.ultimo_mes_que_pode_fechar).
+      mesesAbertos: fechados.some((f) => f.mes === podeFechar)
+        ? []
+        : [{ id: podeFechar, nome: nomeDoMesCurto(podeFechar) }],
+      mesesFechados: fechados.map((f) => ({ id: f.mes, nome: nomeDoMesCurto(f.mes) })),
+    },
+    avisos: [`O mês que pode fechar agora é ${nomeDoMesCurto(podeFechar)} (o corte já passou).`],
+  };
+}
+
+const NOMES_DA_SITUACAO_DO_AJUSTE = {
+  pedido: "Pedido",
+  aprovado: "Aprovado",
+  recusado: "Recusado",
+} as const;
+const NOMES_DA_LINHA_DO_AJUSTE = {
+  receita: "Receita",
+  custo_frota: "Custo da frota",
+  custo_servico: "Custo de serviço",
+} as const;
+
+/** nucleo.ajustes_do_resultado → Resultados › Ajustes (página e contagens vêm do banco). */
+export function adaptarAjustes(
+  bruto: unknown,
+  estado: EstadoDoPainel,
+  operacoes: { id: string; nome: string }[],
+  hoje: string,
+): Bruto {
+  const d = bruto as AjustesDoResultado;
+  // O ajuste é de um mês até o atual (nucleo.pedir_ajuste).
+  const meses = mesesAte(hoje.slice(0, 7));
+  return {
+    mes: estado.mes,
+    meses: [],
+    kpis: [
+      {
+        id: "pendentes",
+        rotulo: "Pendentes de aprovação",
+        valor: d.kpis.pendentes,
+        formato: "inteiro",
+      },
+      {
+        id: "aprovados",
+        rotulo: "Aprovados no mês",
+        valor: d.kpis.aprovados_no_mes,
+        formato: "inteiro",
+      },
+      { id: "recusados", rotulo: "Recusados", valor: d.kpis.recusados, formato: "inteiro" },
+      {
+        id: "valor",
+        rotulo: "Valor ajustado",
+        valor: d.kpis.valor_ajustado,
+        formato: "moeda",
+        apoio: "Só os aprovados",
+      },
+    ],
+    graficos: [
+      {
+        id: "por-operacao",
+        titulo: "Ajustes por operação",
+        descricao:
+          "Cada ajuste justifica uma correção sobre o fato importado, que nunca é editado.",
+        tipo: "barras",
+        deitado: true,
+        categorias: d.por_operacao.map((o) => o.operacao),
+        series: [{ nome: "Valor", tipo: "barra", valores: d.por_operacao.map((o) => o.valor) }],
+        formato: "moeda",
+        colunas: 12,
+      },
+      {
+        id: "por-linha",
+        titulo: "Por linha do resultado",
+        tipo: "barras",
+        categorias: d.por_linha.map((l) => NOMES_DA_LINHA_DO_AJUSTE[l.linha]),
+        series: [{ nome: "Valor", tipo: "barra", valores: d.por_linha.map((l) => l.valor) }],
+        formato: "moeda",
+        colunas: 6,
+      },
+      {
+        id: "por-situacao",
+        titulo: "Por situação",
+        tipo: "rosca",
+        categorias: d.por_situacao.map((s) => NOMES_DA_SITUACAO_DO_AJUSTE[s.situacao]),
+        series: [{ nome: "Ajustes", tipo: "barra", valores: d.por_situacao.map((s) => s.n) }],
+        formato: "inteiro",
+        colunas: 6,
+      },
+    ],
+    chips: [
+      { id: "todos", nome: "Todos", contagem: d.contagens.todas },
+      { id: "pedido", nome: "Pedidos", contagem: d.contagens.pedido },
+      { id: "aprovado", nome: "Aprovados", contagem: d.contagens.aprovado },
+      { id: "recusado", nome: "Recusados", contagem: d.contagens.recusado },
+    ],
+    tabela: {
+      titulo: "Ajustes",
+      item: "ajuste",
+      colunas: [
+        { id: "ajuste", rotulo: "Ajuste", formato: "texto" },
+        { id: "mes", rotulo: "Mês", formato: "mes" },
+        { id: "operacao", rotulo: "Operação", formato: "texto" },
+        { id: "linha", rotulo: "Linha", formato: "texto" },
+        { id: "valor", rotulo: "Valor", formato: "moeda" },
+        { id: "situacao", rotulo: "Situação", formato: "texto" },
+        { id: "pedidoPor", rotulo: "Pedido por", formato: "texto" },
+      ],
+      linhas: d.linhas.map((a) => ({
+        id: a.id,
+        item: `Ajuste ${a.numero}`,
+        ...(a.operacao_id ? { href: `/operacoes/lista/${a.operacao_id}` } : {}),
+        celulas: {
+          ajuste: `Ajuste ${a.numero}`,
+          mes: String(a.mes).slice(0, 7),
+          operacao: a.operacao ?? a.cr,
+          linha: NOMES_DA_LINHA_DO_AJUSTE[a.linha],
+          valor: a.valor,
+          situacao: NOMES_DA_SITUACAO_DO_AJUSTE[a.situacao],
+          pedidoPor: a.pedido_por,
+        },
+        detalhes: [
+          { rotulo: "Justificativa", valor: a.justificativa, formato: "texto" },
+          { rotulo: "Pedido em", valor: a.pedido_em, formato: "data-e-hora" },
+          { rotulo: "Decidido por", valor: a.decidido_por, formato: "texto" },
+          { rotulo: "Decidido em", valor: a.decidido_em, formato: "data-e-hora" },
+          { rotulo: "Motivo da decisão", valor: a.motivo_da_decisao, formato: "texto" },
+        ],
+      })),
+      total: d.total,
+      pagina: d.pagina,
+      paginas: d.paginas,
+      tam: d.tam,
+    },
+    opcoes: {
+      meses: meses.map((m) => ({ id: m, nome: nomeDoMesCurto(m) })),
+      operacoes,
+      // id:versão, para a decisão conferir a edição concorrente. Só os pedidos desta página.
+      ajustesPedidos: d.linhas
+        .filter((a) => a.situacao === "pedido")
+        .map((a) => ({
+          id: `${a.id}:${a.versao}`,
+          nome: `Ajuste ${a.numero} · ${a.operacao ?? a.cr ?? "sem operação"}`,
+        })),
+    },
+    avisos: [],
+  };
+}
+
+/** nucleo.maturacao_da_divida → Resultados › Maturação (só os títulos com saldo, paginados no banco). */
+export function adaptarMaturacao(bruto: unknown): Bruto {
+  const d = bruto as MaturacaoDaDivida;
+  const k = d.kpis;
+  return {
+    mes: null,
+    meses: [],
+    kpis: [
+      {
+        id: "negociado",
+        rotulo: "Negociado",
+        valor: k.negociado,
+        formato: "moeda",
+        apoio: `De ${String(d.inicio).slice(8, 10)}/${String(d.inicio).slice(5, 7)}/${String(d.inicio).slice(0, 4)} até ${String(d.fim).slice(8, 10)}/${String(d.fim).slice(5, 7)}/${String(d.fim).slice(0, 4)}`,
+      },
+      { id: "pago", rotulo: "Pago", valor: k.pago, formato: "moeda" },
+      { id: "saldo", rotulo: "Saldo a quitar", valor: k.saldo, formato: "moeda" },
+      { id: "percentual", rotulo: "Quitado", valor: k.percentual, formato: "percentual" },
+    ],
+    graficos: [
+      {
+        id: "pago-por-mes",
+        titulo: "Pago por mês",
+        descricao: "A curva de quitação da dívida antiga.",
+        tipo: "barras",
+        categorias: d.pago_por_mes.map((m) => nomeDoMesCurto(String(m.mes).slice(0, 7))),
+        series: [{ nome: "Pago", tipo: "barra", valores: d.pago_por_mes.map((m) => m.valor) }],
+        formato: "moeda",
+        colunas: 12,
+      },
+      {
+        id: "saldo-por-operacao",
+        titulo: "Saldo por operação",
+        descricao: "Onde ainda há dívida.",
+        tipo: "barras",
+        deitado: true,
+        categorias: d.saldo_por_operacao.map((o) => o.operacao),
+        series: [
+          { nome: "Saldo", tipo: "barra", valores: d.saldo_por_operacao.map((o) => o.saldo) },
+        ],
+        formato: "moeda",
+        colunas: 12,
+      },
+    ],
+    chips: [],
+    tabela: {
+      titulo: "Títulos com saldo",
+      item: "título",
+      colunas: [
+        { id: "titulo", rotulo: "Título", formato: "texto" },
+        { id: "operacao", rotulo: "Operação", formato: "texto" },
+        { id: "negociadoEm", rotulo: "Negociado em", formato: "data" },
+        { id: "valor", rotulo: "Valor", formato: "moeda" },
+        { id: "saldo", rotulo: "Saldo", formato: "moeda" },
+      ],
+      linhas: d.linhas.map((t) => ({
+        id: String(t.titulo),
+        item: `Título ${t.titulo}`,
+        celulas: {
+          titulo: String(t.titulo),
+          operacao: t.operacao,
+          negociadoEm: t.negociado_em,
+          valor: t.valor,
+          saldo: t.saldo,
+        },
+        detalhes: [],
+      })),
+      total: d.titulos_com_saldo,
+      pagina: d.pagina,
+      paginas: Math.max(1, Math.ceil(d.titulos_com_saldo / Math.max(1, d.tam))),
+      tam: d.tam,
+    },
+    opcoes: {},
+    avisos: [
+      "Renegociado herda a menor data de negociação de origem; a tabela mostra só os títulos com saldo.",
+    ],
+  };
+}
+
+// ---------- Pessoas: Status diário (motorista-tipos.ts) ----------
+
+const NOMES_DO_CODIGO: Record<string, string> = {
+  TBV: "trabalhou em viagem",
+  TBE: "trabalhou na base",
+  TBX: "outra função",
+  FOL: "folga",
+  FÉR: "férias",
+  ATS: "atestado",
+  FRD: "feriado",
+  FLT: "falta",
+};
+
+export interface LeituraDoStatusDiario {
+  contagem: MotoristasNoDia;
+  linhas: DiaDoMotorista[];
+  ferias: FeriasSemSubstituto[];
+}
+
+/**
+ * motoristas_no_dia (contagem pronta) + linha_do_motorista do dia (uma linha por conjunto) +
+ * ferias_sem_substituto → Pessoas › Status diário.
+ */
+export function adaptarStatusDiario(bruto: unknown, estado: EstadoDoPainel): Bruto {
+  const { contagem: c, linhas, ferias } = bruto as LeituraDoStatusDiario;
+  const codigos = Object.keys(NOMES_DO_CODIGO);
+  const p = paginar(
+    estado,
+    linhas.map((l) => ({
+      id: `${l.ativo_id}-${l.dia}`,
+      item: l.nome,
+      grupo: l.realizado ?? "sem-lancamento",
+      href: `/frota/placas/${l.placa}`,
+      celulas: {
+        pessoa: l.nome,
+        conjunto: l.placa,
+        realizado: l.realizado
+          ? `${l.realizado} · ${NOMES_DO_CODIGO[l.realizado]}`
+          : "Sem lançamento",
+        escala: l.escala,
+        sugestao: l.sugestao,
+        substituto: l.substituto ? "Substituto" : "Titular",
+      },
+    })),
+    [...codigos.map((k) => ({ id: k, nome: k })), { id: "sem-lancamento", nome: "Sem lançamento" }],
+  );
+  const nomes = new Map(linhas.map((l) => [l.pessoa_id, l.nome]));
+  const motoristas = [...nomes].map(([id, nome]) => ({ id, nome }));
+  return {
+    mes: null,
+    meses: [],
+    kpis: [
+      { id: "com", rotulo: "Conjuntos com motorista", valor: c.com_motorista, formato: "inteiro" },
+      { id: "sem", rotulo: "Conjuntos sem motorista", valor: c.sem_motorista, formato: "inteiro" },
+      {
+        id: "sem-lancamento",
+        rotulo: "Sem lançamento hoje",
+        valor: c.sem_lancamento,
+        formato: "inteiro",
+        apoio: "Nunca se presume TBV",
+      },
+      {
+        id: "ferias",
+        rotulo: "Férias sem substituto",
+        valor: ferias.length,
+        formato: "inteiro",
+        apoio: "Nos próximos dias",
+      },
+    ],
+    graficos: [
+      {
+        id: "por-codigo",
+        titulo: "Status do dia por código",
+        descricao: "O realizado do dia, distinto da escala.",
+        tipo: "barras",
+        categorias: codigos,
+        series: [
+          {
+            nome: "Motoristas",
+            tipo: "barra",
+            valores: codigos.map((k) => c.por_codigo[k as keyof typeof c.por_codigo] ?? 0),
+          },
+        ],
+        formato: "inteiro",
+        colunas: 12,
+      },
+    ],
+    chips: p.chips,
+    tabela: {
+      titulo: "Motoristas no dia",
+      item: "pessoa",
+      colunas: [
+        { id: "pessoa", rotulo: "Pessoa", formato: "texto" },
+        { id: "conjunto", rotulo: "Conjunto", formato: "placa" },
+        { id: "realizado", rotulo: "Status do dia", formato: "texto" },
+        { id: "escala", rotulo: "Escala", formato: "texto" },
+        { id: "sugestao", rotulo: "Sugestão da escala", formato: "texto" },
+        { id: "substituto", rotulo: "Quem dirige", formato: "texto" },
+      ],
+      linhas: p.linhas,
+      total: p.total,
+      pagina: p.pagina,
+      paginas: p.paginas,
+      tam: estado.tam,
+    },
+    opcoes: { motoristas, substitutos: motoristas },
+    avisos: ferias.map(
+      (f) =>
+        `${f.nome} (${f.placa ?? "sem placa"}) sai de férias sem substituto: use "Indicar substituto".`,
+    ),
   };
 }

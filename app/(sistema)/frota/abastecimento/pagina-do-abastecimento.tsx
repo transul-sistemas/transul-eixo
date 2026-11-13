@@ -171,7 +171,7 @@ export async function PaginaDoAbastecimento({ searchParams }: { searchParams: Pa
         <SecaoDoPainel
           id="frota.abastecimento-provisorio"
           rota={ROTA_DO_ABASTECIMENTO}
-          assistentes={["lancar-abastecimento"]}
+          assistentes={["lancar-abastecimento", "conferir-abastecimento"]}
         />
       </Suspense>
       {modoDosDados() !== "banco" ? (
