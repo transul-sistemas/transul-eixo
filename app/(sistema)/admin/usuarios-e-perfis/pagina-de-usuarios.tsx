@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { enderecoDoCsv } from "@/lib/navegacao/exportacao";
 import { connection } from "next/server";
 import { formatarInteiro } from "@/components/formato/numero";
 import { PaginaDeLeitura } from "@/components/layout/pagina-de-leitura";
@@ -67,7 +68,14 @@ export async function PaginaDeUsuarios({ searchParams }: { searchParams: Paramet
   const podeEditar = temPermissao(sessao.perfil, { modulo: "admin", acao: "editar" });
 
   return (
-    <PaginaDeLeitura titulo={titulo} descricao={descricao}>
+    <PaginaDeLeitura
+      titulo={titulo}
+      descricao={descricao}
+      exportar={enderecoDoCsv(
+        "admin.usuarios-e-perfis",
+        new URLSearchParams(busca ? { q: busca } : {}),
+      )}
+    >
       <section aria-labelledby="titulo-usuarios" className="flex flex-col gap-3">
         <h2 id="titulo-usuarios" className="text-xl font-semibold">
           Usuários

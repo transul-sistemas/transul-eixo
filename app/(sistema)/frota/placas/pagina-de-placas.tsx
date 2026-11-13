@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import { enderecoDoCsv } from "@/lib/navegacao/exportacao";
 import { connection } from "next/server";
 import { hojeEmSaoPaulo } from "@/components/formato/data";
 import {
@@ -236,6 +237,7 @@ export async function PaginaDePlacas({ searchParams }: { searchParams: Parametro
       <PaginaDeLeitura
         lista
         emFoco={emFoco}
+        exportar={enderecoDoCsv("frota.placas", parametros)}
         titulo={titulo}
         descricao={descricao}
         acoes={

@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import { enderecoDoCsv } from "@/lib/navegacao/exportacao";
 import { connection } from "next/server";
 import { formatarInteiro } from "@/components/formato/numero";
 import {
@@ -125,6 +126,7 @@ async function Conteudo({ parametros }: { parametros: URLSearchParams }) {
       lista
       titulo={titulo}
       descricao={descricao}
+      exportar={enderecoDoCsv("pessoas.lista", parametros)}
       acoes={
         podeCadastrar ? (
           <CadastrarPessoa operacoes={dados.operacoes} usuario={sessao.usuarioId} />

@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import { enderecoDoCsv } from "@/lib/navegacao/exportacao";
 import Link from "next/link";
 import { connection } from "next/server";
 import type { ReactNode } from "react";
@@ -206,10 +207,15 @@ export async function PaginaDaCarteira({ searchParams }: { searchParams: Paramet
     (await cookies()).get(NOME_DO_COOKIE_DO_TAMANHO)?.value,
     20,
   );
-  const estado = lerCarteira(paraParametros(await searchParams), hoje, tamLembrado);
+  const parametros = paraParametros(await searchParams);
+  const estado = lerCarteira(parametros, hoje, tamLembrado);
   const { titulo, descricao } = cabecalho();
   return (
-    <PaginaDeLeitura titulo={titulo} descricao={descricao}>
+    <PaginaDeLeitura
+      titulo={titulo}
+      descricao={descricao}
+      exportar={enderecoDoCsv("frota.carteira", parametros)}
+    >
       {modoDosDados() !== "banco" ? (
         <ListaVazia
           titulo="A Carteira lê só do banco"

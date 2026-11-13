@@ -24,6 +24,7 @@ import {
   type IdDoAssistenteDoPainel,
 } from "@/lib/dominio/esquemas/paineis";
 import { acharTela } from "@/lib/navegacao/catalogo";
+import { ehLista, enderecoDoCsv } from "@/lib/navegacao/exportacao";
 import { type EstadoDoPainel, enderecoDoPainel, lerEstadoDoPainel } from "@/lib/navegacao/painel";
 import {
   lerTamanhoLembrado,
@@ -56,6 +57,7 @@ function cabecalho(rota: string) {
   const achada = acharTela(rota);
   if (!achada) notFound();
   return {
+    idDaTela: achada.tela.id,
     titulo: achada.tela.nome,
     descricao: achada.tela.descricao,
     // Início não tem cor de módulo própria: os gráficos usam o cinza de Cadastros.
@@ -248,12 +250,13 @@ export async function TelaDePainel({
   depois,
 }: PropsDaTelaDePainel) {
   await connection();
-  const { titulo, descricao, modulo } = cabecalho(rota);
+  const { idDaTela, titulo, descricao, modulo } = cabecalho(rota);
   const tamLembrado = lerTamanhoLembrado(
     (await cookies()).get(NOME_DO_COOKIE_DO_TAMANHO)?.value,
     20,
   );
-  const estado = lerEstadoDoPainel(paraParametros(await searchParams), tamLembrado);
+  const parametros = paraParametros(await searchParams);
+  const estado = lerEstadoDoPainel(parametros, tamLembrado);
   const hoje = hojeEmSaoPaulo(new Date());
   const [leitura, sessao] = await Promise.all([lerPainel(id, estado, hoje), exigirSessao()]);
   const semFonte = leitura.origem === "sem-fonte";
@@ -275,6 +278,7 @@ export async function TelaDePainel({
             : undefined
         }
         consulta={<Consulta rota={rota} estado={estado} leitura={leitura} />}
+        exportar={ehLista(idDaTela) && !semFonte ? enderecoDoCsv(idDaTela, parametros) : undefined}
         kpis={
           <FaixaDeKpis
             kpis={leitura.kpis.map((k) => ({

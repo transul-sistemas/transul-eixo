@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import { enderecoDoCsv } from "@/lib/navegacao/exportacao";
 import Link from "next/link";
 import { connection } from "next/server";
 import { Moeda } from "@/components/formato/moeda";
@@ -119,6 +120,7 @@ async function Conteudo({ parametros }: { parametros: URLSearchParams }) {
       lista
       titulo={titulo}
       descricao={descricao}
+      exportar={enderecoDoCsv("parceiros.lista", parametros)}
       acoes={
         podeCadastrar ? (
           <CadastrarParceiro agrupadores={dados.agrupadoresLivres} usuario={sessao.usuarioId} />

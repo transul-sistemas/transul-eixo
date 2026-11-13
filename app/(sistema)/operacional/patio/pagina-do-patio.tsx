@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import { enderecoDoCsv } from "@/lib/navegacao/exportacao";
 import { connection } from "next/server";
 import { hojeEmSaoPaulo } from "@/components/formato/data";
 import { formatarInteiro } from "@/components/formato/numero";
@@ -136,10 +137,15 @@ export async function PaginaDoPatio({ searchParams }: { searchParams: Parametros
     (await cookies()).get(NOME_DO_COOKIE_DO_TAMANHO)?.value,
     20,
   );
-  const estado = lerPatioDaUrl(paraParametros(await searchParams), tamLembrado);
+  const parametros = paraParametros(await searchParams);
+  const estado = lerPatioDaUrl(parametros, tamLembrado);
   const { titulo, descricao } = cabecalho();
   return (
-    <PaginaDeLeitura titulo={titulo} descricao={descricao}>
+    <PaginaDeLeitura
+      titulo={titulo}
+      descricao={descricao}
+      exportar={enderecoDoCsv("operacional.patio", parametros)}
+    >
       {modoDosDados() !== "banco" ? (
         <ListaVazia
           titulo="O Pátio lê só do banco"
