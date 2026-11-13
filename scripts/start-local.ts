@@ -136,7 +136,12 @@ function principal(): void {
     mkdirSync(destino, { recursive: true });
     const tar = join(projeto, ".claude", "worktrees", "start-local.tar");
     rodar("git", ["archive", "--format=tar", "-o", tar, ref]);
-    rodar("tar", ["-xf", tar, "-C", destino]);
+    // No Windows, o tar do Git Bash lê "C:" como máquina remota; usa o tar do sistema.
+    const tarDoSistema =
+      process.platform === "win32"
+        ? join(process.env.SystemRoot ?? "C:\\Windows", "System32", "tar.exe")
+        : "tar";
+    rodar(tarDoSistema, ["-xf", tar, "-C", destino]);
     rmSync(tar, { force: true });
     for (const proibido of [".env.local", "importacao"]) {
       rmSync(join(destino, proibido), { recursive: true, force: true });
