@@ -1,12 +1,13 @@
 import { connection } from "next/server";
 import { Suspense } from "react";
+import { formatarDuracao } from "@/components/formato/duracao";
 import { formatarInteiro } from "@/components/formato/numero";
 import { FaixaDeKpis } from "@/components/layout/faixa-de-kpis";
 import { PaginaDeLeitura } from "@/components/layout/pagina-de-leitura";
 import { metadataDaTela } from "@/components/navegacao/tela-em-breve";
 import { ListaVazia } from "@/components/tabela/estados";
 import { modoDosDados } from "@/lib/dados/fonte";
-import { lerPatio } from "@/lib/dados/operacional";
+import { lerKpisDoOperacional } from "@/lib/dados/operacional";
 import { acharTela } from "@/lib/navegacao/catalogo";
 import { RegistrarChegada } from "./registrar-chegada";
 
@@ -28,16 +29,16 @@ async function Conteudo() {
   );
 }
 
-/** A fila agora (contagens prontas do banco, as mesmas do Pátio), para quem está no totem. */
+/** A fila agora (KPIs prontos no banco, nucleo.kpis_do_operacional), para quem está no totem. */
 async function Indicadores() {
-  const { contagens: c } = await lerPatio({ filtro: "fila", pagina: 1, tam: 20 });
+  const k = await lerKpisDoOperacional();
   return (
     <div className="mb-4">
       <FaixaDeKpis
         kpis={[
-          { id: "fila", rotulo: "Na fila agora", valor: formatarInteiro(c.fila) },
-          { id: "dop", rotulo: "Chegaram ao pátio (DOp)", valor: formatarInteiro(c.DOp) },
-          { id: "carregando", rotulo: "Carregando", valor: formatarInteiro(c.CAr + c.CAn) },
+          { id: "fila", rotulo: "Na fila agora", valor: formatarInteiro(k.naFila) },
+          { id: "espera", rotulo: "Maior espera", valor: formatarDuracao(k.maiorEsperaMin) },
+          { id: "patio", rotulo: "No pátio", valor: formatarInteiro(k.noPatio) },
         ]}
       />
     </div>

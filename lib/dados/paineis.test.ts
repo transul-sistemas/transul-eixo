@@ -104,6 +104,65 @@ describe("leitura das telas de painel", () => {
     expect(l.tabela.linhas).toEqual([]);
   });
 
+  it("Comparativo lê nucleo.resultado_por_operacao só pelo mês e rearranja sem somar", async () => {
+    const cascata = {
+      receita: 1000,
+      receita_cte: 900,
+      receita_nfse: 100,
+      custo_frota: 500,
+      custo_servico: 200,
+      custo: 700,
+      resultado: 300,
+      margem_percentual: 30,
+    };
+    const c = cliente({
+      data: {
+        ve_resultado: true,
+        mes: "2026-10-01",
+        kpis: cascata,
+        operacoes: [
+          { ...cascata, operacao_id: "b", nome: "Operação B", peso_na_receita: 60 },
+          {
+            ...cascata,
+            resultado: -10,
+            margem_percentual: -1,
+            operacao_id: "a",
+            nome: "Operação A",
+            peso_na_receita: 40,
+          },
+        ],
+        visao_geral: { receita: 1000, custo: 700, resultado: 300 },
+        fora_das_operacoes: null,
+        custo_por_natureza: [],
+        outras_naturezas: null,
+      },
+      error: null,
+    });
+    const l = await lerPainel(
+      "operacoes.comparativo",
+      { ...ESTADO, mes: "2026-10", filtro: "negativa" },
+      HOJE,
+      c.fabrica,
+    );
+    expect(c.rpc).toHaveBeenCalledWith("resultado_por_operacao", { p_mes: "2026-10-01" });
+    expect(l.origem).toBe("banco");
+    expect(l.kpis.find((k) => k.id === "resultado")?.valor).toBe(30000);
+    expect(l.tabela.linhas.map((x) => x.id)).toEqual(["a"]);
+    expect(l.chips.map((x) => [x.id, x.contagem])).toEqual([
+      ["todos", 2],
+      ["positiva", 1],
+      ["negativa", 1],
+    ]);
+    expect(l.meses[0]).toBe("2026-10");
+  });
+
+  it("sem acesso a Resultados, o Comparativo não mostra número e diz por quê", async () => {
+    const c = cliente({ data: { ve_resultado: false, mes: "2026-10-01" }, error: null });
+    const l = await lerPainel("operacoes.comparativo", ESTADO, HOJE, c.fabrica);
+    expect(l.kpis).toEqual([]);
+    expect(l.avisos[0]).toMatch(/acesso a Resultados/);
+  });
+
   it("outro erro do banco não vira exemplo: sobe como erro de leitura", async () => {
     const falha = cliente({ data: null, error: { code: "42501", message: "permission denied" } });
     await expect(lerPainel("pessoas.documentos", ESTADO, HOJE, falha.fabrica)).rejects.toThrow(

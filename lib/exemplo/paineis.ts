@@ -1,5 +1,5 @@
 // Os dados de exemplo das telas de painel da Fase 1: fazem o papel das funções do banco que ainda não
-// existem (nucleo.comparativo_das_operacoes, nucleo.fechamentos_do_mes, ...), no MESMO formato que elas
+// existem (nucleo.resultado_por_operacao, nucleo.fechamentos_do_mes, ...), no MESMO formato que elas
 // devolverão (dinheiro em reais, como o banco guarda). Tudo fictício e determinístico. Só entra por
 // lib/dados/fonte-de-exemplo.ts, em desenvolvimento e testes.
 

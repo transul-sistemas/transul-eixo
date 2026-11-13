@@ -7,6 +7,11 @@ import {
 import type { EstadoDoPainel } from "@/lib/navegacao/painel";
 import { erroDaAcao, type ResultadoDaAcao, sucesso } from "@/lib/wizard/resultado";
 import { type ErroDoBanco, resultadoDoErro } from "./escrita-do-banco";
+import {
+  adaptarAbastecimentoProvisorio,
+  adaptarResultadoPorOperacao,
+  adaptarVariacaoDasOperacoes,
+} from "./paineis-adaptadores";
 import { gravarPainelPeloExemplo, lerPainelPeloExemplo, modoDosDados } from "./fonte";
 import type {
   FormatoDoValor,
@@ -29,8 +34,8 @@ export const FUNCOES_DOS_PAINEIS = {
   "inicio.resumo-do-dia": "resumo_do_dia",
   "parceiros.livro-do-acionista": "livro_do_acionista",
   "admin.auditoria": "eventos_de_auditoria",
-  "operacoes.comparativo": "comparativo_das_operacoes",
-  "operacoes.analise": "analise_das_operacoes",
+  "operacoes.comparativo": "resultado_por_operacao",
+  "operacoes.analise": "variacao_das_operacoes",
   "resultados.por-operacao": "resultado_por_operacao",
   "resultados.maturacao": "maturacao_da_divida",
   "resultados.fechamentos": "fechamentos_do_mes",
@@ -41,10 +46,35 @@ export const FUNCOES_DOS_PAINEIS = {
   "pessoas.diarias-e-premiacao": "diarias_e_premiacao",
   "pessoas.campanhas": "campanhas_das_pessoas",
   "pessoas.analise": "analise_das_pessoas",
-  "frota.abastecimento-provisorio": "abastecimentos_provisorios",
+  "frota.abastecimento-provisorio": "abastecimento_do_mes_v2",
 } as const;
 
 export type IdDoPainel = keyof typeof FUNCOES_DOS_PAINEIS;
+
+/**
+ * As telas cuja função do banco já existe com contrato próprio (n2-banco): o argumento é só o mês e o
+ * adaptador rearranja o JSON no formato da tela de painel. As demais seguem o contrato único.
+ */
+interface Adaptador {
+  argumentos: (estado: EstadoDoPainel, mes: string | null) => Record<string, unknown>;
+  adaptar: (dados: unknown, estado: EstadoDoPainel) => unknown;
+}
+const SO_O_MES = (_e: EstadoDoPainel, p_mes: string | null) => ({ p_mes });
+const ADAPTADORES: Partial<Record<IdDoPainel, Adaptador>> = {
+  "operacoes.comparativo": {
+    argumentos: SO_O_MES,
+    adaptar: (d, e) => adaptarResultadoPorOperacao(d, e, "comparativo"),
+  },
+  "resultados.por-operacao": {
+    argumentos: SO_O_MES,
+    adaptar: (d, e) => adaptarResultadoPorOperacao(d, e, "por-operacao"),
+  },
+  "operacoes.analise": { argumentos: SO_O_MES, adaptar: adaptarVariacaoDasOperacoes },
+  "frota.abastecimento-provisorio": {
+    argumentos: (_e, p_mes) => ({ p_mes, p_busca: null, p_ordem: "placa", p_pagina: 1, p_tam: 20 }),
+    adaptar: adaptarAbastecimentoProvisorio,
+  },
+};
 
 interface Resposta {
   data: unknown;
@@ -55,7 +85,38 @@ interface Resposta {
 export interface ClienteDosPaineis {
   schema(esquema: "nucleo"): {
     rpc(funcao: string, argumentos?: Record<string, unknown>): PromiseLike<Resposta>;
+    /** Só para achar o ativo vigente de uma placa (Lançar abastecimento). */
+    from?(tabela: "placa_do_ativo"): {
+      select(colunas: "ativo_id"): {
+        eq(
+          coluna: "placa",
+          valor: string,
+        ): {
+          is(
+            coluna: "excluido_em",
+            valor: null,
+          ): {
+            is(coluna: "fim", valor: null): { limit(n: 1): PromiseLike<Resposta> };
+          };
+        };
+      };
+    };
   };
+}
+
+/** O ativo vigente da placa, ou nulo (placa desconhecida ou fora do alcance de quem usa). */
+async function ativoDaPlaca(c: ClienteDosPaineis, placa: string): Promise<string | null> {
+  const consulta = c.schema("nucleo").from;
+  if (!consulta) return null;
+  const { data, error } = await consulta("placa_do_ativo")
+    .select("ativo_id")
+    .eq("placa", placa)
+    .is("excluido_em", null)
+    .is("fim", null)
+    .limit(1);
+  if (error) return null;
+  const linhas = (data as { ativo_id: string }[] | null) ?? [];
+  return linhas[0]?.ativo_id ?? null;
 }
 
 async function clienteDaSessao(): Promise<ClienteDosPaineis> {
@@ -214,20 +275,27 @@ export async function lerPainel(
     return normalizarLeitura(await lerPainelPeloExemplo(id, estado, hoje), "exemplo", funcao);
   }
   const c = await cliente();
-  const { data, error } = await c.schema("nucleo").rpc(funcao, {
-    p_mes: estado.mes ? `${estado.mes}-01` : null,
-    p_filtro: estado.filtro,
-    p_busca: estado.busca || null,
-    p_pagina: estado.pagina,
-    p_tam: estado.tam,
-  });
+  const adaptar = ADAPTADORES[id];
+  const p_mes = estado.mes ? `${estado.mes}-01` : null;
+  const { data, error } = await c.schema("nucleo").rpc(
+    funcao,
+    adaptar
+      ? adaptar.argumentos(estado, p_mes)
+      : {
+          p_mes,
+          p_filtro: estado.filtro,
+          p_busca: estado.busca || null,
+          p_pagina: estado.pagina,
+          p_tam: estado.tam,
+        },
+  );
   if (error) {
     if (classificarFalha(error).causa !== "funcao_ausente") throw falhaDeLeitura(funcao, error);
     // PONTO (N2): a função ainda não existe no banco; o exemplo cobre fora de produção.
     if (emProducao()) return semFonte(funcao, estado);
     return normalizarLeitura(await lerPainelPeloExemplo(id, estado, hoje), "exemplo", funcao);
   }
-  return normalizarLeitura(data, "banco", funcao);
+  return normalizarLeitura(adaptar ? adaptar.adaptar(data, estado) : data, "banco", funcao);
 }
 
 /** Grava o que o assistente do painel mandou (dados já validados pelo esquema). */
@@ -245,7 +313,19 @@ export async function gravarPeloPainel(
   };
   if (modoDosDados() === "exemplo") return peloExemplo();
   const c = await cliente();
-  const { data, error } = await c.schema("nucleo").rpc(funcao, argumentosDoBanco(id, dados, chave));
+  let entrada = dados;
+  if (id === "lancar-abastecimento") {
+    const ativoId = await ativoDaPlaca(c, String(dados.placa));
+    if (!ativoId) {
+      return erroDaAcao("entrada_invalida", {
+        campos: { placa: ["Não achamos esta placa na sua frota. Confira a placa."] },
+      });
+    }
+    entrada = { ...dados, ativoId };
+  }
+  const { data, error } = await c
+    .schema("nucleo")
+    .rpc(funcao, argumentosDoBanco(id, entrada, chave));
   if (error) {
     if (classificarFalha(error).causa !== "funcao_ausente") return resultadoDoErro<unknown>(error);
     // PONTO (N2): a função de gravar ainda não existe no banco.

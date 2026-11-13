@@ -352,12 +352,15 @@ export function argumentosDoBanco(
         p_chave: chave,
       };
     case "lancar-abastecimento":
+      // O banco recebe o ativo (a leitura da placa → ativo é feita antes, em lib/dados/paineis.ts).
       return {
-        p_placa: dados.placa,
+        p_ativo_id: dados.ativoId,
         p_dia: dados.dia,
         p_litros: dados.litros,
-        p_hodometro: dados.hodometro,
         p_valor: reais(dados.valorCentavos),
+        p_km: dados.hodometro,
+        p_combustivel: null,
+        p_posto: null,
         p_chave: chave,
       };
   }

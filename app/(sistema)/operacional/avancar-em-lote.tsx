@@ -16,8 +16,8 @@ import { errosDoResolvedor } from "../frota/placas/assistentes/erros-do-resolved
 import { avancarEmLoteAcao, type ResultadoDoLote } from "./acoes";
 
 // Ação em lote do Pátio e das Ordens (popup): escolher as placas DESTA PÁGINA que a situação permite,
-// conferir e gravar. Cada placa é um pedido independente; o resultado diz "X de Y" e o motivo de cada
-// recusa, numa faixa que fica na tela depois de fechar.
+// conferir e gravar. O lote é tudo ou nada (nucleo.avancar_no_patio_em_lote); o resultado diz "X de Y" e
+// o motivo de cada recusa, numa faixa que fica na tela depois de fechar.
 
 export interface PlacaDoLote {
   ativoId: string;
@@ -134,7 +134,7 @@ export function AvancarEmLote({ acao, placas }: { acao: AcaoEmLote; placas: Plac
           ]}
           efeitos={() => [
             EFEITOS[acao],
-            "Cada placa grava sozinha: se uma for recusada, as outras seguem e a tela diz qual e por quê.",
+            "Tudo ou nada: se uma placa for recusada, nenhuma avança; a tela diz qual e por quê, para tirá-la do lote.",
           ]}
           renderPasso={(_passo, form) => (
             <fieldset className="flex flex-col gap-2">
