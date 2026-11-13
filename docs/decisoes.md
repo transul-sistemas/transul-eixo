@@ -8,6 +8,18 @@ Modelo de entrada:
 
 ---
 
+## 13/11/2026 — Nível 2, tela (agente de tela, modo autônomo): hipóteses registradas
+
+Cada linha é uma hipótese escolhida pela forma mais simples, a revisar por Alexandre (branch `n2-tela`).
+
+- **Tela de painel genérica** (`components/paineis/`): as 15 telas que eram estrutura leem de **uma função do banco por tela** (`nucleo.<nome>`, lista em `lib/dados/paineis.ts`) que devolve KPIs, gráficos, chips com contagem e a página da tabela num formato único (`lib/dados/painel-tipos.ts`; dinheiro em reais, a tela converte para centavos). O agente de banco cria as funções nesse contrato.
+- **Sem a função no banco:** fora de produção a tela usa o exemplo (`lib/exemplo/paineis.ts`) com o aviso "Dados de exemplo"; em produção mostra "Sem dados ainda: depende de nucleo.<nome>" e o assistente diz que a gravação ainda não existe.
+- **Assistentes de painel** (Fechar mês, Reabrir mês, Pedir ajuste, Registrar status do dia, Indicar substituto, Lançar abastecimento) lidos de uma definição só (`lib/dominio/esquemas/paineis.ts`), mesmo Zod na tela e no servidor; Fechar e Reabrir pedem `resultados.editar`, Pedir ajuste `resultados.criar`.
+- **Status do dia e Indicar substituto** gravam pelas funções do A6 (`lancar_status_do_motorista`, `indicar_substituto`); o período do substituto é `[início, fim)` (o fim é o dia em que o titular volta) e o motivo é obrigatório. A lista da tela continua pelo exemplo até existir `nucleo.status_diario_das_pessoas`.
+- **Lote no Pátio e nas Ordens:** Aceitar placas, Concluir carregamentos e Liberar viagens, uma chamada por placa (`avancar_no_patio` com a parte da chave), seleção só da página, resultado "X de Y" com as recusas. Devolver ao gestor fica fora do lote (pede motivo por placa). Sem entrada no Ctrl+K (o teste de ações proíbe ações do módulo Operacional).
+- **Lançar abastecimento** grava hoje por placa em `lancar_abastecimento_provisorio`; a função do n2-banco (ainda vermelha) recebe o id do ativo e mais campos: ajustar os argumentos quando ela existir.
+- **Resumo do dia** passa a aparecer para Gestor de frota e Operacional (módulo Início). A `TelaDeEsqueleto` saiu por falta de uso.
+
 ## 13/11/2026 — Nível 2, banco (agente de banco, modo autônomo): hipóteses registradas
 
 Cada linha é uma hipótese escolhida pela forma mais simples, a revisar por Alexandre (branch `n2-banco`).
