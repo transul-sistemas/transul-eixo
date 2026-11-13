@@ -3,7 +3,7 @@
 -- concluído; abre a exceção (uma aberta por placa) quando a placa não tem CR vigente e FECHA a aberta
 -- quando passou a ter (nada se apaga: a exceção resolvida fica com a resolução). Idempotente: rodar
 -- duas vezes não muda as contagens; a mesma chave de envio devolve o mesmo resultado. Sempre com a
--- chave do usuário de cada perfil, nunca com a service_role.
+-- chave do usuário de cada perfil, nunca com a chave mestra.
 begin;
 \ir apoio/como_usuario.psql
 \ir apoio/transferencia.psql

@@ -62,5 +62,5 @@ comment on function nucleo.registrar_placa_aceita_sem_cr(uuid, uuid) is
   'Meu dia: depois de aceitar a placa, abre a exceção placa_sem_cr se ela não tem CR vigente (uma aberta por placa) e fecha a aberta se passou a ter. Só o gestor de destino do pedido concluído; idempotente.';
 
 insert into config.funcao_executavel (assinatura, justificativa) values
-  ('nucleo.registrar_placa_aceita_sem_cr(uuid,uuid)', 'Meu dia, Receber placas: a placa aceita sem CR vigente vira exceção na fila (e fecha quando ganha CR). Security definer: o gestor não escreve na fila; confere por dentro que é o gestor de destino do pedido concluído e tem chave de envio.');
+  ('nucleo.registrar_placa_aceita_sem_cr(uuid,uuid)', 'Meu dia, Receber placas: a placa aceita sem CR vigente vira exceção na fila (e fecha quando ganha CR). Roda com os direitos do dono porque o gestor não escreve na fila; confere por dentro que é o gestor de destino do pedido concluído e tem chave de envio.');
 grant execute on function nucleo.registrar_placa_aceita_sem_cr(uuid, uuid) to authenticated;
