@@ -8,6 +8,11 @@ import type { ClienteDeEscrita } from "@/lib/dados/escrita-do-banco";
 import { bancoEmDemonstracao } from "@/lib/dados/faixa-da-demonstracao";
 import { fonteDeEscrita, modoDosDados } from "@/lib/dados/fonte";
 import { lerPedidosAbertosDoMeuDia, lerPedidosDoMeuDia } from "@/lib/dados/meu-dia";
+import {
+  lerPortaDaPosicao,
+  lerPosicoesDoDia,
+  type PosicoesDoDia,
+} from "@/lib/dados/posicao-do-dia";
 import { lerTarefas } from "@/lib/dados/tarefas";
 import { podeDecidirNoLote } from "@/lib/dominio/meu-dia";
 import { montarTarefas, type Tarefa } from "@/lib/dominio/tarefas";
@@ -49,6 +54,26 @@ async function outrasTarefas(): Promise<{ tarefas: Tarefa[]; indisponivel: boole
   }
 }
 
+/**
+ * A Posição do dia (M2), a porta obrigatória do gestor: só no banco, só para quem decide, e só quando o
+ * banco diz que a porta abre hoje (nucleo.porta_da_posicao). Falha vira aviso, nunca queda.
+ */
+async function posicaoDoDia(
+  decide: boolean,
+): Promise<{ posicoes: PosicoesDoDia | null; indisponivel: boolean }> {
+  if (!decide || modoDosDados() !== "banco") return { posicoes: null, indisponivel: false };
+  try {
+    const { criarClienteDoServidor } = await import("@/lib/supabase/servidor");
+    const cliente = (await criarClienteDoServidor()) as unknown as ClienteDeEscrita;
+    const porta = await lerPortaDaPosicao(cliente);
+    if (!porta.abrir) return { posicoes: null, indisponivel: false };
+    return { posicoes: await lerPosicoesDoDia(cliente, porta.dia), indisponivel: false };
+  } catch (erro) {
+    console.error("meu dia: posição do dia indisponível:", textoDoErro(erro));
+    return { posicoes: null, indisponivel: true };
+  }
+}
+
 export async function PaginaDoMeuDia() {
   await connection();
   const { perfil, usuarioId } = await exigirSessao();
@@ -69,7 +94,7 @@ export async function PaginaDoMeuDia() {
   } catch {
     gestorId = null; // login sem pessoa ligada: não tem carteira, então nada a receber
   }
-  const [linhas, outras] = await Promise.all([
+  const [linhas, outras, posicao] = await Promise.all([
     gestorId === null && !somenteLeitura
       ? Promise.resolve([])
       : fonteDeEscrita(hoje).then((fonte) =>
@@ -87,6 +112,7 @@ export async function PaginaDoMeuDia() {
           ),
         ),
     outrasTarefas(),
+    posicaoDoDia(!somenteLeitura && gestorId !== null),
   ]);
 
   return (
@@ -110,6 +136,8 @@ export async function PaginaDoMeuDia() {
           somenteLeitura={somenteLeitura}
           outras={outras.tarefas}
           outrasIndisponiveis={outras.indisponivel}
+          posicao={posicao.posicoes}
+          posicaoIndisponivel={posicao.indisponivel}
         />
       </ProvedorDoUsuario>
     </PaginaDeLeitura>

@@ -52,7 +52,7 @@ plausível** (distância por estrada) e **gera a fonte principal da rota**. Uma 
 
 ## Rota e estado
 
-Popup obrigatório do Meu dia (passo 2 de 3), sem rota própria. Gestor de frota. Esqueleto até a fatia **M2**.
+Popup obrigatório do Meu dia (passo 2 de 3), sem rota própria. Gestor de frota. **Construída (Fase 1, n1-tela, 13/11/2026)**: `app/(sistema)/inicio/meu-dia/porta-da-posicao.tsx`; cada resposta grava na hora (o rascunho é o banco); a situação do dia vai junto, sem edição na linha (hipótese).
 
 ## Checklist de fidelidade
 
