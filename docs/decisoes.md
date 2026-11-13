@@ -29,6 +29,12 @@ Cada linha é uma hipótese escolhida pela forma mais simples, a revisar por Ale
 - **A6, quem grava:** Pessoas › editar (escopo tudo) ou o gestor da carteira do conjunto (status do dia com Frota › criar; vínculo e substituição com Frota › editar). **Quem lê as tabelas:** só Pessoas › ver em escopo tudo (o Operacional de filial não lê); o gestor lê pelas funções recortadas (nome e código).
 - **A6, FRD = feriado** (nome a confirmar); os totais do mês agrupam trabalho (TBV, TBE, TBX), folga, férias, atestado, feriado e falta.
 - **A6, Indicar substituto** não cria escala do substituto: a substituição é o registro; a tarefa é a leitura `nucleo.ferias_sem_substituto()` (férias FE na escala do titular nos próximos `dias_para_indicar_substituto` = 10 dias) e não entra em `tarefas_do_usuario`. Encerrar na data do início cancela (exclusão lógica com motivo).
+- **Abastecimento provisório:** lança o gestor da carteira (Frota › criar); confere quem tem Frota › editar na placa; "conferido" exige o id de origem do Sankhya da mesma placa (um por origem); a leitura v2 é a v1 intacta mais os provisórios à parte.
+- **Operacional:** KPIs numa função só (`kpis_do_operacional`); o lote do pátio é tudo ou nada, como o Lançar o dia em lote.
+- **Operações:** a ficha já tinha todas as abas e a receita em duas linhas; a aba Documentos segue sem fonte (contratos). Comparativo e Resultados › Por operação usam a MESMA leitura (`resultado_por_operacao`), com "fora das operações" explícito para bater com a Visão geral.
+- **Fechar o mês:** só a Diretoria; só depois do corte do mês seguinte, pelo calendário (`ultimo_mes_que_pode_fechar`); a conferência de exceções vencidas e do total (I2) fica para a P3. A demonstração não fecha mês (congelaria um mês real).
+- **Ajuste:** pede quem tem Resultados › criar, de qualquer mês até o atual (não só do mês fechado); decide só a Diretoria e quem pede não decide; o aprovado não entra na Visão geral nem na foto nesta versão.
+- **Maturação:** base `dt_competencia` (o staging não traz DTNEG nem a origem da renegociação); "pago" é o valor líquido dos baixados; período em `config.parametro` (01/05/2025 a 31/05/2026).
 ## 13/11/2026 — Nível 1, banco (agente de banco, modo autônomo): hipóteses registradas
 
 Cada linha é uma hipótese escolhida pela forma mais simples, a revisar por Alexandre (branch `n1-banco`).

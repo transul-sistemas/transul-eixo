@@ -86,6 +86,23 @@ Quanto o conjunto (o cavalo e os implementos que ele puxa) deve render, em reais
 No código: `metaDoConjuntoCentavos` (dinheiro em centavos, positivo, ou vazio), definida no assistente Receber placa e aceita só quando a placa é um cavalo.
 
 
+## Nível 2 (13/11/2026): motorista, abastecimento provisório, Operacional e Resultados
+
+Hipóteses da primeira versão (docs/decisoes.md, "Nível 2, banco"); cada número sai de uma função só.
+
+| Termo | O que é |
+| --- | --- |
+| Totais do motorista no mês | Contagem, até hoje, dos dias com realizado por grupo do código: trabalhados (TBV, TBE, TBX), folgas (FOL), férias (FÉR), atestados (ATS), feriados (FRD), faltas (FLT) e sem lançamento (dia com motorista e sem realizado). `nucleo.motorista_do_conjunto_no_mes`. |
+| Férias sem substituto | Dia de férias (FE na escala) do titular do conjunto, de hoje a hoje + `dias_para_indicar_substituto` (10), sem substituição que cubra o dia. `nucleo.ferias_sem_substituto`. |
+| Abastecimento provisório | Lançado à mão; fica à parte e **não soma** nos litros e no valor do mês (o Sankhya é o fato) até ser conferido (casado com o abastecimento do Sankhya, e daí conta pelo fato) ou descartado. `nucleo.abastecimento_do_mes_v2`. |
+| Maior espera (pátio) | Minutos desde a chegada mais antiga ainda na fila do totem; vazio sem fila. `nucleo.kpis_do_operacional`. |
+| Tempo médio no pátio | Média dos minutos desde a entrega ao Operacional das placas hoje no pátio. `nucleo.kpis_do_operacional`. |
+| Resultado por operação | Receita (CT-e + NFS-e) − custo da frota − custo do serviço da operação no mês (`nucleo.cascata_das_operacoes`); margem = resultado ÷ receita; peso na receita = receita da operação ÷ receita das operações. "Fora das operações" = Visão geral − operações. `nucleo.resultado_por_operacao`. |
+| Variação do resultado | Resultado do mês − resultado do mês anterior, por operação. `nucleo.variacao_das_operacoes`. |
+| Diferença contra o vivo | Resultado da Visão geral hoje − resultado da foto do último mês fechado. `nucleo.fechamentos_do_resultado`. |
+| Valor ajustado | Soma dos ajustes aprovados do mês (com sinal). Não entra na Visão geral nem na foto nesta versão. `nucleo.ajustes_do_resultado`. |
+| Maturação | Títulos de despesa do período (`maturacao_inicio` a `maturacao_fim`, base `dt_competencia`), sem provisão e sem invalidados: negociado = valor líquido; pago = valor líquido dos baixados; saldo = negociado − pago; quitado = pago ÷ negociado. `nucleo.maturacao_da_divida`. |
+
 ## Processos e vínculos com história
 
 Definições do desenho de 11/11/2026 (`docs/gerenciador-de-processos.md` e `docs/vinculos-com-historia.md`). Ainda não construído; nenhuma tela calcula isto do seu jeito.

@@ -219,7 +219,7 @@ select set_eq(
   'as políticas de cada tabela, com o nome de cada uma (todas testadas abaixo ou na matriz)'
 );
 -- Nível 2 (13/11/2026): as políticas dos esquemas dos módulos, com o nome de cada uma. Cada uma é testada com o
--- usuário de cada perfil no arquivo do módulo (operacional: 91 e 92; parceiros: 99; pessoas: 98 e 119).
+-- usuário de cada perfil no arquivo do módulo (operacional: 91 e 92; parceiros: 99; pessoas: 98 e 119; financeiro: 123).
 select set_eq(
   $$select schemaname || '.' || tablename || '.' || policyname from pg_policies
      where schemaname in ('operacional', 'parceiros', 'pessoas', 'financeiro')$$,
@@ -230,7 +230,9 @@ select set_eq(
     'pessoas.funcao.funcao_ler', 'pessoas.vinculo.vinculo_ler', 'pessoas.marcacao_da_escala.marcacao_da_escala_ler',
     -- A6 (119-motorista-do-conjunto.test.sql)
     'pessoas.codigo_do_motorista.codigo_do_motorista_ler', 'pessoas.motorista_do_conjunto.motorista_do_conjunto_ler',
-    'pessoas.status_do_motorista.status_do_motorista_ler', 'pessoas.substituicao_do_motorista.substituicao_do_motorista_ler'
+    'pessoas.status_do_motorista.status_do_motorista_ler', 'pessoas.substituicao_do_motorista.substituicao_do_motorista_ler',
+    -- Fechamento e ajuste (123-fechamento-ajuste-e-maturacao.test.sql)
+    'financeiro.fechamento_do_mes.fechamento_do_mes_ler', 'financeiro.ajuste.ajuste_ler'
   ],
   'as políticas dos esquemas dos módulos (operacional, parceiros, pessoas, financeiro), com o nome de cada uma'
 );
