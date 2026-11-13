@@ -14,6 +14,7 @@ import { formatarInteiro } from "@/components/formato/numero";
 import { FaixaDeLegenda } from "@/components/legenda/faixa-de-legenda";
 import { estiloDoTom } from "@/components/legenda/tom";
 import { Placa } from "@/components/placa";
+import { type AbaDoDetalhe, SemDadosAinda } from "@/components/tabela/abas-do-detalhe";
 import { BotaoDoOlho, type DetalheDoItem } from "@/components/tabela/botao-do-olho";
 import type {
   AlvoDoLancamento,
@@ -283,7 +284,69 @@ function periodoDoEngate(i: ImplementoDoConjunto): string {
   return rotuloDoPeriodoDoEngate(i.engatadoDe, i.engatadoAte, formatarData);
 }
 
-function OlhoDaLinha({ placa, detalhes }: { placa: string; detalhes: DetalheDoItem[] }) {
+/**
+ * As abas da barra lateral (A3, protótipos 4 e 7): Financeiro, Motorista, Combustível e Rota do mês. Só
+ * leitura. Enquanto as fontes não chegam, cada aba diz de que depende (nunca R$ 0,00 nem "Crítico").
+ */
+function abasDaBarraLateral(colunas: DiaDaColuna[]): AbaDoDetalhe[] {
+  const hoje = colunas.findIndex((c) => c.hoje);
+  const emCurso = hoje >= 0;
+  const selo = emCurso ? (
+    <p className="bg-status-patio-suave w-fit rounded-full px-2 py-0.5 text-xs font-medium">
+      Mês em curso · dia {formatarInteiro(hoje + 1)} de {formatarInteiro(colunas.length)}
+    </p>
+  ) : null;
+  return [
+    {
+      id: "financeiro",
+      rotulo: "Financeiro",
+      conteudo: (
+        <div className="flex flex-col gap-3">
+          {selo}
+          <SemDadosAinda fonte="da ponte do Sankhya (receita e despesa)">
+            <p>
+              O ritmo compara o realizado com o esperado até hoje, não com a meta do mês inteiro.
+              Nenhum valor é estimado.
+            </p>
+          </SemDadosAinda>
+        </div>
+      ),
+    },
+    {
+      id: "motorista",
+      rotulo: "Motorista",
+      conteudo: <SemDadosAinda fonte="do cadastro de Pessoas e da escala do motorista" />,
+    },
+    {
+      id: "combustivel",
+      rotulo: "Combustível",
+      conteudo: (
+        <SemDadosAinda fonte="do Abastecimento (litros e km)">
+          <p>O custo do combustível vem sempre do Sankhya e nunca se soma ao abastecimento.</p>
+        </SemDadosAinda>
+      ),
+    },
+    {
+      id: "rota",
+      rotulo: "Rota do mês",
+      conteudo: (
+        <SemDadosAinda fonte="de posição do veículo">
+          <p>A rota não é inventada.</p>
+        </SemDadosAinda>
+      ),
+    },
+  ];
+}
+
+function OlhoDaLinha({
+  placa,
+  detalhes,
+  colunas,
+}: {
+  placa: string;
+  detalhes: DetalheDoItem[];
+  colunas: DiaDaColuna[];
+}) {
   return (
     <div role="gridcell" className="flex items-center justify-center">
       <BotaoDoOlho
@@ -291,6 +354,7 @@ function OlhoDaLinha({ placa, detalhes }: { placa: string; detalhes: DetalheDoIt
         detalhes={detalhes}
         hrefDaFicha={`/frota/placas/${placa}`}
         titulo={<Placa placa={placa} tamanho="m" />}
+        abas={abasDaBarraLateral(colunas)}
       />
     </div>
   );
@@ -448,7 +512,7 @@ function LinhaDoConjunto({
           <div key={c.dia} role="gridcell" />
         );
       })}
-      <OlhoDaLinha placa={conjunto.placa} detalhes={detalhes} />
+      <OlhoDaLinha placa={conjunto.placa} detalhes={detalhes} colunas={colunas} />
     </div>
   );
 }
@@ -521,6 +585,7 @@ function LinhaDaSolta({
       })}
       <OlhoDaLinha
         placa={placa.placa}
+        colunas={colunas}
         detalhes={[
           { rotulo: "Tipo", valor: NOMES_DOS_TIPOS[placa.tipo] },
           { rotulo: "Modelo", valor: textoDoModelo(placa.modelo, placa.ano) },
