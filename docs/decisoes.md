@@ -1812,3 +1812,7 @@ Registro de direção, só em texto: nenhum código nem migration. Não muda a f
 - **Nomes dos backups** (mapa em `C:\Backups\eixo\LEIA-ME.txt`; arquivo nunca é movido nem renomeado): `real-com-staging` (10/11, 928 placas, sem demo, 48 migrations), `real-com-demo-antiga` (12/11, com as 50 ZDM antigas, 56 migrations), `demo-antiga` (10/11) e `demo-nova` (12/11, cenários novos e parâmetro da faixa).
 - **Atenção:** o backup de `real-com-staging` tem 48 migrations; depois de restaurá-lo, reaplique as novas com `supabase migration up --local`.
 
+
+## 13/11/2026 — "status" responde o painel de estado (decisão)
+
+- **Regra.** Quando Alexandre escrever apenas "status", a resposta segue o formato curto de sete blocos (rodando agora, pronto para ver, fila, decisões dele, bloqueios e riscos, pendências dele, telas) e atualiza `painel/ESTADO.md` (pasta fora do Git).

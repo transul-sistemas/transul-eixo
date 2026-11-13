@@ -43,3 +43,6 @@ importacao/*
 Thumbs.db
 
 # Entram no versionamento (não ignorar): .agents/, .claude/skills/, skills-lock.json
+
+# Painel de estado (local, fora do Git)
+painel/
