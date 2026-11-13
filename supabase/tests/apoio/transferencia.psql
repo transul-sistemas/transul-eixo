@@ -1,0 +1,71 @@
+-- Auxiliares só dos testes pgTAP de transferência (Meu dia). Cada teste os inclui com
+-- `\ir apoio/transferencia.psql` depois de `\ir apoio/como_usuario.psql`. Tudo vive em pg_temp e some
+-- no `rollback`. Extensão `.psql` de propósito: o `supabase test db` só roda arquivos `.sql`.
+
+create function pg_temp.id(p_nome text) returns uuid language sql as $$
+  select nullif(current_setting('t.' || lower(regexp_replace(p_nome, '[^A-Za-z0-9]', '_', 'g')), true), '')::uuid
+$$;
+create function pg_temp.guardar(p_nome text, p_id uuid) returns uuid language sql as $$
+  select set_config('t.' || lower(regexp_replace(p_nome, '[^A-Za-z0-9]', '_', 'g')), p_id::text, true)::uuid
+$$;
+create function pg_temp.renavam(p_n bigint) returns text language plpgsql as $$
+declare
+  v_prefixo text := lpad(p_n::text, 10, '0');
+begin
+  for v_dv in 0..9 loop
+    if nucleo.renavam_valido(v_prefixo || v_dv::text) then
+      return v_prefixo || v_dv::text;
+    end if;
+  end loop;
+  raise exception 'sem dígito verificador para %', v_prefixo;
+end;
+$$;
+create function pg_temp.cpf(p_n bigint) returns text language plpgsql as $$
+declare
+  v_base text := lpad(p_n::text, 9, '0');
+begin
+  for v_a in 0..9 loop
+    for v_b in 0..9 loop
+      if nucleo.documento_valido(v_base || v_a::text || v_b::text) then
+        return v_base || v_a::text || v_b::text;
+      end if;
+    end loop;
+  end loop;
+  raise exception 'sem CPF para %', v_base;
+end;
+$$;
+create function pg_temp.pessoa(p_nome text, p_n bigint, p_perfil text, p_gestor boolean) returns uuid language plpgsql as $$
+declare
+  v_pessoa uuid;
+  v_auth uuid;
+begin
+  insert into nucleo.pessoa (nome) values (p_nome) returning id into v_pessoa;
+  insert into nucleo.pessoa_documento (pessoa_id, documento) values (v_pessoa, pg_temp.cpf(p_n));
+  if p_gestor then
+    insert into nucleo.papel_da_pessoa (pessoa_id, papel) values (v_pessoa, 'gestor_de_frota');
+  end if;
+  if p_perfil is not null then
+    v_auth := tests.criar_usuario(lower(replace(p_nome, ' ', '.')) || '@exemplo.local');
+    insert into nucleo.usuario (pessoa_id, auth_user_id, perfil) values (v_pessoa, v_auth, p_perfil);
+    perform pg_temp.guardar('auth_' || p_nome, v_auth);
+  end if;
+  return pg_temp.guardar(p_nome, v_pessoa);
+end;
+$$;
+create function pg_temp.disparar() returns void language plpgsql as $$
+begin
+  set constraints all immediate;
+  set constraints all deferred;
+end;
+$$;
+-- Roda a tentativa num bloco que é sempre desfeito e devolve o SQLSTATE do erro, ou 'executou' se ela passou.
+create function pg_temp.erro_de(p_sql text) returns text language plpgsql as $$
+begin
+  begin
+    execute p_sql;
+    raise exception 'a tentativa executou' using errcode = 'ZZ999';
+  exception when others then
+    return case when sqlstate = 'ZZ999' then 'executou' else sqlstate end;
+  end;
+end;
+$$;

@@ -1,6 +1,7 @@
 import { connection } from "next/server";
 import { hojeEmSaoPaulo } from "@/components/formato/data";
 import { SinalDeHidratacao } from "@/components/tabela/sinal-de-hidratacao";
+import { bancoEmDemonstracao } from "@/lib/dados/faixa-da-demonstracao";
 import { exigirSessao } from "@/lib/seguranca/sessao-do-servidor";
 import { TopoLigado } from "./topo";
 
@@ -10,10 +11,16 @@ import { TopoLigado } from "./topo";
  */
 export async function TopoDoSistema() {
   await connection();
-  const { perfil, usuarioId } = await exigirSessao();
+  const [{ perfil, usuarioId }, emDemonstracao] = await Promise.all([
+    exigirSessao(),
+    bancoEmDemonstracao(),
+  ]);
   return (
     <>
-      <TopoLigado hoje={hojeEmSaoPaulo(new Date())} perfil={perfil} usuario={usuarioId} />
+      <TopoLigado hoje={hojeEmSaoPaulo(new Date())} perfil={perfil}
+        emDemonstracao={emDemonstracao}
+        usuario={usuarioId}
+      />
       <SinalDeHidratacao regiao="topo" />
     </>
   );

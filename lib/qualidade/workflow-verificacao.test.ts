@@ -308,15 +308,10 @@ describe("workflow de verificação: jobs só do pull request (capturas e modo b
     expect(envio).toContain("retention-days: 7");
   });
 
-  it("o modo banco roda as mutações do SQL por último (elas recriam o banco)", () => {
-    const passos = passosDe(texto, "modo-banco");
-    const indice = (trecho: string) => passos.findIndex((p) => p.includes(trecho));
-    expect(indice("node scripts/ci/mutacoes-sql.mjs")).toBeGreaterThan(
-      indice("run: pnpm test:e2e-banco"),
-    );
-    expect(passoCom("modo-banco", "node scripts/ci/mutacoes-sql.mjs")).toMatch(
-      /if: (\$\{\{ )?(always|!cancelled)\(\)/,
-    );
+  it("as mutações do SQL rodam na rodada noturna, não a cada push (decisão de 12/11/2026)", () => {
+    expect(noturno).toContain("node scripts/ci/mutacoes-sql.mjs");
+    expect(noturno).toContain("mutacoes-sql:");
+    expect(passosDe(texto, "modo-banco").join(" ")).not.toContain("mutacoes-sql.mjs");
   });
 
   // A chave mestra fora de workers/ já é barrada para o repositório inteiro (lib/qualidade/armadilhas).

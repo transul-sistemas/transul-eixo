@@ -4,7 +4,9 @@ import {
   PERFIS_QUE_VEEM_EM_BREVE,
   PERFIS_QUE_VEEM_ESQUELETO,
   type Perfil,
+  TELAS_EM_TESTE_NA_DEMONSTRACAO,
   TELAS_POR_PERFIL,
+  TELAS_SO_DO_ADMINISTRADOR,
 } from "./perfis";
 
 export function temOModulo(perfil: Perfil, modulo: IdDoModulo): boolean {
@@ -13,9 +15,22 @@ export function temOModulo(perfil: Perfil, modulo: IdDoModulo): boolean {
 }
 
 /** A tela não está fora do recorte do perfil no módulo (TELAS_POR_PERFIL). */
-export function telaLiberada(perfil: Perfil, tela: Pick<Tela, "id" | "permissao">): boolean {
+export function telaLiberada(
+  perfil: Perfil,
+  tela: Pick<Tela, "id" | "permissao">,
+  emDemonstracao = false,
+): boolean {
+  if (perfil !== "Administrador" && TELAS_SO_DO_ADMINISTRADOR.includes(tela.id)) {
+    // Tela em teste: com o banco em demonstração, os perfis listados também a veem.
+    if (!emDemonstracao || !TELAS_EM_TESTE_NA_DEMONSTRACAO[tela.id]?.includes(perfil)) return false;
+  }
   const recorte = TELAS_POR_PERFIL[perfil]?.[tela.permissao.modulo];
   return recorte === undefined || recorte.includes(tela.id);
+}
+
+/** A rota é de uma tela em teste (a decisão depende do parâmetro banco_em_demonstracao). */
+export function ehTelaEmTeste(tela: Pick<Tela, "id"> | undefined): boolean {
+  return tela !== undefined && TELAS_SO_DO_ADMINISTRADOR.includes(tela.id);
 }
 
 export function veEmBreve(perfil: Perfil): boolean {
@@ -27,8 +42,9 @@ export function veEsqueleto(perfil: Perfil): boolean {
 }
 
 /** Pode abrir: tem o módulo e a tela está pronta (ou é esqueleto ou em breve, para quem acompanha a obra). */
-export function podeAbrir(perfil: Perfil, tela: Tela): boolean {
-  if (!temOModulo(perfil, tela.permissao.modulo) || !telaLiberada(perfil, tela)) return false;
+export function podeAbrir(perfil: Perfil, tela: Tela, emDemonstracao = false): boolean {
+  if (!temOModulo(perfil, tela.permissao.modulo) || !telaLiberada(perfil, tela, emDemonstracao))
+    return false;
   if (tela.estado === "pronto") return true;
   if (tela.estado === "esqueleto") return veEsqueleto(perfil);
   if (tela.estado === "em-breve") return veEmBreve(perfil);
@@ -36,12 +52,12 @@ export function podeAbrir(perfil: Perfil, tela: Tela): boolean {
 }
 
 /** Aparece no menu: o que se pode abrir mais a tela restrita, que aparece desabilitada. */
-function apareceNoMenu(perfil: Perfil, tela: Tela): boolean {
+function apareceNoMenu(perfil: Perfil, tela: Tela, emDemonstracao: boolean): boolean {
   return (
-    podeAbrir(perfil, tela) ||
+    podeAbrir(perfil, tela, emDemonstracao) ||
     (tela.estado === "restrito" &&
       temOModulo(perfil, tela.permissao.modulo) &&
-      telaLiberada(perfil, tela))
+      telaLiberada(perfil, tela, emDemonstracao))
   );
 }
 
@@ -49,9 +65,13 @@ function apareceNoMenu(perfil: Perfil, tela: Tela): boolean {
 export function modulosVisiveis(
   perfil: Perfil,
   catalogo: readonly ModuloDoCatalogo[] = CATALOGO,
+  emDemonstracao = false,
 ): readonly ModuloDoCatalogo[] {
   return catalogo
-    .map((modulo) => ({ ...modulo, telas: modulo.telas.filter((t) => apareceNoMenu(perfil, t)) }))
+    .map((modulo) => ({
+      ...modulo,
+      telas: modulo.telas.filter((t) => apareceNoMenu(perfil, t, emDemonstracao)),
+    }))
     .filter((modulo) => modulo.telas.length > 0);
 }
 
@@ -60,6 +80,9 @@ export function rotaInicialDoModulo(
   perfil: Perfil,
   modulo: IdDoModulo,
   catalogo: readonly ModuloDoCatalogo[] = CATALOGO,
+  emDemonstracao = false,
 ): string | undefined {
-  return catalogo.find((m) => m.id === modulo)?.telas.find((t) => podeAbrir(perfil, t))?.rota;
+  return catalogo
+    .find((m) => m.id === modulo)
+    ?.telas.find((t) => podeAbrir(perfil, t, emDemonstracao))?.rota;
 }

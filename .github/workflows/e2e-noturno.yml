@@ -88,3 +88,21 @@ jobs:
           name: playwright-report-noturno
           path: playwright-report/
           retention-days: 7
+
+  mutacoes-sql:
+    # As mutações nos guardas do SQL (cada uma tem de derrubar o pgTAP), tiradas do modo-banco a cada push em
+    # 12/11/2026: rodam toda noite e DEVEM estar verdes antes da carga na nuvem (docs/decisoes.md).
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec supabase start
+      - run: node scripts/ci/mutacoes-sql.mjs

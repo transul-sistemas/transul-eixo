@@ -19,6 +19,8 @@ import pg from "pg";
 import { enderecoDoBancoLocal } from "./banco-local.ts";
 import {
   CHAVE_DA_FAIXA_DEMO,
+  CIDADES_DA_DEMO,
+  posicaoDeOntem,
   NUMEROS_DOS_CENARIOS,
   codcencusDemo,
   planoDosPedidos,
@@ -957,6 +959,11 @@ export async function resumoDaDemo(c: pg.Client): Promise<ResumoDaDemo> {
      union all select 'movimento: correções tardias (lançadas mais de 7 dias depois do fato)', count(*)::text from nucleo.evento_de_status e where e.excluido_em is null and e.registrado_em - e.em > interval '7 days' and e.ativo_id in (select ativo_id from demo)
      union all select 'operações: placas da Operação Demo', count(*)::text from nucleo.placa_na_operacao pn join nucleo.operacao o on o.id = pn.operacao_id where o.nome = 'Operação Demo' and pn.fim is null and pn.excluido_em is null
      union all select 'operações: CRs de serviço da Operação Demo', count(*)::text from nucleo.cr_de_servico_na_operacao s join nucleo.operacao o on o.id = s.operacao_id where o.nome = 'Operação Demo' and s.excluido_em is null
+     union all select 'nível 1: posições de ontem', count(*)::text from nucleo.posicao_do_conjunto where excluido_em is null and ativo_id in (select ativo_id from demo)
+     union all select 'nível 1: trocas de CR registradas', count(*)::text from nucleo.troca_de_cr where ativo_id in (select ativo_id from demo)
+     union all select 'nível 1: pedidos de baixa abertos', count(*)::text from nucleo.pedido_de_baixa where situacao = 'pedida' and ativo_id in (select ativo_id from demo)
+     union all select 'nível 1: situações programadas', count(*)::text from nucleo.situacao_programada where situacao = 'programada' and ativo_id in (select ativo_id from demo)
+     union all select 'nível 1: cidades da demo', count(*)::text from config.cidade where nome like 'Cidade Demo %'
      union all select 'faixa: parâmetro ligado', count(*)::text from config.parametro where chave = '${CHAVE_DA_FAIXA_DEMO}'`,
     [`${PREFIXO_DA_PLACA_DEMO}%`],
   );
@@ -974,6 +981,136 @@ export async function resumoDaDemo(c: pg.Client): Promise<ResumoDaDemo> {
   );
   for (const r of porAssunto.rows) resumo[`fila da demo: ${r.assunto}`] = Number(r.n);
   return resumo;
+}
+
+/**
+ * Nível 1 (13/11/2026): os cenários das funções novas, só com placas ZDM, CRs DEMO-n, cidades "Cidade Demo" e
+ * o lançamento DEMO-. Posição do dia (as posições de ontem dos conjuntos do 2º gestor Demo, um sem sinal),
+ * Trocar CR (uma troca retroativa que muda a placa de operação), baixa pedida (para a Diretoria aprovar),
+ * lançamento sem CR conhecido (Saúde do CR) e uma situação programada para amanhã.
+ */
+export async function carregarCenariosDoNivel1(c: pg.Client, hoje: string): Promise<number> {
+  const gestores = await garantirGestoresDemo(c);
+  const operacoes = await operacoesDaFrota(c);
+  if (operacoes.length < 2) throw new ErroDoEixo("Faltam operações para os cenários do Nível 1.");
+  const n = NUMEROS_DOS_CENARIOS;
+  let novos = 0;
+
+  // Cidades fictícias (a tabela real vem da cópia da v1; nada aqui colide com ela: id e nome próprios).
+  for (const cidade of CIDADES_DA_DEMO) {
+    const r = await c.query(
+      `insert into config.cidade (id, nome, uf, latitude, longitude) values ($1, $2, $3, $4, $5) on conflict do nothing`,
+      [cidade.id, cidade.nome, cidade.uf, cidade.latitude, cidade.longitude],
+    );
+    novos += r.rowCount ?? 0;
+  }
+
+  // Trocar CR: a placa nasce no CR antigo (operação 0) e troca há 20 dias para um CR ligado à operação 1.
+  if (!(await ativoDaPlacaDemo(c, n.placaDaTrocaDeCr.placa))) {
+    const ativo = await cadastrarCavaloDemo(
+      c,
+      n.placaDaTrocaDeCr.placa,
+      await crDeFrotaDemo(c, n.placaDaTrocaDeCr.crAntigo),
+      operacoes[0]!,
+      gestores[1]!,
+      hora(somarDias(hoje, -90), "08:00"),
+    );
+    const novo = await crDeFrotaDemo(c, n.placaDaTrocaDeCr.crNovo);
+    await c.query(
+      `insert into nucleo.cr_de_servico_na_operacao (cr_id, operacao_id, inicio, inicio_origem)
+       select $1, $2, $3::timestamptz, 'informada'
+        where not exists (select 1 from nucleo.cr_de_servico_na_operacao where cr_id = $1 and excluido_em is null)`,
+      [novo, operacoes[1], hora(somarDias(hoje, -90), "08:00")],
+    );
+    const versao = await um<{ v: number }>(
+      c,
+      `select versao as v from nucleo.cr_do_ativo where ativo_id = $1 and fim is null and excluido_em is null`,
+      [ativo],
+    );
+    // Como o Administrador (Cadastros): a troca pela função atômica, com motivo e data retroativa.
+    await c.query(
+      `select nucleo.trocar_cr($1::uuid, $2::uuid, $3::timestamptz, 'Demo: ordem de serviço da outra operação', 'informada', $4::integer)`,
+      [ativo, novo, hora(somarDias(hoje, -20), "00:00"), versao.v],
+    );
+    novos++;
+  }
+
+  // Baixa pedida: o gestor Demo pediu a venda; a Diretoria aprova (quatro olhos). Gravada como o pedido grava.
+  if (!(await ativoDaPlacaDemo(c, n.placaDaBaixaPedida.placa))) {
+    const ativo = await cadastrarCavaloDemo(
+      c,
+      n.placaDaBaixaPedida.placa,
+      await crDeFrotaDemo(c, n.placaDaBaixaPedida.cr),
+      operacoes[0]!,
+      gestores[1]!,
+      hora(somarDias(hoje, -120), "08:00"),
+    );
+    await c.query(
+      `insert into nucleo.pedido_de_baixa (ativo_id, motivo, sigla, em, justificativa, pedido_por, pedido_em)
+       values ($1, 'venda', 'VND', $2::timestamptz, 'Demo: venda do cavalo (o contrato fica no documento)', $3, $4::timestamptz)`,
+      [ativo, hora(hoje, "00:00"), gestores[1], hora(somarDias(hoje, -2), "10:00")],
+    );
+    novos++;
+  }
+
+  // Posição de ontem dos conjuntos do 2º gestor Demo (a porta de hoje já traz "Continua em").
+  const ontem = somarDias(hoje, -1);
+  const conjuntos = (
+    await c.query<{ ativo_id: string }>(
+      `select g.ativo_id from nucleo.gestor_da_carteira g
+         join nucleo.ativo a on a.id = g.ativo_id and a.excluido_em is null and a.tipo in ('cavalo', 'caminhao')
+         join nucleo.placa_do_ativo p on p.ativo_id = a.id and p.fim is null and p.excluido_em is null
+        where g.gestor_id = $1 and g.fim is null and g.excluido_em is null and p.placa like $2
+          and not exists (select 1 from nucleo.baixa_do_ativo b where b.ativo_id = a.id and b.excluido_em is null)
+        order by p.placa, g.ativo_id`,
+      [gestores[1], `${PREFIXO_DA_PLACA_DEMO}%`],
+    )
+  ).rows;
+  for (const [i, k] of conjuntos.entries()) {
+    const p = posicaoDeOntem(i);
+    const r = await c.query(
+      `insert into nucleo.posicao_do_conjunto (ativo_id, dia, cidade_id, origem, sem_sinal, motivo, registrado_por)
+       select $1, $2::date, $3, 'gestor', $4, case when $4 then 'Demo: rastreador desligado' end, $5
+        where not exists (select 1 from nucleo.posicao_do_conjunto
+                           where ativo_id = $1 and dia = $2::date and origem = 'gestor' and excluido_em is null)`,
+      [k.ativo_id, ontem, p.cidadeId, p.semSinal, gestores[1]],
+    );
+    novos += r.rowCount ?? 0;
+    if (p.semSinal) {
+      await c.query(
+        `insert into nucleo.fila_de_excecoes (ativo_id, assunto, descricao)
+         values ($1, 'posicao_pendente', 'Conjunto sem sinal na Posição do dia (demonstração).')
+         on conflict (ativo_id, assunto) where resolvida_em is null and ativo_id is not null and assunto is not null do nothing`,
+        [k.ativo_id],
+      );
+    }
+  }
+
+  // Lançamento sem CR conhecido (Saúde do CR): sem competência, nunca entra em total algum.
+  const r = await c.query(
+    `insert into staging.despesa (origem_id, nufin, codcencus, dt_competencia, valor_liquido)
+     values ('DEMO-SEM-CR-1', 'DEMO-2', $1, null, 1.00), ('DEMO-SEM-CR-2', 'DEMO-3', $1, null, 2.00)
+     on conflict (origem_id) do nothing`,
+    [n.centroSemCr],
+  );
+  novos += r.rowCount ?? 0;
+
+  // Programado: o primeiro cavalo do 2º gestor fica em pátio amanhã (fora do realizado até confirmar).
+  if (conjuntos[0]) {
+    const jaTem = await um<{ n: string }>(
+      c,
+      `select count(*)::text as n from nucleo.situacao_programada where ativo_id = $1 and situacao = 'programada'`,
+      [conjuntos[0].ativo_id],
+    );
+    if (Number(jaTem.n) === 0) {
+      await c.query(`select nucleo.programar_situacao($1::uuid, $2::date, 'PÁT', '07:00')`, [
+        conjuntos[0].ativo_id,
+        somarDias(hoje, 1),
+      ]);
+      novos++;
+    }
+  }
+  return novos;
 }
 
 export async function carregarDemo(
@@ -994,6 +1131,8 @@ export async function carregarDemo(
   areas["vínculos com história"] = `${await carregarVinculosComHistoria(c, hoje)} placas novas`;
   areas["fila de exceções"] = `${await carregarExcecoes(c, hoje)} exceções novas`;
   areas["Operação Demo (sem lançamentos)"] = `${await carregarOperacaoDemo(c, hoje)} placas novas`;
+  areas["Nível 1: posição, troca de CR, baixa pedida, sem CR e programado"] =
+    `${await carregarCenariosDoNivel1(c, hoje)} itens novos`;
   await ligarFaixaDaDemo(c);
   areas["faixa de demonstração"] = "ligada";
   await c.query("set constraints all immediate");

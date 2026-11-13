@@ -301,7 +301,7 @@ jobs:
           if-no-files-found: warn
 
   modo-banco:
-    # Os ~200 ativos de desenvolvimento, o e2e pequeno do modo banco e as mutações do SQL (a medição
+    # Os ~200 ativos de desenvolvimento, o e2e pequeno do modo banco (as mutações do SQL rodam na rodada noturna; a medição
     # tem job próprio, o medicao). Sem pull request (commits direto na main, 05/11/2026), roda também
     # no push da main; não é verificação obrigatória (as obrigatórias continuam app e banco).
     if: github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
@@ -361,10 +361,8 @@ jobs:
           name: playwright-report-banco
           path: playwright-report/
           retention-days: 7
-      # Por último (recriam o banco): as mutações nos guardas do SQL; cada uma tem de derrubar o pgTAP.
-      - if: ${{ !cancelled() }}
-        run: node scripts/ci/mutacoes-sql.mjs
-
+      # As mutações nos guardas do SQL saíram deste job (12/11/2026): rodam na rodada noturna (e2e-noturno.yml)
+      # e antes da carga na nuvem (docs/decisoes.md). O pgTAP e o e2e seguem a cada push.
   medicao:
     # O diagnóstico da lista de placas num job curto (sem build nem navegador): 201, 1.000 e 5.000
     # ativos, com o banco recriado entre eles; sem limite de tempo nas consultas medidas. O relatório

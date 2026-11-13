@@ -30,3 +30,18 @@ export const TELAS_POR_PERFIL: Partial<
 > = {
   Operacional: { pessoas: ["pessoas.escala"] },
 };
+
+/**
+ * Telas em teste (indicador "Teste"): só o Administrador as vê no menu e no Ctrl+K e só ele as abre; para
+ * os demais perfis a rota responde como "não encontrada". Sai daqui quando a tela for liberada.
+ */
+export const TELAS_SO_DO_ADMINISTRADOR: readonly string[] = ["inicio.meu-dia"];
+
+/**
+ * Das telas em teste, as que outros perfis também veem enquanto o parâmetro `banco_em_demonstracao`
+ * estiver ligado (banco de demonstração, nunca o real). Desligado, só o Administrador as vê. O
+ * Administrador vê sempre.
+ */
+export const TELAS_EM_TESTE_NA_DEMONSTRACAO: Readonly<Record<string, readonly Perfil[]>> = {
+  "inicio.meu-dia": ["Gestor de frota"],
+};

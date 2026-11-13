@@ -43,8 +43,9 @@ export function montarMapa(
   perfil: Perfil,
   filtro: FiltroDoMapa = "todos",
   catalogo: readonly ModuloDoCatalogo[] = CATALOGO,
+  emDemonstracao = false,
 ): MapaDoSistema {
-  const visiveis = modulosVisiveis(perfil, catalogo);
+  const visiveis = modulosVisiveis(perfil, catalogo, emDemonstracao);
   const contagem: Record<FiltroDoMapa, number> = {
     todos: 0,
     pronto: 0,

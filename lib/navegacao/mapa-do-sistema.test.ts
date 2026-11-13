@@ -3,11 +3,13 @@ import { CATALOGO, todasAsTelas } from "./catalogo";
 import { lerFiltroDoMapa, montarMapa } from "./mapa-do-sistema";
 
 describe("mapa do sistema", () => {
-  it("o Administrador e a Diretoria veem os 9 módulos e todas as telas do catálogo", () => {
+  it("o Administrador e a Diretoria veem os 9 módulos; o Administrador, todas as telas; a Diretoria, sem a tela em teste", () => {
     for (const perfil of ["Administrador", "Diretoria"] as const) {
       const mapa = montarMapa(perfil);
       expect(mapa.modulos.map((m) => m.modulo.id)).toEqual(CATALOGO.map((m) => m.id));
-      expect(mapa.contagem.todos).toBe(todasAsTelas().length);
+      expect(mapa.contagem.todos).toBe(
+        todasAsTelas().length - (perfil === "Administrador" ? 0 : 1),
+      );
       expect(mapa.contagem.pronto + mapa.contagem.esqueleto).toBe(mapa.contagem.todos);
     }
   });

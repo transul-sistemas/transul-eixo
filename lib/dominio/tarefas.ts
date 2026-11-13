@@ -33,6 +33,11 @@ const ASSUNTOS: Record<string, { nome: string; um: string; varios: string }> = {
     um: "placa com dois CRs do mesmo tipo",
     varios: "placas com dois CRs do mesmo tipo",
   },
+  placa_sem_cr: {
+    nome: "Placa sem CR",
+    um: "placa aceita sem CR vigente",
+    varios: "placas aceitas sem CR vigente",
+  },
   pessoa_sem_documento: {
     nome: "Pessoa sem documento",
     um: "pessoa sem documento",

@@ -373,4 +373,23 @@ export const NUMEROS_DOS_CENARIOS = {
   operacaoDemo: { placaInicial: 61, placas: 8, crsDeServico: [161, 162] },
   crDeServicoSemOperacao: 163,
   crQueDivergeDaUnidade: 164,
+  // Nível 1 (13/11/2026): Trocar CR, baixa com quatro olhos e lançamento sem CR conhecido.
+  placaDaTrocaDeCr: { placa: 70, crAntigo: 70, crNovo: 170 },
+  placaDaBaixaPedida: { placa: 71, cr: 71 },
+  centroSemCr: "9909999",
 } as const;
+
+/** Cidades FICTÍCIAS da demonstração (ids acima de 9.900.000; a tabela real vem da cópia da v1). */
+export const CIDADES_DA_DEMO = [
+  { id: 9_900_001, nome: "Cidade Demo Norte", uf: "MA", latitude: -2.53, longitude: -44.3 },
+  { id: 9_900_002, nome: "Cidade Demo Porto", uf: "MA", latitude: -2.57, longitude: -44.37 },
+  { id: 9_900_003, nome: "Cidade Demo Serra", uf: "PA", latitude: -6.07, longitude: -49.9 },
+  { id: 9_900_004, nome: "Cidade Demo Sul", uf: "SP", latitude: -22.5, longitude: -47.4 },
+  { id: 9_900_005, nome: "Cidade Demo Sem Mapa", uf: "MA", latitude: null, longitude: null },
+] as const;
+
+/** A posição de ontem do i-ésimo conjunto do gestor Demo: uma cidade da demonstração, ou "sem sinal" (o 5º). */
+export function posicaoDeOntem(i: number): { cidadeId: number | null; semSinal: boolean } {
+  if (i % 5 === 4) return { cidadeId: null, semSinal: true };
+  return { cidadeId: CIDADES_DA_DEMO[i % 4]!.id, semSinal: false };
+}

@@ -8,6 +8,21 @@ Modelo de entrada:
 
 ---
 
+## 13/11/2026 — Nível 1, banco (agente de banco, modo autônomo): hipóteses registradas
+
+Cada linha é uma hipótese escolhida pela forma mais simples, a revisar por Alexandre (branch `n1-banco`).
+
+- **Líder da operação** = pessoa com vínculo vigente de função `lider` (`pessoas.vinculo`) numa operação dos conjuntos do gestor; só ele libera a Posição do dia (o Administrador não).
+- **Conjuntos da Posição do dia** = cavalos e caminhões não baixados da carteira vigente do gestor.
+- **Tabela de cidades** nasce vazia (`config.cidade`); a carga de `cidades_brasil` da cópia da v1 fica para um script local; a demonstração usa cidades fictícias "Cidade Demo".
+- **Distância improvável** = reta × 1,25 contra 900 km por dia (parâmetros); a rota por par de cidades (A4) substitui depois.
+- **Posição repetida** igual não grava linha nova; mudar a resposta exige a versão e exclui a anterior logicamente.
+- **Trocar CR** pode o gestor vigente ou quem tem Cadastros › editar no escopo tudo, menos a Diretoria (H6); com dois CRs do mesmo tipo vigentes, recusa e manda escolher o vigente antes.
+- **Operação do CR** = vínculo CR-operação vigente (agora para todo CR); sem vínculo, a do cadastro do CR (legado), sem preencher dados.
+- **Correção tardia** = troca com data anterior a hoje; mês fechado e impacto antes de gravar (C3/C4) ficam para quando houver fechamento e D0.
+- **Baixa por motivo, sem sigla nova:** venda e devolução gravam VND; sucata e sinistro, SUC; só a Diretoria aprova (quem pede não aprova); transferência em andamento e conjunto bloqueiam o pedido.
+- **Saúde do CR:** CR sem operação não conta o CR cuja placa vigente já tem operação; lançamento sem CR = centro do staging sem CR (sem D0); Classificar = criar o CR ou "sem destino"; Atribuir dono só pelo Administrador, em tabela própria (sem P1).
+- **Lançar o dia em lote:** tudo ou nada; com um recusado nada grava e a função devolve a lista com o motivo. **Programado** em tabela própria, confirmado à mão no dia (sem tarefa automática).
 ## 12/11/2026 — Critério (d) estendido a todo assistente do inventário
 
 - **Contexto:** o inventário `docs/assistentes-e-popups.md` (12/11/2026) lista 50 assistentes e popups, existentes e novos. O
@@ -1811,6 +1826,14 @@ Registro de direção, só em texto: nenhum código nem migration. Não muda a f
 - **`pnpm backup:conteudo -- <arquivo>`** informa só contagens do backup (placas reais, placas Demo, parâmetro `banco_em_demonstracao`, migrations), sem restaurar nada.
 - **Nomes dos backups** (mapa em `C:\Backups\eixo\LEIA-ME.txt`; arquivo nunca é movido nem renomeado): `real-com-staging` (10/11, 928 placas, sem demo, 48 migrations), `real-com-demo-antiga` (12/11, com as 50 ZDM antigas, 56 migrations), `demo-antiga` (10/11) e `demo-nova` (12/11, cenários novos e parâmetro da faixa).
 - **Atenção:** o backup de `real-com-staging` tem 48 migrations; depois de restaurá-lo, reaplique as novas com `supabase migration up --local`.
+
+## 12/11/2026 — Modo construção: branch integracao, prévia e CI das mutações (decisão)
+
+- **Branch `integracao`:** junta tudo que está em construção (A5, A1 e as próximas fatias), roda na prévia (porta 3000) e fica atualizada; a `main` só recebe código com o CI verde (o PR é a exceção para provar o código).
+- **Agentes:** até 2 juntos, um de banco (com banco descartável) e um de tela (só vitest, tsc e lint); o de tela só começa com mais de 3 GB livres e o descartável desligado; parar qualquer agente abaixo de 1,5 GB.
+- **CI:** `scripts/ci/mutacoes-sql.mjs` saiu do job `modo-banco` e roda na rodada noturna (`e2e-noturno.yml`, job `mutacoes-sql`) e deve estar verde antes da carga na nuvem; o pgTAP e o e2e seguem a cada push.
+- **Ordem:** A1 (ajustes), wizards em popup, Meu dia e receber em lote, Engatar e Desatrelar pela aba Soltas, Posição do dia (banco, em paralelo), Trocar CR e V0, Enviar placa, Confirmar carteira, Baixa e Saúde do CR.
+- **Respostas ao inventário:** botão "Enviar placa" (o nome técnico "disponibilizar" fica no código); lançamento manual de abastecimento SIM ("Lançar abastecimento", marcado provisório até a ponte do Sankhya); baixa não ganha sigla (o motivo fica no registro; a sigla final é VND ou SUC); passos de desenho que faltam entram quando a fatia for construída; Saúde do CR segue o quadro (a lista vira a aba "Todos os CRs"); na aba Soltas cada peça tem um chip só e a soma bate com o total; critério (d) confirmado; os 10 assistentes sem Ctrl+K entram na fatia S1.
 
 
 ## 13/11/2026 — Grade por conjunto: dias em lote (decisão)

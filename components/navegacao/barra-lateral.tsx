@@ -42,6 +42,8 @@ import { useTelaGrande } from "./tela-grande";
 
 export interface PropsDaBarra {
   perfil: Perfil;
+  /** O banco está em demonstração: as telas em teste liberadas ao perfil aparecem. */
+  emDemonstracao?: boolean;
   /** Quem usa a barra: a memória (grupos abertos, fixados, modo compacto) é de cada pessoa. */
   usuario: string;
   /** Contador por id de tela. O da tela sobe, somado, para o grupo do módulo. */
@@ -142,6 +144,14 @@ function ItemDaTela({
           Estrutura
         </span>
       ) : null}
+      {tela.selo ? (
+        <span
+          title="Tela em teste: só o Administrador a vê"
+          className="text-muted-foreground border-border rounded border px-1 text-[0.6875rem] leading-4"
+        >
+          {tela.selo}
+        </span>
+      ) : null}
       {quantidade ? <Contador id={tela.id} quantidade={quantidade} rotulo={tela.contador} /> : null}
     </>
   );
@@ -202,6 +212,7 @@ function estadoDePartida(
  */
 export function BarraLateral({
   perfil,
+  emDemonstracao = false,
   usuario,
   contadores = {},
   rotulo = "Menu principal",
@@ -296,14 +307,14 @@ export function BarraLateral({
     }
   }, [emGaveta]);
 
-  const modulos = useMemo(() => modulosVisiveis(perfil), [perfil]);
+  const modulos = useMemo(() => modulosVisiveis(perfil, undefined, emDemonstracao), [perfil, emDemonstracao]);
   const somas = useMemo(() => somarContadores(contadores), [contadores]);
   // O modo compacto guardado vale só no computador: na gaveta o menu é sempre inteiro.
   const compacta = estado.compacta && (incorporada || telaGrande);
   const buscando = !compacta && termo.trim() !== "";
   const resultados = useMemo(
-    () => (buscando ? buscarTelas(termo, perfil) : []),
-    [buscando, termo, perfil],
+    () => (buscando ? buscarTelas(termo, perfil, undefined, emDemonstracao) : []),
+    [buscando, termo, perfil, emDemonstracao],
   );
 
   const fixadas = estado.fixados.flatMap((id) => {
@@ -470,7 +481,7 @@ export function BarraLateral({
                   const soma = somas[modulo.id];
                   const aberto = estado.gruposAbertos.includes(modulo.id);
                   const ativo = modulo.id === moduloAtual;
-                  const primeiraAberta = modulo.telas.find((t) => podeAbrir(perfil, t))?.rota;
+                  const primeiraAberta = modulo.telas.find((t) => podeAbrir(perfil, t, emDemonstracao))?.rota;
 
                   if (compacta) {
                     return (

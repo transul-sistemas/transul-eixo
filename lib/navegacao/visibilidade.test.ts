@@ -122,11 +122,11 @@ describe("modulosVisiveis (catálogo de teste)", () => {
 });
 
 describe("modulosVisiveis (catálogo real)", () => {
-  it("Administrador e Diretoria veem os 9 módulos e as 36 telas", () => {
+  it("Administrador e Diretoria veem os 9 módulos; o Administrador, as 37 telas; a Diretoria, 36 (sem o Meu dia, em teste)", () => {
     for (const perfil of ["Administrador", "Diretoria"] as const) {
       const visiveis = modulosVisiveis(perfil);
       expect(visiveis).toHaveLength(9);
-      expect(visiveis.flatMap((m) => m.telas)).toHaveLength(36);
+      expect(visiveis.flatMap((m) => m.telas)).toHaveLength(perfil === "Administrador" ? 37 : 36);
     }
   });
   it("com as cinco telas da Frota prontas, o Gestor de frota vê as cinco; o Operacional vê Pátio, Totem, Ordens de carregamento e a Escala", () => {
