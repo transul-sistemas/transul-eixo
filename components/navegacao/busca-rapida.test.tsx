@@ -49,7 +49,7 @@ describe("<ConteudoDaBusca>: campo e lista", () => {
     expect(html).toContain("Frota › Receber placa");
   });
   it("tela esqueleto leva a etiqueta Estrutura, não Em breve", () => {
-    const html = conteudo("comparativo");
+    const html = conteudo("livro do acionista");
     expect(html).toContain("Estrutura");
     expect(html).not.toContain("Em breve");
   });
