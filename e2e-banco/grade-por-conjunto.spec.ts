@@ -36,6 +36,8 @@ interface Medidas {
 }
 
 async function medir(page: Page, testid: string): Promise<Medidas> {
+  // A grade chega por streaming: até a troca, fica num contêiner oculto e mede 0.
+  await page.getByTestId(testid).waitFor({ state: "visible" });
   return page.evaluate((alvo) => {
     const cartao = document.querySelector<HTMLElement>(`[data-testid="${alvo}"]`);
     if (!cartao) throw new Error("A grade não abriu.");
