@@ -8,6 +8,21 @@ Modelo de entrada:
 
 ---
 
+## 13/11/2026 — Nível 1, banco (agente de banco, modo autônomo): hipóteses registradas
+
+Cada linha é uma hipótese escolhida pela forma mais simples, a revisar por Alexandre (branch `n1-banco`).
+
+- **Líder da operação** = pessoa com vínculo vigente de função `lider` (`pessoas.vinculo`) numa operação dos conjuntos do gestor; só ele libera a Posição do dia (o Administrador não).
+- **Conjuntos da Posição do dia** = cavalos e caminhões não baixados da carteira vigente do gestor.
+- **Tabela de cidades** nasce vazia (`config.cidade`); a carga de `cidades_brasil` da cópia da v1 fica para um script local; a demonstração usa cidades fictícias "Cidade Demo".
+- **Distância improvável** = reta × 1,25 contra 900 km por dia (parâmetros); a rota por par de cidades (A4) substitui depois.
+- **Posição repetida** igual não grava linha nova; mudar a resposta exige a versão e exclui a anterior logicamente.
+- **Trocar CR** pode o gestor vigente ou quem tem Cadastros › editar no escopo tudo, menos a Diretoria (H6); com dois CRs do mesmo tipo vigentes, recusa e manda escolher o vigente antes.
+- **Operação do CR** = vínculo CR-operação vigente (agora para todo CR); sem vínculo, a do cadastro do CR (legado), sem preencher dados.
+- **Correção tardia** = troca com data anterior a hoje; mês fechado e impacto antes de gravar (C3/C4) ficam para quando houver fechamento e D0.
+- **Baixa por motivo, sem sigla nova:** venda e devolução gravam VND; sucata e sinistro, SUC; só a Diretoria aprova (quem pede não aprova); transferência em andamento e conjunto bloqueiam o pedido.
+- **Saúde do CR:** CR sem operação não conta o CR cuja placa vigente já tem operação; lançamento sem CR = centro do staging sem CR (sem D0); Classificar = criar o CR ou "sem destino"; Atribuir dono só pelo Administrador, em tabela própria (sem P1).
+- **Lançar o dia em lote:** tudo ou nada; com um recusado nada grava e a função devolve a lista com o motivo. **Programado** em tabela própria, confirmado à mão no dia (sem tarefa automática).
 ## 12/11/2026 — Critério (d) estendido a todo assistente do inventário
 
 - **Contexto:** o inventário `docs/assistentes-e-popups.md` (12/11/2026) lista 50 assistentes e popups, existentes e novos. O
