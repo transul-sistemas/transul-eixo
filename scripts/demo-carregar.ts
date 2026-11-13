@@ -967,6 +967,7 @@ export async function resumoDaDemo(c: pg.Client): Promise<ResumoDaDemo> {
      union all select 'nível 2: conjuntos com motorista', count(*)::text from pessoas.motorista_do_conjunto where excluido_em is null and fim is null and ativo_id in (select ativo_id from demo)
      union all select 'nível 2: dias lançados do motorista', count(*)::text from pessoas.status_do_motorista s join nucleo.pessoa p on p.id = s.pessoa_id where p.nome like 'Demo %' and s.excluido_em is null
      union all select 'nível 2: substituições', count(*)::text from pessoas.substituicao_do_motorista where excluido_em is null and ativo_id in (select ativo_id from demo)
+     union all select 'nível 2: abastecimentos provisórios', count(*)::text from nucleo.abastecimento_provisorio where situacao = 'provisorio' and ativo_id in (select ativo_id from demo)
      union all select 'faixa: parâmetro ligado', count(*)::text from config.parametro where chave = '${CHAVE_DA_FAIXA_DEMO}'`,
     [`${PREFIXO_DA_PLACA_DEMO}%`],
   );
@@ -1196,6 +1197,32 @@ export async function carregarMotoristasDaDemo(c: pg.Client, hoje: string): Prom
   return novos;
 }
 
+/**
+ * Nível 2: três abastecimentos lançados à mão (provisórios) nas placas ZDM 1 a 3, de ontem e de hoje, à espera
+ * da conferência com o Sankhya. Nunca somam no total do mês. Idempotente pelo posto "Posto Demo".
+ */
+export async function carregarAbastecimentoProvisorioDaDemo(
+  c: pg.Client,
+  hoje: string,
+): Promise<number> {
+  let novos = 0;
+  for (let i = 1; i <= 3; i++) {
+    const ativo = await exigirAtivoDaPlacaDemo(c, i);
+    const ja = await um<{ n: string }>(
+      c,
+      `select count(*)::text as n from nucleo.abastecimento_provisorio where ativo_id = $1 and posto = 'Posto Demo'`,
+      [ativo],
+    );
+    if (Number(ja.n) > 0) continue;
+    await c.query(
+      `select nucleo.lancar_abastecimento_provisorio($1::uuid, $2::date, $3, $4, null, 'Diesel S10', 'Posto Demo')`,
+      [ativo, somarDias(hoje, i === 3 ? 0 : -1), 120 + i * 10, (120 + i * 10) * 6.2],
+    );
+    novos++;
+  }
+  return novos;
+}
+
 export async function carregarDemo(
   c: pg.Client,
 ): Promise<{ areas: Record<string, string>; abastecimento: number }> {
@@ -1218,6 +1245,8 @@ export async function carregarDemo(
     `${await carregarCenariosDoNivel1(c, hoje)} itens novos`;
   areas["Nível 2: motoristas, realizado do dia e substituto"] =
     `${await carregarMotoristasDaDemo(c, hoje)} itens novos`;
+  areas["Nível 2: abastecimentos provisórios"] =
+    `${await carregarAbastecimentoProvisorioDaDemo(c, hoje)} lançamentos novos`;
   await ligarFaixaDaDemo(c);
   areas["faixa de demonstração"] = "ligada";
   await c.query("set constraints all immediate");

@@ -212,7 +212,9 @@ select set_eq(
     -- Saúde do CR, CR1 (testadas em 117-saude-do-cr.test.sql).
     'nucleo.classificacao_de_centro.classificacao_de_centro_ler', 'nucleo.dono_de_problema.dono_de_problema_ler',
     -- Programado, A2 (testada em 118-lancar-o-dia.test.sql).
-    'nucleo.situacao_programada.situacao_programada_ler'
+    'nucleo.situacao_programada.situacao_programada_ler',
+    -- Abastecimento provisório, Nível 2 (testada em 120-abastecimento-provisorio.test.sql).
+    'nucleo.abastecimento_provisorio.abastecimento_provisorio_ler'
   ],
   'as políticas de cada tabela, com o nome de cada uma (todas testadas abaixo ou na matriz)'
 );
