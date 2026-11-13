@@ -32,6 +32,8 @@ import { EngatarImplemento } from "./engatar-implemento";
 import { EntregarAoOperacional } from "./entregar-ao-operacional";
 import { EscolherAPlaca } from "./escolher-a-placa";
 import { MudarSituacao } from "./mudar-situacao";
+import { PedirBaixa } from "./pedir-baixa";
+import { TrocarCr } from "./trocar-cr";
 import { ReceberPlaca } from "./receber-placa";
 
 // O hospedeiro dos assistentes da Frota: abre o que a URL pede (`?assistente=`), na lista de
@@ -65,6 +67,8 @@ const ASSISTENTE_DA_ACAO: Record<string, string> = {
   "frota.corrigir-placa": "corrigir-placa",
   "frota.cancelar-pedido": "cancelar-pedido",
   "frota.devolver-placa": "devolver-placa",
+  "frota.trocar-cr": "trocar-cr",
+  "frota.pedir-baixa": "pedir-baixa",
 };
 
 export function AssistentesDaFrota({
@@ -100,6 +104,8 @@ export function AssistentesDaFrota({
   const corrigir = useAssistenteNaUrl("corrigir-placa");
   const cancelar = useAssistenteNaUrl("cancelar-pedido");
   const devolver = useAssistenteNaUrl("devolver-placa");
+  const trocar = useAssistenteNaUrl("trocar-cr");
+  const baixa = useAssistenteNaUrl("pedir-baixa");
   const botao = useRef<HTMLButtonElement>(null);
   const [criados, setCriados] = useState<ItemCriado[]>([]);
   const catalogos = useMemo(
@@ -183,6 +189,8 @@ export function AssistentesDaFrota({
     "disponibilizar-placa": disponibilizar.abrir,
     "cancelar-pedido": cancelar.abrir,
     "devolver-placa": devolver.abrir,
+    "trocar-cr": trocar.abrir,
+    "pedir-baixa": baixa.abrir,
   };
   function aoAbrirDaFicha(id: string) {
     const assistente = ASSISTENTE_DA_ACAO[id];
@@ -478,6 +486,38 @@ export function AssistentesDaFrota({
             }
             aoEscolher={escolherPlaca}
             aoFechar={devolver.fechar}
+          />
+        )
+      ) : null}
+      {noNavegador && trocar.aberto ? (
+        placaPedida !== null ? (
+          <TrocarCr
+            key={placaPedida}
+            placa={placaPedida}
+            crs={catalogos.crs}
+            aoFechar={trocar.fechar}
+          />
+        ) : (
+          <EscolherAPlaca
+            titulo="Trocar CR"
+            opcoes={[]}
+            vazio={ABRA_A_FICHA("Trocar CR")}
+            aoEscolher={escolherPlaca}
+            aoFechar={trocar.fechar}
+          />
+        )
+      ) : null}
+
+      {noNavegador && baixa.aberto ? (
+        placaPedida !== null ? (
+          <PedirBaixa key={placaPedida} placa={placaPedida} aoFechar={baixa.fechar} />
+        ) : (
+          <EscolherAPlaca
+            titulo="Pedir baixa"
+            opcoes={[]}
+            vazio={ABRA_A_FICHA("Pedir baixa")}
+            aoEscolher={escolherPlaca}
+            aoFechar={baixa.fechar}
           />
         )
       ) : null}
