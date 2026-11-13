@@ -1819,3 +1819,12 @@ Registro de direção, só em texto: nenhum código nem migration. Não muda a f
 - **CI:** `scripts/ci/mutacoes-sql.mjs` saiu do job `modo-banco` e roda na rodada noturna (`e2e-noturno.yml`, job `mutacoes-sql`) e deve estar verde antes da carga na nuvem; o pgTAP e o e2e seguem a cada push.
 - **Ordem:** A1 (ajustes), wizards em popup, Meu dia e receber em lote, Engatar e Desatrelar pela aba Soltas, Posição do dia (banco, em paralelo), Trocar CR e V0, Enviar placa, Confirmar carteira, Baixa e Saúde do CR.
 - **Respostas ao inventário:** botão "Enviar placa" (o nome técnico "disponibilizar" fica no código); lançamento manual de abastecimento SIM ("Lançar abastecimento", marcado provisório até a ponte do Sankhya); baixa não ganha sigla (o motivo fica no registro; a sigla final é VND ou SUC); passos de desenho que faltam entram quando a fatia for construída; Saúde do CR segue o quadro (a lista vira a aba "Todos os CRs"); na aba Soltas cada peça tem um chip só e a soma bate com o total; critério (d) confirmado; os 10 assistentes sem Ctrl+K entram na fatia S1.
+
+
+## 13/11/2026 — Grade por conjunto: dias em lote (decisão)
+
+- **Causa e correção.** `/frota/acompanhamento?tam=100` estourava o limite (57014) porque `dias_do_conjunto` refazia a situação por dia e por conjunto, com a RLS (`ve_ativo`) em cada leitura: 8,7 s com 928 placas. A migration `20261116200000_grade_por_conjunto_rapida` cria `dias_dos_conjuntos` (estados, peças e eventos do mês lidos uma vez para a página) e faz `grade_por_conjunto` consultar os conjuntos uma só vez: 0,8 s, mesmo resultado (md5 igual em 7 chamadas; pgTAP 112 compara com `dias_do_conjunto` e limita a 1,5 s).
+
+## 13/11/2026 — "status" responde o painel de estado (decisão)
+
+- **Regra.** Quando Alexandre escrever apenas "status", a resposta segue o formato curto de sete blocos (rodando agora, pronto para ver, fila, decisões dele, bloqueios e riscos, pendências dele, telas) e atualiza `painel/ESTADO.md` (pasta fora do Git).

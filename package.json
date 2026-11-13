@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "dev:banco": "node scripts/dev-banco.mjs",
+    "start:local": "node scripts/start-local.ts",
     "build": "next build",
     "start": "next start",
     "lint": "eslint . && stylelint \"**/*.css\"",
@@ -23,6 +24,7 @@
     "importar:cr": "node scripts/importar-cr.ts",
     "backup:banco": "node scripts/backup.ts banco",
     "backup:restaurar": "node scripts/backup.ts restaurar",
+    "backup:conteudo": "node scripts/backup-conteudo.ts",
     "demo:carregar": "node scripts/demo-carregar.ts",
     "demo:ensaio": "node scripts/demo-carregar.ts --ensaio",
     "demo:trocar": "node scripts/demo-trocar.ts",
