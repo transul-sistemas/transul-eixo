@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "dev:banco": "node scripts/dev-banco.mjs",
+    "start:local": "node scripts/start-local.ts",
     "build": "next build",
     "start": "next start",
     "lint": "eslint . && stylelint \"**/*.css\"",
