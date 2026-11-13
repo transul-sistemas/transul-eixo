@@ -159,6 +159,42 @@ só agregados); sem nuvem até Alexandre pedir; sem Sankhya e sem API nesta etap
   mapeamento de T, F, FE e AT da escala atual para os códigos novos. **Dois motoristas por conjunto ficam
   fora desta fatia.**
 
+## S1. Aba Soltas, Engatar e Desatrelar (junto da A1)
+
+Acrescentada em 12/11/2026, a partir do quadro 3 do Design (`docs/prototipos/soltas-envio-carteira-e-saude/`). **Só plano:
+nenhuma fatia começou.**
+
+- **Modelo e ritmo:** banco (função de leitura e função atômica de gravação em lote) e tela. Risco médio-alto (grava a composição
+  do conjunto e muda a situação do conjunto no instante do engate; RLS por filial): **para no checkpoint** e espera o
+  "aprovado" antes de aplicar no banco local.
+- **Objetivo:** a aba **"Grade · Soltas"** do Acompanhamento (uma linha por peça sem cavalo, com a situação da própria peça),
+  o assistente **Engatar implementos** com **vários** implementos de uma vez e o conjunto resultante calculado antes de gravar,
+  e o assistente **Desatrelar implementos** no mesmo molde. Hoje existem `engatar-implemento` (um por vez) e
+  `desatrelar-implemento` (sem quadro).
+- **Tabelas e funções:** nenhuma tabela nova (a composição `nucleo.composicao` já guarda início e fim).
+  - `nucleo.grade_das_soltas(p_mes, filtros, página, tamanho)` (security invoker, a RLS de quem chama vale): uma linha por ativo
+    sem composição vigente (semirreboque, dolly, apoio, equipamento), a situação de cada dia **da própria peça**, a marca de
+    manual ou correção tardia, "pode engatar" (regra única em `lib/dominio/`) e as contagens dos chips por situação e por
+    tipo e o "X de Y com situação hoje", **todas do banco**, nunca somadas no navegador;
+  - `nucleo.conferir_engate(p_cavalo, p_implementos uuid[], p_em)`, **somente leitura**: devolve o nome do conjunto resultante
+    (pela nomenclatura, nunca gravado na placa), as marcas da conferência e os motivos de recusa (peça impedida, outra filial,
+    carrocerias diferentes, combinação que não existe), reaproveitando `nucleo.conferir_conjunto` e `nucleo.nome_do_conjunto`;
+  - `nucleo.engatar_varios(p_cavalo, p_implementos uuid[], p_posicoes smallint[], p_em, p_chave)`, **atômica, tudo ou nada**,
+    chamando `nucleo.engatar` por peça, com chave de envio e "X de Y" no retorno; `nucleo.desatrelar` (que já aceita a lista)
+    ganha a **chave de envio** (hoje não tem; ver `docs/decisoes.md`, lista das gravações sem chave).
+- **Telas:** aba Soltas de `/frota/acompanhamento` (ficha `frota-acompanhamento-grade-soltas.md`, com a grade de **largura fluida**
+  da A1); popups Engatar e Desatrelar (ficha `frota-engatar-implementos.md`); **a ficha do Desatrelar e o quadro dele ainda não
+  existem** (ver "Dependências").
+- **Testes de aceite:** pgTAP (engatar vários é tudo ou nada; chave repetida não duplica; só cavalo é mestre e só implemento é
+  servo; carroceria mista bloqueada; peça impedida não engata; engatar e desatrelar no meio do mês mudam a linha no dia
+  certo; a peça engatada some da aba Soltas e entra na grade por conjunto; RLS com usuário de cada perfil); unitário do nome do
+  conjunto pela estrutura (simples, bi, bitrezão, rodotrem, "pendente" sem os eixos) e da regra "pode engatar"; e2e do caminho
+  principal (engatar duas peças pela linha da aba Soltas, desatrelar, voltar à aba) e de "fechar é fechar"; contagem dos chips
+  fecha com o total; teste de largura da grade em 1366, 1667 e 1920 px.
+- **Dependências:** A1 (a grade por conjunto e a composição vigente, que já existem), a nomenclatura; **o desenho do
+  Desatrelar** (falta quadro); A2 se o Engatar passar a lançar situação no mesmo gesto (hipótese: não). Os dados de teste da
+  demonstração (cenário 4) para ver movimento.
+
 ## Nova ordem (11/11/2026)
 
 Depois da Etapa 5 (A5 e A1): **M1, M2, A2, V0 e Trocar CR, P3, A4** (ver

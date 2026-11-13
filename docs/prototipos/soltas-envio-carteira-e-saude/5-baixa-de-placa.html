@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Baixa de placa</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:'Barlow',sans-serif;color:#0f1729;background:#f6f7fb}
+.sk{background:#e9ecf3;border-radius:8px}
+.btn{padding:10px 18px;border-radius:10px;font-size:15px;font-weight:600;font-family:'Barlow',sans-serif;cursor:pointer;border:1px solid #d9dde8;background:#fff;color:#0f1729}
+.btn.pri{background:#3355ff;border-color:#3355ff;color:#fff}
+.plate{display:inline-block;border:1.5px solid #1d3a8a;border-top:5px solid #1d3a8a;border-radius:4px;background:#fff;font-weight:700;font-size:14px;letter-spacing:1px;padding:0 5px;color:#0f1729}
+.tg{display:inline-block;padding:2px 9px;border-radius:999px;font-size:12px;font-weight:700}
+.mut{color:#5a6478;font-size:13px}
+.k{font-size:12px;font-weight:700;letter-spacing:.06em;color:#5a6478;margin-bottom:8px}
+.step{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:500;color:#5a6478}
+.dot{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;background:#eceef4;color:#5a6478}
+.dot.ok{background:#22a06b;color:#fff}
+.dot.on{background:#3355ff;color:#fff}
+.li{display:flex;gap:10px;font-size:14px;line-height:1.45;margin:0 0 7px}
+.fl{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.box{border:1px solid #eceef4;border-radius:12px;padding:14px}
+</style>
+</helmet>
+<div style="position:relative;box-sizing:border-box;min-height:900px;background:#f6f7fb;overflow:hidden">
+  <div style="padding:20px 24px;display:flex;flex-direction:column;gap:12px">
+    <div class="sk" style="height:22px;width:220px"></div><div class="sk" style="height:34px;width:300px"></div><div class="sk" style="height:90px"></div>
+    <div class="sk" style="height:70px"></div><div class="sk" style="height:70px"></div><div class="sk" style="height:70px"></div><div class="sk" style="height:70px"></div>
+  </div>
+  <div style="position:absolute;left:0;top:0;right:0;bottom:0;background:rgba(15,23,41,.55)"></div>
+
+  <div role="dialog" aria-label="Baixa de placa, conferir" style="position:absolute;left:50%;top:24px;transform:translateX(-50%);width:1000px;max-width:96%;background:#fff;border-radius:16px;box-shadow:0 24px 64px rgba(15,23,41,.35);box-sizing:border-box;padding:22px 28px;display:flex;flex-direction:column;gap:12px">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
+      <div><h2 style="margin:0;font-size:22px;font-weight:700">Dar baixa na placa</h2>
+      <div style="font-size:14px;color:#5a6478;margin-top:2px"><span class="plate">ZDM2B31</span> Semirreboque · 2 eixos · baú · CR013 · Operação A · quinta-feira, 12 de novembro de 2026</div></div>
+      <button class="btn" aria-label="Fechar" style="padding:6px 12px">×</button>
+    </div>
+    <div style="display:flex;gap:18px;flex-wrap:wrap;padding:10px 0;border-top:1px solid #eceef4;border-bottom:1px solid #eceef4">
+      <span class="step"><span class="dot ok">✓</span>Motivo</span><span class="step"><span class="dot ok">✓</span>Documento</span><span class="step" style="color:#0f1729"><span class="dot on">3</span>Conferir</span>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+      <div class="box">
+        <div class="k">O PEDIDO</div>
+        <div class="fl"><span class="tg" style="background:#e5e8ee;color:#4a5568">Venda</span><span style="font-size:14px">data da baixa <b>12/11/2026</b></span></div>
+        <div style="font-size:14px;margin-top:8px">Documento: nota fiscal de venda, anexada.</div>
+        <div class="mut" style="margin-top:4px">Comprador e valor ficam no documento anexo, e não no sistema.</div>
+      </div>
+      <div class="box" style="border:2px solid #3355ff;background:#eef1ff">
+        <div class="k" style="color:#1d3a8a">QUATRO OLHOS</div>
+        <div style="font-size:14px"><b>Você pede</b> → <b>Diretoria aprova</b></div>
+        <div class="mut" style="margin-top:6px;color:#1d3a8a">A Diretoria recebe uma tarefa com prazo de 5 dias. Enquanto não aprovar, a placa continua ativa, marcada como "baixa pedida". Quem pede não aprova.</div>
+      </div>
+    </div>
+
+    <div>
+      <div class="k">O QUE ACONTECE QUANDO A DIRETORIA APROVAR</div>
+      <div class="li"><span style="color:#22a06b;font-weight:700">✓</span><span>A situação passa a <b>VND (vendido)</b> a partir de 12/11, e a placa sai das grades e da sua carteira.</span></div>
+      <div class="li"><span style="color:#22a06b;font-weight:700">✓</span><span>O vínculo com o <b>CR013 encerra em 12/11</b>. O CR continua existindo, com o histórico, e as despesas dele seguem na Operação A até essa data.</span></div>
+      <div class="li"><span style="color:#22a06b;font-weight:700">✓</span><span>A <b>Operação A deixa de contar a placa a partir de 12/11</b> (24 → 23 placas). O resultado dos meses anteriores não muda.</span></div>
+      <div class="li"><span style="color:#22a06b;font-weight:700">✓</span><span>Nada é apagado: a placa continua pesquisável e no histórico, com quem pediu, quem aprovou e quando.</span></div>
+    </div>
+
+    <div style="border:1.5px solid #e8a317;background:#fff8e6;border-radius:12px;padding:12px 14px;font-size:13px"><b style="color:#7a5200">Antes de pedir:</b> esta placa não tem pendência aberta nem transferência em andamento. Se tivesse, o assistente pediria para resolver primeiro.</div>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;border-top:1px solid #eceef4;padding-top:12px">
+      <button class="btn">Cancelar</button>
+      <div style="display:flex;gap:10px"><button class="btn">Voltar</button><button class="btn pri">Pedir a baixa</button></div>
+    </div>
+    <div style="font-size:12px;color:#5a6478;margin-top:-4px">Baixa por sinistro, sucata ou devolução usa o mesmo assistente, com o documento próprio de cada motivo. Dados de exemplo (fictícios).</div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1360,"height":900}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

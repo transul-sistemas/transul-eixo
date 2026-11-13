@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Saúde do CR</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:'Barlow',sans-serif;color:#0f1729;background:#f6f7fb}
+.card{background:#fff;border:1px solid #eceef4;border-radius:12px;padding:14px 16px}
+.k{font-size:12px;font-weight:700;letter-spacing:.06em;color:#5a6478;margin-bottom:8px}
+.big{font-size:28px;font-weight:700}
+.tg{display:inline-block;padding:2px 9px;border-radius:999px;font-size:12px;font-weight:700}
+.vig{background:#d3efe3;color:#0f5c3d}
+.enc{background:#fadadb;color:#8a1f24}
+.warn{background:#fbecc7;color:#7a5200}
+.mut{color:#5a6478;font-size:13px}
+.btn{padding:8px 14px;border-radius:9px;font-size:13px;font-weight:600;font-family:'Barlow',sans-serif;cursor:pointer;border:1px solid #3355ff;background:#fff;color:#3355ff}
+.r{display:grid;grid-template-columns:1.6fr 70px 1.2fr 110px 170px;gap:10px;align-items:center;padding:11px 0;border-top:1px solid #eceef4;font-size:14px}
+.bar{height:10px;border-radius:999px;background:#eceef4}
+.bar i{display:block;height:10px;border-radius:999px;background:#3355ff}
+.t{display:grid;grid-template-columns:150px 1fr 48px;gap:10px;align-items:center;font-size:13px;margin-bottom:7px}
+.ch{display:inline-block;padding:4px 10px;border-radius:8px;background:#eef1ff;color:#1d3a8a;font-size:13px;font-weight:600}
+</style>
+</helmet>
+<div style="box-sizing:border-box;padding:20px 24px;display:flex;flex-direction:column;gap:14px;min-height:900px;background:#f6f7fb">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap">
+    <div><div style="font-size:13px;color:#5a6478">Cadastros › Saúde do CR</div><h1 style="margin:2px 0 0;font-size:26px;font-weight:700">Saúde do CR</h1>
+    <div style="font-size:14px;color:#5a6478">O que precisa de atenção para o resultado de cada operação ficar certo.</div></div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span class="tg warn">dados até 28/10/2026</span><span class="tg" style="background:#eef1ff;color:#1d3a8a;font-size:13px;padding:5px 12px">novembro de 2026</span></div>
+  </div>
+
+  <div style="display:flex;gap:12px;flex-wrap:wrap">
+    <div class="card" style="flex:1 1 170px"><div class="k" style="margin:0">CRS ATIVOS</div><div class="big">1.300</div></div>
+    <div class="card" style="flex:1 1 170px"><div class="k" style="margin:0">PLACAS SEM CR</div><div class="big" style="color:#8a1f24">6</div></div>
+    <div class="card" style="flex:1 1 170px"><div class="k" style="margin:0">CR SEM OPERAÇÃO</div><div class="big" style="color:#8a1f24">14</div></div>
+    <div class="card" style="flex:1 1 170px"><div class="k" style="margin:0">DOIS CRS DO MESMO TIPO</div><div class="big" style="color:#8a1f24">3</div></div>
+    <div class="card" style="flex:1 1 170px"><div class="k" style="margin:0">LANÇAMENTOS ÓRFÃOS</div><div class="big" style="color:#8a1f24">2</div></div>
+    <div class="card" style="flex:1 1 200px"><div class="k" style="margin:0">RECONCILIAÇÃO</div><div style="font-size:18px;font-weight:700;color:#0f5c3d;margin-top:6px">✓ O total bate</div></div>
+  </div>
+
+  <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:flex-start">
+    <div class="card" style="flex:2 1 680px;padding:6px 16px 10px">
+      <div class="k" style="margin:10px 0 0">O QUE FAZER · POR DONO E PRAZO</div>
+      <div class="r" style="border-top:0"><span class="k" style="margin:0">PROBLEMA</span><span class="k" style="margin:0">QTD.</span><span class="k" style="margin:0">DONO</span><span class="k" style="margin:0">PRAZO</span><span></span></div>
+      <div class="r"><div><b>Placa sem CR vigente</b><div class="mut">a placa não entra em nenhuma operação</div></div><b>6</b><span>Analista de cadastro</span><span class="tg warn">5 dias úteis</span><button class="btn">Escolher o CR</button></div>
+      <div class="r"><div><b>CR sem operação</b><div class="mut">a despesa dele não cai em operação nenhuma</div></div><b>14</b><span>Líder da operação</span><span class="tg warn">5 dias úteis</span><button class="btn">Ligar à operação</button></div>
+      <div class="r"><div><b>Dois CRs vigentes do mesmo tipo</b><div class="mut"><span class="tg vig">um vigente</span> <span class="tg enc">outro encerrado</span> é o esperado</div></div><b>3</b><span>Gestor da carteira</span><span class="tg warn">5 dias úteis</span><button class="btn">Escolher o vigente</button></div>
+      <div class="r"><div><b>Lançamento sem CR conhecido</b><div class="mut">despesa que não achou o CR</div></div><b>2</b><span>Financeiro</span><span class="tg warn">3 dias úteis</span><button class="btn">Classificar</button></div>
+      <div class="r"><div><b>Data fora de faixa ou futura</b><div class="mut">fica fora do resultado até corrigir no Sankhya</div></div><b>4</b><span>Financeiro</span><span class="tg" style="background:#e5e8ee;color:#4a5568">sem prazo</span><button class="btn">Ver a lista</button></div>
+      <div class="r"><div><b>CR bloqueado com despesa no mês</b><div class="mut">continua contando no resultado: só para saber</div></div><b>5</b><span>Informativo</span><span class="tg vig">conta</span><button class="btn">Ver os CRs</button></div>
+    </div>
+
+    <div style="flex:1 1 380px;display:flex;flex-direction:column;gap:14px">
+      <div class="card">
+        <div class="k">RECONCILIAÇÃO · LANÇAMENTOS DO MÊS POR TIPO</div>
+        <div class="t"><span>Frota com placa</span><span class="bar"><i style="width:57.5%"></i></span><b>57,5%</b></div>
+        <div class="t"><span>Serviço</span><span class="bar"><i style="width:14%"></i></span><b>14%</b></div>
+        <div class="t"><span>Acionista</span><span class="bar"><i style="width:9%"></i></span><b>9%</b></div>
+        <div class="t"><span>Frete de terceiro</span><span class="bar"><i style="width:5%"></i></span><b>5%</b></div>
+        <div class="t"><span>Agregado</span><span class="bar"><i style="width:4%"></i></span><b>4%</b></div>
+        <div class="t"><span>Estrutura</span><span class="bar"><i style="width:4%"></i></span><b>4%</b></div>
+        <div class="t"><span>Frota sem placa</span><span class="bar"><i style="width:3%"></i></span><b>3%</b></div>
+        <div class="t"><span>Impostos</span><span class="bar"><i style="width:2%"></i></span><b>2%</b></div>
+        <div class="t"><span>Diretoria</span><span class="bar"><i style="width:1%"></i></span><b>1%</b></div>
+        <div class="t"><span>Sem centro</span><span class="bar"><i style="width:.5%"></i></span><b>0,5%</b></div>
+        <div style="border-top:1px solid #eceef4;padding-top:8px;font-size:14px"><b style="color:#0f5c3d">✓ Os 10 tipos somam 100% do total do Sankhya.</b><div class="mut">Cada lançamento cai em um tipo só. Frete de terceiro não é contado duas vezes.</div></div>
+      </div>
+      <div class="card">
+        <div class="k">RASTRO DO NÚMERO · COMO LER</div>
+        <div style="font-size:13px;color:#5a6478;margin-bottom:8px">Em qualquer valor do Eixo, o clique mostra o caminho:</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;font-size:13px"><span class="ch">Operação A</span>›<span class="ch">CR013 <span class="tg vig" style="padding:0 6px">vigente</span></span>›<span class="ch">Lançamento 4821</span>›<span class="ch">Natureza</span>›<span class="ch">Competência 10/2026</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="mut">Dados de exemplo (fictícios). Prazos e donos são parâmetros editáveis pelo Administrador.</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1360,"height":900}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

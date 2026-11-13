@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Grade das Soltas</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:'Barlow',sans-serif;color:#0f1729;background:#f6f7fb}
+.tab{padding:7px 14px;border-radius:8px;font-size:14px;font-weight:500;color:#5a6478;background:#fff;border:1px solid #eceef4;font-family:'Barlow',sans-serif;cursor:pointer}
+.tab.on{background:#3355ff;color:#fff;border-color:#3355ff}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:999px;font-size:13px;font-weight:500;border:1px solid #eceef4;background:#fff;color:#0f1729}
+.chip b{font-weight:700}
+.cell{height:40px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;box-sizing:border-box}
+.b{background:#d5ebfb;color:#0b5688}
+.r{background:#fadadb;color:#8a1f24}
+.f{background:#e5e8ee;color:#4a5568}
+.e{border:1.5px dashed #3355ff;background:#eef1ff;color:#3355ff}
+.p{border:1.5px dotted #8a94a6;background:#fff;color:#5a6478;font-style:italic}
+.plate{display:inline-block;border:1.5px solid #1d3a8a;border-top:5px solid #1d3a8a;border-radius:4px;background:#fff;font-weight:700;font-size:13px;letter-spacing:1px;padding:0 5px;color:#0f1729}
+.tag{display:inline-block;padding:1px 8px;border-radius:999px;font-size:12px;font-weight:600}
+.row{display:grid;grid-template-columns:280px repeat(9,minmax(54px,1fr)) 150px;gap:6px;align-items:center;padding:8px 0;border-top:1px solid #eceef4}
+.dh{text-align:center;font-size:12px;color:#5a6478;font-weight:500}
+.dh b{display:block;font-size:15px;color:#0f1729}
+.btn{padding:7px 12px;border-radius:9px;font-size:13px;font-weight:600;font-family:'Barlow',sans-serif;cursor:pointer;border:1px solid #3355ff;background:#fff;color:#3355ff}
+.btn.off{border-color:#d9dde8;color:#5a6478;cursor:not-allowed;background:#f6f7fb}
+.eye{width:34px;height:34px;border-radius:8px;border:1px solid #eceef4;background:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.mut{font-size:12px;color:#5a6478}
+</style>
+</helmet>
+<div style="box-sizing:border-box;padding:20px 24px;display:flex;flex-direction:column;gap:14px;min-height:900px;background:#f6f7fb">
+  <div><div style="font-size:13px;color:#5a6478">Frota › Acompanhamento</div><h1 style="margin:2px 0 0;font-size:26px;font-weight:700">Acompanhamento</h1></div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="tab">Grade · Conjuntos</button><button class="tab on">Grade · Soltas</button><button class="tab">Agora</button><button class="tab">Censo</button><button class="tab">Mapa</button><button class="tab">Movimento</button></div>
+
+  <div style="background:#fff;border:1px solid #eceef4;border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:12px">
+    <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+      <span style="font-weight:700;font-size:15px">Hoje, 12 de novembro</span>
+      <span style="font-size:14px;color:#5a6478"><b style="color:#0f1729">38 de 52</b> soltas com situação hoje</span>
+      <span style="display:inline-block;width:180px;height:8px;border-radius:999px;background:#eceef4"><span style="display:block;width:73%;height:8px;border-radius:999px;background:#3355ff"></span></span>
+      <span style="font-size:13px;color:#5a6478">Peça solta não forma conjunto: a situação é a da própria peça.</span>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <span class="chip"><span class="tag b">PÁT</span>Pátio <b>31</b></span>
+      <span class="chip"><span class="tag r">MAN</span>Manutenção <b>6</b></span>
+      <span class="chip"><span class="tag r">REF</span>Reforma <b>3</b></span>
+      <span class="chip"><span class="tag f">ALU</span>Alugado <b>8</b></span>
+      <span class="chip"><span class="tag f">VEN</span>À venda <b>2</b></span>
+      <span class="chip"><span class="tag e" style="padding:1px 8px">—</span>Sem lançamento <b>14</b></span>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><span class="mut" style="font-weight:700;letter-spacing:.06em">TIPO</span><span class="chip" style="border-color:#3355ff;color:#1d3a8a;background:#eef1ff">Todos 52</span><span class="chip">Semirreboque 34</span><span class="chip">Dolly 7</span><span class="chip">Apoio 6</span><span class="chip">Equipamento 5</span></div>
+  </div>
+
+  <div style="background:#fff;border:1px solid #eceef4;border-radius:12px;padding:6px 16px 14px;overflow-x:auto">
+    <div class="row" style="border-top:0"><div class="mut" style="font-weight:700;letter-spacing:.05em">PEÇA</div>
+      <div class="dh">qui<b>5</b></div><div class="dh">sex<b>6</b></div><div class="dh">sáb<b>7</b></div><div class="dh">dom<b>8</b></div><div class="dh">seg<b>9</b></div><div class="dh">ter<b>10</b></div><div class="dh">qua<b>11</b></div>
+      <div class="dh" style="color:#3355ff;border-bottom:2px solid #3355ff">qui<b style="color:#3355ff">12</b></div><div class="dh">sex<b>13</b></div><div></div></div>
+
+    <div class="row"><div><span class="plate">ZDM2B23</span> <span class="tag" style="background:#eef1ff;color:#1d3a8a">Semirreboque</span><div class="mut">3 eixos · graneleira · sem cavalo</div></div>
+      <div class="cell b">PÁT</div><div class="cell b">PÁT</div><div class="cell b">PÁT</div><div class="cell b">PÁT</div><div class="cell b">PÁT</div><div class="cell b">PÁT</div><div class="cell b">PÁT</div><div class="cell e">lançar</div><div class="cell" style="border:1px solid #eceef4"></div>
+      <div style="display:flex;gap:6px;justify-content:flex-end"><button class="btn">Engatar</button><button class="eye" aria-label="Ver detalhes de ZDM2B23"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3355ff" stroke-width="2" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></button></div></div>
+
+    <div class="row"><div><span class="plate">ZDM2B24</span> <span class="tag" style="background:#eef1ff;color:#1d3a8a">Semirreboque</span><div class="mut">2 eixos · baú · em manutenção</div></div>
+      <div class="cell b">PÁT</div><div class="cell b">PÁT</div><div class="cell r">MAN</div><div class="cell r">MAN</div><div class="cell r">MAN</div><div class="cell r">MAN</div><div class="cell r">MAN</div><div class="cell p">MAN</div><div class="cell p">PÁT</div>
+      <div style="display:flex;gap:6px;justify-content:flex-end"><button class="btn off" aria-disabled="true" title="Em manutenção: não pode ser engatada">Engatar</button><button class="eye" aria-label="Ver detalhes de ZDM2B24"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3355ff" stroke-width="2" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></button></div></div>
+
+    <div class="row"><div><span class="plate">ZDM3D01</span> <span class="tag" style="background:#e5e8ee;color:#4a5568">Dolly</span><div class="mut">2 eixos · para rodotrem</div></div>
+      <div class="cell b">PÁT</div><div class="cell b">PÁT</div><div class="cell b">PÁT</div><div class="cell b">PÁT</div><div class="cell b">PÁT</div><div class="cell b">PÁT</div><div class="cell b">PÁT</div><div class="cell b">PÁT</div><div class="cell" style="border:1px solid #eceef4"></div>
+      <div style="display:flex;gap:6px;justify-content:flex-end"><button class="btn">Engatar</button><button class="eye" aria-label="Ver detalhes de ZDM3D01"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3355ff" stroke-width="2" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></button></div></div>
+
+    <div class="row"><div><span class="plate">ZDM4A01</span> <span class="tag" style="background:#e5e8ee;color:#4a5568">Apoio</span><div class="mut">camionete · alugada a terceiro</div></div>
+      <div class="cell f">ALU</div><div class="cell f">ALU</div><div class="cell f">ALU</div><div class="cell f">ALU</div><div class="cell f">ALU</div><div class="cell f">ALU</div><div class="cell f">ALU</div><div class="cell f">ALU</div><div class="cell" style="border:1px solid #eceef4"></div>
+      <div style="display:flex;gap:6px;justify-content:flex-end"><span class="mut" style="align-self:center">não engata</span><button class="eye" aria-label="Ver detalhes de ZDM4A01"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3355ff" stroke-width="2" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></button></div></div>
+
+    <div class="row"><div><span class="plate">ZDM5E01</span> <span class="tag" style="background:#e5e8ee;color:#4a5568">Equipamento</span><div class="mut">empilhadeira · em reforma</div></div>
+      <div class="cell r">REF</div><div class="cell r">REF</div><div class="cell r">REF</div><div class="cell r">REF</div><div class="cell r">REF</div><div class="cell r">REF</div><div class="cell r">REF</div><div class="cell e">lançar</div><div class="cell" style="border:1px solid #eceef4"></div>
+      <div style="display:flex;gap:6px;justify-content:flex-end"><span class="mut" style="align-self:center">não engata</span><button class="eye" aria-label="Ver detalhes de ZDM5E01"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3355ff" stroke-width="2" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></button></div></div>
+
+    <div class="row"><div><span class="plate">ZDM2B31</span> <span class="tag" style="background:#eef1ff;color:#1d3a8a">Semirreboque</span><div class="mut">2 eixos · baú · à venda</div></div>
+      <div class="cell f">VEN</div><div class="cell f">VEN</div><div class="cell f">VEN</div><div class="cell f">VEN</div><div class="cell f">VEN</div><div class="cell f">VEN</div><div class="cell f">VEN</div><div class="cell f">VEN</div><div class="cell" style="border:1px solid #eceef4"></div>
+      <div style="display:flex;gap:6px;justify-content:flex-end"><button class="btn">Dar baixa</button><button class="eye" aria-label="Ver detalhes de ZDM2B31"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3355ff" stroke-width="2" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></button></div></div>
+  </div>
+
+  <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:#5a6478;align-items:center">
+    <span><b style="color:#0f1729">Engatar</b> leva a peça para a aba Conjuntos, com o cavalo escolhido.</span>
+    <span><b style="color:#0f1729">Dar baixa</b> abre o assistente de baixa, com aprovação.</span>
+    <span>Dados de exemplo (fictícios).</span>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1360,"height":900}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

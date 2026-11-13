@@ -219,6 +219,99 @@ principal do restante não muda.
   única); unitário (regra das 5h, distância e fator, sem coordenada não alerta); e2e; fidelidade ao protótipo.
 - **Dependências:** M1 (a fila guiada), a tabela de cidades, H5. **Alimenta** A2, A4 e o Movimento.
 
+## Fatias do quadro 3 (12/11/2026): S2, S3, S4 e CR1
+
+Vêm dos desenhos do quadro 3 do Design (`docs/prototipos/soltas-envio-carteira-e-saude/`) e do inventário
+`docs/assistentes-e-popups.md`. **Só plano: nenhuma começou.** A **S1** (aba Soltas, Engatar e Desatrelar) está em
+`2026-11-11-acompanhamento-v2.md`, junto da A1. Cada uma entra na fila **junto** da fatia indicada, sem mudar a ordem.
+
+## S2. Enviar placa, devolver e cancelar (junto da M1)
+
+- **Modelo e ritmo:** banco (função de leitura nova, ajustes nas funções da transferência) e tela. Risco médio: **para no
+  checkpoint** e espera o "aprovado" antes de aplicar no banco local.
+- **Objetivo:** o assistente **Enviar placa a outro gestor** passa a ter o passo **Gestor de destino** (lista com carga e
+  tempo de resposta de cada gestor, motivo obrigatório) e o quadro "Como funciona"; **Devolver placa** (recusar) e **Cancelar
+  pedido** ganham desenho no mesmo molde. O nome do botão, do Ctrl+K e do cartão da tarefa passa a ser um só ("Enviar placa").
+- **Tabelas e funções:** nenhuma tabela nova de regra. `nucleo.gestores_para_receber(p_placa)` (security invoker): gestores
+  de frota que podem receber, com filial, operações, número de placas na carteira e, quando a caixa de Tarefas (P1) existir,
+  tempo médio de resposta e tarefas atrasadas (antes disso, só a carga e "Sem dados ainda" no tempo de resposta);
+  `nucleo.disponibilizar_placa`, `nucleo.cancelar_pedido` e `nucleo.devolver_placa` **mantêm** a assinatura (a chave de envio e
+  a versão já valem); o motivo vira catálogo editável em Cadastros; o prazo de 5 dias segue em `config.parametro`.
+- **Telas:** fichas `frota-enviar-placa.md` (passos Placa, Gestor de destino, Pendências, Conferir) e, a desenhar, **Devolver
+  placa** e **Cancelar pedido** (hoje sem quadro); `frota.disponibilizar-placa` renomeada no catálogo (hipótese a confirmar).
+- **Testes de aceite:** pgTAP (a placa continua na carteira de quem enviou até o destino receber; só quem enviou cancela e só
+  antes do recebimento; só o destino devolve, com motivo; o Administrador não envia nem recebe; pedido aberto bloqueia novo
+  envio da mesma placa; RLS com usuário de cada perfil); unitário (motivo obrigatório, pendências vão junto); e2e do caminho
+  principal (enviar, cancelar, e enviar e devolver); o teste do critério (d) para o nome único da ação.
+- **Dependências:** **M1** (o lado de quem recebe, o lote); P1 para o tempo de resposta (opcional); **o desenho de Devolver e
+  Cancelar**; H4 (prazo) e H5.
+
+## S3. Confirmar a carteira (junto da M1)
+
+- **Modelo e ritmo:** banco (rascunho, função de leitura ajustada) e tela. Risco médio: **para no checkpoint**.
+- **Objetivo:** o assistente **Confirmar a carteira do mês** passa de 2 para **3 passos** (Conferir as placas, Resolver o que
+  não confere, Confirmar), com as três respostas por placa (**Está comigo**, **Não é minha**, **Corrigir**), a barra "N de M
+  confirmadas", o CR e a operação do mês com o rótulo de vigência e **Salvar e continuar depois**. É a terceira tarefa do Meu
+  dia.
+- **Tabelas e funções:** `nucleo.confirmacao_da_carteira` e `nucleo.confirmar_carteira(p_mes, p_itens, p_chave)` **existem**
+  (migration `20261110210000`); novos: leitura `nucleo.carteira_do_mes` ajustada para devolver o CR e a operação **vigentes e
+  encerrados no mês** com a troca; o rascunho no banco (P1); "Não é minha" cria a tarefa do líder da operação e "Corrigir" abre
+  Corrigir placa ou Trocar CR e vira tarefa de cadastro; o prazo (dia 5 do mês seguinte) em `config.parametro`.
+- **Telas:** ficha `frota-confirmar-carteira.md`; Ctrl+K "Confirmar carteira" (hoje fora de `lib/navegacao/acoes.ts`); o cartão
+  da caixa de Tarefas ("Confirmar as 2 restantes").
+- **Testes de aceite:** pgTAP (a confirmação é por placa e mês, única; "Não é minha" cria uma tarefa só; o Administrador não
+  confirma por ninguém; RLS pela carteira); unitário (a regra da situação "na maior parte" do mês, placa sem CR vigente e CR
+  trocado no mês sinalizados); e2e do caminho principal (confirmar parte, salvar, voltar e confirmar o resto) e de prazo
+  vencido (sinaliza, nunca cancela).
+- **Dependências:** **M1** (a fila guiada) e P1 (rascunho e tarefas); V0 e Trocar CR para o "Corrigir" de CR trocado (até lá,
+  só o aviso); H4.
+
+## S4. Baixa de placa com quatro olhos (junto da P3)
+
+- **Modelo e ritmo:** banco (processo, pedido, aprovação) e tela. Risco alto (regra de aprovação, encerra posse, composição e
+  CR, dado de baixa): **para no checkpoint** e espera o "aprovado".
+- **Objetivo:** o assistente **Dar baixa na placa** (Motivo, Documento, Conferir) cria um **pedido**; a **Diretoria aprova** em
+  tarefa de 5 dias; **quem pede não aprova**; até aprovar, a placa fica ativa e marcada "baixa pedida". Venda, sinistro,
+  sucata e devolução usam o mesmo assistente, com o documento de cada motivo.
+- **Tabelas e funções:** o processo "baixa de placa" na camada de P3 (definição versionada, evento imutável);
+  `nucleo.pedido_de_baixa` (ativo, motivo, data, documento no Storage, situação: pedida, aprovada, recusada, cancelada; versão;
+  RLS; exclusão lógica); `nucleo.pedir_baixa(p_ativo, p_motivo, p_em, p_documento, p_chave)` e `nucleo.aprovar_baixa(p_pedido,
+  p_chave)` / `nucleo.recusar_baixa(p_pedido, p_motivo)`, atômicas, com a recusa de **mesma pessoa pedindo e aprovando**;
+  `nucleo.registrar_baixa(p_ativo_id, p_sigla, p_em, p_motivo)` **continua** como o efeito da aprovação (encerra posse,
+  composição e vínculo com o CR e grava a sigla de baixa); `nucleo.impacto_da_baixa(p_ativo, p_em)` somente leitura para o
+  passo Conferir. A régua só tem VND e SUC como baixa: decidir se sinistro e devolução ganham sigla (hipótese: motivo no
+  evento, sem sigla nova).
+- **Telas:** ficha `frota-baixa-de-placa.md` (**só o passo Conferir tem quadro**; Motivo e Documento a desenhar); o botão "Dar
+  baixa" na aba Soltas (S1) e na ficha; o cartão de aprovação na caixa de Tarefas da Diretoria; Ctrl+K "Dar baixa na placa".
+- **Testes de aceite:** pgTAP (quem pede não aprova; a placa continua ativa até a aprovação; ao aprovar, a situação, o vínculo
+  do CR e a contagem da operação mudam na data certa e nada é apagado; pendência aberta ou transferência em andamento bloqueia o
+  pedido; placa engatada exige desatrelar; mês fechado exige a permissão da Diretoria; evento imutável; RLS); unitário (motivo
+  e documento obrigatórios); e2e do caminho principal (pedir como gestor, aprovar como Diretoria) e de prazo vencido (sinaliza,
+  nunca cancela); teste de que o comprador e o valor **não** são gravados no sistema.
+- **Dependências:** **P3** (processos como dado) com P1 e P2; **S1** (o botão na aba Soltas); H3, H4 e H6; o desenho dos
+  passos Motivo e Documento.
+
+## CR1. Saúde do CR (junto da C1)
+
+- **Modelo e ritmo:** banco (visão e funções de leitura) e tela. Risco médio (leitura sobre o staging; RLS): **para no
+  checkpoint**; só no staging e no banco local, nada na nuvem.
+- **Objetivo:** a tela **Saúde do CR** do quadro: seis cartões de contagem, a tabela **"O que fazer, por dono e prazo"**, a
+  **reconciliação por tipo** (10 tipos somando 100% do total do Sankhya) e o "como ler o rastro", com os quatro resolvedores
+  (Escolher o CR, Ligar à operação, Escolher o vigente, Classificar). **Amplia a C1**, que tinha a lista de CRs e o semáforo.
+- **Tabelas e funções:** `nucleo.saude_do_cr` (C1, um CR por linha, com o problema e o dono) mais
+  `nucleo.resumo_da_saude_do_cr(p_mes)` (contagem por problema, dono e prazo, e as contagens dos cartões, **todas do banco**);
+  `nucleo.reconciliacao_por_tipo(p_mes)` sobre `nucleo.lancamento_atribuido` e `config.tipo_de_lancamento` (D0), com o teste
+  da soma (I2); prazos e donos por problema em `config.parametro`, editáveis só pelo Administrador, com auditoria; "Atribuir
+  dono" cria tarefa na fila do papel (P1).
+- **Telas:** `/cadastros/saude-do-cr` (ficha `cadastros-saude-do-cr-quadro.md`, junto de `cadastros-saude-do-cr.md`); os
+  resolvedores em popup; o rastro no painel lateral (C2). **Os passos dos quatro resolvedores não têm quadro.**
+- **Testes de aceite:** um caso por problema (placa sem CR, CR sem operação, repetido, dois do mesmo tipo, lançamento sem CR,
+  data fora de faixa, bloqueado com despesa); a soma dos tipos mais "sem destino" é igual ao total (I2) e nenhum lançamento cai
+  em dois tipos (I3); sem despesa mostra "Sem dados ainda", nunca R$ 0,00; RLS com usuário de cada perfil; e2e em 1366 e 1920,
+  claro e escuro.
+- **Dependências:** **C1** (a mesma fatia, que agora inclui os cartões e a reconciliação), C0, D0 e V0 (ficha do CR e Trocar CR);
+  o desenho dos resolvedores; a confirmação dos prazos pelo Alexandre.
+
 ## CI-2. Teste de migração sobre dados (NÃO executar agora)
 
 Pedido de Alexandre em 11/11/2026, depois do defeito do lote de número (a migration reclassificou exceções e deixou as

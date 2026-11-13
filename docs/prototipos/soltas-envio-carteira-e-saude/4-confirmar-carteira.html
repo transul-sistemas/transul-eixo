@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Confirmar a carteira do mês</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:'Barlow',sans-serif;color:#0f1729;background:#f6f7fb}
+.sk{background:#e9ecf3;border-radius:8px}
+.btn{padding:10px 18px;border-radius:10px;font-size:15px;font-weight:600;font-family:'Barlow',sans-serif;cursor:pointer;border:1px solid #d9dde8;background:#fff;color:#0f1729}
+.btn.pri{background:#3355ff;border-color:#3355ff;color:#fff}
+.plate{display:inline-block;border:1.5px solid #1d3a8a;border-top:5px solid #1d3a8a;border-radius:4px;background:#fff;font-weight:700;font-size:14px;letter-spacing:1px;padding:0 5px;color:#0f1729}
+.tg{display:inline-block;padding:2px 9px;border-radius:999px;font-size:12px;font-weight:700}
+.vig{background:#d3efe3;color:#0f5c3d}
+.enc{background:#fadadb;color:#8a1f24}
+.warn{background:#fbecc7;color:#7a5200}
+.mut{color:#5a6478;font-size:13px}
+.k{font-size:12px;font-weight:700;letter-spacing:.06em;color:#5a6478}
+.step{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:500;color:#5a6478}
+.dot{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;background:#eceef4;color:#5a6478}
+.dot.ok{background:#22a06b;color:#fff}
+.dot.on{background:#3355ff;color:#fff}
+.r{display:grid;grid-template-columns:190px 170px 230px 1fr;gap:10px;align-items:center;padding:9px 0;border-top:1px solid #eceef4;font-size:14px}
+.sg{display:flex}
+.sg button{padding:7px 10px;font-size:13px;font-weight:600;font-family:'Barlow',sans-serif;cursor:pointer;border:1px solid #d9dde8;background:#fff;color:#0f1729}
+.sg button:first-child{border-radius:8px 0 0 8px}
+.sg button:last-child{border-radius:0 8px 8px 0}
+.sg .a{background:#d3efe3;border-color:#22a06b;color:#0f5c3d}
+</style>
+</helmet>
+<div style="position:relative;box-sizing:border-box;min-height:900px;background:#f6f7fb;overflow:hidden">
+  <div style="padding:20px 24px;display:flex;flex-direction:column;gap:12px">
+    <div class="sk" style="height:22px;width:220px"></div><div class="sk" style="height:34px;width:300px"></div><div class="sk" style="height:90px"></div>
+    <div class="sk" style="height:70px"></div><div class="sk" style="height:70px"></div><div class="sk" style="height:70px"></div><div class="sk" style="height:70px"></div>
+  </div>
+  <div style="position:absolute;left:0;top:0;right:0;bottom:0;background:rgba(15,23,41,.55)"></div>
+
+  <div role="dialog" aria-label="Confirmar a carteira de outubro" style="position:absolute;left:50%;top:24px;transform:translateX(-50%);width:1100px;max-width:96%;background:#fff;border-radius:16px;box-shadow:0 24px 64px rgba(15,23,41,.35);box-sizing:border-box;padding:22px 28px;display:flex;flex-direction:column;gap:12px">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap">
+      <div><h2 style="margin:0;font-size:22px;font-weight:700">Confirmar a carteira de outubro</h2>
+      <div style="font-size:14px;color:#5a6478;margin-top:2px">Gestor Demo 01 · 14 placas · <span class="tg enc">venceu em 05/11, atrasada há 7 dias</span></div></div>
+      <button class="btn" aria-label="Fechar" style="padding:6px 12px">×</button>
+    </div>
+    <div style="display:flex;gap:18px;flex-wrap:wrap;padding:10px 0;border-top:1px solid #eceef4;border-bottom:1px solid #eceef4;align-items:center;justify-content:space-between">
+      <div style="display:flex;gap:18px;flex-wrap:wrap"><span class="step" style="color:#0f1729"><span class="dot on">1</span>Conferir as placas</span><span class="step"><span class="dot">2</span>Resolver o que não confere</span><span class="step"><span class="dot">3</span>Confirmar</span></div>
+      <div style="display:flex;gap:10px;align-items:center;font-size:14px"><b>12 de 14 confirmadas</b><span style="display:inline-block;width:160px;height:8px;border-radius:999px;background:#eceef4"><span style="display:block;width:86%;height:8px;border-radius:999px;background:#22a06b"></span></span></div>
+    </div>
+
+    <div class="mut" style="background:#f6f7fb;border-radius:10px;padding:8px 12px">Confirmar diz ao sistema que estas placas, com este CR e esta operação, estavam sob a sua responsabilidade em outubro. É a base do resultado do mês e de quem responde por cada placa.</div>
+
+    <div>
+      <div class="r" style="border-top:0"><span class="k">PLACA</span><span class="k">SITUAÇÃO NO MÊS</span><span class="k">CR E OPERAÇÃO</span><span class="k">A PLACA ESTÁ COM VOCÊ?</span></div>
+      <div class="r"><div><span class="plate">ZDM1A01</span><div class="mut">Rodotrem · Frota</div></div><div>ETc na maior parte</div><div><b>CR004</b> <span class="tg vig">Vigente</span><div class="mut">Operação A</div></div><div class="sg"><button class="a" aria-pressed="true">✓ Está comigo</button><button>Não é minha</button><button>Corrigir</button></div></div>
+      <div class="r"><div><span class="plate">ZDM1A02</span><div class="mut">Bitrem · Frota</div></div><div>ETc e FOg</div><div><b>CR011</b> <span class="tg vig">Vigente</span><div class="mut">Operação A</div></div><div class="sg"><button class="a" aria-pressed="true">✓ Está comigo</button><button>Não é minha</button><button>Corrigir</button></div></div>
+      <div class="r"><div><span class="plate">ZDM1A03</span><div class="mut">Rodotrem · Acionista</div></div><div>ETc, ADe e CAr</div><div><b>CR015</b> <span class="tg vig">Vigente</span><div class="mut">Operação C</div></div><div class="sg"><button class="a" aria-pressed="true">✓ Está comigo</button><button>Não é minha</button><button>Corrigir</button></div></div>
+      <div class="r" style="background:#fffaf0"><div><span class="plate">ZDM1A07</span><div class="mut">Simples · Frota</div></div><div>PÁT o mês inteiro</div>
+        <div><span class="tg warn">sem CR vigente</span><div class="mut">precisa de um CR para o resultado</div></div><div><div class="sg"><button>Está comigo</button><button>Não é minha</button><button style="background:#fbecc7;border-color:#e8a317;color:#7a5200" aria-pressed="true">Corrigir</button></div><div class="mut" style="margin-top:4px">abre Corrigir placa e vira tarefa de cadastro</div></div></div>
+      <div class="r" style="background:#fffaf0"><div><span class="plate">ZDM1A09</span><div class="mut">Cavalo · Frota</div></div><div>ETv e ACe</div>
+        <div><b>CR003</b> <span class="tg enc">Encerrado em 12/10</span><div class="mut">trocou para CR015, Operação C</div></div><div><div class="sg"><button>Está comigo</button><button>Não é minha</button><button>Corrigir</button></div><div class="mut" style="margin-top:4px">a troca do CR foi em outubro: confira a data</div></div></div>
+      <div class="r"><div><span class="plate">ZDM1A11</span><div class="mut">Cavalo · Frota</div></div><div>ETc</div><div><b>CR004</b> <span class="tg vig">Vigente</span><div class="mut">Operação A</div></div><div class="sg"><button class="a" aria-pressed="true">✓ Está comigo</button><button>Não é minha</button><button>Corrigir</button></div></div>
+      <div class="mut" style="padding:8px 0;border-top:1px solid #eceef4">… mais 8 placas, todas já confirmadas · <b style="color:#3355ff">ver todas</b></div>
+    </div>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;border-top:1px solid #eceef4;padding-top:12px;flex-wrap:wrap">
+      <div style="font-size:14px"><b>12 confirmadas</b> · <b>2 faltam</b>. "Não é minha" vira pedido de correção para o líder da operação.</div>
+      <div style="display:flex;gap:10px"><button class="btn">Salvar e continuar depois</button><button class="btn pri">Confirmar as 12 e resolver as 2</button></div>
+    </div>
+    <div style="font-size:12px;color:#5a6478;margin-top:-4px">Dados de exemplo (fictícios). O prazo é um parâmetro editável pelo Administrador.</div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1360,"height":900}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>
