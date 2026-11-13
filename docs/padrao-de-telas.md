@@ -66,12 +66,11 @@ Regra de Alexandre (11/11/2026): **o wizard abre em popup central; a barra later
   resumo ao vivo, rascunho salvo e "fechar é fechar". Nunca na lateral.
 - **Painel lateral** (`BotaoDoOlho`, Espiar, ficha curta): só para **ler o detalhe** de um item, sem
   formulário de gravação.
-- O componente `Assistente` (`components/wizard/assistente.tsx`) hoje tem duas variantes: `modal`
-  (tela quase cheia) e `lateral` (o mini-wizard). A regra pede **uma variante de popup central** (proposta:
-  largura moderada para os assistentes curtos, e a tela quase cheia mantida para os longos) e **a aposentadoria da
-  variante lateral**.
+- O componente `Assistente` (`components/wizard/assistente.tsx`) tem duas variantes: `modal` (popup central) e
+  `empilhado` (o mini-wizard do "+": popup central menor, sobre o assistente de baixo, sem rascunho). A variante
+  `lateral` foi aposentada em 13/11/2026 (n1-tela); o teste `lib/qualidade/assistente-em-popup.test.ts` barra a volta.
 
-### Assistentes que hoje usam a variante lateral (conferido no código, 11/11/2026)
+### Assistentes que usavam a variante lateral (convertidos em 13/11/2026)
 
 | Assistente | Arquivo | O que fazer |
 | --- | --- | --- |

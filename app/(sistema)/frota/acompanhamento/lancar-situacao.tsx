@@ -13,7 +13,7 @@ import type { DefinicaoDeAssistente } from "@/lib/wizard/passos";
 import { errosDoResolvedor } from "../placas/assistentes/erros-do-resolvedor";
 import { lancarSituacaoAcao } from "./acoes";
 
-// Lançar situação (mini-wizard lateral, aberto pela célula da grade): escolher a situação do dia entre
+// Lançar situação (popup central, aberto pela célula da grade): escolher a situação do dia entre
 // as que valem para a placa (tipo e conjunto), conferir e gravar. O banco fecha as camadas de
 // prioridade maior que estejam abertas, para o que se lança ser o que se vê.
 
@@ -68,7 +68,6 @@ export function LancarSituacao({
   return (
     <Assistente<Valores>
       definicao={DEFINICAO}
-      variante="lateral"
       resolver={resolver}
       valoresIniciais={{ sigla: "" }}
       validarRascunho={() => null}

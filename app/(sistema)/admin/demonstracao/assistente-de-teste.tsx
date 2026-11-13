@@ -244,7 +244,7 @@ export function AssistenteDeTeste() {
                             valoresIniciais={{ nome: "" }}
                             validarRascunho={() => null}
                             usuario={usuario}
-                            variante="lateral"
+                            variante="empilhado"
                             rascunho={false}
                             fecharAoGravar
                             focoFinal={focoFinal}

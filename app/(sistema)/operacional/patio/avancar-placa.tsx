@@ -15,7 +15,7 @@ import type { DefinicaoDeAssistente } from "@/lib/wizard/passos";
 import { errosDoResolvedor } from "../../frota/placas/assistentes/erros-do-resolvedor";
 import { avancarNoPatioAcao } from "../acoes";
 
-// Avançar a placa no pátio (mini-wizard lateral, aberto pela linha): aceitar (DOp → ACe), concluir o
+// Avançar a placa no pátio (popup central, aberto pela linha): aceitar (DOp → ACe), concluir o
 // carregamento (CAr → CAn), liberar a viagem (CAn → ETc, a placa volta ao gestor) ou devolver ao
 // gestor (DOp ou ACe → PÁT, com o motivo). O banco confere a filial da custódia e a situação.
 
@@ -87,7 +87,6 @@ export function AvancarPlaca({
   return (
     <Assistente<Valores>
       definicao={definicao}
-      variante="lateral"
       resolver={resolver}
       valoresIniciais={{ motivo: "" }}
       validarRascunho={() => null}
