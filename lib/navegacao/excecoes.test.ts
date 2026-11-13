@@ -5,13 +5,18 @@ const q = (texto: string) => new URLSearchParams(texto);
 
 describe("lerFila", () => {
   it("sem parâmetros: todos os assuntos, página 1", () => {
-    expect(lerFila(q(""))).toEqual({ assunto: null, pagina: 1 });
+    expect(lerFila(q(""))).toEqual({ assunto: null, pagina: 1, demo: false });
   });
   it("lê o assunto e a página", () => {
     expect(lerFila(q("assunto=cadastro_incompleto&pagina=3"))).toEqual({
       assunto: "cadastro_incompleto",
       pagina: 3,
+      demo: false,
     });
+  });
+  it("o filtro Demo vem de demo=1 (qualquer outro valor desliga)", () => {
+    expect(lerFila(q("demo=1")).demo).toBe(true);
+    expect(lerFila(q("demo=sim")).demo).toBe(false);
   });
   it("assunto fora do formato vira todos (nunca vai cru ao banco)", () => {
     expect(lerFila(q("assunto=Drop Table;")).assunto).toBeNull();

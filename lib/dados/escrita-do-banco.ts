@@ -528,6 +528,28 @@ export function escritaDoBanco(cliente: () => Promise<ClienteDeEscrita>): FonteD
         .map((l) => ({ placa: l.placa, nome: `${l.placa} · ${l.modelo}` }));
     },
 
+    async cavalosParaEngatar(): Promise<PlacaAEscolher[]> {
+      const c = await cliente();
+      // A primeira página basta para escolher (100 cavalos, em ordem de placa); a RLS já limita ao escopo.
+      const pagina = await ler<{ linhas: { placa: string; modelo: string }[] }>(
+        c,
+        "listar_placas",
+        {
+          p_busca: "",
+          p_grupos: [],
+          p_tipos: ["cavalo"],
+          p_siglas: [],
+          p_baixadas: false,
+          p_ordem: "placa",
+          p_decrescente: false,
+          p_pagina: 1,
+          p_tam: 100,
+          p_para_receber: false,
+        },
+      );
+      return pagina.linhas.map((l) => ({ placa: l.placa, nome: `${l.placa} · ${l.modelo}` }));
+    },
+
     async cancelarPedido(entrada, chave): Promise<Resultado<PedidoDeTransferencia>> {
       const c = await cliente();
       const antes = await pedidoDaPlaca(c, entrada.placa);

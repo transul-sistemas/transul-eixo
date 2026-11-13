@@ -122,17 +122,17 @@ describe("modulosVisiveis (catálogo de teste)", () => {
 });
 
 describe("modulosVisiveis (catálogo real)", () => {
-  it("Administrador e Diretoria veem os 9 módulos; o Administrador, as 37 telas; a Diretoria, 36 (sem o Meu dia, em teste)", () => {
+  it("Administrador e Diretoria veem os 9 módulos; o Administrador, as 38 telas; a Diretoria, 37 (sem o Meu dia, em teste)", () => {
     for (const perfil of ["Administrador", "Diretoria"] as const) {
       const visiveis = modulosVisiveis(perfil);
       expect(visiveis).toHaveLength(9);
-      expect(visiveis.flatMap((m) => m.telas)).toHaveLength(perfil === "Administrador" ? 37 : 36);
+      expect(visiveis.flatMap((m) => m.telas)).toHaveLength(perfil === "Administrador" ? 38 : 37);
     }
   });
   it("com as cinco telas da Frota prontas, o Gestor de frota vê as cinco; o Operacional vê Pátio, Totem, Ordens de carregamento e a Escala", () => {
     expect(modulosVisiveis("Gestor de frota").map((m) => [m.id, m.telas.map((t) => t.id)])).toEqual(
       [
-        ["inicio", ["inicio.tarefas", "inicio.mapa-do-sistema"]],
+        ["inicio", ["inicio.tarefas", "inicio.resumo-do-dia", "inicio.mapa-do-sistema"]],
         [
           "frota",
           [
@@ -147,10 +147,15 @@ describe("modulosVisiveis (catálogo real)", () => {
       ],
     );
     expect(modulosVisiveis("Operacional").map((m) => [m.id, m.telas.map((t) => t.id)])).toEqual([
-      ["inicio", ["inicio.tarefas", "inicio.mapa-do-sistema"]],
+      ["inicio", ["inicio.tarefas", "inicio.resumo-do-dia", "inicio.mapa-do-sistema"]],
       [
         "operacional",
-        ["operacional.patio", "operacional.totem", "operacional.ordens-de-carregamento"],
+        [
+          "operacional.patio",
+          "operacional.totem",
+          "operacional.ordens-de-carregamento",
+          "operacional.analise",
+        ],
       ],
       ["pessoas", ["pessoas.escala"]],
     ]);

@@ -964,6 +964,11 @@ export async function resumoDaDemo(c: pg.Client): Promise<ResumoDaDemo> {
      union all select 'nível 1: pedidos de baixa abertos', count(*)::text from nucleo.pedido_de_baixa where situacao = 'pedida' and ativo_id in (select ativo_id from demo)
      union all select 'nível 1: situações programadas', count(*)::text from nucleo.situacao_programada where situacao = 'programada' and ativo_id in (select ativo_id from demo)
      union all select 'nível 1: cidades da demo', count(*)::text from config.cidade where nome like 'Cidade Demo %'
+     union all select 'nível 2: conjuntos com motorista', count(*)::text from pessoas.motorista_do_conjunto where excluido_em is null and fim is null and ativo_id in (select ativo_id from demo)
+     union all select 'nível 2: dias lançados do motorista', count(*)::text from pessoas.status_do_motorista s join nucleo.pessoa p on p.id = s.pessoa_id where p.nome like 'Demo %' and s.excluido_em is null
+     union all select 'nível 2: substituições', count(*)::text from pessoas.substituicao_do_motorista where excluido_em is null and ativo_id in (select ativo_id from demo)
+     union all select 'nível 2: abastecimentos provisórios', count(*)::text from nucleo.abastecimento_provisorio where situacao = 'provisorio' and ativo_id in (select ativo_id from demo)
+     union all select 'nível 2: ajustes pedidos da demo', count(*)::text from financeiro.ajuste where justificativa like 'Demo:%' and situacao = 'pedido'
      union all select 'faixa: parâmetro ligado', count(*)::text from config.parametro where chave = '${CHAVE_DA_FAIXA_DEMO}'`,
     [`${PREFIXO_DA_PLACA_DEMO}%`],
   );
@@ -1113,6 +1118,141 @@ export async function carregarCenariosDoNivel1(c: pg.Client, hoje: string): Prom
   return novos;
 }
 
+/**
+ * Nível 2, A6 (13/11/2026): os motoristas Demo dos cavalos ZDM 1 a 10 (vínculo desde o início do vínculo da pessoa),
+ * o realizado dos últimos 10 dias pela sugestão da escala (hoje fica sem lançamento), férias sem substituto no
+ * motorista do ZDM 1 (a tarefa "Indicar substituto") e férias com substituto no do ZDM 2. Só pessoas "Demo".
+ */
+export async function carregarMotoristasDaDemo(c: pg.Client, hoje: string): Promise<number> {
+  const motoristas = (
+    await c.query<{ pessoa_id: string; inicio: string; operacao_id: string }>(
+      `select v.pessoa_id, v.inicio::text as inicio, v.operacao_id
+         from pessoas.vinculo v join nucleo.pessoa p on p.id = v.pessoa_id
+        where p.nome like 'Demo %' and v.funcao = 'motorista' and v.excluido_em is null and v.periodo @> $1::date
+        order by p.nome, v.pessoa_id`,
+      [hoje],
+    )
+  ).rows;
+  if (motoristas.length < 11)
+    throw new ErroDoEixo("Faltam motoristas Demo para os cenários do A6.");
+  let novos = 0;
+  const conjuntos: string[] = [];
+  for (let i = 1; i <= 10; i++) {
+    const ativo = await exigirAtivoDaPlacaDemo(c, i);
+    conjuntos.push(ativo);
+    const ja = await um<{ n: string }>(
+      c,
+      `select count(*)::text as n from pessoas.motorista_do_conjunto where ativo_id = $1 and excluido_em is null`,
+      [ativo],
+    );
+    if (Number(ja.n) > 0) continue;
+    const m = motoristas[i - 1]!;
+    await c.query(`select nucleo.vincular_motorista($1::uuid, $2::uuid, $3::date)`, [
+      ativo,
+      m.pessoa_id,
+      m.inicio,
+    ]);
+    novos++;
+  }
+  // O realizado dos últimos 10 dias, pela sugestão da escala (o gestor "lançou" o que estava planejado).
+  for (const m of motoristas.slice(0, 10)) {
+    const r = await um<{ n: string }>(
+      c,
+      `select count(nucleo.lancar_status_do_motorista(e.pessoa_id, e.dia, cm.codigo))::text as n
+         from pessoas.marcacao_da_escala e
+         join pessoas.codigo_do_motorista cm on cm.sugerido_pela_escala = e.sigla
+        where e.pessoa_id = $1 and e.dia between $2::date - 10 and $2::date - 1
+          and not exists (select 1 from pessoas.status_do_motorista s
+                           where s.pessoa_id = e.pessoa_id and s.dia = e.dia and s.excluido_em is null)`,
+      [m.pessoa_id, hoje],
+    );
+    novos += Number(r.n);
+  }
+  // Férias na escala: o do ZDM 1 sem substituto (tarefa); o do ZDM 2 com o 11º motorista de substituto.
+  const ferias = [
+    { m: motoristas[0]!, de: 3, ate: 6 },
+    { m: motoristas[1]!, de: 4, ate: 7 },
+  ];
+  for (const f of ferias) {
+    for (let d = f.de; d <= f.ate; d++) {
+      const r = await c.query(
+        `select nucleo.marcar_escala($1::uuid, $2::uuid, $3::date, 'FE')
+          where not exists (select 1 from pessoas.marcacao_da_escala where pessoa_id = $1 and dia = $3::date)`,
+        [f.m.pessoa_id, f.m.operacao_id, somarDias(hoje, d)],
+      );
+      novos += r.rowCount ?? 0;
+    }
+  }
+  const temSubstituto = await um<{ n: string }>(
+    c,
+    `select count(*)::text as n from pessoas.substituicao_do_motorista where ativo_id = $1 and excluido_em is null`,
+    [conjuntos[1]],
+  );
+  if (Number(temSubstituto.n) === 0) {
+    await c.query(
+      `select nucleo.indicar_substituto($1::uuid, $2::uuid, $3::date, $4::date, 'Demo: férias do titular')`,
+      [motoristas[1]!.pessoa_id, motoristas[10]!.pessoa_id, somarDias(hoje, 4), somarDias(hoje, 8)],
+    );
+    novos++;
+  }
+  return novos;
+}
+
+/**
+ * Nível 2: três abastecimentos lançados à mão (provisórios) nas placas ZDM 1 a 3, de ontem e de hoje, à espera
+ * da conferência com o Sankhya. Nunca somam no total do mês. Idempotente pelo posto "Posto Demo".
+ */
+export async function carregarAbastecimentoProvisorioDaDemo(
+  c: pg.Client,
+  hoje: string,
+): Promise<number> {
+  let novos = 0;
+  for (let i = 1; i <= 3; i++) {
+    const ativo = await exigirAtivoDaPlacaDemo(c, i);
+    const ja = await um<{ n: string }>(
+      c,
+      `select count(*)::text as n from nucleo.abastecimento_provisorio where ativo_id = $1 and posto = 'Posto Demo'`,
+      [ativo],
+    );
+    if (Number(ja.n) > 0) continue;
+    await c.query(
+      `select nucleo.lancar_abastecimento_provisorio($1::uuid, $2::date, $3, $4, null, 'Diesel S10', 'Posto Demo')`,
+      [ativo, somarDias(hoje, i === 3 ? 0 : -1), 120 + i * 10, (120 + i * 10) * 6.2],
+    );
+    novos++;
+  }
+  return novos;
+}
+
+/**
+ * Nível 2, Resultados: dois ajustes pedidos na "Operação Demo" (um de custo da frota, um de receita) para a
+ * Diretoria decidir. O ajuste não entra em total nenhum (nem na Visão geral nem na foto). Nenhum mês é fechado
+ * pela demonstração: fechar é da Diretoria e congelaria um mês real. Idempotente pela justificativa "Demo:".
+ */
+export async function carregarAjustesDaDemo(c: pg.Client, hoje: string): Promise<number> {
+  const operacao = await um<{ id: string } | undefined>(
+    c,
+    `select id from nucleo.operacao where nome = $1 and excluido_em is null`,
+    [NOME_DA_OPERACAO_DEMO],
+  );
+  if (!operacao) return 0;
+  const ja = await um<{ n: string }>(
+    c,
+    `select count(*)::text as n from financeiro.ajuste where justificativa like 'Demo:%'`,
+  );
+  if (Number(ja.n) > 0) return 0;
+  const mes = `${somarDias(hoje, -40).slice(0, 7)}-01`;
+  await c.query(
+    `select nucleo.pedir_ajuste($1::date, $2::uuid, null, 'custo_frota', -150.00, 'Demo: nota de manutenção lançada em dobro')`,
+    [mes, operacao.id],
+  );
+  await c.query(
+    `select nucleo.pedir_ajuste($1::date, $2::uuid, null, 'receita', 320.00, 'Demo: frete prestado sem CT-e emitido')`,
+    [mes, operacao.id],
+  );
+  return 2;
+}
+
 export async function carregarDemo(
   c: pg.Client,
 ): Promise<{ areas: Record<string, string>; abastecimento: number }> {
@@ -1133,6 +1273,12 @@ export async function carregarDemo(
   areas["Operação Demo (sem lançamentos)"] = `${await carregarOperacaoDemo(c, hoje)} placas novas`;
   areas["Nível 1: posição, troca de CR, baixa pedida, sem CR e programado"] =
     `${await carregarCenariosDoNivel1(c, hoje)} itens novos`;
+  areas["Nível 2: motoristas, realizado do dia e substituto"] =
+    `${await carregarMotoristasDaDemo(c, hoje)} itens novos`;
+  areas["Nível 2: abastecimentos provisórios"] =
+    `${await carregarAbastecimentoProvisorioDaDemo(c, hoje)} lançamentos novos`;
+  areas["Nível 2: ajustes pedidos (Operação Demo)"] =
+    `${await carregarAjustesDaDemo(c, hoje)} ajustes novos`;
   await ligarFaixaDaDemo(c);
   areas["faixa de demonstração"] = "ligada";
   await c.query("set constraints all immediate");

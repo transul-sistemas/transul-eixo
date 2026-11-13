@@ -48,9 +48,9 @@ describe("<ConteudoDaBusca>: campo e lista", () => {
     expect(html).toContain("Frota › Placas");
     expect(html).toContain("Frota › Receber placa");
   });
-  it("tela esqueleto leva a etiqueta Estrutura, não Em breve", () => {
-    const html = conteudo("comparativo");
-    expect(html).toContain("Estrutura");
+  it("tela pronta da Fase 1 não leva etiqueta Estrutura nem Em breve", () => {
+    const html = conteudo("livro do acionista");
+    expect(html).not.toContain("Estrutura");
     expect(html).not.toContain("Em breve");
   });
   it("a ação pronta aparece habilitada e sem a etiqueta Em breve", () => {

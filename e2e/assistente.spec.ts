@@ -333,13 +333,13 @@ test.describe("assistente: o + e o mini-wizard", () => {
   const botaoMais = (page: import("@playwright/test").Page) =>
     assistente(page).getByRole("button", { name: "Cadastrar categoria" });
 
-  test("o + abre o mini-wizard num painel lateral; Esc fecha só o mini e o foco volta ao +", async ({
+  test("o + abre o mini-wizard num popup central empilhado; Esc fecha só o mini e o foco volta ao +", async ({
     page,
   }) => {
     await abrirOAssistente(page);
     await botaoMais(page).click();
     await expect(mini(page)).toBeVisible();
-    await expect(mini(page)).toHaveAttribute("data-variante", "lateral");
+    await expect(mini(page)).toHaveAttribute("data-variante", "empilhado");
     await page.keyboard.press("Escape");
     await expect(mini(page)).toBeHidden();
     await expect(assistente(page)).toBeVisible(); // o assistente de baixo continua aberto

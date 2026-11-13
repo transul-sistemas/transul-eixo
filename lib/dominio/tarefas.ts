@@ -80,10 +80,15 @@ function contar(n: number, um: string, varios: string): string {
   return `${n} ${n === 1 ? um : varios}`;
 }
 
-export function enderecoDaFila(e: { assunto: string | null; pagina: number }): string {
+export function enderecoDaFila(e: {
+  assunto: string | null;
+  pagina: number;
+  demo?: boolean;
+}): string {
   const q = new URLSearchParams();
   if (e.assunto !== null) q.set("assunto", e.assunto);
   if (e.pagina > 1) q.set("pagina", String(e.pagina));
+  if (e.demo === true) q.set("demo", "1");
   const texto = q.toString();
   return texto ? `${ROTA_DA_FILA}?${texto}` : ROTA_DA_FILA;
 }

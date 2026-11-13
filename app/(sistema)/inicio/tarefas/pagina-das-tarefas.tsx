@@ -4,7 +4,13 @@ import { connection } from "next/server";
 import { formatarInteiro } from "@/components/formato/numero";
 import { PaginaDeLeitura } from "@/components/layout/pagina-de-leitura";
 import { EsqueletoDaTabela, ListaVazia } from "@/components/tabela/estados";
+import { ProvedorDoUsuario } from "@/components/navegacao/usuario-da-sessao";
+import { lerPedidosDeBaixa, type PedidoDeBaixa } from "@/lib/dados/baixa";
+import type { ClienteDeEscrita } from "@/lib/dados/escrita-do-banco";
 import { modoDosDados } from "@/lib/dados/fonte";
+import { textoDoErro } from "@/lib/log/erro";
+import { exigirSessao } from "@/lib/seguranca/sessao-do-servidor";
+import { BaixasPedidas } from "./baixas-pedidas";
 import { lerTarefas } from "@/lib/dados/tarefas";
 import { montarTarefas } from "@/lib/dominio/tarefas";
 import { acharTela } from "@/lib/navegacao/catalogo";
@@ -63,6 +69,35 @@ async function Conteudo() {
   );
 }
 
+/** S4: os pedidos de baixa abertos (a Diretoria decide; quem pediu cancela). Falha vira aviso. */
+async function Baixas() {
+  const { perfil, usuarioId } = await exigirSessao();
+  let pedidos: PedidoDeBaixa[] | null = null;
+  try {
+    const { criarClienteDoServidor } = await import("@/lib/supabase/servidor");
+    const cliente = (await criarClienteDoServidor()) as unknown as ClienteDeEscrita;
+    pedidos = await lerPedidosDeBaixa(cliente, "pedida");
+  } catch (erro) {
+    console.error("pedidos de baixa indisponíveis:", textoDoErro(erro));
+  }
+  if (pedidos === null) {
+    return (
+      <p role="alert" className="border-border rounded-lg border p-3 text-sm">
+        Não foi possível ler os pedidos de baixa agora. Recarregue a página para tentar de novo.
+      </p>
+    );
+  }
+  return (
+    <ProvedorDoUsuario usuario={usuarioId}>
+      <BaixasPedidas
+        pedidos={pedidos}
+        podeDecidir={perfil === "Diretoria"}
+        podeCancelar={perfil === "Gestor de frota"}
+      />
+    </ProvedorDoUsuario>
+  );
+}
+
 export async function PaginaDasTarefas() {
   await connection();
   const { titulo, descricao } = cabecalho();
@@ -74,7 +109,10 @@ export async function PaginaDasTarefas() {
           descricao="Esta tela não tem dados de exemplo. Rode o sistema com os dados do banco para ver o que espera você."
         />
       ) : (
-        <Conteudo />
+        <>
+          <Conteudo />
+          <Baixas />
+        </>
       )}
     </PaginaDeLeitura>
   );

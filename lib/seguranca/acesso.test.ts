@@ -100,14 +100,17 @@ describe("decidirAcesso", () => {
     });
   });
 
-  it("tela esqueleto (10/11/2026): só Administrador e Diretoria; os outros perfis recebem 404", () => {
-    for (const perfil of ["Gestor de frota", "Operacional"] as const) {
-      for (const rota of ["/inicio/resumo-do-dia", "/operacional/analise"]) {
-        expect(decidirAcesso(rota, "", { ...logado, perfil }), `${perfil} ${rota}`).toEqual({
-          tipo: "nao-encontrada",
-        });
-      }
-    }
+  it("fim da Fase 1 (13/11/2026): as telas que eram estrutura abrem para quem tem o módulo", () => {
+    expect(
+      decidirAcesso("/inicio/resumo-do-dia", "", { ...logado, perfil: "Gestor de frota" }),
+    ).toEqual({
+      tipo: "seguir",
+    });
+    expect(decidirAcesso("/operacional/analise", "", { ...logado, perfil: "Operacional" })).toEqual(
+      {
+        tipo: "seguir",
+      },
+    );
     for (const perfil of ["Administrador", "Diretoria"] as const) {
       expect(decidirAcesso("/inicio/tarefas", "", { ...logado, perfil })).toEqual({
         tipo: "seguir",

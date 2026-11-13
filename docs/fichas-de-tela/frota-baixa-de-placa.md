@@ -74,6 +74,7 @@ CR, operação, história) antes de pedir e deixa a placa ativa até a aprovaç�
 
 ## Rota e estado
 
+- **Construída (Fase 1, n1-tela, 13/11/2026):** "Pedir baixa" em popup na ficha da placa (só no banco) e no Ctrl+K (Motivo, Documento, Conferir com o impacto); "Decidir baixa" (Diretoria) e "Cancelar pedido de baixa" (quem pediu) no bloco "Baixas pedidas" de `/inicio/tarefas`.
 - Rota proposta: popup sobre `/frota/acompanhamento` (aba Soltas), a ficha da placa e a tarefa de aprovação da Diretoria.
 - Módulo Frota. Quem pede: Gestor de frota; quem aprova: Diretoria.
 - Estado no catálogo: **esqueleto** (o assistente não existe; só a função `registrar_baixa`).

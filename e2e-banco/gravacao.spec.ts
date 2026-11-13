@@ -84,14 +84,14 @@ test.describe.serial("transferência pelo banco: disponibilizar, receber e concl
       await rota.fulfill({ response: await rota.fetch() });
     });
     await page.goto(`${ROTA}/${alvo.placa}`);
-    await page.getByRole("button", { name: "Disponibilizar placa" }).click();
-    const d = dialogo(page, "Disponibilizar placa");
+    await page.getByRole("button", { name: "Enviar placa" }).click();
+    const d = dialogo(page, "Enviar placa");
     await d.getByLabel("Gestor que vai receber").selectOption({ label: gestor.nome });
     await d.getByLabel("Motivo").fill("Troca de carteira (e2e do modo banco)");
     await continuar(d);
     await d.getByLabel("Pendências conhecidas").fill("CRLV vence em breve");
     await continuar(d);
-    await d.getByRole("button", { name: "Disponibilizar placa" }).click();
+    await d.getByRole("button", { name: "Enviar placa" }).click();
     await expect(d.getByTestId("assistente-concluido")).toBeVisible();
 
     const abertos = await comBanco((banco) =>

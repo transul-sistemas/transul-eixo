@@ -153,4 +153,18 @@ describe("idsDasAcoesDoMomento: cancelar e devolver o pedido", () => {
       ).toBe(true);
     }
   });
+
+  it("com o banco (comVinculos): Trocar CR sempre; Pedir baixa só sem transferência aberta", () => {
+    const ids = idsDasAcoesDoMomento({ sigla: "PÁT", tipo: "cavalo", comVinculos: true });
+    expect(ids.slice(-2)).toEqual(["frota.trocar-cr", "frota.pedir-baixa"]);
+    const comPedido = idsDasAcoesDoMomento({
+      sigla: "PÁT",
+      tipo: "cavalo",
+      pedidoAberto: true,
+      comVinculos: true,
+    });
+    expect(comPedido).toContain("frota.trocar-cr");
+    expect(comPedido).not.toContain("frota.pedir-baixa");
+    expect(idsDasAcoesDoMomento({ sigla: "VND", tipo: "cavalo", comVinculos: true })).toEqual([]);
+  });
 });

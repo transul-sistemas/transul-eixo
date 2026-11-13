@@ -15,6 +15,7 @@ import {
   NOME_DO_COOKIE_DO_TAMANHO,
 } from "@/lib/navegacao/preferencias-da-tabela";
 import { enderecoDoPatio, type EstadoDaLista, lerPatioDaUrl } from "@/lib/navegacao/operacional";
+import { ACOES_EM_LOTE, acoesPossiveis } from "@/lib/dominio/esquemas/operacional";
 import { exigirSessao } from "@/lib/seguranca/sessao-do-servidor";
 import {
   FiltrosDaLista,
@@ -22,6 +23,7 @@ import {
   type ParametrosDaBusca,
   paraParametros,
 } from "../navegacao-da-lista";
+import { AvancarEmLote } from "../avancar-em-lote";
 import { ListaDoPatio } from "./lista-do-patio";
 
 const ROTA = "/operacional/patio";
@@ -92,6 +94,17 @@ async function Conteudo({ estado, hoje }: { estado: EstadoDaLista<FiltroDoPatio>
       ) : (
         <>
           <ProvedorDoUsuario usuario={sessao.usuarioId}>
+            <div className="flex flex-wrap items-start gap-3">
+              {ACOES_EM_LOTE.map((acao) => (
+                <AvancarEmLote
+                  key={acao}
+                  acao={acao}
+                  placas={patio.linhas
+                    .filter((l) => acoesPossiveis(l.sigla).includes(acao))
+                    .map((l) => ({ ativoId: l.ativoId, placa: l.placa }))}
+                />
+              ))}
+            </div>
             <ListaDoPatio
               linhas={patio.linhas}
               aguardando={aguardando.linhas}

@@ -94,7 +94,10 @@ test.describe("barra lateral: grupos", () => {
     const demo = menu(page).getByRole("link", { name: /^Demonstração/ });
     await expect(demo).toBeVisible();
     await expect(demo).not.toContainText("Em breve");
-    await expect(menu(page).getByRole("link", { name: /^Auditoria/ })).toContainText("Estrutura");
+    // Fim da Fase 1: a Auditoria está pronta, sem etiqueta.
+    await expect(menu(page).getByRole("link", { name: /^Auditoria/ })).not.toContainText(
+      "Estrutura",
+    );
   });
 });
 

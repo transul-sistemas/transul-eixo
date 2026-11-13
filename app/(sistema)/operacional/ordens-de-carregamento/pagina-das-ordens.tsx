@@ -5,6 +5,7 @@ import { formatarInteiro } from "@/components/formato/numero";
 import { FaixaDeKpis } from "@/components/layout/faixa-de-kpis";
 import { PaginaDeLeitura } from "@/components/layout/pagina-de-leitura";
 import { ProvedorDoUsuario } from "@/components/navegacao/usuario-da-sessao";
+import { AvancarEmLote } from "../avancar-em-lote";
 import { EsqueletoDaTabela, ListaVazia } from "@/components/tabela/estados";
 import { modoDosDados } from "@/lib/dados/fonte";
 import { lerOperacoes, lerOrdens, lerPatio } from "@/lib/dados/operacional";
@@ -81,6 +82,20 @@ async function Conteudo({
         ]}
       />
       <ProvedorDoUsuario usuario={sessao.usuarioId}>
+        <div className="flex flex-wrap items-start gap-3">
+          <AvancarEmLote
+            acao="concluir"
+            placas={ordens.linhas
+              .filter((o) => o.situacao === "carregando")
+              .map((o) => ({ ativoId: o.ativoId, placa: o.placa }))}
+          />
+          <AvancarEmLote
+            acao="liberar"
+            placas={ordens.linhas
+              .filter((o) => o.situacao === "carregada")
+              .map((o) => ({ ativoId: o.ativoId, placa: o.placa }))}
+          />
+        </div>
         <ListaDasOrdens
           ordens={ordens.linhas}
           aguardando={aguardando.linhas}

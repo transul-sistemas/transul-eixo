@@ -56,10 +56,9 @@ describe("<BarraLateral>: grupos", () => {
     const html = barra({ rotaAtual: "/frota/placas" });
     expect(html).not.toContain('href="/pessoas/escala"');
   });
-  it("tela esqueleto leva o selo Estrutura, e nenhuma tela leva Em breve; a pronta não leva selo", () => {
-    // No grupo Administração só a Auditoria é esqueleto (Usuários e perfis e Demonstração, prontas).
+  it("ao fim da Fase 1 nenhuma tela leva o selo Estrutura nem Em breve", () => {
     const html = barra({ rotaAtual: "/admin/demonstracao" });
-    expect(contar(html, "Estrutura")).toBe(1);
+    expect(contar(html, "Estrutura")).toBe(0);
     expect(contar(html, "Em breve")).toBe(0);
   });
   it("quem não acompanha a obra não vê o selo Estrutura em lugar nenhum", () => {
@@ -72,13 +71,13 @@ describe("<BarraLateral>: grupos", () => {
     expect(html).toContain("Nenhuma tela disponível para o seu perfil.");
     expect(html).not.toContain("aria-expanded=");
   });
-  it("o Operacional vê os grupos Operacional (Pátio, Totem e Ordens de carregamento) e Pessoas (só a Escala)", () => {
+  it("o Operacional vê os grupos Operacional (Pátio, Totem, Ordens de carregamento e Análise) e Pessoas (só a Escala)", () => {
     const html = barra({ perfil: "Operacional", rotaAtual: "/operacional/patio" });
-    expect(contar(html, "aria-expanded=")).toBe(3); // Início (só o Mapa), Operacional e Pessoas
+    expect(contar(html, "aria-expanded=")).toBe(3); // Início, Operacional e Pessoas
     expect(html).toContain('href="/operacional/patio"');
     expect(html).toContain('href="/operacional/totem"');
     expect(html).toContain('href="/operacional/ordens-de-carregamento"');
-    expect(html).not.toContain('href="/operacional/analise"');
+    expect(html).toContain('href="/operacional/analise"');
     const naPessoas = barra({ perfil: "Operacional", rotaAtual: "/pessoas/escala" });
     expect(naPessoas).toContain('href="/pessoas/escala"');
     expect(naPessoas).not.toContain('href="/pessoas/lista"');

@@ -123,7 +123,7 @@ export const CATALOGO: readonly ModuloDoCatalogo[] = [
       icone: "IconSunHigh",
       dispositivos: DESKTOP_E_TABLET,
       descricao: "Mostra, em uma página, como a operação está hoje.",
-      estado: "esqueleto",
+      estado: "pronto",
     },
     {
       slug: "mapa-do-sistema",
@@ -226,7 +226,7 @@ export const CATALOGO: readonly ModuloDoCatalogo[] = [
       icone: "IconChartLine",
       dispositivos: DESKTOP,
       descricao: "Mede o tempo de cada etapa do Operacional.",
-      estado: "esqueleto",
+      estado: "pronto",
     },
   ]),
   modulo("operacoes", "Operações", "IconRoute", "operacoes", [
@@ -245,7 +245,7 @@ export const CATALOGO: readonly ModuloDoCatalogo[] = [
       icone: "IconScale",
       dispositivos: DESKTOP,
       descricao: "Compara o resultado entre operações.",
-      estado: "esqueleto",
+      estado: "pronto",
     },
     {
       slug: "analise",
@@ -253,7 +253,7 @@ export const CATALOGO: readonly ModuloDoCatalogo[] = [
       icone: "IconChartLine",
       dispositivos: DESKTOP,
       descricao: "Explica as variações de cada operação.",
-      estado: "esqueleto",
+      estado: "pronto",
     },
   ]),
   modulo("pessoas", "Pessoas", "IconUsers", "pessoas", [
@@ -280,7 +280,7 @@ export const CATALOGO: readonly ModuloDoCatalogo[] = [
       icone: "IconCalendarCheck",
       dispositivos: TODOS,
       descricao: "Registra o status do dia de cada pessoa.",
-      estado: "esqueleto",
+      estado: "pronto",
     },
     {
       slug: "documentos",
@@ -288,7 +288,7 @@ export const CATALOGO: readonly ModuloDoCatalogo[] = [
       icone: "IconFiles",
       dispositivos: DESKTOP,
       descricao: "Controla os documentos e os vencimentos.",
-      estado: "esqueleto",
+      estado: "pronto",
     },
     {
       slug: "diarias-e-premiacao",
@@ -296,7 +296,7 @@ export const CATALOGO: readonly ModuloDoCatalogo[] = [
       icone: "IconCash",
       dispositivos: DESKTOP,
       descricao: "Calcula as diárias e as premiações do período.",
-      estado: "esqueleto",
+      estado: "pronto",
     },
     {
       slug: "campanhas",
@@ -304,7 +304,7 @@ export const CATALOGO: readonly ModuloDoCatalogo[] = [
       icone: "IconSpeakerphone",
       dispositivos: DESKTOP,
       descricao: "Gerencia as campanhas e acompanha os resultados.",
-      estado: "esqueleto",
+      estado: "pronto",
     },
     {
       slug: "analise",
@@ -312,7 +312,7 @@ export const CATALOGO: readonly ModuloDoCatalogo[] = [
       icone: "IconChartLine",
       dispositivos: DESKTOP,
       descricao: "Explica as variações de pessoal.",
-      estado: "esqueleto",
+      estado: "pronto",
     },
   ]),
   modulo("parceiros", "Parceiros", "IconHeartHandshake", "parceiros", [
@@ -339,7 +339,7 @@ export const CATALOGO: readonly ModuloDoCatalogo[] = [
       icone: "IconBook",
       dispositivos: DESKTOP,
       descricao: "Mostra o livro do acionista e os seus lançamentos.",
-      estado: "esqueleto",
+      estado: "pronto",
     },
     {
       slug: "locacao",
@@ -365,7 +365,7 @@ export const CATALOGO: readonly ModuloDoCatalogo[] = [
       icone: "IconRoute",
       dispositivos: DESKTOP,
       descricao: "Mostra o resultado de cada operação.",
-      estado: "esqueleto",
+      estado: "pronto",
     },
     {
       slug: "maturacao",
@@ -373,7 +373,7 @@ export const CATALOGO: readonly ModuloDoCatalogo[] = [
       icone: "IconHourglass",
       dispositivos: DESKTOP,
       descricao: "Acompanha a quitação da dívida antiga.",
-      estado: "esqueleto",
+      estado: "pronto",
     },
     {
       slug: "fechamentos",
@@ -381,7 +381,7 @@ export const CATALOGO: readonly ModuloDoCatalogo[] = [
       icone: "IconLock",
       dispositivos: DESKTOP,
       descricao: "Guarda a foto de cada mês fechado.",
-      estado: "esqueleto",
+      estado: "pronto",
     },
     {
       slug: "ajustes",
@@ -389,7 +389,7 @@ export const CATALOGO: readonly ModuloDoCatalogo[] = [
       icone: "IconAdjustments",
       dispositivos: DESKTOP,
       descricao: "Registra ajustes justificados, com aprovação por alçada.",
-      estado: "esqueleto",
+      estado: "pronto",
     },
   ]),
   modulo("cadastros", "Cadastros", "IconDatabase", "cadastros", [
@@ -399,6 +399,15 @@ export const CATALOGO: readonly ModuloDoCatalogo[] = [
       icone: "IconListDetails",
       dispositivos: DESKTOP,
       descricao: "Mantém catálogos, regras e parâmetros, como o dia do corte da competência.",
+      estado: "pronto",
+    },
+    {
+      slug: "saude-do-cr",
+      nome: "Saúde do CR",
+      icone: "IconListDetails",
+      dispositivos: DESKTOP,
+      descricao:
+        "Placa sem CR, CR sem operação, dois CRs do mesmo tipo e lançamento sem CR, com dono e prazo.",
       estado: "pronto",
     },
   ]),
@@ -417,7 +426,7 @@ export const CATALOGO: readonly ModuloDoCatalogo[] = [
       icone: "IconHistory",
       dispositivos: DESKTOP,
       descricao: "Mostra quem fez o quê, quando e por quê.",
-      estado: "esqueleto",
+      estado: "pronto",
     },
     {
       slug: "demonstracao",

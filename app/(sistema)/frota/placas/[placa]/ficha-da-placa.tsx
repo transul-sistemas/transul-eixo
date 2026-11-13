@@ -10,6 +10,7 @@ import { LinhaDoTempo } from "@/components/ficha/linha-do-tempo";
 import { Placa } from "@/components/placa";
 import { haDias, SecoesDoResumo } from "@/components/tabela/resumo-da-placa";
 import { hojeEmSaoPaulo } from "@/components/formato/data";
+import { modoDosDados } from "@/lib/dados/fonte";
 import { NOMES_DOS_TIPOS, obterFicha } from "@/lib/dados/placas";
 import { idsDasAcoesDoMomento } from "@/lib/dominio/acoes-do-momento";
 import { somarDias } from "@/lib/dominio/dias";
@@ -91,6 +92,7 @@ export async function FichaDaPlaca({
       pedido !== null &&
       dadosDosAssistentes?.gestorId != null &&
       podeCancelarPedido(pedido, dadosDosAssistentes.gestorId).ok,
+    comVinculos: modoDosDados() === "banco",
   })
     .map((id) => ACOES.find((acao) => acao.id === id))
     .filter((acao) => acao !== undefined)

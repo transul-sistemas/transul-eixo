@@ -1,5 +1,14 @@
 import { type ResultadoDaAcao, sucesso } from "@/lib/wizard/resultado";
 import { type ClienteDeEscrita, resultadoDoErro } from "./escrita-do-banco";
+import type {
+  CidadeDaPosicao,
+  PosicoesDoDia,
+  PortaDaPosicao,
+  DistanciaImprovavel,
+  GestorComPosicaoPendente,
+  PontoDaSerie,
+  RespostaDaPosicao,
+} from "./posicao-do-dia-tipos";
 
 // M2, Posição do dia (docs/posicao-do-dia.md): as leituras e as gravações da porta obrigatória.
 // Funções do banco (migration 20261117100000_posicao_do_dia.sql):
@@ -7,99 +16,18 @@ import { type ClienteDeEscrita, resultadoDoErro } from "./escrita-do-banco";
 //  nucleo.distancia_improvavel(p_cidade_de, p_cidade_para, p_dias) · nucleo.serie_de_posicoes(p_ativo_id, p_de, p_ate)
 //  nucleo.registrar_posicao_do_dia(...) · nucleo.liberar_posicao_do_dia(...) · nucleo.gestores_com_posicao_pendente(p_dia)
 
-export interface CidadeDaPosicao {
-  id: number;
-  nome: string;
-  uf: string;
-}
-
-export interface PosicaoDeOntem {
-  dia: string;
-  cidade_id: number | null;
-  cidade: string | null;
-  uf: string | null;
-  sem_sinal: boolean;
-}
-
-export interface PosicaoDeHoje {
-  posicao_id: string;
-  versao: number;
-  cidade_id: number | null;
-  cidade: string | null;
-  uf: string | null;
-  sem_sinal: boolean;
-  motivo: string | null;
-  confirmou_alerta: boolean;
-}
-
-export interface ConjuntoDaPosicao {
-  ativo_id: string;
-  placa: string;
-  tipo: string;
-  conjunto: string | null;
-  sigla: string | null;
-  grupo: string | null;
-  filial: string | null;
-  cidade_da_filial: CidadeDaPosicao | null;
-  ontem: PosicaoDeOntem | null;
-  hoje: PosicaoDeHoje | null;
-}
-
-export interface PosicoesDoDia {
-  dia: string;
-  total: number;
-  respondidos: number;
-  liberada: boolean;
-  liberacao: { motivo: string; liberado_em: string } | null;
-  conjuntos: ConjuntoDaPosicao[];
-}
-
-export interface PortaDaPosicao {
-  abrir: boolean;
-  dia: string;
-  total: number;
-  respondidos: number;
-  liberada: boolean;
-}
-
-export interface DistanciaImprovavel {
-  km: number | null;
-  estimada: boolean;
-  limite_km: number;
-  improvavel: boolean;
-}
-
-export interface GestorComPosicaoPendente {
-  gestor_id: string;
-  gestor: string;
-  total: number;
-  respondidos: number;
-  liberada: boolean;
-}
-
-export interface PontoDaSerie {
-  dia: string;
-  cidade_id: number | null;
-  cidade: string | null;
-  uf: string | null;
-  latitude: number | null;
-  longitude: number | null;
-  sem_sinal: boolean;
-  origem: "gestor" | "sankhya" | "v1";
-}
-
-/** A resposta de um conjunto: cidade (da busca) ou "Sem sinal" com motivo, e a situação do dia. */
-export interface RespostaDaPosicao {
-  ativoId: string;
-  dia: string;
-  cidadeId: number | null;
-  semSinal: boolean;
-  motivo: string | null;
-  sigla: string | null;
-  confirmouAlerta: boolean;
-  /** A versão da posição já gravada no dia (ao corrigir); nula na primeira resposta. */
-  versao: number | null;
-}
+export type {
+  CidadeDaPosicao,
+  PosicaoDeOntem,
+  PosicaoDeHoje,
+  ConjuntoDaPosicao,
+  PosicoesDoDia,
+  PortaDaPosicao,
+  DistanciaImprovavel,
+  GestorComPosicaoPendente,
+  PontoDaSerie,
+  RespostaDaPosicao,
+} from "./posicao-do-dia-tipos";
 
 async function ler<T>(
   cliente: ClienteDeEscrita,

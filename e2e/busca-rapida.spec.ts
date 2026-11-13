@@ -150,14 +150,14 @@ test.describe("busca rápida: ações da Frota", () => {
     await expect(page.getByRole("dialog", { name: "Receber placa" })).toBeVisible();
   });
 
-  test("Entregar ao Operacional, Disponibilizar placa e Concluir recebimento também estão ligadas", async ({
+  test("Entregar ao Operacional, Enviar placa e Concluir recebimento também estão ligadas", async ({
     page,
   }) => {
     await abrirHidratada(page, "/inicio/tarefas");
     await abrirBusca(page);
     for (const [termo, nome] of [
       ["entregar", /Frota › Entregar ao Operacional/],
-      ["disponibilizar", /Frota › Disponibilizar placa/],
+      ["enviar placa", /Frota › Enviar placa/],
       ["concluir recebimento", /Frota › Concluir recebimento/],
     ] as const) {
       await campo(page).fill(termo);

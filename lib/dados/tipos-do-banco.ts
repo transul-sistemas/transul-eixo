@@ -463,7 +463,69 @@ isOneToOne: false
           }
         },"nucleo": {
           Tables: {
-            "ativo": {
+            "abastecimento_provisorio": {
+                  Row: {
+                    "ativo_id": string,"combustivel": string | null,"decidido_em": string | null,"decidido_por": string | null,"dia": string,"id": string,"km": number | null,"lancado_em": string,"lancado_por": string | null,"litros": number,"motivo_da_decisao": string | null,"origem_id_sankhya": string | null,"placa": string,"posto": string | null,"situacao": string,"valor": number | null,"versao": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "ativo_id": string,"combustivel"?: string | null,"decidido_em"?: string | null,"decidido_por"?: string | null,"dia": string,"id"?: string,"km"?: number | null,"lancado_em"?: string,"lancado_por"?: string | null,"litros": number,"motivo_da_decisao"?: string | null,"origem_id_sankhya"?: string | null,"placa": string,"posto"?: string | null,"situacao"?: string,"valor"?: number | null,"versao"?: number
+                  }
+                  Update: {
+                    "ativo_id"?: string,"combustivel"?: string | null,"decidido_em"?: string | null,"decidido_por"?: string | null,"dia"?: string,"id"?: string,"km"?: number | null,"lancado_em"?: string,"lancado_por"?: string | null,"litros"?: number,"motivo_da_decisao"?: string | null,"origem_id_sankhya"?: string | null,"placa"?: string,"posto"?: string | null,"situacao"?: string,"valor"?: number | null,"versao"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "abastecimento_provisorio_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: false
+      referencedRelation: "alerta_de_vinculo"
+      referencedColumns: ["ativo_id"]
+    },{
+      foreignKeyName: "abastecimento_provisorio_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: false
+      referencedRelation: "ativo"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "abastecimento_provisorio_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: false
+      referencedRelation: "campo_pendente"
+      referencedColumns: ["ativo_id"]
+    },{
+      foreignKeyName: "abastecimento_provisorio_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: false
+      referencedRelation: "operacao_do_ativo"
+      referencedColumns: ["ativo_id"]
+    },{
+      foreignKeyName: "abastecimento_provisorio_decidido_por_fkey"
+      columns: ["decidido_por"]
+isOneToOne: false
+      referencedRelation: "pessoa"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "abastecimento_provisorio_decidido_por_fkey"
+      columns: ["decidido_por"]
+isOneToOne: false
+      referencedRelation: "pessoa_para_leitura"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "abastecimento_provisorio_lancado_por_fkey"
+      columns: ["lancado_por"]
+isOneToOne: false
+      referencedRelation: "pessoa"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "abastecimento_provisorio_lancado_por_fkey"
+      columns: ["lancado_por"]
+isOneToOne: false
+      referencedRelation: "pessoa_para_leitura"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"ativo": {
                   Row: {
                     "ano_fabricacao": number | null,"ano_fabricacao_origem": Database["config"]['Enums']["origem_do_campo"] | null,"ano_modelo": number | null,"ano_modelo_origem": Database["config"]['Enums']["origem_do_campo"] | null,"cadastro_pendente": boolean,"carroceria_id": string | null,"carroceria_origem": Database["config"]['Enums']["origem_do_campo"] | null,"chassi": string | null,"cmt_kg": number | null,"cmt_kg_origem": Database["config"]['Enums']["origem_do_campo"] | null,"codigo_fipe": string | null,"codigo_fipe_origem": Database["config"]['Enums']["origem_do_campo"] | null,"codveiculo": number | null,"criado_em": string,"eixos": number | null,"eixos_origem": Database["config"]['Enums']["origem_do_campo"] | null,"excluido_em": string | null,"excluido_por": string | null,"funcao": Database["nucleo"]['Enums']["funcao_do_implemento"] | null,"id": string,"modelo_id": string | null,"modelo_origem": Database["config"]['Enums']["origem_do_campo"] | null,"motivo_da_exclusao": string | null,"numero_de_serie": string | null,"pbt_kg": number | null,"pbt_kg_origem": Database["config"]['Enums']["origem_do_campo"] | null,"renavam": string | null,"tara_kg": number | null,"tara_kg_origem": Database["config"]['Enums']["origem_do_campo"] | null,"tipo": Database["nucleo"]['Enums']["tipo_de_ativo"],"valor_fipe": number | null,"valor_fipe_origem": Database["config"]['Enums']["origem_do_campo"] | null,"valor_fipe_referencia": string | null,"valor_manual": number | null,"valor_manual_em": string | null,"valor_manual_fonte": string | null,"valor_manual_origem": Database["config"]['Enums']["origem_do_campo"] | null,"versao": number
                   }
@@ -2097,10 +2159,16 @@ isOneToOne: false
 "abastecimento_do_mes":
 { Args: { "p_busca"?: string,"p_mes"?: string,"p_ordem"?: string,"p_pagina"?: number,"p_tam"?: number }; Returns: Json
                            },
+"abastecimento_do_mes_v2":
+{ Args: { "p_busca"?: string,"p_mes"?: string,"p_ordem"?: string,"p_pagina"?: number,"p_tam"?: number }; Returns: Json
+                           },
 "agora_do_acompanhamento":
 { Args: { "p_agrupamento": string,"p_tipos"?: (string)[] }; Returns: {
               "atencao": number,"chave": string,"em_atividade": number,"fora": number,"impedida": number,"patio": number,"pendente": number,"rotulo": string,"total": number
             }[]
+                           },
+"ajustes_do_resultado":
+{ Args: { "p_mes"?: string,"p_pagina"?: number,"p_situacao"?: string,"p_tam"?: number }; Returns: Json
                            },
 "alerta_correcao_tardia":
 { Args: { "p_em": string,"p_ultima": string }; Returns: boolean
@@ -2134,6 +2202,9 @@ isOneToOne: false
                            },
 "avancar_no_patio":
 { Args: { "p_acao": string,"p_ativo_id": string,"p_chave"?: string,"p_em"?: string,"p_motivo"?: string }; Returns: Json
+                           },
+"avancar_no_patio_em_lote":
+{ Args: { "p_acao": string,"p_ativos": (string)[],"p_chave"?: string,"p_motivo"?: string }; Returns: Json
                            },
 "buscar_cidades":
 { Args: { "p_busca": string,"p_limite"?: number }; Returns: {
@@ -2203,6 +2274,9 @@ isOneToOne: false
 "concluir_transferencia":
 { Args: { "p_em": string,"p_transferencia_id": string }; Returns: string
                            },
+"conferir_abastecimento_provisorio":
+{ Args: { "p_chave"?: string,"p_decisao": string,"p_id": string,"p_motivo": string,"p_origem_id": string,"p_versao": number }; Returns: string
+                           },
 "conferir_conjunto":
 { Args: { "p_cavalo_id": string }; Returns: undefined
                            },
@@ -2234,6 +2308,9 @@ isOneToOne: false
                            },
 "confirmar_situacao_programada":
 { Args: { "p_chave"?: string,"p_programada_id": string,"p_versao": number }; Returns: string
+                           },
+"conjunto_do_motorista_em":
+{ Args: { "p_dia": string,"p_pessoa_id": string }; Returns: string
                            },
 "conjuntos_com_lancamento_no_dia":
 { Args: { "p_dia": string }; Returns: {
@@ -2295,6 +2372,9 @@ isOneToOne: false
 "data_na_faixa":
 { Args: { "p_data": string }; Returns: boolean
                            },
+"decidir_ajuste":
+{ Args: { "p_ajuste_id": string,"p_chave"?: string,"p_decisao": string,"p_motivo": string,"p_versao": number }; Returns: string
+                           },
 "desatrelar":
 { Args: { "p_cavalo_id": string,"p_em": string,"p_implementos"?: (string)[] }; Returns: number
                            },
@@ -2346,6 +2426,9 @@ isOneToOne: false
 "e_lider_do_gestor":
 { Args: { "p_gestor": string,"p_lider": string }; Returns: boolean
                            },
+"e_motorista_em":
+{ Args: { "p_dia": string,"p_pessoa_id": string }; Returns: boolean
+                           },
 "editar_pessoa":
 { Args: { "p_email"?: string,"p_funcao"?: string,"p_inicio"?: string,"p_nome": string,"p_operacao"?: string,"p_pessoa": string,"p_versao": number }; Returns: Json
                            },
@@ -2354,6 +2437,12 @@ isOneToOne: false
                            },
 "encerrar_locacao":
 { Args: { "p_chave"?: string,"p_fim": string,"p_locacao_id": string,"p_motivo": string,"p_versao": number }; Returns: Json
+                           },
+"encerrar_motorista_do_conjunto":
+{ Args: { "p_chave"?: string,"p_fim": string,"p_vinculo_id": string }; Returns: string
+                           },
+"encerrar_substituicao":
+{ Args: { "p_chave"?: string,"p_fim": string,"p_motivo": string,"p_substituicao_id": string }; Returns: string
                            },
 "encerrar_vinculo_de_cr":
 { Args: { "p_chave"?: string,"p_em": string,"p_motivo": string,"p_versao": number,"p_vinculo_id": string }; Returns: string
@@ -2372,6 +2461,17 @@ isOneToOne: false
                            },
 "excecoes_abertas":
 { Args: { "p_assunto": string,"p_pagina": number,"p_tamanho": number }; Returns: Json
+                           },
+"fechamentos_do_resultado":
+{ Args: Record<PropertyKey, never>; Returns: Json
+                           },
+"fechar_mes":
+{ Args: { "p_chave"?: string,"p_mes": string }; Returns: string
+                           },
+"ferias_sem_substituto":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "ativo_id": string,"dias": number,"nome": string,"placa": string,"primeiro_dia": string,"titular_id": string,"ultimo_dia": string
+            }[]
                            },
 "ficha_da_operacao":
 { Args: { "p_mes"?: string,"p_operacao": string }; Returns: Json
@@ -2420,6 +2520,9 @@ isOneToOne: false
 "impacto_da_baixa":
 { Args: { "p_ativo_id": string,"p_em": string }; Returns: Json
                            },
+"indicar_substituto":
+{ Args: { "p_chave"?: string,"p_fim": string,"p_inicio": string,"p_motivo": string,"p_substituto_id": string,"p_titular_id": string }; Returns: string
+                           },
 "inicio_do_pat":
 { Args: { "p_ativo_id": string }; Returns: string
                            },
@@ -2429,6 +2532,12 @@ isOneToOne: false
 "justificar_diferenca":
 { Args: { "p_chave"?: string,"p_cr_id": string,"p_mes": string,"p_motivo": string }; Returns: Json
                            },
+"kpis_do_operacional":
+{ Args: Record<PropertyKey, never>; Returns: Json
+                           },
+"lancar_abastecimento_provisorio":
+{ Args: { "p_ativo_id": string,"p_chave"?: string,"p_combustivel": string,"p_dia": string,"p_km": number,"p_litros": number,"p_posto": string,"p_valor": number }; Returns: string
+                           },
 "lancar_o_dia_em_lote":
 { Args: { "p_ativos": (string)[],"p_chave"?: string,"p_dia": string,"p_hora": string,"p_sigla": string }; Returns: Json
                            },
@@ -2437,6 +2546,9 @@ isOneToOne: false
                            },
 "lancar_situacao_na_hora":
 { Args: { "p_ativo_id": string,"p_em": string,"p_sigla": string }; Returns: string
+                           },
+"lancar_status_do_motorista":
+{ Args: { "p_chave"?: string,"p_codigo": string,"p_dia": string,"p_motivo"?: string,"p_pessoa_id": string,"p_versao"?: number }; Returns: string
                            },
 "liberar_posicao_do_dia":
 { Args: { "p_chave"?: string,"p_dia": string,"p_gestor_id": string,"p_motivo": string }; Returns: string
@@ -2485,6 +2597,11 @@ isOneToOne: false
 "linha_de_receita":
 { Args: { "p_codtipoper": number,"p_serie": string,"p_status_cte": string,"p_tipo_documento": string }; Returns: string
                            },
+"linha_do_motorista":
+{ Args: { "p_ate": string,"p_de": string }; Returns: {
+              "ativo_id": string,"dia": string,"escala": string,"nome": string,"pessoa_id": string,"placa": string,"realizado": string,"substituto": boolean,"sugestao": string
+            }[]
+                           },
 "linhas_divergentes":
 { Args: Record<PropertyKey, never>; Returns: {
               "ativo_id": string,"motivo": string
@@ -2502,6 +2619,9 @@ isOneToOne: false
 "mascarar_documento":
 { Args: { "p_texto": string }; Returns: string
                            },
+"maturacao_da_divida":
+{ Args: { "p_pagina"?: number,"p_tam"?: number }; Returns: Json
+                           },
 "mes_fechado_mais_recente":
 { Args: { "p_hoje"?: string }; Returns: string
                            },
@@ -2510,6 +2630,12 @@ isOneToOne: false
                            },
 "meta_do_conjunto_de":
 { Args: { "p_ativo_id": string,"p_em"?: string }; Returns: number
+                           },
+"motorista_do_conjunto_no_mes":
+{ Args: { "p_ativo_id": string,"p_mes": string }; Returns: Json
+                           },
+"motoristas_no_dia":
+{ Args: { "p_dia": string }; Returns: Json
                            },
 "mudar_tipo_do_ativo":
 { Args: { "p_ativo_id": string,"p_motivo": string,"p_tipo": Database["nucleo"]['Enums']["tipo_de_ativo"] }; Returns: undefined
@@ -2580,6 +2706,9 @@ isOneToOne: false
                            },
 "pedidos_para_receber":
 { Args: Record<PropertyKey, never>; Returns: Json
+                           },
+"pedir_ajuste":
+{ Args: { "p_chave"?: string,"p_cr_id": string,"p_justificativa": string,"p_linha": string,"p_mes": string,"p_operacao_id": string,"p_valor": number }; Returns: string
                            },
 "pedir_baixa":
 { Args: { "p_ativo_id": string,"p_chave"?: string,"p_documento": string,"p_em": string,"p_justificativa": string,"p_motivo": string }; Returns: string
@@ -2689,6 +2818,9 @@ isOneToOne: false
 "pode_gravar_cadastro_de_cr":
 { Args: Record<PropertyKey, never>; Returns: boolean
                            },
+"pode_no_motorista_do_conjunto":
+{ Args: { "p_acao_na_frota": string,"p_ativo_id": string }; Returns: boolean
+                           },
 "porta_da_posicao":
 { Args: Record<PropertyKey, never>; Returns: Json
                            },
@@ -2706,6 +2838,9 @@ isOneToOne: false
                            },
 "proximo_recalculo_do_ativo":
 { Args: { "p_ativo_id": string,"p_em"?: string }; Returns: string
+                           },
+"reabrir_mes":
+{ Args: { "p_chave"?: string,"p_mes": string,"p_motivo": string }; Returns: string
                            },
 "recalcular_linha_da_placa":
 { Args: { "p_ativo_id": string,"p_em"?: string }; Returns: undefined
@@ -2757,6 +2892,9 @@ isOneToOne: false
                            },
 "resultado_da_operacao":
 { Args: { "p_fim": string,"p_inicio": string,"p_operacao": string }; Returns: Json
+                           },
+"resultado_por_operacao":
+{ Args: { "p_mes"?: string }; Returns: Json
                            },
 "resumo_da_saude_do_cr":
 { Args: Record<PropertyKey, never>; Returns: Json
@@ -2848,6 +2986,15 @@ isOneToOne: false
                            },
 "ultimo_mes_completo_do_staging":
 { Args: Record<PropertyKey, never>; Returns: string
+                           },
+"ultimo_mes_que_pode_fechar":
+{ Args: Record<PropertyKey, never>; Returns: string
+                           },
+"variacao_das_operacoes":
+{ Args: { "p_mes"?: string }; Returns: Json
+                           },
+"vincular_motorista":
+{ Args: { "p_ativo_id": string,"p_chave"?: string,"p_inicio": string,"p_pessoa_id": string }; Returns: string
                            },
 "vincular_usuario":
 { Args: { "p_email": string,"p_perfil": string,"p_pessoa_id": string }; Returns: undefined
