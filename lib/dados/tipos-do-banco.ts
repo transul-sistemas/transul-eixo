@@ -1555,6 +1555,92 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"troca_de_cr": {
+                  Row: {
+                    "ativo_id": string,"correcao_tardia": boolean,"cr_antigo_id": string | null,"cr_novo_id": string,"em": string,"feita_em": string,"feita_por": string | null,"id": string,"motivo": string,"operacao_antiga_id": string | null,"operacao_nova_id": string | null,"origem_da_data": Database["config"]['Enums']["origem_da_data"]
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "ativo_id": string,"correcao_tardia": boolean,"cr_antigo_id"?: string | null,"cr_novo_id": string,"em": string,"feita_em"?: string,"feita_por"?: string | null,"id"?: string,"motivo": string,"operacao_antiga_id"?: string | null,"operacao_nova_id"?: string | null,"origem_da_data": Database["config"]['Enums']["origem_da_data"]
+                  }
+                  Update: {
+                    "ativo_id"?: string,"correcao_tardia"?: boolean,"cr_antigo_id"?: string | null,"cr_novo_id"?: string,"em"?: string,"feita_em"?: string,"feita_por"?: string | null,"id"?: string,"motivo"?: string,"operacao_antiga_id"?: string | null,"operacao_nova_id"?: string | null,"origem_da_data"?: Database["config"]['Enums']["origem_da_data"]
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "troca_de_cr_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: false
+      referencedRelation: "alerta_de_vinculo"
+      referencedColumns: ["ativo_id"]
+    },{
+      foreignKeyName: "troca_de_cr_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: false
+      referencedRelation: "ativo"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "troca_de_cr_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: false
+      referencedRelation: "campo_pendente"
+      referencedColumns: ["ativo_id"]
+    },{
+      foreignKeyName: "troca_de_cr_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: false
+      referencedRelation: "operacao_do_ativo"
+      referencedColumns: ["ativo_id"]
+    },{
+      foreignKeyName: "troca_de_cr_cr_antigo_id_fkey"
+      columns: ["cr_antigo_id"]
+isOneToOne: false
+      referencedRelation: "alerta_de_cr"
+      referencedColumns: ["cr_id"]
+    },{
+      foreignKeyName: "troca_de_cr_cr_antigo_id_fkey"
+      columns: ["cr_antigo_id"]
+isOneToOne: false
+      referencedRelation: "cr"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "troca_de_cr_cr_novo_id_fkey"
+      columns: ["cr_novo_id"]
+isOneToOne: false
+      referencedRelation: "alerta_de_cr"
+      referencedColumns: ["cr_id"]
+    },{
+      foreignKeyName: "troca_de_cr_cr_novo_id_fkey"
+      columns: ["cr_novo_id"]
+isOneToOne: false
+      referencedRelation: "cr"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "troca_de_cr_feita_por_fkey"
+      columns: ["feita_por"]
+isOneToOne: false
+      referencedRelation: "pessoa"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "troca_de_cr_feita_por_fkey"
+      columns: ["feita_por"]
+isOneToOne: false
+      referencedRelation: "pessoa_para_leitura"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "troca_de_cr_operacao_antiga_id_fkey"
+      columns: ["operacao_antiga_id"]
+isOneToOne: false
+      referencedRelation: "operacao"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "troca_de_cr_operacao_nova_id_fkey"
+      columns: ["operacao_nova_id"]
+isOneToOne: false
+      referencedRelation: "operacao"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"usuario": {
                   Row: {
                     "ativo": boolean,"auth_user_id": string,"criado_em": string,"perfil": string,"pessoa_id": string,"versao": number
@@ -1945,6 +2031,11 @@ isOneToOne: false
 "criar_ordem_de_carregamento":
 { Args: { "p_ativo_id": string,"p_chave"?: string,"p_data_prevista": string,"p_destino": string,"p_em"?: string,"p_operacao_id": string }; Returns: Json
                            },
+"crs_da_placa":
+{ Args: { "p_ativo_id": string,"p_incluir_historico"?: boolean }; Returns: {
+              "codigo": string,"cr_id": string,"fim": string,"fim_origem": string,"inicio": string,"inicio_origem": string,"nome": string,"operacao": string,"operacao_id": string,"tipo": string,"versao": number,"vigente": boolean,"vinculo_id": string
+            }[]
+                           },
 "crs_ocupados":
 { Args: Record<PropertyKey, never>; Returns: string[]
                            },
@@ -1993,6 +2084,11 @@ isOneToOne: false
                            },
 "distancia_improvavel":
 { Args: { "p_cidade_de": number,"p_cidade_para": number,"p_dias"?: number }; Returns: Json
+                           },
+"divergencias_de_operacao":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "ativo_id": string,"operacao_da_placa": string,"operacao_da_placa_id": string,"operacao_do_cr": string,"operacao_do_cr_id": string,"placa": string
+            }[]
                            },
 "documento_valido":
 { Args: { "p_texto": string }; Returns: boolean
@@ -2061,6 +2157,9 @@ isOneToOne: false
 { Args: { "p_placa": string }; Returns: {
               "em": string,"sigla": string
             }[]
+                           },
+"historia_do_cr":
+{ Args: { "p_cr_id": string }; Returns: Json
                            },
 "hoje_em_sao_paulo":
 { Args: Record<PropertyKey, never>; Returns: string
@@ -2167,6 +2266,9 @@ isOneToOne: false
                            },
 "opcoes_da_analise":
 { Args: Record<PropertyKey, never>; Returns: Json
+                           },
+"operacao_do_cr_em":
+{ Args: { "p_cr_id": string,"p_em": string }; Returns: string
                            },
 "operacao_e_degrau_em":
 { Args: { "p_ativo_id": string,"p_em": string }; Returns: {
@@ -2276,6 +2378,9 @@ isOneToOne: false
 { Args: Record<PropertyKey, never>; Returns: {
               "ativo_id": string,"origem": string,"parceiro_id": string
             }[]
+                           },
+"placas_e_crs_da_operacao":
+{ Args: { "p_incluir_historico"?: boolean,"p_operacao_id": string }; Returns: Json
                            },
 "placas_filtradas":
 { Args: { "p_baixadas": boolean,"p_busca": string,"p_grupos": (string)[],"p_para_receber"?: boolean,"p_siglas": (string)[],"p_tipos": (string)[] }; Returns: {
@@ -2438,6 +2543,9 @@ isOneToOne: false
                            },
 "tipos_de_cr_do_ativo":
 { Args: { "p_ativo_id": string,"p_em": string }; Returns: (string)[]
+                           },
+"trocar_cr":
+{ Args: { "p_ativo_id": string,"p_chave"?: string,"p_cr_novo_id": string,"p_em": string,"p_motivo": string,"p_origem_da_data": Database["config"]['Enums']["origem_da_data"],"p_versao": number }; Returns: string
                            },
 "ultima_correcao_tardia_em":
 { Args: { "p_ativo_id": string }; Returns: string

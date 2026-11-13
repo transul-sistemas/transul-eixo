@@ -204,7 +204,9 @@ select set_eq(
     'nucleo.confirmacao_da_carteira.confirmacao_da_carteira_ler',
     -- Posição do dia, M2 (testadas em 114-posicao-do-dia.test.sql).
     'config.cidade.cidade_ler', 'config.cidade.cidade_criar', 'config.cidade.cidade_alterar',
-    'nucleo.posicao_do_conjunto.posicao_do_conjunto_ler', 'nucleo.liberacao_da_posicao.liberacao_da_posicao_ler'
+    'nucleo.posicao_do_conjunto.posicao_do_conjunto_ler', 'nucleo.liberacao_da_posicao.liberacao_da_posicao_ler',
+    -- Trocar CR, V0 (testada em 115-trocar-cr.test.sql).
+    'nucleo.troca_de_cr.troca_de_cr_ler'
   ],
   'as políticas de cada tabela, com o nome de cada uma (todas testadas abaixo ou na matriz)'
 );

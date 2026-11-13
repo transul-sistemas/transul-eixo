@@ -105,9 +105,10 @@ select tests.como(pg_temp.id('auth_Dir'));
 select is(pg_temp.erro_de(format($$select nucleo.trocar_cr(%L, %L, '2026-11-01 00:00-03', 'x', 'informada', %s, null)$$,
   pg_temp.id('c2'), pg_temp.cr('X2-115'), 1)), '42501', '19. a Diretoria não grava direto (H6)');
 reset role;
+select set_config('t.sql_anon', format($$select nucleo.trocar_cr(%L, %L, '2026-11-01 00:00-03', 'x', 'informada', null, null)$$,
+  pg_temp.id('c2'), pg_temp.cr('X2-115')), true);
 select tests.como_anonimo();
-select is(pg_temp.erro_de(format($$select nucleo.trocar_cr(%L, %L, '2026-11-01 00:00-03', 'x', 'informada', null, null)$$,
-  pg_temp.id('c2'), pg_temp.cr('X2-115'))), '42501', '20. anon não executa');
+select is(pg_temp.erro_de(current_setting('t.sql_anon')), '42501', '20. anon não executa');
 reset role;
 select set_config('t.vx1', (pg_temp.vinculo('c2', 'X1-115')).versao::text, true);
 select tests.como(pg_temp.id('auth_Adm'));
