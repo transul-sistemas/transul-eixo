@@ -14,8 +14,18 @@ import { errosDoResolvedor } from "./erros-do-resolvedor";
 
 const CLASSE_DO_TEXTO = cn(CLASSE_DO_CAMPO, "h-auto py-2 max-sm:h-auto");
 
-// Disponibilizar placa: o gestor de frota envia a placa a outro gestor de frota, com o motivo e as
-// pendências que já conhece. A placa só muda de carteira quando quem recebe conclui o recebimento.
+// Enviar placa (função nucleo.disponibilizar_placa): o gestor de frota envia a placa a outro gestor de
+// frota, com o motivo e as pendências que já conhece. A placa só muda de carteira quando quem recebe
+// conclui o recebimento. O passo Placa do desenho fica no topo do passo Destino (a placa já vem da ficha).
+
+/** O quadro "Como funciona" do desenho (docs/prototipos/soltas-envio-carteira-e-saude/3-enviar-placa.html). */
+const COMO_FUNCIONA = [
+  "A placa continua na sua carteira até o destino aceitar.",
+  "O destino recebe a tarefa de receber a placa, com prazo de 5 dias.",
+  "Ele aceita, aceita com pendências ou recusa (e a placa volta para você).",
+  "Só você cancela o pedido, e só enquanto ele ainda não recebeu a placa.",
+  "CR e operação são confirmados por quem recebe; se a operação mudar, ele usa Trocar CR.",
+];
 
 interface Valores {
   paraGestorId: string;
@@ -26,7 +36,7 @@ interface Valores {
 
 const DEFINICAO: DefinicaoDeAssistente = {
   id: "disponibilizar-placa",
-  titulo: "Disponibilizar placa",
+  titulo: "Enviar placa",
   versaoDoEsquema: 1,
   passos: [
     { id: "destino", titulo: "Destino e motivo", campos: ["paraGestorId", "motivo"] },
@@ -85,8 +95,8 @@ export function DisponibilizarPlaca({
       registro={placa.placa}
       rascunho={false}
       focoFinal={focoFinal}
-      rotuloConcluir="Disponibilizar placa"
-      mensagemConcluido="Placa disponibilizada. Ela muda de carteira quando quem recebe concluir o recebimento."
+      rotuloConcluir="Enviar placa"
+      mensagemConcluido="Placa enviada. Ela muda de carteira quando quem recebe concluir o recebimento."
       aoConcluir={(valores, chaveDeEnvio) =>
         disponibilizarPlacaAcao({ chaveDeEnvio, dados: entrada(valores) })
       }
@@ -115,11 +125,14 @@ export function DisponibilizarPlaca({
           receber&quot; e registra a chegada.
         </>,
         "A placa continua na sua carteira até quem recebe concluir o recebimento, respondendo cada pendência.",
-        "Enquanto o pedido estiver aberto, a placa não pode ser disponibilizada de novo.",
+        "Enquanto o pedido estiver aberto, a placa não pode ser enviada de novo; só você cancela, antes de ele receber.",
       ]}
       renderPasso={(passo, form) =>
         passo.id === "destino" ? (
           <>
+            <p className="border-border bg-muted/50 rounded-lg border px-3 py-2 text-sm">
+              Placa <b>{placa.placa}</b>, hoje na carteira de <b>{placa.gestor}</b>.
+            </p>
             <Campo
               rotulo="Gestor que vai receber"
               erro={form.formState.errors.paraGestorId?.message}
@@ -145,6 +158,17 @@ export function DisponibilizarPlaca({
                 />
               )}
             </Campo>
+            <section
+              aria-label="Como funciona"
+              className="border-border flex flex-col gap-2 rounded-lg border p-3 text-sm"
+            >
+              <h4 className="text-muted-foreground font-semibold">Como funciona</h4>
+              <ol className="flex list-decimal flex-col gap-1 pl-5">
+                {COMO_FUNCIONA.map((t) => (
+                  <li key={t}>{t}</li>
+                ))}
+              </ol>
+            </section>
           </>
         ) : (
           <Campo

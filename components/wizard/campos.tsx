@@ -66,8 +66,8 @@ export interface OpcaoDeSelecao {
 }
 
 /**
- * Campo de seleção com o "+": quando falta a opção, o botão ao lado abre um mini-wizard em painel
- * lateral e devolve o campo preenchido com o que foi criado. Esc fecha só o mini, e o foco volta ao "+".
+ * Campo de seleção com o "+": quando falta a opção, o botão ao lado abre um mini-wizard em popup
+ * central empilhado e devolve o campo preenchido com o que foi criado. Esc fecha só o mini, e o foco volta ao "+".
  */
 export function CampoComMais({
   rotulo,

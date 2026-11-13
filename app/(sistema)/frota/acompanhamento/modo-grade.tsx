@@ -10,7 +10,10 @@ import {
   lerGradeDeSoltas,
   lerGradePorConjunto,
 } from "@/lib/dados/acompanhamento";
-import { medidaDoDia, tamanhoEfetivoDaPagina } from "@/lib/dominio/grade-por-conjunto";
+import type { ClienteDeEscrita } from "@/lib/dados/escrita-do-banco";
+import { lerSituacoesProgramadas, type SituacaoProgramada } from "@/lib/dados/lancar-o-dia";
+import { diasDoMes, medidaDoDia, tamanhoEfetivoDaPagina } from "@/lib/dominio/grade-por-conjunto";
+import { textoDoErro } from "@/lib/log/erro";
 import { NOMES_DOS_CHIPS } from "@/lib/dominio/status";
 import {
   enderecoDoAcompanhamento,
@@ -251,6 +254,22 @@ function Paginador({
   );
 }
 
+/** A2: as situações programadas do mês; falha não derruba a grade (vira lista vazia, com o log). */
+async function programadasDoMes(mes: string, hoje: string): Promise<SituacaoProgramada[]> {
+  const dias = diasDoMes(mes, hoje);
+  const de = dias[0]?.dia;
+  const ate = dias.at(-1)?.dia;
+  if (!de || !ate) return [];
+  try {
+    const { criarClienteDoServidor } = await import("@/lib/supabase/servidor");
+    const cliente = (await criarClienteDoServidor()) as unknown as ClienteDeEscrita;
+    return await lerSituacoesProgramadas(cliente, de, ate);
+  } catch (erro) {
+    console.error("situações programadas indisponíveis:", textoDoErro(erro));
+    return [];
+  }
+}
+
 export async function ModoGrade({
   estado,
   hoje,
@@ -274,9 +293,10 @@ export async function ModoGrade({
     tam: linhasPorPagina,
   };
   // O assistente "Lançar situação" guarda o rascunho pelo usuário da sessão (ProvedorDoUsuario).
-  const [dados, sessao] = await Promise.all([
+  const [dados, sessao, programadas] = await Promise.all([
     soltas ? lerGradeDeSoltas(filtros) : lerGradePorConjunto(filtros),
     exigirSessao(),
+    programadasDoMes(estado.mes.slice(0, 7), hoje),
   ]);
   const resumo: ResumoDaAba = {
     mes: dados.mes,
@@ -334,6 +354,7 @@ export async function ModoGrade({
             densidadeInicial={densidade}
             vazio={vazio}
             paginador={paginador}
+            programadas={programadas}
           />
         ) : (
           <GradeDosConjuntos
@@ -341,6 +362,7 @@ export async function ModoGrade({
             densidadeInicial={densidade}
             vazio={vazio}
             paginador={paginador}
+            programadas={programadas}
           />
         )}
       </ProvedorDoUsuario>

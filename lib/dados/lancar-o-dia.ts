@@ -1,5 +1,8 @@
 import { type ResultadoDaAcao, sucesso } from "@/lib/wizard/resultado";
 import { type ClienteDeEscrita, resultadoDoErro } from "./escrita-do-banco";
+import type { ResultadoDoLote, SituacaoProgramada } from "./lancar-o-dia-tipos";
+
+export type { ResultadoDoLote, SituacaoProgramada } from "./lancar-o-dia-tipos";
 
 // A2, Lançar o dia (lote), Programado e Corrigir o último evento. Funções do banco
 // (migration 20261117500000_lancar_o_dia.sql):
@@ -8,26 +11,6 @@ import { type ClienteDeEscrita, resultadoDoErro } from "./escrita-do-banco";
 //  nucleo.confirmar_situacao_programada(p_programada_id, p_versao, p_chave) -> uuid (o evento)
 //  nucleo.cancelar_situacao_programada(p_programada_id, p_motivo, p_chave) -> uuid
 //  nucleo.situacoes_programadas(p_de, p_ate) · nucleo.corrigir_ultimo_evento(p_evento_id, p_motivo, p_nova_sigla, p_chave)
-
-export interface ResultadoDoLote {
-  lote_id: string;
-  total: number;
-  /** Nulo quando a chave de envio já tinha sido usada (repetido). */
-  lancados: number | null;
-  recusados: { ativo_id: string; motivo: string; codigo: string }[];
-  repetido: boolean;
-}
-
-export interface SituacaoProgramada {
-  id: string;
-  versao: number;
-  ativo_id: string;
-  placa: string | null;
-  dia: string;
-  hora: string;
-  sigla: string;
-  grupo: string | null;
-}
 
 /** Tudo ou nada: com um recusado, nada grava e a tela oferece "remover da lista e lançar os outros". */
 export async function lancarODiaEmLote(

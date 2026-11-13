@@ -137,4 +137,6 @@ export interface DadosDosAssistentes {
   conjuntoDaPlaca: ConjuntoDaPlaca | null;
   /** Engatar implemento: os implementos soltos que podem entrar no conjunto. */
   implementosLivres: PlacaAEscolher[];
+  /** Engatar aberto sem cavalo (pela aba Soltas): os cavalos a escolher. */
+  cavalosParaEngatar: PlacaAEscolher[];
 }

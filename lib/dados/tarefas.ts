@@ -1,4 +1,5 @@
 import { falhaDeLeitura } from "@/lib/erros/leitura";
+import { ehExcecaoDaDemonstracao, paginar } from "@/lib/dominio/excecoes-da-demonstracao";
 import type { NumerosDeTarefas } from "@/lib/dominio/tarefas";
 import type { ErroDoBanco } from "./escrita-do-banco";
 
@@ -109,3 +110,44 @@ export async function lerExcecoes(
 }
 
 export const TAMANHO_DA_FILA = 50;
+
+/** Teto da leitura completa (exportar e filtro Demo): 100 páginas de 50, bem acima da fila de hoje. */
+export const PAGINAS_NO_MAXIMO = 100;
+
+/**
+ * A fila inteira de um assunto (ou de todos), página a página, para exportar o CSV e filtrar a
+ * demonstração no servidor. Para no teto e diz se cortou.
+ */
+export async function lerTodasAsExcecoes(
+  assunto: string | null,
+  cliente: () => Promise<ClienteDasTarefas> = clienteDaSessao,
+): Promise<{ linhas: LinhaDeExcecao[]; tipos: ExcecoesAbertas["tipos"]; cortada: boolean }> {
+  const linhas: LinhaDeExcecao[] = [];
+  let tipos: ExcecoesAbertas["tipos"] = [];
+  for (let pagina = 1; pagina <= PAGINAS_NO_MAXIMO; pagina++) {
+    const lida = await lerExcecoes({ assunto, pagina }, cliente);
+    tipos = lida.tipos;
+    linhas.push(...lida.linhas);
+    if (linhas.length >= lida.total || lida.linhas.length === 0) {
+      return { linhas, tipos, cortada: false };
+    }
+  }
+  return { linhas, tipos, cortada: true };
+}
+
+/** O filtro "Demo": só as exceções da demonstração, paginadas no servidor (o total respeita o filtro). */
+export async function lerExcecoesDaDemonstracao(
+  estado: { assunto: string | null; pagina: number },
+  cliente: () => Promise<ClienteDasTarefas> = clienteDaSessao,
+): Promise<ExcecoesAbertas> {
+  const todas = await lerTodasAsExcecoes(estado.assunto, cliente);
+  const demo = todas.linhas.filter(ehExcecaoDaDemonstracao);
+  const pagina = paginar(demo, estado.pagina, TAMANHO_DA_FILA);
+  return {
+    pagina: pagina.pagina,
+    tamanho: TAMANHO_DA_FILA,
+    total: pagina.total,
+    tipos: todas.tipos,
+    linhas: pagina.linhas,
+  };
+}

@@ -154,8 +154,8 @@ test.describe("disponibilizar placa (enviar a outro gestor)", () => {
       .first()
       .getAttribute("data-espiar-placa"))!;
     await abrirHidratada(page, FICHA(placa));
-    await page.getByRole("button", { name: "Disponibilizar placa" }).click();
-    const d = dialogo(page, "Disponibilizar placa");
+    await page.getByRole("button", { name: "Enviar placa" }).click();
+    const d = dialogo(page, "Enviar placa");
     await expect(d).toBeVisible();
     // O dono da placa não aparece entre os destinos: o primeiro da lista serve.
     await d.getByLabel("Gestor que vai receber").selectOption({ index: 1 });
@@ -163,14 +163,14 @@ test.describe("disponibilizar placa (enviar a outro gestor)", () => {
     await d.getByRole("button", { name: "Continuar" }).click();
     await d.getByLabel("Pendências conhecidas").fill("CRLV vence em breve");
     await d.getByRole("button", { name: "Continuar" }).click();
-    await d.getByRole("button", { name: "Disponibilizar placa" }).click();
+    await d.getByRole("button", { name: "Enviar placa" }).click();
     await expect(d.getByTestId("assistente-concluido")).toHaveText(
-      "Placa disponibilizada. Ela muda de carteira quando quem recebe concluir o recebimento.",
+      "Placa enviada. Ela muda de carteira quando quem recebe concluir o recebimento.",
     );
     await d.getByRole("button", { name: "Fechar", exact: true }).click();
     await expect(d).toBeHidden();
-    // Com o pedido aberto, a placa não se disponibiliza de novo.
-    await expect(page.getByRole("button", { name: "Disponibilizar placa" })).toHaveCount(0);
+    // Com o pedido aberto, a placa não se envia de novo.
+    await expect(page.getByRole("button", { name: "Enviar placa" })).toHaveCount(0);
   });
 
   test("sem motivo, avisa no campo e fica no passo", async ({ page }) => {
@@ -180,8 +180,8 @@ test.describe("disponibilizar placa (enviar a outro gestor)", () => {
       .first()
       .getAttribute("data-espiar-placa"))!;
     await abrirHidratada(page, FICHA(placa));
-    await page.getByRole("button", { name: "Disponibilizar placa" }).click();
-    const d = dialogo(page, "Disponibilizar placa");
+    await page.getByRole("button", { name: "Enviar placa" }).click();
+    const d = dialogo(page, "Enviar placa");
     await d.getByLabel("Gestor que vai receber").selectOption({ index: 1 });
     await d.getByRole("button", { name: "Continuar" }).click();
     await expect(d.getByText("Informe o motivo.")).toBeVisible();
