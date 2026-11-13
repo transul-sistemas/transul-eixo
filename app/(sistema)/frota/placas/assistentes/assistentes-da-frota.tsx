@@ -309,16 +309,16 @@ export function AssistentesDaFrota({
           />
         ) : (
           <EscolherAPlaca
-            titulo="Disponibilizar placa"
+            titulo="Enviar placa"
             opcoes={[]}
             vazio={
               semPlaca
-                ? "Abra a ficha da placa (ou busque a placa na lista) e use Disponibilizar placa nela."
+                ? "Abra a ficha da placa (ou busque a placa na lista) e use Enviar placa nela."
                 : alvo === null
                   ? naoAchou
                   : dados.pedido !== null
                     ? `A placa ${nomeDaPlaca} já tem um pedido de transferência aberto. Espere a resposta de quem vai receber.`
-                    : `A placa ${nomeDaPlaca} está baixada e não pode ser disponibilizada.`
+                    : `A placa ${nomeDaPlaca} está baixada e não pode ser enviada.`
             }
             aoEscolher={escolherPlaca}
             aoFechar={disponibilizar.fechar}

@@ -427,7 +427,7 @@ function LinhaDoConjunto({
         <ChipsDosImplementos implementos={conjunto.implementos} />
         {conjunto.implementos.some((i) => i.engatadoAte === null) ? (
           <AcaoDaLinha
-            rotulo="Desatrelar implementos"
+            rotulo="Desatrelar implemento"
             assistente="desatrelar-implemento"
             extras={{ placa: conjunto.placa }}
           />

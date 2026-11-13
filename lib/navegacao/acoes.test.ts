@@ -22,7 +22,7 @@ describe("ações dos assistentes da Frota", () => {
       "Receber placa",
       "Concluir recebimento",
       "Entregar ao Operacional",
-      "Disponibilizar placa",
+      "Enviar placa",
       "Mudar situação",
       "Engatar implementos",
       "Desatrelar implemento",
@@ -88,7 +88,7 @@ describe("buscarAcoes", () => {
     ]);
     expect(buscarAcoes("RECEBER", "Administrador")).toHaveLength(1);
     expect(buscarAcoes("entregar", "Diretoria")[0]?.nome).toBe("Entregar ao Operacional");
-    expect(buscarAcoes("disponibilizar", "Diretoria")[0]?.nome).toBe("Disponibilizar placa");
+    expect(buscarAcoes("enviar placa", "Diretoria")[0]?.nome).toBe("Enviar placa");
   });
   it("acha por uma palavra só, com o nome que contém o termo antes do que só combina pelo módulo", () => {
     expect(
@@ -99,7 +99,7 @@ describe("buscarAcoes", () => {
       "Cadastrar placa",
       "Corrigir placa",
       "Devolver placa",
-      "Disponibilizar placa",
+      "Enviar placa",
       "Receber placa",
     ]);
     // "Receber placa" saiu do módulo Operacional: só o nome de "Entregar ao Operacional" combina.
@@ -116,11 +116,11 @@ describe("buscarAcoes", () => {
     for (const perfil of ["Administrador", "Diretoria", "Gestor de frota"] as const) {
       expect(buscarAcoes("receber placa", perfil), perfil).toHaveLength(1);
       expect(buscarAcoes("cadastrar placa", perfil), perfil).toHaveLength(1);
-      expect(buscarAcoes("disponibilizar", perfil), perfil).toHaveLength(1);
+      expect(buscarAcoes("enviar", perfil), perfil).toHaveLength(1);
     }
     expect(buscarAcoes("receber placa", "Operacional")).toEqual([]);
     expect(buscarAcoes("cadastrar placa", "Operacional")).toEqual([]);
-    expect(buscarAcoes("disponibilizar", "Operacional")).toEqual([]);
+    expect(buscarAcoes("enviar", "Operacional")).toEqual([]);
   });
 
   const pronta = (modulo: AcaoDoCatalogo["modulo"]): AcaoDoCatalogo => ({
@@ -133,14 +133,14 @@ describe("buscarAcoes", () => {
     descricao: "Faz algo.",
   });
 
-  it("pronta, Receber placa e Disponibilizar são do Gestor de frota e não do Operacional", () => {
+  it("pronta, Receber placa e Enviar placa são do Gestor de frota e não do Operacional", () => {
     const prontas = ACOES.map((a) => ({ ...a, estado: "pronto" as const }));
     expect(buscarAcoes("receber placa", "Gestor de frota", prontas).map((a) => a.id)).toEqual([
       "frota.receber-placa",
     ]);
     expect(buscarAcoes("receber placa", "Operacional", prontas)).toEqual([]);
-    expect(buscarAcoes("disponibilizar", "Operacional", prontas)).toEqual([]);
-    expect(buscarAcoes("disponibilizar", "Gestor de frota", prontas)).toHaveLength(1);
+    expect(buscarAcoes("enviar", "Operacional", prontas)).toEqual([]);
+    expect(buscarAcoes("enviar", "Gestor de frota", prontas)).toHaveLength(1);
   });
 
   it("ação pronta aparece para quem tem o módulo, e só para ele", () => {

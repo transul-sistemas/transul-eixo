@@ -68,7 +68,7 @@ export const ACOES: readonly AcaoDoCatalogo[] = [
   },
   {
     id: "frota.disponibilizar-placa",
-    nome: "Disponibilizar placa",
+    nome: "Enviar placa",
     icone: "IconArrowsExchange",
     modulo: "frota",
     permissao: { modulo: "frota", acao: "criar" },

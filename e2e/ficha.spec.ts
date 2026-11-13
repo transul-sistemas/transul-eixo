@@ -301,7 +301,7 @@ test.describe("ficha da placa: o conteúdo", () => {
     const grupo = page.getByRole("group", { name: "Ações do momento" });
     await expect(grupo.getByRole("button")).toHaveText([
       "Entregar ao Operacional",
-      "Disponibilizar placa",
+      "Enviar placa",
       "Mudar situação",
       "Engatar implementos",
       "Desatrelar implemento",
@@ -316,14 +316,12 @@ test.describe("ficha da placa: o conteúdo", () => {
     );
     await abrirFicha(page, "AAA0A04"); // DOp: já está no Operacional; não se entrega de novo
     const grupoDOp = page.getByRole("group", { name: "Ações do momento" });
-    await expect(grupoDOp.getByRole("button").first()).toHaveText("Disponibilizar placa");
+    await expect(grupoDOp.getByRole("button").first()).toHaveText("Enviar placa");
     await expect(grupoDOp.getByRole("button", { name: "Entregar ao Operacional" })).toHaveCount(0);
     await abrirFicha(page, "AAA0A00"); // com pedido de transferência pendente: Receber placa primeiro
     const grupoDoPedido = page.getByRole("group", { name: "Ações do momento" });
     await expect(grupoDoPedido.getByRole("button").first()).toHaveText("Receber placa");
-    await expect(grupoDoPedido.getByRole("button", { name: "Disponibilizar placa" })).toHaveCount(
-      0,
-    );
+    await expect(grupoDoPedido.getByRole("button", { name: "Enviar placa" })).toHaveCount(0);
   });
 });
 
