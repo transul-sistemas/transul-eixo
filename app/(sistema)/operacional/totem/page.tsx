@@ -1,9 +1,12 @@
 import { connection } from "next/server";
 import { Suspense } from "react";
+import { formatarInteiro } from "@/components/formato/numero";
+import { FaixaDeKpis } from "@/components/layout/faixa-de-kpis";
 import { PaginaDeLeitura } from "@/components/layout/pagina-de-leitura";
 import { metadataDaTela } from "@/components/navegacao/tela-em-breve";
 import { ListaVazia } from "@/components/tabela/estados";
 import { modoDosDados } from "@/lib/dados/fonte";
+import { lerPatio } from "@/lib/dados/operacional";
 import { acharTela } from "@/lib/navegacao/catalogo";
 import { RegistrarChegada } from "./registrar-chegada";
 
@@ -18,7 +21,26 @@ async function Conteudo() {
       descricao="Esta tela não tem dados de exemplo. Rode o sistema com os dados do banco para registrar a chegada na fila."
     />
   ) : (
-    <RegistrarChegada />
+    <>
+      <Indicadores />
+      <RegistrarChegada />
+    </>
+  );
+}
+
+/** A fila agora (contagens prontas do banco, as mesmas do Pátio), para quem está no totem. */
+async function Indicadores() {
+  const { contagens: c } = await lerPatio({ filtro: "fila", pagina: 1, tam: 20 });
+  return (
+    <div className="mb-4">
+      <FaixaDeKpis
+        kpis={[
+          { id: "fila", rotulo: "Na fila agora", valor: formatarInteiro(c.fila) },
+          { id: "dop", rotulo: "Chegaram ao pátio (DOp)", valor: formatarInteiro(c.DOp) },
+          { id: "carregando", rotulo: "Carregando", valor: formatarInteiro(c.CAr + c.CAn) },
+        ]}
+      />
+    </div>
   );
 }
 

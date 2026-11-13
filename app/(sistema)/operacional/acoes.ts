@@ -8,13 +8,14 @@ import { modoDosDados } from "@/lib/dados/fonte";
 import { gravarAvancoNoPatio, gravarChegada, gravarOrdem } from "@/lib/dados/operacional";
 import type { ChegadaRegistrada, OrdemCriada, PlacaAvancada } from "@/lib/dados/operacional-tipos";
 import {
+  esquemaAvancarEmLote,
   esquemaAvancarNoPatio,
   esquemaCriarOrdem,
   esquemaRegistrarChegada,
 } from "@/lib/dominio/esquemas/operacional";
 import { ErroDePermissao, ErroDeSessao, exigirPermissao } from "@/lib/seguranca/exigir-permissao";
-import { chaveDeEnvioValida } from "@/lib/wizard/chave-de-envio";
-import { erroDaAcao, errosDeCampos, type ResultadoDaAcao } from "@/lib/wizard/resultado";
+import { chaveDaParte, chaveDeEnvioValida } from "@/lib/wizard/chave-de-envio";
+import { erroDaAcao, errosDeCampos, type ResultadoDaAcao, sucesso } from "@/lib/wizard/resultado";
 
 // As gravações do Operacional (Totem, Pátio e Ordens de carregamento): conferem a permissão
 // (operacional.criar ou operacional.editar; o banco confere de novo a filial da custódia e a situação),
@@ -88,6 +89,47 @@ export async function avancarNoPatioAcao(bruto: unknown): Promise<ResultadoDaAca
   }
   if (resultado.ok) invalidarOperacional();
   return resultado;
+}
+
+export interface ResultadoDoLote {
+  feitas: number;
+  total: number;
+  recusadas: { placa: string; mensagem: string }[];
+}
+
+/**
+ * Avança várias placas de uma vez (aceitar, concluir ou liberar): uma chamada por placa, cada uma com a
+ * sua parte da chave de envio (repetir o envio não duplica). Uma recusa não derruba as outras; devolve
+ * "X de Y" e o motivo de cada recusa.
+ */
+export async function avancarEmLoteAcao(bruto: unknown): Promise<ResultadoDaAcao<ResultadoDoLote>> {
+  const negado = await conferir("editar");
+  if (negado) return negado;
+  const envelope = ENVELOPE.safeParse(bruto);
+  if (!envelope.success || !chaveDeEnvioValida(envelope.data.chaveDeEnvio)) {
+    return erroDaAcao("entrada_invalida", { mensagem: ENVIO_INCOMPLETO });
+  }
+  const dados = esquemaAvancarEmLote.safeParse(envelope.data.dados);
+  if (!dados.success) return erroDaAcao("entrada_invalida", { campos: errosDeCampos(dados.error) });
+  if (modoDosDados() !== "banco") return erroDaAcao("entrada_invalida", { mensagem: SO_NO_BANCO });
+  const { acao, placas } = dados.data;
+  const recusadas: ResultadoDoLote["recusadas"] = [];
+  let feitas = 0;
+  for (const [i, p] of placas.entries()) {
+    try {
+      const r = await gravarAvancoNoPatio(
+        { ativoId: p.ativoId, placa: p.placa, acao, motivo: "" },
+        chaveDaParte(envelope.data.chaveDeEnvio, i),
+      );
+      if (r.ok) feitas++;
+      else recusadas.push({ placa: p.placa, mensagem: r.erro.mensagem });
+    } catch (erro) {
+      console.error("avançar a placa em lote falhou:", textoDoErro(erro));
+      recusadas.push({ placa: p.placa, mensagem: "Não foi possível gravar agora. Tente de novo." });
+    }
+  }
+  if (feitas > 0) invalidarOperacional();
+  return sucesso({ feitas, total: placas.length, recusadas });
 }
 
 export async function criarOrdemAcao(bruto: unknown): Promise<ResultadoDaAcao<OrdemCriada>> {
