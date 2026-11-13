@@ -303,7 +303,7 @@ test.describe("ficha da placa: o conteúdo", () => {
       "Entregar ao Operacional",
       "Disponibilizar placa",
       "Mudar situação",
-      "Engatar implemento",
+      "Engatar implementos",
       "Desatrelar implemento",
       "Corrigir placa",
     ]);

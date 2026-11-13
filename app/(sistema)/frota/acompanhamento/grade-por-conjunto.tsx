@@ -6,7 +6,8 @@ import {
   IconClockExclamation,
   IconPencil,
 } from "@tabler/icons-react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { type CSSProperties, type ReactNode, useRef, useState } from "react";
 import { formatarData } from "@/components/formato/data";
 import { formatarInteiro } from "@/components/formato/numero";
@@ -295,6 +296,39 @@ function OlhoDaLinha({ placa, detalhes }: { placa: string; detalhes: DetalheDoIt
   );
 }
 
+/**
+ * A ação de escrita da linha (Engatar na aba Soltas, Desatrelar na aba Conjuntos): abre o assistente
+ * em popup sobre a grade (`?assistente=`), mantendo filtros, página e mês na URL.
+ */
+function AcaoDaLinha({
+  rotulo,
+  assistente,
+  extras,
+}: {
+  rotulo: string;
+  assistente: string;
+  extras: Record<string, string>;
+}) {
+  const rota = usePathname();
+  const parametros = useSearchParams();
+  const novos = new URLSearchParams(parametros.toString());
+  novos.delete("placa");
+  novos.delete("implemento");
+  novos.set("assistente", assistente);
+  for (const [chave, valor] of Object.entries(extras)) novos.set(chave, valor);
+  return (
+    <Link
+      href={`${rota}?${novos.toString()}`}
+      scroll={false}
+      aria-haspopup="dialog"
+      data-acao-da-linha={assistente}
+      className="text-acao hover:bg-muted focus-visible:ring-ring/50 w-fit rounded px-1 text-xs font-medium underline-offset-2 outline-none hover:underline focus-visible:ring-2"
+    >
+      {rotulo}
+    </Link>
+  );
+}
+
 /** Os implementos, como chips pequenos: "+ N implementos" e as placas em tamanho menor. */
 function ChipsDosImplementos({ implementos }: { implementos: ImplementoDoConjunto[] }) {
   if (implementos.length === 0) return null;
@@ -391,6 +425,13 @@ function LinhaDoConjunto({
           {textoDoModelo(conjunto.modelo, conjunto.ano)}
         </span>
         <ChipsDosImplementos implementos={conjunto.implementos} />
+        {conjunto.implementos.some((i) => i.engatadoAte === null) ? (
+          <AcaoDaLinha
+            rotulo="Desatrelar implementos"
+            assistente="desatrelar-implemento"
+            extras={{ placa: conjunto.placa }}
+          />
+        ) : null}
       </div>
       {colunas.map((c) => {
         const celula = conjunto.dias.find((d) => d.dia === c.dia);
@@ -455,6 +496,13 @@ function LinhaDaSolta({
         <span className="text-muted-foreground truncate text-xs">
           {textoDoModelo(placa.modelo, placa.ano)}
         </span>
+        {placa.tipo === "implemento" ? (
+          <AcaoDaLinha
+            rotulo="Engatar implementos"
+            assistente="engatar-implemento"
+            extras={{ implemento: placa.placa }}
+          />
+        ) : null}
       </div>
       {colunas.map((c) => {
         const celula = placa.dias.find((d) => d.dia === c.dia);

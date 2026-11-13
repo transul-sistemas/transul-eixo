@@ -89,7 +89,7 @@ export const ACOES: readonly AcaoDoCatalogo[] = [
   },
   {
     id: "frota.engatar-implemento",
-    nome: "Engatar implemento",
+    nome: "Engatar implementos",
     icone: "IconCirclePlus",
     modulo: "frota",
     permissao: { modulo: "frota", acao: "criar" },

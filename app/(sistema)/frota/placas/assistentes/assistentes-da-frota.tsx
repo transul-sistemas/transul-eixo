@@ -383,15 +383,16 @@ export function AssistentesDaFrota({
             placa={engatarGuardada}
             conjunto={dados.conjuntoDaPlaca}
             livres={dados.implementosLivres}
+            marcado={parametros.get("implemento")}
             aoFechar={engatar.fechar}
           />
         ) : (
           <EscolherAPlaca
-            titulo="Engatar implemento"
-            opcoes={[]}
+            titulo="Engatar implementos: escolha o cavalo"
+            opcoes={semPlaca ? dados.cavalosParaEngatar : []}
             vazio={
               semPlaca
-                ? ABRA_A_FICHA("Engatar implemento")
+                ? "Nenhum cavalo ativo para receber implementos. Cadastre o cavalo ou confira a carteira."
                 : alvo === null
                   ? naoAchou
                   : naoBaixada

@@ -24,7 +24,7 @@ describe("ações dos assistentes da Frota", () => {
       "Entregar ao Operacional",
       "Disponibilizar placa",
       "Mudar situação",
-      "Engatar implemento",
+      "Engatar implementos",
       "Desatrelar implemento",
       "Corrigir placa",
       "Cancelar pedido",

@@ -313,6 +313,12 @@ export function escritaDoArmazem(armazem: Armazem): FonteDeEscrita {
         .implementosLivres()
         .map((p) => ({ placa: p.placa, nome: `${p.placa} · ${p.modelo}` }))
         .sort((a, b) => (a.placa < b.placa ? -1 : 1)),
+    cavalosParaEngatar: async () =>
+      armazem
+        .placasParaLista()
+        .filter((p) => p.tipo === "cavalo" && !SIGLAS_DE_BAIXA.includes(p.sigla))
+        .map((p) => ({ placa: p.placa, nome: `${p.placa} · ${p.modelo}` }))
+        .sort((a, b) => (a.placa < b.placa ? -1 : 1)),
     cancelarPedido: async (entrada, chave, agora, gestorId) =>
       armazem.cancelar(entrada, chave, agora, gestorId),
     devolverPlaca: async (entrada, chave, agora, gestorId) =>
