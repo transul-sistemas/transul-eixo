@@ -99,8 +99,8 @@ async function conteudo(arquivo: string): Promise<void> {
   if ((await saiu) !== 0) throw new ErroDoBackup("A leitura do backup falhou.");
   const c = contador.resultado();
   console.log(`Backup lido sem restaurar nada: ${rotuloDoConteudo(c)}.`);
-  console.log(`  placas reais: ${c.placasReais}`);
-  console.log(`  placas Demo (ZDM): ${c.placasDemo}`);
+  console.log(`  placas reais: ${c.placasReais}`); // log-seguro: só a contagem
+  console.log(`  placas Demo (ZDM): ${c.placasDemo}`); // log-seguro: só a contagem
   console.log(
     `  parâmetro banco_em_demonstracao: ${c.bancoEmDemonstracao ? "presente" : "ausente"}`,
   );
@@ -110,6 +110,7 @@ async function conteudo(arquivo: string): Promise<void> {
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const arquivo = process.argv.slice(2).filter((a) => a !== "--")[0] ?? "";
   conteudo(arquivo).catch((e: unknown) => {
+    // log-seguro: ErroDoEixo traz texto nosso; o resto passa por textoDoErro
     console.error(e instanceof ErroDoEixo ? e.message : textoDoErro(e));
     process.exit(1);
   });

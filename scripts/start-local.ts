@@ -184,6 +184,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   try {
     principal();
   } catch (e) {
+    // log-seguro: os erros deste script são textos nossos (git, tar, next e as guardas acima)
     console.error(`[start:local] ${e instanceof Error ? e.message : String(e)}`);
     process.exit(1);
   }
