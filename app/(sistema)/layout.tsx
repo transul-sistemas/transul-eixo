@@ -8,6 +8,7 @@ import { BarraLateral } from "@/components/navegacao/barra-lateral";
 import { FaixaDaDemonstracaoDaSessao } from "@/components/navegacao/faixa-da-demonstracao";
 import { TopoDoSistema, TopoReservado } from "@/components/navegacao/topo-do-sistema";
 import { ArmadorDaVolta } from "@/components/tabela/retorno-da-lista-no-navegador";
+import { bancoEmDemonstracao } from "@/lib/dados/faixa-da-demonstracao";
 import { exigirSessao, obterPessoaDaSessao } from "@/lib/seguranca/sessao-do-servidor";
 import { sair } from "@/app/(acesso)/acoes";
 import { hojeEmSaoPaulo } from "@/components/formato/data";
@@ -34,16 +35,18 @@ async function contarParaReceberSemCair(): Promise<number> {
 // é dinâmico, então ela fica num Suspense, com o lugar reservado (a largura padrão, aberta).
 async function BarraLateralDaSessao() {
   // A sessão e a pessoa em paralelo: a barra chega mais cedo.
-  const [{ perfil, usuarioId, email }, pessoa, paraReceber] = await Promise.all([
+  const [{ perfil, usuarioId, email }, pessoa, paraReceber, emDemonstracao] = await Promise.all([
     exigirSessao(),
     obterPessoaDaSessao(),
     contarParaReceberSemCair(),
+    bancoEmDemonstracao(),
   ]);
   // A memória da barra é de quem entrou (fatia 3.9a); nome e e-mail no rodapé, acima do Sair. O selo
   // de Placas conta o que espera por quem usa (o total vem do banco).
   return (
     <BarraLateral
       perfil={perfil}
+      emDemonstracao={emDemonstracao}
       usuario={usuarioId}
       contadores={paraReceber > 0 ? { "frota.placas": paraReceber } : {}}
       aoSair={sair}

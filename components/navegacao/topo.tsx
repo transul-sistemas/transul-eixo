@@ -24,6 +24,8 @@ export interface PropsDoTopo {
   /** Dia de hoje em São Paulo, `aaaa-mm-dd`: é de onde vem o período padrão. */
   hoje: string;
   perfil: Perfil;
+  /** O banco está em demonstração (libera as telas em teste ao perfil). */
+  emDemonstracao?: boolean;
   /** De quem são os fixados e os recentes da busca rápida (o id do usuário da sessão). */
   usuario: string;
   /** Rota da página (padrão da navegação): a trilha e os links partem dela. */
@@ -75,6 +77,7 @@ function Escolha({
 export function Topo({
   hoje,
   perfil,
+  emDemonstracao = false,
   usuario,
   rota,
   parametros = new URLSearchParams(),
@@ -189,6 +192,7 @@ export function Topo({
         </div>
         <BuscaRapida
           perfil={perfil}
+          emDemonstracao={emDemonstracao}
           usuario={usuario}
           rota={caminho}
           parametros={parametros}
@@ -205,7 +209,8 @@ export function TopoLigado({
   hoje,
   perfil,
   usuario,
-}: Pick<PropsDoTopo, "hoje" | "perfil" | "usuario">) {
+  emDemonstracao,
+}: Pick<PropsDoTopo, "hoje" | "perfil" | "usuario" | "emDemonstracao">) {
   const rota = usePathname();
   const lidos = useSearchParams();
   const router = useRouter();
@@ -213,6 +218,7 @@ export function TopoLigado({
     <Topo
       hoje={hoje}
       perfil={perfil}
+      emDemonstracao={emDemonstracao}
       usuario={usuario}
       rota={rota}
       parametros={new URLSearchParams(lidos.toString())}

@@ -62,13 +62,14 @@ function itensPorId(
   perfil: Perfil,
   catalogo: readonly ModuloDoCatalogo[],
   excluir: ReadonlySet<string> = new Set(),
+  emDemonstracao = false,
 ): ItemDaBusca[] {
   const itens: ItemDaBusca[] = [];
   for (const id of ids) {
     if (excluir.has(id)) continue;
     for (const modulo of catalogo) {
       const tela = modulo.telas.find((t) => t.id === id);
-      if (tela && podeAbrir(perfil, tela)) {
+      if (tela && podeAbrir(perfil, tela, emDemonstracao)) {
         itens.push(itemDaTela(modulo, tela));
         break;
       }
@@ -101,20 +102,21 @@ export function montarGrupos(
   contexto: ContextoDaBusca,
   catalogo: readonly ModuloDoCatalogo[] = CATALOGO,
   acoes: readonly AcaoDoCatalogo[] = ACOES,
+  emDemonstracao = false,
 ): readonly GrupoDaBusca[] {
   const grupos: GrupoDaBusca[] = [];
   if (normalizar(termo) === "") {
-    const fixados = itensPorId(contexto.fixados, perfil, catalogo);
+    const fixados = itensPorId(contexto.fixados, perfil, catalogo, undefined, emDemonstracao);
     // Fixados e a tela atual não se repetem em Recentes.
     const jaMostrados = new Set(fixados.map((item) => item.id));
     if (contexto.atual !== undefined) jaMostrados.add(contexto.atual);
-    const recentes = itensPorId(contexto.recentes, perfil, catalogo, jaMostrados);
+    const recentes = itensPorId(contexto.recentes, perfil, catalogo, jaMostrados, emDemonstracao);
     if (fixados.length > 0) grupos.push({ id: "fixados", titulo: "Fixados", itens: fixados });
     if (recentes.length > 0) grupos.push({ id: "recentes", titulo: "Recentes", itens: recentes });
     return grupos;
   }
 
-  const telas: ItemDaBusca[] = buscarTelas(termo, perfil, catalogo).map((r) =>
+  const telas: ItemDaBusca[] = buscarTelas(termo, perfil, catalogo, emDemonstracao).map((r) =>
     r.modo
       ? {
           id: `${r.tela.id}#${r.modo.id}`,

@@ -25,11 +25,15 @@ interface Candidato extends ResultadoDeBusca {
   readonly alvo: string;
 }
 
-function candidatos(perfil: Perfil, catalogo: readonly ModuloDoCatalogo[]): Candidato[] {
+function candidatos(
+  perfil: Perfil,
+  catalogo: readonly ModuloDoCatalogo[],
+  emDemonstracao: boolean,
+): Candidato[] {
   const lista: Candidato[] = [];
-  for (const modulo of modulosVisiveis(perfil, catalogo)) {
+  for (const modulo of modulosVisiveis(perfil, catalogo, emDemonstracao)) {
     for (const tela of modulo.telas) {
-      if (!podeAbrir(perfil, tela)) continue;
+      if (!podeAbrir(perfil, tela, emDemonstracao)) continue;
       const base = `${modulo.nome} › ${tela.nome}`;
       lista.push({
         modulo,
@@ -86,12 +90,13 @@ export function buscarTelas(
   termo: string,
   perfil: Perfil,
   catalogo: readonly ModuloDoCatalogo[] = CATALOGO,
+  emDemonstracao = false,
 ): readonly ResultadoDeBusca[] {
   const normalizado = normalizar(termo);
   if (normalizado === "") return [];
   const palavras = normalizado.split(" ");
   const primeiro = palavras[0] ?? normalizado;
-  return candidatos(perfil, catalogo)
+  return candidatos(perfil, catalogo, emDemonstracao)
     .map((candidato, ordem) => ({ candidato, ordem }))
     .filter(({ candidato }) => palavras.every((palavra) => candidato.texto.includes(palavra)))
     .map((item) => ({ ...item, nota: pontuar(item.candidato, normalizado, primeiro) }))

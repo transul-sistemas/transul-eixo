@@ -8,6 +8,10 @@ import {
   etapasDaDecisao,
   executarLote,
   type ItemDoLote,
+  diasDesdeOEnvio,
+  situacaoDoEnvio,
+  podeDecidirNoLote,
+  precisaRegistrarSemCr,
   NOTA_DA_PENDENCIA,
   problemasDoLote,
   resumoDoLote,
@@ -122,6 +126,7 @@ function chamadasFalsas(falhas: Record<string, string> = {}) {
     receber: fazer("receber"),
     concluir: fazer("concluir"),
     devolver: fazer("devolver"),
+    registrarSemCr: fazer("registrar_sem_cr") as ChamadasDoLote["registrarSemCr"],
   };
   return { chamadas, ligacoes };
 }
@@ -267,5 +272,142 @@ describe("resumoDoLote", () => {
   it("tudo certo não fala de falha", () => {
     const r = resumoDoLote([{ pedidoId: "1", placa: "A", decisao: "aceitar", situacao: "feita" }]);
     expect(r.texto).toBe("1 de 1 decisão gravada: 1 aceita.");
+  });
+});
+
+describe("diasDesdeOEnvio (dia de São Paulo, -03:00)", () => {
+  it("conta dias de calendário até hoje", () => {
+    expect(diasDesdeOEnvio("2026-11-04T15:30:00Z", "2026-11-12")).toBe(8);
+    expect(diasDesdeOEnvio("2026-11-11T15:30:00Z", "2026-11-12")).toBe(1);
+  });
+  it("o mesmo dia é zero, mesmo sendo às 23h59 de São Paulo (02:59Z do dia seguinte)", () => {
+    expect(diasDesdeOEnvio("2026-11-12T02:59:00Z", "2026-11-11")).toBe(0);
+    expect(diasDesdeOEnvio("2026-11-12T03:00:00Z", "2026-11-12")).toBe(0);
+  });
+  it("passa a virada do mês e do ano", () => {
+    expect(diasDesdeOEnvio("2026-10-30T15:00:00Z", "2026-11-02")).toBe(3);
+    expect(diasDesdeOEnvio("2026-12-30T15:00:00Z", "2027-01-02")).toBe(3);
+  });
+  it("envio no futuro (relógio diferente) nunca dá negativo", () => {
+    expect(diasDesdeOEnvio("2026-11-13T15:00:00Z", "2026-11-12")).toBe(0);
+  });
+});
+
+describe("situacaoDoEnvio", () => {
+  it("fala 'há N dias', 'há 1 dia' e 'hoje'", () => {
+    expect(situacaoDoEnvio("2026-11-04T15:30:00Z", "2026-11-12", 5).rotulo).toBe("há 8 dias");
+    expect(situacaoDoEnvio("2026-11-11T15:30:00Z", "2026-11-12", 5).rotulo).toBe("há 1 dia");
+    expect(situacaoDoEnvio("2026-11-12T15:30:00Z", "2026-11-12", 5).rotulo).toBe("hoje");
+  });
+  it("vence só depois do prazo: no limite ainda está no prazo", () => {
+    expect(situacaoDoEnvio("2026-11-07T15:00:00Z", "2026-11-12", 5).vencido).toBe(false); // 5 dias
+    expect(situacaoDoEnvio("2026-11-06T15:00:00Z", "2026-11-12", 5).vencido).toBe(true); // 6 dias
+    expect(situacaoDoEnvio("2026-11-12T15:00:00Z", "2026-11-12", 5).vencido).toBe(false);
+  });
+  it("o vencido leva texto próprio (nunca só a cor)", () => {
+    expect(situacaoDoEnvio("2026-11-04T15:30:00Z", "2026-11-12", 5).aviso).toBe("Prazo vencido");
+    expect(situacaoDoEnvio("2026-11-11T15:30:00Z", "2026-11-12", 5).aviso).toBeNull();
+  });
+  it("sem data de envio ou sem prazo, não inventa: sem rótulo e sem vencimento", () => {
+    expect(situacaoDoEnvio(null, "2026-11-12", 5)).toEqual({
+      rotulo: null,
+      vencido: false,
+      aviso: null,
+    });
+    expect(situacaoDoEnvio("2026-11-01T15:30:00Z", "2026-11-12", null)).toMatchObject({
+      rotulo: "há 11 dias",
+      vencido: false,
+      aviso: null,
+    });
+  });
+});
+
+describe("quem decide o lote", () => {
+  it("só o gestor de destino decide; o Administrador só lê", () => {
+    expect(podeDecidirNoLote("Gestor de frota")).toBe(true);
+    expect(podeDecidirNoLote("Administrador")).toBe(false);
+    expect(podeDecidirNoLote("Diretoria")).toBe(false);
+    expect(podeDecidirNoLote("Operacional")).toBe(false);
+  });
+});
+
+describe("precisaRegistrarSemCr", () => {
+  it("só ao aceitar (limpo ou com pendências) uma placa sem CR vigente", () => {
+    expect(precisaRegistrarSemCr("aceitar", [])).toBe(true);
+    expect(precisaRegistrarSemCr("aceitar_com_pendencias", [])).toBe(true);
+    expect(precisaRegistrarSemCr("recusar", [])).toBe(false);
+    expect(precisaRegistrarSemCr("aceitar", [{ codigo: "CR1" }])).toBe(false);
+  });
+  it("CR não lido (null) não é 'sem CR': o banco confere de novo por dentro", () => {
+    expect(precisaRegistrarSemCr("aceitar", null)).toBe(true);
+  });
+});
+
+describe("executarLote: placa aceita sem CR vigente", () => {
+  const semCr = (p: PedidoDeTransferencia, d: ItemDoLote["decisao"]): ItemDoLote => ({
+    ...item(p, d, d === "recusar" ? "motivo" : ""),
+    crs: [],
+  });
+  const comCr = (p: PedidoDeTransferencia, d: ItemDoLote["decisao"]): ItemDoLote => ({
+    ...item(p, d),
+    crs: [{ codigo: "CR1", nome: "x" }],
+  });
+
+  it("aceitar sem CR registra a exceção depois de concluir; aceitar com pendências também", async () => {
+    const { chamadas, ligacoes } = chamadasFalsas();
+    await executarLote(
+      [
+        semCr(pedido("1"), "aceitar"),
+        semCr(
+          pedido("2", { pendenciasConhecidas: [{ id: "p", texto: "t" }] }),
+          "aceitar_com_pendencias",
+        ),
+      ],
+      chamadas,
+      new Map(),
+      chave,
+    );
+    expect(ligacoes.map((l) => l.split(":").slice(0, 2).join(":"))).toEqual([
+      "receber:1",
+      "concluir:1",
+      "registrar_sem_cr:1",
+      "receber:2",
+      "concluir:2",
+      "registrar_sem_cr:2",
+    ]);
+  });
+
+  it("recusar ou ter CR vigente não registra", async () => {
+    const { chamadas, ligacoes } = chamadasFalsas();
+    await executarLote(
+      [semCr(pedido("1"), "recusar"), comCr(pedido("2"), "aceitar")],
+      chamadas,
+      new Map(),
+      chave,
+    );
+    expect(ligacoes.some((l) => l.startsWith("registrar_sem_cr"))).toBe(false);
+  });
+
+  it("falha ao registrar não desfaz o aceite: 'Tentar de novo' repete só o registro, com a mesma chave", async () => {
+    const falhas = { "registrar_sem_cr:1": "Sem conexão. Tente de novo." };
+    const { chamadas, ligacoes } = chamadasFalsas(falhas);
+    const progresso = new Map();
+    const itens = [semCr(pedido("1"), "aceitar")];
+    const r1 = await executarLote(itens, chamadas, progresso, chave);
+    expect(r1[0]?.situacao).toBe("falhou");
+    delete (falhas as Record<string, string>)["registrar_sem_cr:1"];
+    const r2 = await executarLote(itens, chamadas, progresso, chave);
+    expect(r2[0]?.situacao).toBe("feita");
+    const tipos = ligacoes.map((l) => l.split(":")[0]);
+    expect(tipos).toEqual(["receber", "concluir", "registrar_sem_cr", "registrar_sem_cr"]);
+    const chaves = ligacoes.filter((l) => l.startsWith("registrar_sem_cr")).map((l) => chaveDe(l));
+    expect(chaves[0]).toBe(chaves[1]);
+  });
+
+  it("sem a chamada registrada (outras telas), nada muda", async () => {
+    const { chamadas, ligacoes } = chamadasFalsas();
+    delete chamadas.registrarSemCr;
+    await executarLote([semCr(pedido("1"), "aceitar")], chamadas, new Map(), chave);
+    expect(ligacoes.map((l) => l.split(":")[0])).toEqual(["receber", "concluir"]);
   });
 });

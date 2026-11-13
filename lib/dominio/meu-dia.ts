@@ -7,7 +7,7 @@ import { vigenteEm } from "./vigencia";
 // placa de cada vez, cada uma na sua transação, e conta o resultado ("X de Y").
 
 export type Decisao = "aceitar" | "aceitar_com_pendencias" | "recusar";
-export type Etapa = "receber" | "concluir" | "devolver";
+export type Etapa = "receber" | "concluir" | "devolver" | "registrar_sem_cr";
 
 export const MOTIVO_MAXIMO = 300;
 /** A nota que cada pendência leva quando o gestor aceita a placa com pendências (a função exige uma). */
@@ -25,12 +25,64 @@ export interface LinhaDoPedido {
   /** Os CRs vigentes hoje (pode haver mais de um); `[]` = sem CR vigente; `null` = não foi possível ler. */
   crs: { codigo: string; nome: string }[] | null;
   operacao: string | null;
+  /** Quando o pedido foi enviado (instante UTC); nulo se a leitura não trouxe. */
+  enviadaEm?: string | null;
+  /** O prazo da transferência em dias (config.parametro); nulo se a leitura não trouxe. */
+  prazoDias?: number | null;
 }
 
 export interface ItemDoLote {
   pedido: PedidoDeTransferencia;
   decisao: Decisao | null;
   motivo: string;
+  /** Os CRs vigentes hoje da placa (`[]` = sem CR; `null` = não lido; ausente = não conferir). */
+  crs?: { codigo: string; nome: string }[] | null;
+}
+
+/** Só o gestor de destino decide o lote; o Administrador vê a fila e os dados, em modo leitura. */
+export function podeDecidirNoLote(perfil: string): boolean {
+  return perfil === "Gestor de frota";
+}
+
+/**
+ * Aceitar (limpo ou com pendências) uma placa sem CR vigente abre a exceção "placa sem CR". CR não lido
+ * (`null`) também chama: o banco confere por dentro, e a função é idempotente.
+ */
+export function precisaRegistrarSemCr(
+  decisao: Decisao,
+  crs: readonly { codigo: string }[] | null,
+): boolean {
+  return decisao !== "recusar" && (crs === null || crs.length === 0);
+}
+
+/** Dias de calendário (dia de São Paulo, -03:00) entre o envio, em UTC, e hoje (`aaaa-mm-dd`); nunca negativo. */
+export function diasDesdeOEnvio(enviadaEm: string, hoje: string): number {
+  const envioLocal = new Date(new Date(enviadaEm).getTime() - 3 * 3600_000)
+    .toISOString()
+    .slice(0, 10);
+  const dia = (iso: string) => Date.parse(`${iso}T00:00:00Z`);
+  return Math.max(0, Math.round((dia(hoje) - dia(envioLocal)) / 86_400_000));
+}
+
+export interface SituacaoDoEnvio {
+  /** "há 8 dias", "há 1 dia" ou "hoje"; nulo sem data de envio. */
+  rotulo: string | null;
+  /** Passou do prazo da transferência (no dia limite ainda está no prazo). Sinaliza; nunca cancela. */
+  vencido: boolean;
+  /** O texto que acompanha o vermelho suave, para a cor nunca ficar sozinha. */
+  aviso: string | null;
+}
+
+export function situacaoDoEnvio(
+  enviadaEm: string | null,
+  hoje: string,
+  prazoDias: number | null,
+): SituacaoDoEnvio {
+  if (enviadaEm === null) return { rotulo: null, vencido: false, aviso: null };
+  const dias = diasDesdeOEnvio(enviadaEm, hoje);
+  const rotulo = dias === 0 ? "hoje" : dias === 1 ? "há 1 dia" : `há ${dias} dias`;
+  const vencido = prazoDias !== null && dias > prazoDias;
+  return { rotulo, vencido, aviso: vencido ? "Prazo vencido" : null };
 }
 
 /**
@@ -45,9 +97,15 @@ export function decisoesPermitidas(pedido: PedidoDeTransferencia): Decisao[] {
 }
 
 /** As funções que a decisão chama, na ordem: a chegada (se ainda pendente) e depois concluir ou devolver. */
-export function etapasDaDecisao(pedido: PedidoDeTransferencia, decisao: Decisao): Etapa[] {
+export function etapasDaDecisao(
+  pedido: PedidoDeTransferencia,
+  decisao: Decisao,
+  crs?: readonly { codigo: string }[] | null,
+): Etapa[] {
   const ultima: Etapa = decisao === "recusar" ? "devolver" : "concluir";
-  return pedido.situacao === "pendente" ? ["receber", ultima] : [ultima];
+  const etapas: Etapa[] = pedido.situacao === "pendente" ? ["receber", ultima] : [ultima];
+  if (crs !== undefined && precisaRegistrarSemCr(decisao, crs)) etapas.push("registrar_sem_cr");
+  return etapas;
 }
 
 export interface ProblemaDoLote {
@@ -113,6 +171,8 @@ export interface ChamadasDoLote {
     unknown
   >;
   devolver: Chamada<Base & { motivo: string }, unknown>;
+  /** Abre a exceção "placa sem CR" (o banco confere por dentro e é idempotente). */
+  registrarSemCr?: Chamada<{ pedidoId: string }, unknown>;
 }
 
 /** O que já foi gravado de cada pedido, para repetir sem duplicar e retomar de onde parou. */
@@ -139,7 +199,7 @@ export async function executarLote(
   novaChave: () => string,
 ): Promise<ResultadoDaPlaca[]> {
   const resultados: ResultadoDaPlaca[] = [];
-  for (const { pedido, decisao, motivo } of itens) {
+  for (const { pedido, decisao, motivo, crs } of itens) {
     if (decisao === null) continue;
     const base = { pedidoId: pedido.id, placa: pedido.placa, decisao };
     const p = progresso.get(pedido.id) ?? {
@@ -154,7 +214,11 @@ export async function executarLote(
       continue;
     }
     let falha: string | null = null;
-    for (const etapa of etapasDaDecisao(pedido, decisao)) {
+    for (const etapa of etapasDaDecisao(
+      pedido,
+      decisao,
+      chamadas.registrarSemCr ? crs : undefined,
+    )) {
       if (p.feitas.includes(etapa)) continue;
       const chave = (p.chaves[etapa] ??= novaChave());
       const comum = { placa: pedido.placa, pedidoId: pedido.id, versaoDoPedido: p.versao };
@@ -174,6 +238,11 @@ export async function executarLote(
                 nota: NOTA_DA_PENDENCIA,
               })),
             },
+            chave,
+          );
+        } else if (etapa === "registrar_sem_cr") {
+          r = await (chamadas.registrarSemCr as NonNullable<ChamadasDoLote["registrarSemCr"]>)(
+            { pedidoId: pedido.id },
             chave,
           );
         } else {

@@ -4,12 +4,15 @@ import { hojeEmSaoPaulo } from "@/components/formato/data";
 import { PaginaDeLeitura } from "@/components/layout/pagina-de-leitura";
 import { ProvedorDoUsuario } from "@/components/navegacao/usuario-da-sessao";
 import { EsqueletoDaTabela } from "@/components/tabela/estados";
+import type { ClienteDeEscrita } from "@/lib/dados/escrita-do-banco";
+import { bancoEmDemonstracao } from "@/lib/dados/faixa-da-demonstracao";
 import { fonteDeEscrita, modoDosDados } from "@/lib/dados/fonte";
-import { lerPedidosDoMeuDia } from "@/lib/dados/meu-dia";
+import { lerPedidosAbertosDoMeuDia, lerPedidosDoMeuDia } from "@/lib/dados/meu-dia";
 import { lerTarefas } from "@/lib/dados/tarefas";
+import { podeDecidirNoLote } from "@/lib/dominio/meu-dia";
 import { montarTarefas, type Tarefa } from "@/lib/dominio/tarefas";
 import { acharTela } from "@/lib/navegacao/catalogo";
-import { TELAS_SO_DO_ADMINISTRADOR } from "@/lib/navegacao/perfis";
+import { podeAbrir } from "@/lib/navegacao/visibilidade";
 import { gestorAtual } from "@/lib/seguranca/gestor-atual";
 import { exigirSessao } from "@/lib/seguranca/sessao-do-servidor";
 import { textoDoErro } from "@/lib/log/erro";
@@ -49,10 +52,14 @@ async function outrasTarefas(): Promise<{ tarefas: Tarefa[]; indisponivel: boole
 export async function PaginaDoMeuDia() {
   await connection();
   const { perfil, usuarioId } = await exigirSessao();
-  // Além do proxy (que já responde 404): quem não é Administrador não vê nada desta tela.
-  if (!TELAS_SO_DO_ADMINISTRADOR.includes("inicio.meu-dia") || perfil !== "Administrador") {
+  // Além do proxy (que já responde 404): o Administrador abre sempre; o Gestor de frota, só com o
+  // parâmetro banco_em_demonstracao ligado (lido com a chave de quem chama).
+  const telaDoMeuDia = acharTela("/inicio/meu-dia")?.tela;
+  if (!telaDoMeuDia || !podeAbrir(perfil, telaDoMeuDia, await bancoEmDemonstracao())) {
     notFound();
   }
+  // Só o gestor de destino decide; o Administrador vê a fila e os dados em modo leitura.
+  const somenteLeitura = !podeDecidirNoLote(perfil);
   const { titulo, descricao } = cabecalho();
   const hoje = hojeEmSaoPaulo(new Date());
 
@@ -63,9 +70,22 @@ export async function PaginaDoMeuDia() {
     gestorId = null; // login sem pessoa ligada: não tem carteira, então nada a receber
   }
   const [linhas, outras] = await Promise.all([
-    gestorId === null
+    gestorId === null && !somenteLeitura
       ? Promise.resolve([])
-      : fonteDeEscrita(hoje).then((fonte) => lerPedidosDoMeuDia(fonte, gestorId, hoje)),
+      : fonteDeEscrita(hoje).then((fonte) =>
+          lerPedidosDoMeuDia(
+            fonte,
+            gestorId ?? "",
+            hoje,
+            modoDosDados() === "banco"
+              ? async () => {
+                  const { criarClienteDoServidor } = await import("@/lib/supabase/servidor");
+                  const cliente = (await criarClienteDoServidor()) as unknown as ClienteDeEscrita;
+                  return lerPedidosAbertosDoMeuDia(cliente, somenteLeitura);
+                }
+              : undefined,
+          ),
+        ),
     outrasTarefas(),
   ]);
 
@@ -75,7 +95,7 @@ export async function PaginaDoMeuDia() {
       descricao={descricao}
       acoes={
         <span
-          title="Tela em teste: só o Administrador a vê"
+          title="Tela em teste: visível ao Administrador e, com o banco em demonstração, ao gestor de frota"
           className="text-muted-foreground border-border rounded-md border px-2 py-0.5 text-sm"
         >
           Teste
@@ -86,6 +106,8 @@ export async function PaginaDoMeuDia() {
         <FilaDoDia
           linhas={linhas}
           semCarteira={gestorId === null}
+          hoje={hoje}
+          somenteLeitura={somenteLeitura}
           outras={outras.tarefas}
           outrasIndisponiveis={outras.indisponivel}
         />

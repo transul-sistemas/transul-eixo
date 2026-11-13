@@ -202,6 +202,7 @@ export function ConteudoDaBusca({
 
 export interface PropsDaBusca {
   perfil: Perfil;
+  emDemonstracao?: boolean;
   /** De quem são os fixados e os recentes. */
   usuario: string;
   /** Rota da página: toda tela visitada vira um item de Recentes. */
@@ -219,6 +220,7 @@ export interface PropsDaBusca {
  */
 export function BuscaRapida({
   perfil,
+  emDemonstracao = false,
   usuario,
   rota,
   parametros = new URLSearchParams(),
@@ -233,7 +235,7 @@ export function BuscaRapida({
   const campo = useRef<HTMLInputElement>(null);
   const lembrado = useRef<HTMLElement | null>(null);
 
-  const grupos = montarGrupos(termo, perfil, contexto);
+  const grupos = montarGrupos(termo, perfil, contexto, undefined, undefined, emDemonstracao);
   const itens = achatar(grupos);
   const ativoEfetivo = itens.length === 0 ? -1 : Math.min(Math.max(ativo, 0), itens.length - 1);
 
