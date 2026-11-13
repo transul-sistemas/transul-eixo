@@ -41,7 +41,7 @@ select is((current_setting('t.lote')::jsonb->>'lancados')::int, 2, '1. o lote la
 select is((current_setting('t.lote')::jsonb->>'total')::int, 2, '2. "2 de 2"');
 reset role;
 select is(nucleo.situacao_no_dia(pg_temp.id('k1'), pg_temp.hoje() - 1), 'PÁT', '3. k1 ficou PÁT no dia');
-select is((select em from nucleo.evento_de_status where ativo_id = pg_temp.id('k2') and sigla = 'PÁT' and excluido_em is null),
+select is((select max(em) from nucleo.evento_de_status where ativo_id = pg_temp.id('k2') and sigla = 'PÁT' and excluido_em is null),
   ((pg_temp.hoje() - 1) + time '08:00') at time zone 'America/Sao_Paulo', '4. na mesma hora para todos');
 select set_config('t.ev1', pg_temp.eventos('k1')::text, true);
 select tests.como(pg_temp.id('auth_Gestor A'));
@@ -106,7 +106,7 @@ select is((select count(*) from nucleo.situacoes_programadas(pg_temp.hoje(), pg_
 reset role;
 
 -- ---- corrigir o último evento ----
-select set_config('t.ult', (select id::text from nucleo.evento_de_status where ativo_id = pg_temp.id('k2') and sigla = 'PÁT' and excluido_em is null), true);
+select set_config('t.ult', (select id::text from nucleo.evento_de_status where ativo_id = pg_temp.id('k2') and sigla = 'PÁT' and excluido_em is null order by em desc limit 1), true);
 select set_config('t.ev2', pg_temp.eventos('k2')::text, true);
 select tests.como(pg_temp.id('auth_Gestor B'));
 select is(pg_temp.erro_de(format($$select nucleo.corrigir_ultimo_evento(%L, 'x', null, null)$$, current_setting('t.ult'))),

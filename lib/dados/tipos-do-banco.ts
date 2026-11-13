@@ -1599,6 +1599,74 @@ isOneToOne: false
       referencedColumns: ["campo"]
     }
                   ]
+                },"situacao_programada": {
+                  Row: {
+                    "ativo_id": string,"decidido_em": string | null,"decidido_por": string | null,"dia": string,"evento_id": string | null,"hora": string,"id": string,"motivo_do_cancelamento": string | null,"programado_em": string,"programado_por": string | null,"sigla": string,"situacao": string,"versao": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "ativo_id": string,"decidido_em"?: string | null,"decidido_por"?: string | null,"dia": string,"evento_id"?: string | null,"hora": string,"id"?: string,"motivo_do_cancelamento"?: string | null,"programado_em"?: string,"programado_por"?: string | null,"sigla": string,"situacao"?: string,"versao"?: number
+                  }
+                  Update: {
+                    "ativo_id"?: string,"decidido_em"?: string | null,"decidido_por"?: string | null,"dia"?: string,"evento_id"?: string | null,"hora"?: string,"id"?: string,"motivo_do_cancelamento"?: string | null,"programado_em"?: string,"programado_por"?: string | null,"sigla"?: string,"situacao"?: string,"versao"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "situacao_programada_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: false
+      referencedRelation: "alerta_de_vinculo"
+      referencedColumns: ["ativo_id"]
+    },{
+      foreignKeyName: "situacao_programada_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: false
+      referencedRelation: "ativo"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "situacao_programada_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: false
+      referencedRelation: "campo_pendente"
+      referencedColumns: ["ativo_id"]
+    },{
+      foreignKeyName: "situacao_programada_ativo_id_fkey"
+      columns: ["ativo_id"]
+isOneToOne: false
+      referencedRelation: "operacao_do_ativo"
+      referencedColumns: ["ativo_id"]
+    },{
+      foreignKeyName: "situacao_programada_decidido_por_fkey"
+      columns: ["decidido_por"]
+isOneToOne: false
+      referencedRelation: "pessoa"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "situacao_programada_decidido_por_fkey"
+      columns: ["decidido_por"]
+isOneToOne: false
+      referencedRelation: "pessoa_para_leitura"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "situacao_programada_evento_id_fkey"
+      columns: ["evento_id"]
+isOneToOne: false
+      referencedRelation: "evento_de_status"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "situacao_programada_programado_por_fkey"
+      columns: ["programado_por"]
+isOneToOne: false
+      referencedRelation: "pessoa"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "situacao_programada_programado_por_fkey"
+      columns: ["programado_por"]
+isOneToOne: false
+      referencedRelation: "pessoa_para_leitura"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"transferencia": {
                   Row: {
                     "ativo_id": string,"cancelada_em": string | null,"concluida_em": string | null,"criado_em": string,"de_gestor_id": string,"devolvida_em": string | null,"excluido_em": string | null,"excluido_por": string | null,"id": string,"motivo": string,"motivo_da_devolucao": string | null,"motivo_da_exclusao": string | null,"para_gestor_id": string,"recebida_em": string | null,"situacao": string,"versao": number
@@ -2093,6 +2161,9 @@ isOneToOne: false
 "cancelar_pedido_de_baixa":
 { Args: { "p_chave"?: string,"p_pedido_id": string }; Returns: string
                            },
+"cancelar_situacao_programada":
+{ Args: { "p_chave"?: string,"p_motivo": string,"p_programada_id": string }; Returns: string
+                           },
 "carteira_do_mes":
 { Args: { "p_filtro"?: string,"p_mes": string,"p_pagina"?: number,"p_tam"?: number }; Returns: Json
                            },
@@ -2161,6 +2232,9 @@ isOneToOne: false
 "confirmar_carteira":
 { Args: { "p_chave"?: string,"p_itens": Json,"p_mes": string }; Returns: Json
                            },
+"confirmar_situacao_programada":
+{ Args: { "p_chave"?: string,"p_programada_id": string,"p_versao": number }; Returns: string
+                           },
 "conjuntos_com_lancamento_no_dia":
 { Args: { "p_dia": string }; Returns: {
               "x": number,"y": number
@@ -2189,6 +2263,9 @@ isOneToOne: false
                            },
 "corrigir_campo":
 { Args: { "p_ativo_id": string,"p_campo": string,"p_chave"?: string,"p_motivo": string,"p_valor": Json,"p_versao"?: number }; Returns: string
+                           },
+"corrigir_ultimo_evento":
+{ Args: { "p_chave"?: string,"p_evento_id": string,"p_motivo": string,"p_nova_sigla"?: string }; Returns: string
                            },
 "cr_da_operacao_no_mes":
 { Args: { "p_mes": string }; Returns: {
@@ -2352,8 +2429,14 @@ isOneToOne: false
 "justificar_diferenca":
 { Args: { "p_chave"?: string,"p_cr_id": string,"p_mes": string,"p_motivo": string }; Returns: Json
                            },
+"lancar_o_dia_em_lote":
+{ Args: { "p_ativos": (string)[],"p_chave"?: string,"p_dia": string,"p_hora": string,"p_sigla": string }; Returns: Json
+                           },
 "lancar_situacao_do_dia":
 { Args: { "p_ativo_id": string,"p_chave"?: string,"p_dia": string,"p_sigla": string }; Returns: Json
+                           },
+"lancar_situacao_na_hora":
+{ Args: { "p_ativo_id": string,"p_em": string,"p_sigla": string }; Returns: string
                            },
 "liberar_posicao_do_dia":
 { Args: { "p_chave"?: string,"p_dia": string,"p_gestor_id": string,"p_motivo": string }; Returns: string
@@ -2618,6 +2701,9 @@ isOneToOne: false
 "problemas_da_saude_do_cr":
 { Args: { "p_pagina"?: number,"p_problema": string,"p_tamanho"?: number }; Returns: Json
                            },
+"programar_situacao":
+{ Args: { "p_ativo_id": string,"p_chave"?: string,"p_dia": string,"p_hora": string,"p_sigla": string }; Returns: string
+                           },
 "proximo_recalculo_do_ativo":
 { Args: { "p_ativo_id": string,"p_em"?: string }; Returns: string
                            },
@@ -2716,6 +2802,11 @@ isOneToOne: false
 "situacao_no_fim_dos_dias":
 { Args: { "p_ate": string,"p_ativos": (string)[],"p_inicio": string }; Returns: {
               "ativo_id": string,"dia": string,"sigla": string
+            }[]
+                           },
+"situacoes_programadas":
+{ Args: { "p_ate": string,"p_de": string }; Returns: {
+              "ativo_id": string,"dia": string,"grupo": string,"hora": string,"id": string,"placa": string,"sigla": string,"versao": number
             }[]
                            },
 "soltas_com_situacao_no_dia":
