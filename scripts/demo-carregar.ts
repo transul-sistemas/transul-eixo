@@ -968,6 +968,7 @@ export async function resumoDaDemo(c: pg.Client): Promise<ResumoDaDemo> {
      union all select 'nível 2: dias lançados do motorista', count(*)::text from pessoas.status_do_motorista s join nucleo.pessoa p on p.id = s.pessoa_id where p.nome like 'Demo %' and s.excluido_em is null
      union all select 'nível 2: substituições', count(*)::text from pessoas.substituicao_do_motorista where excluido_em is null and ativo_id in (select ativo_id from demo)
      union all select 'nível 2: abastecimentos provisórios', count(*)::text from nucleo.abastecimento_provisorio where situacao = 'provisorio' and ativo_id in (select ativo_id from demo)
+     union all select 'nível 2: ajustes pedidos da demo', count(*)::text from financeiro.ajuste where justificativa like 'Demo:%' and situacao = 'pedido'
      union all select 'faixa: parâmetro ligado', count(*)::text from config.parametro where chave = '${CHAVE_DA_FAIXA_DEMO}'`,
     [`${PREFIXO_DA_PLACA_DEMO}%`],
   );
@@ -1223,6 +1224,35 @@ export async function carregarAbastecimentoProvisorioDaDemo(
   return novos;
 }
 
+/**
+ * Nível 2, Resultados: dois ajustes pedidos na "Operação Demo" (um de custo da frota, um de receita) para a
+ * Diretoria decidir. O ajuste não entra em total nenhum (nem na Visão geral nem na foto). Nenhum mês é fechado
+ * pela demonstração: fechar é da Diretoria e congelaria um mês real. Idempotente pela justificativa "Demo:".
+ */
+export async function carregarAjustesDaDemo(c: pg.Client, hoje: string): Promise<number> {
+  const operacao = await um<{ id: string } | undefined>(
+    c,
+    `select id from nucleo.operacao where nome = $1 and excluido_em is null`,
+    [NOME_DA_OPERACAO_DEMO],
+  );
+  if (!operacao) return 0;
+  const ja = await um<{ n: string }>(
+    c,
+    `select count(*)::text as n from financeiro.ajuste where justificativa like 'Demo:%'`,
+  );
+  if (Number(ja.n) > 0) return 0;
+  const mes = `${somarDias(hoje, -40).slice(0, 7)}-01`;
+  await c.query(
+    `select nucleo.pedir_ajuste($1::date, $2::uuid, null, 'custo_frota', -150.00, 'Demo: nota de manutenção lançada em dobro')`,
+    [mes, operacao.id],
+  );
+  await c.query(
+    `select nucleo.pedir_ajuste($1::date, $2::uuid, null, 'receita', 320.00, 'Demo: frete prestado sem CT-e emitido')`,
+    [mes, operacao.id],
+  );
+  return 2;
+}
+
 export async function carregarDemo(
   c: pg.Client,
 ): Promise<{ areas: Record<string, string>; abastecimento: number }> {
@@ -1247,6 +1277,8 @@ export async function carregarDemo(
     `${await carregarMotoristasDaDemo(c, hoje)} itens novos`;
   areas["Nível 2: abastecimentos provisórios"] =
     `${await carregarAbastecimentoProvisorioDaDemo(c, hoje)} lançamentos novos`;
+  areas["Nível 2: ajustes pedidos (Operação Demo)"] =
+    `${await carregarAjustesDaDemo(c, hoje)} ajustes novos`;
   await ligarFaixaDaDemo(c);
   areas["faixa de demonstração"] = "ligada";
   await c.query("set constraints all immediate");

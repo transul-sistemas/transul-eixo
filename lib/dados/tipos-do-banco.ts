@@ -2167,6 +2167,9 @@ isOneToOne: false
               "atencao": number,"chave": string,"em_atividade": number,"fora": number,"impedida": number,"patio": number,"pendente": number,"rotulo": string,"total": number
             }[]
                            },
+"ajustes_do_resultado":
+{ Args: { "p_mes"?: string,"p_pagina"?: number,"p_situacao"?: string,"p_tam"?: number }; Returns: Json
+                           },
 "alerta_correcao_tardia":
 { Args: { "p_em": string,"p_ultima": string }; Returns: boolean
                            },
@@ -2369,6 +2372,9 @@ isOneToOne: false
 "data_na_faixa":
 { Args: { "p_data": string }; Returns: boolean
                            },
+"decidir_ajuste":
+{ Args: { "p_ajuste_id": string,"p_chave"?: string,"p_decisao": string,"p_motivo": string,"p_versao": number }; Returns: string
+                           },
 "desatrelar":
 { Args: { "p_cavalo_id": string,"p_em": string,"p_implementos"?: (string)[] }; Returns: number
                            },
@@ -2455,6 +2461,12 @@ isOneToOne: false
                            },
 "excecoes_abertas":
 { Args: { "p_assunto": string,"p_pagina": number,"p_tamanho": number }; Returns: Json
+                           },
+"fechamentos_do_resultado":
+{ Args: Record<PropertyKey, never>; Returns: Json
+                           },
+"fechar_mes":
+{ Args: { "p_chave"?: string,"p_mes": string }; Returns: string
                            },
 "ferias_sem_substituto":
 { Args: Record<PropertyKey, never>; Returns: {
@@ -2607,6 +2619,9 @@ isOneToOne: false
 "mascarar_documento":
 { Args: { "p_texto": string }; Returns: string
                            },
+"maturacao_da_divida":
+{ Args: { "p_pagina"?: number,"p_tam"?: number }; Returns: Json
+                           },
 "mes_fechado_mais_recente":
 { Args: { "p_hoje"?: string }; Returns: string
                            },
@@ -2691,6 +2706,9 @@ isOneToOne: false
                            },
 "pedidos_para_receber":
 { Args: Record<PropertyKey, never>; Returns: Json
+                           },
+"pedir_ajuste":
+{ Args: { "p_chave"?: string,"p_cr_id": string,"p_justificativa": string,"p_linha": string,"p_mes": string,"p_operacao_id": string,"p_valor": number }; Returns: string
                            },
 "pedir_baixa":
 { Args: { "p_ativo_id": string,"p_chave"?: string,"p_documento": string,"p_em": string,"p_justificativa": string,"p_motivo": string }; Returns: string
@@ -2820,6 +2838,9 @@ isOneToOne: false
                            },
 "proximo_recalculo_do_ativo":
 { Args: { "p_ativo_id": string,"p_em"?: string }; Returns: string
+                           },
+"reabrir_mes":
+{ Args: { "p_chave"?: string,"p_mes": string,"p_motivo": string }; Returns: string
                            },
 "recalcular_linha_da_placa":
 { Args: { "p_ativo_id": string,"p_em"?: string }; Returns: undefined
@@ -2964,6 +2985,9 @@ isOneToOne: false
 { Args: { "p_ativo_id": string }; Returns: string
                            },
 "ultimo_mes_completo_do_staging":
+{ Args: Record<PropertyKey, never>; Returns: string
+                           },
+"ultimo_mes_que_pode_fechar":
 { Args: Record<PropertyKey, never>; Returns: string
                            },
 "variacao_das_operacoes":
