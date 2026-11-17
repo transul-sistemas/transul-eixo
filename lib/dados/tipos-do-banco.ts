@@ -334,6 +334,26 @@ isOneToOne: false
       referencedColumns: ["codigo"]
     }
                   ]
+                },"processo": {
+                  Row: {
+                    "ativo": boolean,"codigo": string,"criado_em": string,"descricao": string | null,"nome": string,"perfil_responsavel": string,"prazo_em_horas": number,"versao": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "ativo"?: boolean,"codigo": string,"criado_em"?: string,"descricao"?: string | null,"nome": string,"perfil_responsavel": string,"prazo_em_horas": number,"versao"?: number
+                  }
+                  Update: {
+                    "ativo"?: boolean,"codigo"?: string,"criado_em"?: string,"descricao"?: string | null,"nome"?: string,"perfil_responsavel"?: string,"prazo_em_horas"?: number,"versao"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "processo_perfil_responsavel_fkey"
+      columns: ["perfil_responsavel"]
+isOneToOne: false
+      referencedRelation: "perfil"
+      referencedColumns: ["codigo"]
+    }
+                  ]
                 },"receita_top": {
                   Row: {
                     "ativa": boolean,"codtipoper": number,"motivo": string,"tipo": string
@@ -929,6 +949,68 @@ isOneToOne: false
       referencedColumns: ["ativo_id"]
     }
                   ]
+                },"delegacao": {
+                  Row: {
+                    "criada_por": string | null,"criado_em": string,"de_pessoa_id": string,"excluido_em": string | null,"excluido_por": string | null,"fim": string,"id": string,"inicio": string,"motivo": string,"motivo_da_exclusao": string | null,"para_pessoa_id": string,"periodo": unknown,"processo": string | null,"versao": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "criada_por"?: string | null,"criado_em"?: string,"de_pessoa_id": string,"excluido_em"?: string | null,"excluido_por"?: string | null,"fim": string,"id"?: string,"inicio": string,"motivo": string,"motivo_da_exclusao"?: string | null,"para_pessoa_id": string,"periodo"?: never,"processo"?: string | null,"versao"?: number
+                  }
+                  Update: {
+                    "criada_por"?: string | null,"criado_em"?: string,"de_pessoa_id"?: string,"excluido_em"?: string | null,"excluido_por"?: string | null,"fim"?: string,"id"?: string,"inicio"?: string,"motivo"?: string,"motivo_da_exclusao"?: string | null,"para_pessoa_id"?: string,"periodo"?: never,"processo"?: string | null,"versao"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "delegacao_criada_por_fkey"
+      columns: ["criada_por"]
+isOneToOne: false
+      referencedRelation: "pessoa"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "delegacao_criada_por_fkey"
+      columns: ["criada_por"]
+isOneToOne: false
+      referencedRelation: "pessoa_para_leitura"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "delegacao_de_pessoa_id_fkey"
+      columns: ["de_pessoa_id"]
+isOneToOne: false
+      referencedRelation: "pessoa"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "delegacao_de_pessoa_id_fkey"
+      columns: ["de_pessoa_id"]
+isOneToOne: false
+      referencedRelation: "pessoa_para_leitura"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "delegacao_excluido_por_fkey"
+      columns: ["excluido_por"]
+isOneToOne: false
+      referencedRelation: "pessoa"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "delegacao_excluido_por_fkey"
+      columns: ["excluido_por"]
+isOneToOne: false
+      referencedRelation: "pessoa_para_leitura"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "delegacao_para_pessoa_id_fkey"
+      columns: ["para_pessoa_id"]
+isOneToOne: false
+      referencedRelation: "pessoa"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "delegacao_para_pessoa_id_fkey"
+      columns: ["para_pessoa_id"]
+isOneToOne: false
+      referencedRelation: "pessoa_para_leitura"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"dono_de_problema": {
                   Row: {
                     "atribuido_em": string,"atribuido_por": string | null,"dono_id": string,"excluido_em": string | null,"excluido_por": string | null,"id": string,"motivo_da_exclusao": string | null,"prazo": string | null,"problema": string,"referencia": string,"versao": number
@@ -1321,6 +1403,44 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"pedido_de_aprovacao": {
+                  Row: {
+                    "decidido_em": string | null,"decidido_por": string | null,"descricao": string,"id": string,"motivo_da_decisao": string | null,"numero": number,"pedido_em": string,"pedido_por": string,"referencia": string | null,"situacao": string,"tipo": string,"versao": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "decidido_em"?: string | null,"decidido_por"?: string | null,"descricao": string,"id"?: string,"motivo_da_decisao"?: string | null,"numero"?: never,"pedido_em"?: string,"pedido_por": string,"referencia"?: string | null,"situacao"?: string,"tipo": string,"versao"?: number
+                  }
+                  Update: {
+                    "decidido_em"?: string | null,"decidido_por"?: string | null,"descricao"?: string,"id"?: string,"motivo_da_decisao"?: string | null,"numero"?: never,"pedido_em"?: string,"pedido_por"?: string,"referencia"?: string | null,"situacao"?: string,"tipo"?: string,"versao"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "pedido_de_aprovacao_decidido_por_fkey"
+      columns: ["decidido_por"]
+isOneToOne: false
+      referencedRelation: "pessoa"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "pedido_de_aprovacao_decidido_por_fkey"
+      columns: ["decidido_por"]
+isOneToOne: false
+      referencedRelation: "pessoa_para_leitura"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "pedido_de_aprovacao_pedido_por_fkey"
+      columns: ["pedido_por"]
+isOneToOne: false
+      referencedRelation: "pessoa"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "pedido_de_aprovacao_pedido_por_fkey"
+      columns: ["pedido_por"]
+isOneToOne: false
+      referencedRelation: "pessoa_para_leitura"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"pedido_de_baixa": {
                   Row: {
                     "ativo_id": string,"decidido_em": string | null,"decidido_por": string | null,"documento": string | null,"em": string,"id": string,"justificativa": string,"motivo": string,"motivo_da_decisao": string | null,"pedido_em": string,"pedido_por": string,"sigla": string,"situacao": string,"versao": number
@@ -1612,6 +1732,56 @@ isOneToOne: false
     },{
       foreignKeyName: "posse_do_ativo_pessoa_dona_id_fkey"
       columns: ["pessoa_dona_id"]
+isOneToOne: false
+      referencedRelation: "pessoa_para_leitura"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"reatribuicao_de_tarefa": {
+                  Row: {
+                    "criada_em": string,"criada_por": string | null,"encerrada_em": string | null,"encerrada_por": string | null,"id": string,"motivo": string,"motivo_do_encerramento": string | null,"para_pessoa_id": string,"processo": string,"tarefa_id": string,"versao": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "criada_em"?: string,"criada_por"?: string | null,"encerrada_em"?: string | null,"encerrada_por"?: string | null,"id"?: string,"motivo": string,"motivo_do_encerramento"?: string | null,"para_pessoa_id": string,"processo": string,"tarefa_id": string,"versao"?: number
+                  }
+                  Update: {
+                    "criada_em"?: string,"criada_por"?: string | null,"encerrada_em"?: string | null,"encerrada_por"?: string | null,"id"?: string,"motivo"?: string,"motivo_do_encerramento"?: string | null,"para_pessoa_id"?: string,"processo"?: string,"tarefa_id"?: string,"versao"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "reatribuicao_de_tarefa_criada_por_fkey"
+      columns: ["criada_por"]
+isOneToOne: false
+      referencedRelation: "pessoa"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "reatribuicao_de_tarefa_criada_por_fkey"
+      columns: ["criada_por"]
+isOneToOne: false
+      referencedRelation: "pessoa_para_leitura"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "reatribuicao_de_tarefa_encerrada_por_fkey"
+      columns: ["encerrada_por"]
+isOneToOne: false
+      referencedRelation: "pessoa"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "reatribuicao_de_tarefa_encerrada_por_fkey"
+      columns: ["encerrada_por"]
+isOneToOne: false
+      referencedRelation: "pessoa_para_leitura"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "reatribuicao_de_tarefa_para_pessoa_id_fkey"
+      columns: ["para_pessoa_id"]
+isOneToOne: false
+      referencedRelation: "pessoa"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "reatribuicao_de_tarefa_para_pessoa_id_fkey"
+      columns: ["para_pessoa_id"]
 isOneToOne: false
       referencedRelation: "pessoa_para_leitura"
       referencedColumns: ["id"]
@@ -2185,6 +2355,9 @@ isOneToOne: false
 "alertas_vigentes_do_ativo":
 { Args: { "p_ativo_id": string,"p_em": string }; Returns: (string)[]
                            },
+"alterar_delegacao":
+{ Args: { "p_chave"?: string,"p_delegacao_id": string,"p_fim": string,"p_motivo": string,"p_versao": number }; Returns: string
+                           },
 "analise_da_frota":
 { Args: { "p_agrupamento"?: string,"p_filial"?: string,"p_mes": string,"p_operacao_id"?: string }; Returns: Json
                            },
@@ -2375,6 +2548,15 @@ isOneToOne: false
 "decidir_ajuste":
 { Args: { "p_ajuste_id": string,"p_chave"?: string,"p_decisao": string,"p_motivo": string,"p_versao": number }; Returns: string
                            },
+"decidir_aprovacao":
+{ Args: { "p_chave"?: string,"p_decisao": string,"p_motivo": string,"p_pedido_id": string,"p_versao": number }; Returns: string
+                           },
+"delegacoes":
+{ Args: { "p_so_vigentes"?: boolean }; Returns: Json
+                           },
+"delegar_tarefas":
+{ Args: { "p_chave"?: string,"p_de_pessoa_id"?: string,"p_fim": string,"p_inicio": string,"p_motivo": string,"p_para_pessoa_id": string,"p_processo": string }; Returns: string
+                           },
 "desatrelar":
 { Args: { "p_cavalo_id": string,"p_em": string,"p_implementos"?: (string)[] }; Returns: number
                            },
@@ -2532,6 +2714,9 @@ isOneToOne: false
 "justificar_diferenca":
 { Args: { "p_chave"?: string,"p_cr_id": string,"p_mes": string,"p_motivo": string }; Returns: Json
                            },
+"kpi_do_painel":
+{ Args: { "p_apoio"?: string,"p_formato": string,"p_id": string,"p_rotulo": string,"p_valor": Json }; Returns: Json
+                           },
 "kpis_do_operacional":
 { Args: Record<PropertyKey, never>; Returns: Json
                            },
@@ -2631,6 +2816,9 @@ isOneToOne: false
 "meta_do_conjunto_de":
 { Args: { "p_ativo_id": string,"p_em"?: string }; Returns: number
                            },
+"minhas_tarefas":
+{ Args: Record<PropertyKey, never>; Returns: Json
+                           },
 "motorista_do_conjunto_no_mes":
 { Args: { "p_ativo_id": string,"p_mes": string }; Returns: Json
                            },
@@ -2681,6 +2869,12 @@ isOneToOne: false
 "ordens_de_carregamento":
 { Args: { "p_pagina"?: number,"p_situacao"?: string,"p_tam"?: number }; Returns: Json
                            },
+"pagina_do_painel":
+{ Args: { "p_pagina": number,"p_tam": number,"p_total": number }; Returns: number
+                           },
+"painel_de_processos":
+{ Args: { "p_busca"?: string,"p_filtro"?: string,"p_mes"?: string,"p_pagina"?: number,"p_tam"?: number }; Returns: Json
+                           },
 "parceiros_do_mes":
 { Args: { "p_busca"?: string,"p_chips"?: (string)[],"p_mes"?: string,"p_pagina"?: number,"p_tam"?: number }; Returns: Json
                            },
@@ -2696,6 +2890,9 @@ isOneToOne: false
 "pedido_para_agir":
 { Args: { "p_mensagem": string,"p_transferencia_id": string }; Returns: Record<string, unknown>
                            },
+"pedidos_de_aprovacao":
+{ Args: { "p_situacao"?: string }; Returns: Json
+                           },
 "pedidos_de_baixa":
 { Args: { "p_situacao"?: string }; Returns: {
               "ativo_id": string,"atrasado": boolean,"decidido_em": string,"decidido_por_nome": string,"documento": string,"em": string,"id": string,"justificativa": string,"motivo": string,"motivo_da_decisao": string,"pedido_em": string,"pedido_por": string,"pedido_por_nome": string,"placa": string,"prazo_ate": string,"sigla": string,"situacao": string,"versao": number
@@ -2709,6 +2906,9 @@ isOneToOne: false
                            },
 "pedir_ajuste":
 { Args: { "p_chave"?: string,"p_cr_id": string,"p_justificativa": string,"p_linha": string,"p_mes": string,"p_operacao_id": string,"p_valor": number }; Returns: string
+                           },
+"pedir_aprovacao":
+{ Args: { "p_chave"?: string,"p_descricao": string,"p_referencia": string,"p_tipo": string }; Returns: string
                            },
 "pedir_baixa":
 { Args: { "p_ativo_id": string,"p_chave"?: string,"p_documento": string,"p_em": string,"p_justificativa": string,"p_motivo": string }; Returns: string
@@ -2727,6 +2927,9 @@ isOneToOne: false
                            },
 "placa_valida":
 { Args: { "p_texto": string }; Returns: boolean
+                           },
+"placa_vigente_do_ativo":
+{ Args: { "p_ativo_id": string }; Returns: string
                            },
 "placas_da_carteira_do_mes":
 { Args: { "p_gestor_id": string,"p_mes": string }; Returns: {
@@ -2833,6 +3036,9 @@ isOneToOne: false
 "problemas_da_saude_do_cr":
 { Args: { "p_pagina"?: number,"p_problema": string,"p_tamanho"?: number }; Returns: Json
                            },
+"processos_e_responsaveis":
+{ Args: { "p_busca"?: string,"p_filtro"?: string,"p_mes"?: string,"p_pagina"?: number,"p_tam"?: number }; Returns: Json
+                           },
 "programar_situacao":
 { Args: { "p_ativo_id": string,"p_chave"?: string,"p_dia": string,"p_hora": string,"p_sigla": string }; Returns: string
                            },
@@ -2841,6 +3047,9 @@ isOneToOne: false
                            },
 "reabrir_mes":
 { Args: { "p_chave"?: string,"p_mes": string,"p_motivo": string }; Returns: string
+                           },
+"reatribuir_tarefa":
+{ Args: { "p_chave"?: string,"p_motivo": string,"p_para_pessoa_id": string,"p_processo": string,"p_tarefa_id": string }; Returns: string
                            },
 "recalcular_linha_da_placa":
 { Args: { "p_ativo_id": string,"p_em"?: string }; Returns: undefined
@@ -2902,6 +3111,9 @@ isOneToOne: false
 "revogar_correcao":
 { Args: { "p_correcao_id": string,"p_motivo": string }; Returns: undefined
                            },
+"salvar_processo":
+{ Args: { "p_ativo": boolean,"p_chave"?: string,"p_codigo": string,"p_descricao": string,"p_nome": string,"p_perfil_responsavel": string,"p_prazo_em_horas": number,"p_versao": number }; Returns: string
+                           },
 "serie_de_posicoes":
 { Args: { "p_ate": string,"p_ativo_id": string,"p_de": string }; Returns: {
               "cidade": string,"cidade_id": number,"dia": string,"latitude": number,"longitude": number,"origem": string,"sem_sinal": boolean,"uf": string
@@ -2959,6 +3171,17 @@ isOneToOne: false
                            },
 "staging_tem_dtneg":
 { Args: Record<PropertyKey, never>; Returns: boolean
+                           },
+"tabela_do_painel":
+{ Args: { "p_colunas": Json,"p_item": string,"p_linhas": Json,"p_pagina": number,"p_tam": number,"p_titulo": string,"p_total": number }; Returns: Json
+                           },
+"tam_do_painel":
+{ Args: { "p_tam": number }; Returns: number
+                           },
+"tarefas_abertas":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "assunto": string,"criada_em": string,"descricao": string,"dono_id": string,"perfil_da_fila": string,"processo": string,"reatribuida": boolean,"tarefa_id": string,"vence_em": string
+            }[]
                            },
 "tarefas_do_usuario":
 { Args: Record<PropertyKey, never>; Returns: Json

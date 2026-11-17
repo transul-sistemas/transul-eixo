@@ -8,6 +8,12 @@ Modelo de entrada:
 
 ---
 
+## 13/11/2026 — Nível 3, banco (agente de banco, modo autônomo): hipóteses registradas
+
+Cada linha é uma hipótese escolhida pela forma mais simples, a revisar por Alexandre (branch `n3-banco`).
+
+- **Processos:** o "papel responsável" é o perfil (`config.processo.perfil_responsavel`); as tarefas nascem dos estados (transferência, baixa pedida, ajuste pedido, exceção aberta, pedido de aprovação) por `nucleo.tarefas_abertas()`, sem tabela de tarefa; reatribuir só o Administrador (H5); delegação uma por pessoa de cada vez, para todos os processos ou um; pedir aprovação com tipo mês fechado, permissão ou outro, decide a Diretoria.
+
 ## 13/11/2026 — Nível 2, tela (agente de tela, modo autônomo): hipóteses registradas
 
 Cada linha é uma hipótese escolhida pela forma mais simples, a revisar por Alexandre (branch `n2-tela`).
