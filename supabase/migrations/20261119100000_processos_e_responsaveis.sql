@@ -691,6 +691,7 @@ declare
   v_tam integer := nucleo.tam_do_painel(p_tam);
   v_resultado jsonb;
 begin
+  perform p_mes; -- o contrato único do painel passa o mês; as tarefas abertas não dependem dele.
   if not config.pode('admin', 'ver') then
     raise exception 'Você não tem permissão para ver o painel de processos.' using errcode = '42501';
   end if;
@@ -802,6 +803,7 @@ declare
   v_tam integer := nucleo.tam_do_painel(p_tam);
   v_resultado jsonb;
 begin
+  perform p_mes; -- o contrato único do painel passa o mês; o catálogo de processos não depende dele.
   if not config.pode('admin', 'ver') then
     raise exception 'Você não tem permissão para ver os processos.' using errcode = '42501';
   end if;
