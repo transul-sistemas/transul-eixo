@@ -11,7 +11,14 @@ import type { ClienteDeEscrita } from "@/lib/dados/escrita-do-banco";
 import { modoDosDados } from "@/lib/dados/fonte";
 import { textoDoErro } from "@/lib/log/erro";
 import { exigirSessao } from "@/lib/seguranca/sessao-do-servidor";
+import { lerPedidosDeAprovacao, type PedidoDeAprovacao } from "@/lib/dados/aprovacao";
+import {
+  type GestorComPosicaoPendente,
+  lerGestoresComPosicaoPendente,
+} from "@/lib/dados/posicao-do-dia";
 import { BaixasPedidas } from "./baixas-pedidas";
+import { PedidosDeAprovacao } from "./pedidos-de-aprovacao";
+import { PosicaoDosGestores } from "./posicao-dos-gestores";
 import { lerTarefas } from "@/lib/dados/tarefas";
 import { montarTarefas } from "@/lib/dominio/tarefas";
 import { acharTela } from "@/lib/navegacao/catalogo";
@@ -99,6 +106,62 @@ async function Baixas() {
   );
 }
 
+/** 31: os gestores das operações de quem é líder, com a Posição do dia (vazio para quem não é líder). */
+async function DoLider() {
+  const { usuarioId } = await exigirSessao();
+  let dia: string | null = null;
+  let gestores: GestorComPosicaoPendente[] = [];
+  try {
+    const { criarClienteDoServidor } = await import("@/lib/supabase/servidor");
+    const cliente = (await criarClienteDoServidor()) as unknown as ClienteDeEscrita;
+    const r = await cliente
+      .schema("nucleo")
+      .rpc("dia_da_posicao", { p_em: new Date().toISOString() });
+    if (r.error) throw new Error(`dia_da_posicao: ${r.error.message}`);
+    dia = String(r.data);
+    gestores = await lerGestoresComPosicaoPendente(cliente, dia);
+  } catch (erro) {
+    console.error("posição dos gestores indisponível:", textoDoErro(erro));
+    return (
+      <p role="alert" className="border-border rounded-lg border p-3 text-sm">
+        Não foi possível ler a Posição do dia dos seus gestores. Recarregue a página para tentar de
+        novo.
+      </p>
+    );
+  }
+  if (!dia || gestores.length === 0) return null;
+  return (
+    <ProvedorDoUsuario usuario={usuarioId}>
+      <PosicaoDosGestores gestores={gestores} dia={dia} />
+    </ProvedorDoUsuario>
+  );
+}
+
+/** 37: os pedidos de aprovação (os próprios; a Diretoria e o Administrador veem todos). */
+async function Aprovacoes() {
+  const { perfil, usuarioId } = await exigirSessao();
+  let pedidos: PedidoDeAprovacao[] | null = null;
+  try {
+    const { criarClienteDoServidor } = await import("@/lib/supabase/servidor");
+    const cliente = (await criarClienteDoServidor()) as unknown as ClienteDeEscrita;
+    pedidos = await lerPedidosDeAprovacao(cliente, null);
+  } catch (erro) {
+    console.error("pedidos de aprovação indisponíveis:", textoDoErro(erro));
+  }
+  if (pedidos === null) {
+    return (
+      <p role="alert" className="border-border rounded-lg border p-3 text-sm">
+        Não foi possível ler os pedidos de aprovação agora. Recarregue a página para tentar de novo.
+      </p>
+    );
+  }
+  return (
+    <ProvedorDoUsuario usuario={usuarioId}>
+      <PedidosDeAprovacao pedidos={pedidos} podeDecidir={perfil === "Diretoria"} />
+    </ProvedorDoUsuario>
+  );
+}
+
 export async function PaginaDasTarefas() {
   await connection();
   const { titulo, descricao } = cabecalho();
@@ -116,7 +179,9 @@ export async function PaginaDasTarefas() {
       ) : (
         <>
           <Conteudo />
+          <DoLider />
           <Baixas />
+          <Aprovacoes />
         </>
       )}
     </PaginaDeLeitura>

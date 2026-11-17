@@ -310,6 +310,17 @@ export const ACOES: readonly AcaoDoCatalogo[] = [
       "Justifica em lote as diferenças do acionista e, sem pendências, confere e trava o mês.",
     rota: "/parceiros/conciliacao?assistente=conciliar-o-mes",
   },
+  {
+    id: "inicio.pedir-aprovacao",
+    nome: "Pedir aprovação",
+    icone: "IconChecklist",
+    modulo: "inicio",
+    permissao: { modulo: "inicio", acao: "criar" },
+    estado: "pronto",
+    descricao:
+      "Pede à Diretoria a aprovação de um mês fechado, uma permissão ou outro caso; quem pede não decide.",
+    rota: "/inicio/tarefas?assistente=pedir-aprovacao",
+  },
 ];
 
 function nomeDoModulo(id: IdDoModulo): string {
