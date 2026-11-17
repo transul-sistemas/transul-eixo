@@ -102,7 +102,11 @@ create trigger t40_sem_exclusao_fisica before delete on config.processo
 create trigger t90_auditoria after insert or update or delete on config.processo
   for each row execute function auditoria.registrar_mudanca('codigo');
 
-insert into config.processo (codigo, nome, descricao, perfil_responsavel, prazo_em_horas) values
+-- Os perfis nascem no seed, que roda depois das migrations: num banco novo, estas linhas vêm do seed
+-- (supabase/seed.sql); num banco que já existe, entram aqui (mesmo padrão de 20261112200000).
+insert into config.processo (codigo, nome, descricao, perfil_responsavel, prazo_em_horas)
+select v.codigo, v.nome, v.descricao, v.perfil, v.prazo
+  from (values
   ('transferencia_de_placa', 'Transferência de placa', 'Quem recebe a placa confere e conclui (5 dias).', 'gestor_de_frota', 120),
   ('confirmacao_da_carteira', 'Confirmação mensal da carteira', 'O gestor confirma as placas da carteira até o dia 5.', 'gestor_de_frota', 120),
   ('excecoes_e_cadastro', 'Exceções e cadastro pendente', 'A fila de exceções do cadastro.', 'administrador', 72),
@@ -112,7 +116,10 @@ insert into config.processo (codigo, nome, descricao, perfil_responsavel, prazo_
   ('trocar_cr', 'Trocar CR', 'A troca do CR da placa.', 'gestor_de_frota', 72),
   ('fechamento_mensal', 'Fechamento mensal', 'A Diretoria fecha o mês depois do corte.', 'diretoria', 240),
   ('ajuste_do_resultado', 'Ajuste do resultado', 'A Diretoria decide o ajuste pedido (quem pede não decide).', 'diretoria', 72),
-  ('pedido_de_aprovacao', 'Pedido de aprovação', 'Aprovação ou permissão pedida à Diretoria (mês fechado, acesso).', 'diretoria', 48);
+  ('pedido_de_aprovacao', 'Pedido de aprovação', 'Aprovação ou permissão pedida à Diretoria (mês fechado, acesso).', 'diretoria', 48)
+  ) as v (codigo, nome, descricao, perfil, prazo)
+  join config.perfil p on p.codigo = v.perfil
+on conflict (codigo) do nothing;
 
 create table nucleo.reatribuicao_de_tarefa (
   id uuid primary key default gen_random_uuid(),
