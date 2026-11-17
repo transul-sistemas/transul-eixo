@@ -1,4 +1,4 @@
-// Exportar CSV (Fase 1, N3): toda lista do catálogo tem o botão "Exportar CSV" na barra de consulta. O
+// Exportar CSV (Fase 1, N3): toda lista do catálogo tem o botão "Exportar CSV" nas ações do título. O
 // arquivo é gerado no servidor (`/exportar/<id da tela>`), com a sessão de quem pede (a RLS decide o que
 // entra), os mesmos filtros da tela e a lista inteira, não só a página. Aqui fica só o que é puro: quem é
 // lista e o endereço do CSV. O teste `exportacao.test.ts` confere que toda tela do catálogo está em uma das

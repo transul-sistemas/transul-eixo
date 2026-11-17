@@ -11,7 +11,8 @@ interface Props {
   /** A barra de consulta: busca, chips com contagem, mais filtros e visões salvas. */
   consulta?: ReactNode;
   /**
-   * O endereço do CSV da lista (`enderecoDoCsv`): o botão "Exportar CSV" fica no fim da barra de consulta.
+   * O endereço do CSV da lista (`enderecoDoCsv`): o botão "Exportar CSV" fica no fim das ações do título
+   * (na linha da barra de consulta ele roubava largura dos filtros e da faixa "Para receber").
    * Toda lista do catálogo tem (lib/navegacao/exportacao.test.ts).
    */
   exportar?: string;
@@ -72,21 +73,15 @@ export function PaginaDeLeitura({
             </p>
           ) : null}
         </div>
-        {acoes ? (
+        {acoes || exportar ? (
           <div role="group" aria-label="Ações" className="flex flex-wrap items-center gap-2">
             {acoes}
+            {exportar ? <BotaoExportarCsv href={exportar} /> : null}
           </div>
         ) : null}
       </div>
       <AvisoDeDadosCongelados dadosAte={dadosAte} />
-      {exportar ? (
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div className="min-w-0 flex-1">{consulta}</div>
-          <BotaoExportarCsv href={exportar} />
-        </div>
-      ) : (
-        consulta
-      )}
+      {consulta}
       {kpis}
       <div className={cn("flex min-w-0 flex-1 flex-col gap-8", lista && "min-h-0 lg:gap-3")}>
         {children}
