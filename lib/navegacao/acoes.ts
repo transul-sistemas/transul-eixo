@@ -277,6 +277,17 @@ export const ACOES: readonly AcaoDoCatalogo[] = [
     descricao: "Aprova ou recusa um ajuste pedido; só a Diretoria, e quem pediu não decide.",
     rota: "/resultados/ajustes?assistente=decidir-ajuste",
   },
+  {
+    id: "parceiros.conciliar-o-mes",
+    nome: "Conciliar o mês",
+    icone: "IconChecklist",
+    modulo: "parceiros",
+    permissao: { modulo: "parceiros", acao: "criar" },
+    estado: "pronto",
+    descricao:
+      "Justifica em lote as diferenças do acionista e, sem pendências, confere e trava o mês.",
+    rota: "/parceiros/conciliacao?assistente=conciliar-o-mes",
+  },
 ];
 
 function nomeDoModulo(id: IdDoModulo): string {

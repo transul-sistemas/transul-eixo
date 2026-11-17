@@ -36,10 +36,13 @@ export function ListaDaConciliacao({
   linhas,
   mes,
   podeJustificar,
+  conferidos = [],
 }: {
   linhas: LinhaDaConciliacao[];
   mes: string;
   podeJustificar: boolean;
+  /** Os acionistas (agrupadores) com o mês conferido: as linhas deles não aceitam justificativa nova. */
+  conferidos?: readonly string[];
 }) {
   const router = useRouter();
   const [aberta, setAberta] = useState<LinhaDaConciliacao | null>(null);
@@ -142,9 +145,15 @@ export function ListaDaConciliacao({
                       {l.motivo}
                     </span>
                   ) : null}
+                  {conferidos.includes(l.agrupadorId) ? (
+                    <span className="text-muted-foreground mt-1 block text-xs">
+                      Mês conferido (travado)
+                    </span>
+                  ) : null}
                 </td>
                 <td className="px-3 py-2">
                   {podeJustificar &&
+                  !conferidos.includes(l.agrupadorId) &&
                   (l.situacao === "diferenca" || l.situacao === "sem_lancamento") ? (
                     <Button
                       size="sm"
