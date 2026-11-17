@@ -8,6 +8,17 @@ Modelo de entrada:
 
 ---
 
+## 17/11/2026 — Três hipóteses do Nível 3 aceitas (decisão)
+
+- **Decisão (Alexandre):** as três hipóteses levadas a ele ficam como estão.
+  1. **Ctrl+K "Pedir aprovação"** aparece só para Administrador e Diretoria (o catálogo de ações aceita só a
+     permissão "criar"); o gestor pede pelo botão em Início › Tarefas.
+  2. **Ficha do CR** abre pela rota com o id do CR (`/cadastros/crs/<id>`), porque o CODCENCUS pode faltar antes da
+     ponte do Sankhya.
+  3. **Conciliar o mês** exige motivo para TODAS as pendências no assistente; justificar só algumas continua pelo
+     botão da linha.
+- **Quem decidiu:** Alexandre.
+
 ## 17/11/2026 — Conciliar o mês: wizard em dois passos e trava do mês do acionista
 
 - **Decisão (Alexandre):** "Conciliar o mês" é um wizard em dois passos: (1) lista as diferenças sem justificativa e
