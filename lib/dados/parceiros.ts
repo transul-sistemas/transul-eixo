@@ -2,6 +2,7 @@ import { falhaDeLeitura } from "@/lib/erros/leitura";
 import type {
   EntradaCadastrarLocacao,
   EntradaCadastrarParceiro,
+  EntradaConciliarOMes,
   EntradaEncerrarLocacao,
   EntradaJustificarDiferenca,
   TipoDeParceiro,
@@ -11,12 +12,15 @@ import type {
   EstadoDosParceiros,
   FiltroDaLocacao,
 } from "@/lib/navegacao/parceiros";
+import { chaveDaParte } from "@/lib/wizard/chave-de-envio";
 import { erroDaAcao, type ResultadoDaAcao, sucesso } from "@/lib/wizard/resultado";
 import { type ErroDoBanco, resultadoDoErro } from "./escrita-do-banco";
 import { centavos } from "./operacoes";
 import type { TipoDeAtivo } from "./placas-tipos";
 import type {
   ConciliacaoDoMes,
+  ConciliacaoGravada,
+  ConferenciaDoMes,
   FichaDoParceiro,
   JustificativaGravada,
   LinhaDeParceiro,
@@ -402,6 +406,69 @@ export function gravarJustificativa(
     { p_cr_id: entrada.crId, p_mes: `${entrada.mes}-01`, p_motivo: entrada.motivo, p_chave: chave },
     (r) => ({ justificativaId: String(r.justificativa_id) }),
   );
+}
+
+/** Os acionistas com o mês conferido (travado) na Conciliação. */
+export async function lerConferenciasDaConciliacao(
+  mes: string,
+  cliente: () => Promise<ClienteDosParceiros> = clienteDaSessao,
+): Promise<ConferenciaDoMes[]> {
+  const linhas = await ler<{ agrupador_id: string; conferida_em: string; linhas: number }[] | null>(
+    cliente,
+    "conferencias_da_conciliacao",
+    { p_mes: `${mes}-01` },
+  );
+  return (linhas ?? []).map((l) => ({
+    agrupadorId: l.agrupador_id,
+    conferidaEm: l.conferida_em,
+    linhas: l.linhas,
+  }));
+}
+
+/**
+ * Conciliar o mês (Alexandre, 17/11/2026): justifica as pendências em lote (tudo ou nada) e, com o lote
+ * gravado, marca o mês do acionista como conferido. O lote usa a chave do assistente e a conferência a
+ * parte 1 dela, as duas estáveis: "Tentar de novo" não justifica nem confere duas vezes.
+ */
+export async function gravarConciliacaoDoMes(
+  entrada: EntradaConciliarOMes,
+  chave: string,
+  cliente: () => Promise<ClienteDosParceiros> = clienteDaSessao,
+): Promise<ResultadoDaAcao<ConciliacaoGravada>> {
+  const c = await cliente();
+  const mes = `${entrada.mes}-01`;
+  let justificadas = 0;
+  if (entrada.justificativas.length > 0) {
+    const lote = await c.schema("nucleo").rpc("justificar_diferencas_em_lote", {
+      p_mes: mes,
+      p_itens: entrada.justificativas.map((j) => ({ cr_id: j.crId, motivo: j.motivo })),
+      p_chave: chave,
+    });
+    if (lote.error)
+      return resultadoDoErro<ConciliacaoGravada>(lote.error) as ResultadoDaAcao<ConciliacaoGravada>;
+    const r = (lote.data ?? {}) as {
+      gravadas?: number | null;
+      total?: number;
+      recusadas?: { cr_id: string; motivo: string }[];
+    };
+    const recusadas = r.recusadas ?? [];
+    if (recusadas.length > 0) {
+      return erroDaAcao("entrada_invalida", {
+        mensagem: `Nenhuma justificativa foi gravada: ${recusadas.length} de ${r.total ?? recusadas.length} linhas foram recusadas. ${recusadas.map((x) => x.motivo).join(" ")}`,
+      });
+    }
+    justificadas = r.gravadas ?? entrada.justificativas.length;
+  }
+  const conf = await c.schema("nucleo").rpc("conferir_mes_do_acionista", {
+    p_agrupador: entrada.agrupadorId,
+    p_mes: mes,
+    p_chave: chaveDaParte(chave, 1),
+  });
+  if (conf.error)
+    return resultadoDoErro<ConciliacaoGravada>(conf.error) as ResultadoDaAcao<ConciliacaoGravada>;
+  const d = (conf.data ?? {}) as { conferencia_id?: string; linhas?: number };
+  if (!d.conferencia_id) return erroDaAcao("falha");
+  return sucesso({ conferenciaId: String(d.conferencia_id), justificadas, linhas: d.linhas ?? 0 });
 }
 
 /** Centavos inteiros em reais com duas casas, como texto (o numeric do banco não perde centavos). */
