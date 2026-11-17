@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { linhasFecham } from "@/components/layout/grade-de-paineis";
 import { zerarPaineisDeExemplo } from "@/lib/exemplo/paineis";
+import { avisoDoExemplo } from "./painel-tipos";
 import {
   FUNCOES_DOS_PAINEIS,
   gravarPeloPainel,
@@ -111,6 +112,19 @@ describe("leitura das telas de painel", () => {
     );
     expect(l.origem).toBe("exemplo");
     expect(l.tabela.linhas.length).toBeGreaterThan(0);
+    expect(l.funcaoAusente).toBe(true);
+    expect(avisoDoExemplo(l)).toBe(
+      "Dados de exemplo (fictícios): a função nucleo.resultado_por_operacao ainda não existe no banco. Só fora de produção.",
+    );
+  });
+
+  it("no modo exemplo, o aviso não diz que a função falta (ela pode já existir)", async () => {
+    vi.stubEnv("EIXO_DADOS", "exemplo");
+    const l = await lerPainel("operacional.analise", ESTADO, HOJE);
+    expect(l.funcaoAusente).toBeUndefined();
+    expect(avisoDoExemplo(l)).toBe(
+      "Dados de exemplo (fictícios): o sistema está no modo de exemplo. Só fora de produção.",
+    );
   });
 
   it("função ausente em produção: sem fonte, nenhum número inventado", async () => {

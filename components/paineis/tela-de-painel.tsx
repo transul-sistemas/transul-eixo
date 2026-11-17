@@ -17,7 +17,12 @@ import { PainelDeGrafico } from "@/components/layout/painel-de-grafico";
 import { ProvedorDoUsuario } from "@/components/navegacao/usuario-da-sessao";
 import { EsqueletoDaTabela } from "@/components/tabela/estados";
 import { type IdDoPainel, lerPainel } from "@/lib/dados/paineis";
-import type { CorDaSerie, GraficoDoPainel, LeituraDoPainel } from "@/lib/dados/painel-tipos";
+import {
+  avisoDoExemplo,
+  type CorDaSerie,
+  type GraficoDoPainel,
+  type LeituraDoPainel,
+} from "@/lib/dados/painel-tipos";
 import { passosDaCascata } from "@/lib/dominio/resultado-da-operacao";
 import {
   ASSISTENTES_DOS_PAINEIS,
@@ -206,11 +211,7 @@ function Consulta({
 function AvisoDaOrigem({ leitura }: { leitura: LeituraDoPainel }) {
   if (leitura.origem === "banco" && leitura.avisos.length === 0) return null;
   const itens = [
-    ...(leitura.origem === "exemplo"
-      ? [
-          `Dados de exemplo (fictícios): a função ${leitura.funcao} ainda não existe no banco. Só fora de produção.`,
-        ]
-      : []),
+    ...(leitura.origem === "exemplo" ? [avisoDoExemplo(leitura)] : []),
     ...(leitura.origem === "sem-fonte"
       ? [`Sem dados ainda: depende de ${leitura.pendencia ?? `${leitura.funcao} no banco`}.`]
       : []),

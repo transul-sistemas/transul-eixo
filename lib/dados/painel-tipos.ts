@@ -143,4 +143,13 @@ export interface LeituraDoPainel {
   avisos: string[];
   /** Sem fonte: o que falta, completando "Sem dados ainda: depende de ..." (sem ele, a função do banco). */
   pendencia?: string;
+  /** Exemplo porque a função ainda não existe no banco (e não porque o sistema está no modo exemplo). */
+  funcaoAusente?: true;
+}
+
+/** O aviso da leitura de exemplo: só diz que a função falta quando de fato faltou. */
+export function avisoDoExemplo(l: Pick<LeituraDoPainel, "funcao" | "funcaoAusente">): string {
+  return l.funcaoAusente
+    ? `Dados de exemplo (fictícios): a função ${l.funcao} ainda não existe no banco. Só fora de produção.`
+    : "Dados de exemplo (fictícios): o sistema está no modo de exemplo. Só fora de produção.";
 }
