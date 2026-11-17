@@ -13,6 +13,13 @@ Modelo de entrada:
 Cada linha é uma hipótese escolhida pela forma mais simples, a revisar por Alexandre (branch `n3-banco`).
 
 - **Processos:** o "papel responsável" é o perfil (`config.processo.perfil_responsavel`); as tarefas nascem dos estados (transferência, baixa pedida, ajuste pedido, exceção aberta, pedido de aprovação) por `nucleo.tarefas_abertas()`, sem tabela de tarefa; reatribuir só o Administrador (H5); delegação uma por pessoa de cada vez, para todos os processos ou um; pedir aprovação com tipo mês fechado, permissão ou outro, decide a Diretoria.
+## 17/11/2026 — A4, Rota do mês (Nível 3, entrega 2): hipóteses registradas
+
+Cada linha é uma hipótese escolhida pela forma mais simples, a revisar por Alexandre (branch `a4-rota-do-mes`).
+
+- **Fonte:** a aba Rota do mês da barra lateral do Acompanhamento lê `nucleo.serie_de_posicoes` (Posição do dia, N1) pela rota `/frota/acompanhamento/rota`, com a sessão de quem pede (a RLS decide o alcance), do primeiro ao último dia do mês da grade. Fora do banco, uma série fictícia com o selo "Dados de exemplo".
+- **Sem mapa nesta versão:** a lista de trechos (cidade, período, dias) e o total de mudanças de cidade dizem o mesmo que o mapa do protótipo 5 sem inventar traçado; o mapa pela rodovia (MapLibre + rota por par de cidades) fica para a passada visual. Desvio do protótipo registrado aqui.
+- **Trecho = dias SEGUIDOS na mesma cidade:** um dia sem resposta no meio quebra o trecho; "Sem sinal" é trecho próprio e não conta como mudança de cidade.
 
 ## 13/11/2026 — Nível 2, tela (agente de tela, modo autônomo): hipóteses registradas
 
