@@ -47,6 +47,11 @@ const TELAS: readonly { readonly nome: string; readonly rota: string }[] = [
   { nome: "n3-conciliacao", rota: "/parceiros/conciliacao" },
   { nome: "n3-livro-do-acionista", rota: "/parceiros/livro-do-acionista" },
   { nome: "n3-locacao", rota: "/parceiros/locacao" },
+  { nome: "n3-conciliar-o-mes", rota: "/parceiros/conciliacao?assistente=conciliar-o-mes" },
+  { nome: "n3-processos", rota: "/admin/processos" },
+  { nome: "n3-painel-de-processos", rota: "/admin/painel-de-processos" },
+  { nome: "n3-crs", rota: "/cadastros/crs" },
+  { nome: "n3-pedir-aprovacao", rota: "/inicio/tarefas?assistente=pedir-aprovacao" },
 ];
 
 const TEMAS = [
@@ -73,3 +78,15 @@ for (const tela of TELAS) {
     await capturar(page, tela.nome);
   });
 }
+
+// A Ficha do CR abre pela linha da lista (o id do CR muda de banco para banco).
+test("captura n3-ficha-do-cr", async ({ page }, info) => {
+  test.skip(info.project.name !== "capturas-1366", "a galeria é só a 1366");
+  await page.goto("/cadastros/crs");
+  const ficha = page.locator('a[href^="/cadastros/crs/"]').first();
+  test.skip((await ficha.count()) === 0, "sem CR na lista deste banco");
+  await page.goto((await ficha.getAttribute("href")) as string);
+  await expect(page.locator("main").first()).toBeVisible();
+  await page.waitForLoadState("networkidle");
+  await capturar(page, "n3-ficha-do-cr");
+});
