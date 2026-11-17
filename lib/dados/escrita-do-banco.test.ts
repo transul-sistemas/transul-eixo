@@ -412,6 +412,20 @@ describe("a ficha da placa pelo banco: situação, conjunto e correção", () =>
       { placa: "BBB2B22", nome: "BBB2B22 · Sider" },
     ]);
   });
+
+  it("os cavalos para engatar (aba Soltas): só cavalos, sem as baixadas", async () => {
+    respostas.listar_placas = {
+      data: { linhas: [{ placa: "AAA1A11", modelo: "FH 540", sigla: "PÁT" }] },
+      error: null,
+    };
+    expect(await fonte.cavalosParaEngatar()).toEqual([
+      { placa: "AAA1A11", nome: "AAA1A11 · FH 540" },
+    ]);
+    expect(rpc).toHaveBeenCalledWith(
+      "listar_placas",
+      expect.objectContaining({ p_tipos: ["cavalo"], p_baixadas: false }),
+    );
+  });
 });
 
 describe("placasQuePodemSerEntregues pelo banco: sem o limite de 100 placas", () => {

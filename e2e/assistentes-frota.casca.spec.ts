@@ -58,7 +58,7 @@ test.describe("assistentes da Frota em tablet e celular", () => {
     expect(mais!.height).toBeGreaterThanOrEqual(ehCelular(page) ? 40 : 32);
   });
 
-  test("o + abre o mini-wizard dentro da tela (folha de baixo no celular, painel à direita no tablet)", async ({
+  test("o + abre o mini-wizard como popup central empilhado, inteiro dentro da tela", async ({
     page,
   }) => {
     await abrirOCadastro(page);
@@ -75,13 +75,10 @@ test.describe("assistentes da Frota em tablet e celular", () => {
     const tela = page.viewportSize()!;
     expect(caixa.x).toBeGreaterThanOrEqual(0);
     expect(caixa.x + caixa.width).toBeLessThanOrEqual(tela.width + 1);
-    if (ehCelular(page)) {
-      expect(caixa.y + caixa.height).toBeGreaterThan(tela.height - 2); // encostada embaixo
-      expect(caixa.y).toBeGreaterThan(tela.height * 0.05);
-    } else {
-      expect(caixa.x + caixa.width).toBeGreaterThan(tela.width - 2); // encostado à direita
-      expect(caixa.height).toBeGreaterThan(tela.height - 2); // de ponta a ponta
-    }
+    // popup central empilhado (Fase 1, 13/11/2026): inteiro na tela e centrado na horizontal
+    expect(caixa.y).toBeGreaterThanOrEqual(0);
+    expect(caixa.y + caixa.height).toBeLessThanOrEqual(tela.height + 1);
+    expect(Math.abs(caixa.x + caixa.width / 2 - tela.width / 2)).toBeLessThan(2);
   });
 
   test("cadastra uma placa inteira no toque", async ({ page }) => {

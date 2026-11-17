@@ -15,10 +15,11 @@ import {
   esquemaCorrigirPlaca,
   esquemaDesatrelar,
   esquemaEngatar,
+  esquemaEngatarVarios,
   esquemaMudarSituacao,
 } from "@/lib/dominio/esquemas/ficha-da-placa";
 import { normalizarPlaca } from "@/lib/dominio/placa";
-import { chaveDeEnvioValida } from "@/lib/wizard/chave-de-envio";
+import { chaveDaParte, chaveDeEnvioValida } from "@/lib/wizard/chave-de-envio";
 import { erroDaAcao, errosDeCampos, type ResultadoDaAcao } from "@/lib/wizard/resultado";
 import type { AtualDaAcao, ItemCriado, PlacaGravada } from "./escrita-tipos";
 import type { FonteDeEscrita } from "./fonte";
@@ -187,6 +188,40 @@ export async function executarEngatar(
   const v = validar(esquemaEngatar({ agora }), dados);
   if (!v.ok) return v.erro;
   return gravando(() => fonte.engatar(v.dados, chave, agora));
+}
+
+/**
+ * Engatar vários implementos: uma chamada à fonte (nucleo.engatar) por peça, na ordem, com a posição
+ * seguinte e uma chave por peça (repetir o envio não duplica). A primeira recusa para o lote e a
+ * mensagem diz quantos entraram ("1 de 3 engatados").
+ */
+export async function executarEngatarVarios(
+  chave: string,
+  dados: unknown,
+  { fonte, agora }: ContextoDaEscrita,
+): Promise<Resultado<PlacaGravada>> {
+  const semChave = conferirChave(chave);
+  if (semChave) return semChave;
+  const v = validar(esquemaEngatarVarios({ agora }), dados);
+  if (!v.ok) return v.erro;
+  const { placa, implementos, primeiraPosicao, quando } = v.dados;
+  let ultimo: Resultado<PlacaGravada> = erroDaAcao("falha");
+  for (const [i, implemento] of implementos.entries()) {
+    const r = await gravando(() =>
+      fonte.engatar(
+        { placa, implemento, posicao: primeiraPosicao + i, quando },
+        chaveDaParte(chave, i),
+        agora,
+      ),
+    );
+    if (!r.ok) {
+      return erroDaAcao(r.erro.codigo, {
+        mensagem: `${String(i)} de ${String(implementos.length)} engatados. ${implemento}: ${r.erro.mensagem}`,
+      });
+    }
+    ultimo = r;
+  }
+  return ultimo;
 }
 
 /** Desatrelar implemento: os implementos escolhidos saem do cavalo e voltam ao pátio. */

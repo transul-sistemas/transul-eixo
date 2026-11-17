@@ -1843,3 +1843,18 @@ Registro de direção, só em texto: nenhum código nem migration. Não muda a f
 ## 13/11/2026 — "status" responde o painel de estado (decisão)
 
 - **Regra.** Quando Alexandre escrever apenas "status", a resposta segue o formato curto de sete blocos (rodando agora, pronto para ver, fila, decisões dele, bloqueios e riscos, pendências dele, telas) e atualiza `painel/ESTADO.md` (pasta fora do Git).
+
+## 13/11/2026 — n1-tela: hipóteses da Fase 1 (agente de tela, modo autônomo)
+
+- **Popup:** o `Assistente` tem `modal` e `empilhado` (o "+": central, menor, z acima, sem rascunho); a variante `lateral` saiu e `lib/qualidade/assistente-em-popup.test.ts` barra a volta.
+- **Engatar e Desatrelar na grade:** "Engatar implementos" fica na linha do implemento da aba Soltas (escolhe o cavalo, depois os implementos); "Desatrelar implemento" fica na linha do conjunto (aba Conjuntos), porque solta não tem o que desatrelar. Vários implementos = uma chamada a `nucleo.engatar` por peça, chave derivada por peça, para no primeiro erro e diz "X de Y".
+- **Enviar placa:** o passo "Placa" do desenho virou o topo do passo Destino (a placa já vem da ficha); carga e tempo de resposta de cada gestor ficam para P1.
+- **Confirmar carteira:** "Não é minha" e "Corrigir" gravam `confere=false` com o rótulo na observação; a tarefa do líder (P1) ainda não nasce.
+- **Barra lateral A3:** as abas Financeiro, Motorista, Combustível e Rota do mês mostram "Sem dados ainda: depende ..." até as fontes existirem; a aba Motorista aparece para todos (sem checar Pessoas › ver).
+- **Filtro Demo das exceções:** marca pela placa ZDM, CR DEMO-, pessoa "Demo " ou DEMO- na descrição; lido inteiro no servidor e paginado lá (até 100 páginas). Melhor seria `p_demo` em `nucleo.excecoes_abertas` (banco).
+- **Posição do dia:** cada resposta grava na hora (o rascunho é o banco); a situação do dia vai como está, sem edição na linha.
+- **A2 na grade:** "Lançar o dia" abre pelo número do dia no cabeçalho, com as linhas da página; o lote é tudo ou nada e, com recusa, a tela marca os recusados e oferece removê-los. A célula futura programa; a célula com programada abre "Confirmar ou cancelar". "Lançar na hora" é a hora opcional do Lançar situação. O último evento para corrigir é lido de `nucleo.evento_de_status` (RLS), sem função própria.
+- **Trocar CR:** o primeiro passo é escolher qual CR vigente sai (dá a versão); o CR novo vem do catálogo. A data da troca vale às 00:00 de São Paulo.
+- **Baixa:** a decisão mora na caixa de Tarefas ("Baixas pedidas"); só a Diretoria vê "Decidir baixa" e só o Gestor de frota vê "Cancelar pedido de baixa"; o Administrador lê. O documento é uma referência em texto (sem upload nesta fase).
+- **Saúde do CR:** tela nova no catálogo (`/cadastros/saude-do-cr`); o dono do "Atribuir dono" sai da lista de gestores do catálogo (hipótese: o banco espera a pessoa).
+- **Trocar CR e Pedir baixa na ficha:** só aparecem no modo banco (`comVinculos`), para o e2e de exemplo não mudar.

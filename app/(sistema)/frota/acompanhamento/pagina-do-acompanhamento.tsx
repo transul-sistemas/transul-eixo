@@ -32,7 +32,12 @@ import {
 import { acharTela } from "@/lib/navegacao/catalogo";
 import { cn } from "@/lib/utils";
 import { STATUS, type Status } from "@/lib/visual/tons";
+import { AssistentesDaFrota } from "../placas/assistentes/assistentes-da-frota";
+import { carregarDadosDosAssistentes } from "../placas/assistentes/carregar-dados";
 import { ModoGrade } from "./modo-grade";
+
+/** Os assistentes da Frota que a grade abre por cima de si (a linha da aba Soltas e a dos Conjuntos). */
+const ASSISTENTES_DA_GRADE = ["engatar-implemento", "desatrelar-implemento"];
 
 export type ParametrosDaBusca = Promise<Record<string, string | string[] | undefined>>;
 
@@ -344,8 +349,15 @@ export async function PaginaDoAcompanhamento({
   const densidade = lerDensidadeLembrada(
     (await cookies()).get(NOME_DO_COOKIE_DA_DENSIDADE_DA_GRADE)?.value,
   );
-  const estado = lerAcompanhamento(paraParametros(await searchParams), hoje, tamLembrado);
+  const parametros = paraParametros(await searchParams);
+  const estado = lerAcompanhamento(parametros, hoje, tamLembrado);
   const { titulo, descricao } = cabecalho();
+  // Engatar (aba Soltas) e Desatrelar (aba Conjuntos) abrem em popup sobre a grade: fechar volta à grade.
+  const assistente = parametros.get("assistente");
+  const dadosDosAssistentes =
+    assistente !== null && ASSISTENTES_DA_GRADE.includes(assistente)
+      ? await carregarDadosDosAssistentes({ assistente, placa: parametros.get("placa"), hoje })
+      : null;
   let conteudo: ReactNode;
   if (modoDosDados() !== "banco") {
     conteudo = (
@@ -388,6 +400,7 @@ export async function PaginaDoAcompanhamento({
         <>
           {daGrade ? <ModoFoco /> : null}
           <BotaoDaLegenda />
+          {dadosDosAssistentes ? <AssistentesDaFrota dados={dadosDosAssistentes} /> : null}
         </>
       }
       consulta={<Abas estado={estado} hoje={hoje} />}

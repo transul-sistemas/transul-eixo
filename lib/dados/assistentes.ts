@@ -60,6 +60,8 @@ export async function dadosDosAssistentes(
       assistente === "concluir-recebimento" ||
       assistente === "devolver-placa");
   const pedidos = precisaDosPedidos && gestorId ? await fonte.pedidosParaReceber(gestorId) : [];
+  const cavalosParaEngatar =
+    semPlaca && assistente === "engatar-implemento" ? await fonte.cavalosParaEngatar() : [];
   const placasParaEntregar =
     semPlaca && assistente === "entregar-ao-operacional"
       ? await fonte.placasQuePodemSerEntregues()
@@ -78,5 +80,6 @@ export async function dadosDosAssistentes(
     placasParaEntregar,
     conjuntoDaPlaca,
     implementosLivres,
+    cavalosParaEngatar,
   };
 }

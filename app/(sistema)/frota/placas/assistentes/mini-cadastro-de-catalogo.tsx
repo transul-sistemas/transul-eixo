@@ -17,7 +17,7 @@ import { criarItemDeCatalogoAcao } from "../acoes";
 import { errosDoResolvedor } from "./erros-do-resolvedor";
 
 // O mini-wizard do "+": cria marca, modelo, gestor, operação, CR ou filial sem sair do assistente de
-// baixo. Usa o mesmo motor (variante lateral) e o mesmo esquema do servidor. O CR pede também o código
+// baixo. Usa o mesmo motor (variante empilhado) e o mesmo esquema do servidor. O CR pede também o código
 // do Sankhya (CODCENCUS). No banco, o "+" só existe para o que tem caminho seguro (marca, modelo e CR):
 // os outros campos ficam só com a lista.
 
@@ -115,7 +115,7 @@ export function MiniCadastroDeCatalogo({
       valoresIniciais={{ nome: "", codcencus: "" }}
       validarRascunho={() => null}
       usuario={usuario}
-      variante="lateral"
+      variante="empilhado"
       rascunho={false}
       fecharAoGravar
       focoFinal={focoFinal}

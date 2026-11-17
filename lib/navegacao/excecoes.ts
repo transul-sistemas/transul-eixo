@@ -4,6 +4,8 @@
 export interface EstadoDaFila {
   assunto: string | null;
   pagina: number;
+  /** O filtro "Demo": só as exceções da demonstração (`demo=1`). */
+  demo: boolean;
 }
 
 const ASSUNTO = /^[a-z_]{1,60}$/;
@@ -14,5 +16,6 @@ export function lerFila(parametros: URLSearchParams): EstadoDaFila {
   return {
     assunto: ASSUNTO.test(assunto) ? assunto : null,
     pagina: Number.isInteger(pagina) && pagina >= 1 ? pagina : 1,
+    demo: parametros.get("demo") === "1",
   };
 }

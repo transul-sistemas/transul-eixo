@@ -76,6 +76,7 @@ tinha **naquele mês**, não na de hoje.
 
 ## Rota e estado
 
+- **Construída (Fase 1, n1-tela, 13/11/2026):** bloco "Placas e CRs com história" dentro da aba Placas da ficha (hipótese: sem aba própria), sempre com o histórico.
 - Rota: aba "Placas e CRs" da ficha `/operacoes/lista/<id>` (`?aba=placas-e-crs&historico=1`). Módulo Operações (cor
   `#7C5CFF`). A ficha de hoje tem a aba Placas e a aba Mapa mental; a nova aba generaliza a primeira.
 - Quem vê: Administrador e Diretoria. Gestor de frota e Operacional não veem Operações.

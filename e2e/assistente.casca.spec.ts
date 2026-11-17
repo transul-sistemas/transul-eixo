@@ -9,7 +9,7 @@ import {
 } from "./apoio-assistente";
 
 // O assistente no tablet (820) e no celular (390): stepper compacto, resumo em gaveta, sem rolagem
-// lateral, alvos de toque grandes e o mini-wizard como folha de baixo.
+// lateral, alvos de toque grandes e o mini-wizard como popup central empilhado.
 
 const caixaDe = (el: ReturnType<typeof assistente>) => el.boundingBox();
 
@@ -83,22 +83,17 @@ test.describe("assistente em tablet e celular", () => {
     await expect(botaoDeAbrir(page)).toBeFocused();
   });
 
-  test("o mini-wizard é um painel lateral (tablet) ou a folha de baixo (celular) e devolve o campo", async ({
-    page,
-  }, info) => {
+  test("o mini-wizard é um popup central menor, empilhado, e devolve o campo", async ({ page }) => {
     await abrirOAssistente(page);
     await assistente(page).getByRole("button", { name: "Cadastrar categoria" }).click();
     await expect(mini(page)).toBeVisible();
     const janela = await page.evaluate(() => ({ l: window.innerWidth, a: window.innerHeight }));
     const caixa = (await caixaDe(mini(page)))!;
-    if (info.project.name === "celular-390") {
-      expect(Math.abs(caixa.width - janela.l)).toBeLessThanOrEqual(1); // largura toda
-      expect(Math.abs(caixa.y + caixa.height - janela.a)).toBeLessThanOrEqual(1); // colada embaixo
-      expect(caixa.y).toBeGreaterThan(0);
-    } else {
-      expect(Math.abs(caixa.x + caixa.width - janela.l)).toBeLessThanOrEqual(1); // colada à direita
-      expect(caixa.width).toBeLessThan(janela.l);
-    }
+    // Centralizado nos dois eixos (tolerância de 2 px) e menor que a janela.
+    expect(Math.abs(caixa.x + caixa.width / 2 - janela.l / 2)).toBeLessThanOrEqual(2);
+    expect(Math.abs(caixa.y + caixa.height / 2 - janela.a / 2)).toBeLessThanOrEqual(2);
+    expect(caixa.width).toBeLessThan(janela.l);
+    expect(caixa.height).toBeLessThan(janela.a);
     await mini(page).getByLabel("Nome da categoria").fill("Bateria");
     await page.keyboard.press("Enter");
     await mini(page).getByRole("button", { name: "Cadastrar categoria" }).click();

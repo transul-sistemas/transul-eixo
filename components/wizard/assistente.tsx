@@ -42,8 +42,8 @@ import { erroDaAcao, type ErroDaAcao, type ResultadoDaAcao } from "@/lib/wizard/
 import { PassosDoAssistente } from "./passos-do-assistente";
 import { ResumoAoVivo, type SecaoDoResumo } from "./resumo-ao-vivo";
 
-// O motor de interface dos assistentes (wizard): um modal de tela quase cheia (ou um painel lateral
-// para o mini-wizard) com stepper, barra de progresso, resumo ao vivo, rascunho salvo, "fechar é
+// O motor de interface dos assistentes (wizard): um popup central (ou um popup menor e empilhado
+// para o mini-wizard do "+") com stepper, barra de progresso, resumo ao vivo, rascunho salvo, "fechar é
 // fechar" e envio que não duplica. Não conhece nenhum assistente em particular: quem usa passa a
 // definição, o resolvedor do Zod, o desenho dos campos de cada passo, o resumo e a gravação.
 
@@ -81,8 +81,11 @@ export interface PropsDoAssistente<V extends FieldValues> {
   aoFechar: () => void;
   /** Chamado com a linha gravada, antes de mostrar "concluído". */
   aoGravar?: (linha: unknown) => void;
-  /** `lateral` é o mini-wizard: painel à direita (folha de baixo no celular), sem resumo ao lado. */
-  variante?: "modal" | "lateral";
+  /**
+   * `modal` é o popup central. `empilhado` é o mini-wizard do "+": popup central menor, por cima do
+   * assistente de baixo, sem resumo ao lado (regra 2 do CLAUDE.md; a variante de painel foi aposentada).
+   */
+  variante?: "modal" | "empilhado";
   /** Leva o foco de volta a quem abriu (padrão: o elemento que tinha o foco). */
   focoFinal?: React.RefObject<HTMLElement | null>;
   /** Guarda e retoma rascunho (padrão: sim). O mini-wizard não guarda: ele nunca vira rascunho do assistente de baixo. */
@@ -131,7 +134,7 @@ export function Assistente<V extends FieldValues>({
 }: PropsDoAssistente<V>) {
   const { passos } = definicao;
   const ultimo = passos.length - 1;
-  const lateral = variante === "lateral";
+  const empilhado = variante === "empilhado";
   const chaveDoRasc = chaveDoRascunho(usuario, definicao.id, registro);
   // O rascunho é lido uma vez, ao montar (o assistente só monta no navegador, depois da hidratação).
   const [rascunho] = useState(() =>
@@ -333,20 +336,26 @@ export function Assistente<V extends FieldValues>({
       modal
     >
       <Dialog.Portal>
-        <Dialog.Backdrop className="bg-foreground/40 fixed inset-0 z-50 transition-opacity duration-200 data-ending-style:opacity-0 data-starting-style:opacity-0 motion-reduce:transition-none" />
+        <Dialog.Backdrop
+          className={cn(
+            "bg-foreground/40 fixed inset-0 transition-opacity duration-200 data-ending-style:opacity-0 data-starting-style:opacity-0 motion-reduce:transition-none",
+            empilhado ? "z-[60]" : "z-50",
+          )}
+        />
         <Dialog.Popup
           finalFocus={focoFinal}
           data-assistente={definicao.id}
           data-variante={variante}
           // As teclas do mini-wizard (Enter, por exemplo) não sobem para o assistente de baixo,
           // que está acima dele na árvore do React (o portal não separa os eventos).
-          onKeyDown={lateral ? (evento) => evento.stopPropagation() : undefined}
+          onKeyDown={empilhado ? (evento) => evento.stopPropagation() : undefined}
           className={cn(
-            "bg-background fixed z-50 flex flex-col overflow-hidden shadow-lg outline-none",
-            lateral
-              ? "inset-y-0 right-0 w-[28rem] max-w-full border-l max-sm:inset-x-0 max-sm:top-auto max-sm:bottom-0 max-sm:max-h-[92dvh] max-sm:w-full max-sm:rounded-t-xl max-sm:border-t"
+            "bg-background fixed flex flex-col overflow-hidden shadow-lg outline-none",
+            empilhado
+              ? // Popup central menor, empilhado sobre o assistente de baixo (acima dele no eixo z).
+                "inset-x-2 top-1/2 z-[60] max-h-[min(80dvh,560px)] -translate-y-1/2 rounded-xl border sm:inset-x-auto sm:left-1/2 sm:w-[min(32rem,calc(100vw-2rem))] sm:-translate-x-1/2"
               : // Abaixo de 1024 px: tela cheia. Daí em diante: painel centralizado de até 1040 px e 90% da altura.
-                "inset-2 rounded-xl border sm:inset-4 lg:inset-auto lg:top-1/2 lg:left-1/2 lg:h-[min(90dvh,820px)] lg:w-[min(1040px,calc(100vw-3rem))] lg:-translate-x-1/2 lg:-translate-y-1/2 lg:rounded-2xl",
+                "inset-2 z-50 rounded-xl border sm:inset-4 lg:inset-auto lg:top-1/2 lg:left-1/2 lg:h-[min(90dvh,820px)] lg:w-[min(1040px,calc(100vw-3rem))] lg:-translate-x-1/2 lg:-translate-y-1/2 lg:rounded-2xl",
           )}
         >
           <div className="border-border flex items-start justify-between gap-3 border-b px-4 py-3 sm:px-6">
@@ -473,7 +482,7 @@ export function Assistente<V extends FieldValues>({
               <div
                 className={cn(
                   "grid min-h-0 flex-1 overflow-y-auto",
-                  !lateral && !ehConferir && "lg:grid-cols-[minmax(0,1fr)_300px]",
+                  !empilhado && !ehConferir && "lg:grid-cols-[minmax(0,1fr)_300px]",
                 )}
               >
                 <form
@@ -490,8 +499,12 @@ export function Assistente<V extends FieldValues>({
                     data-testid="coluna-de-leitura"
                     className={cn(
                       "flex w-full flex-col gap-4",
-                      !lateral && "mx-auto",
-                      conferirEmColunas ? "max-w-[860px]" : lateral ? "max-w-xl" : "max-w-[620px]",
+                      !empilhado && "mx-auto",
+                      conferirEmColunas
+                        ? "max-w-[860px]"
+                        : empilhado
+                          ? "max-w-xl"
+                          : "max-w-[620px]",
                     )}
                   >
                     <h3 className="text-base font-semibold">
@@ -527,14 +540,14 @@ export function Assistente<V extends FieldValues>({
                     )}
                   </div>
                 </form>
-                {!lateral && !ehConferir ? (
+                {!empilhado && !ehConferir ? (
                   <div className="hidden lg:block">
                     <ResumoAoVivo secoes={secoes} modo="coluna" />
                   </div>
                 ) : null}
               </div>
 
-              {!lateral && !ehConferir ? (
+              {!empilhado && !ehConferir ? (
                 <div className="border-border border-t px-4 py-2 sm:px-6 lg:hidden">
                   <button
                     type="button"

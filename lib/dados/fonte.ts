@@ -124,6 +124,8 @@ export interface FonteDeEscrita {
   conjuntoDaPlaca(placa: string): Promise<ConjuntoDaPlaca | null>;
   /** Os implementos soltos (sem cavalo) que podem ser engatados. */
   implementosLivres(): Promise<PlacaAEscolher[]>;
+  /** Os cavalos não baixados que podem receber implementos (engatar pela aba Soltas). */
+  cavalosParaEngatar(): Promise<PlacaAEscolher[]>;
   /** A origem desiste do pedido pendente; devolve o pedido já cancelado. */
   cancelarPedido(
     entrada: EntradaCancelarPedido,

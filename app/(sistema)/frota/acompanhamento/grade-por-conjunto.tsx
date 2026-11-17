@@ -6,13 +6,15 @@ import {
   IconClockExclamation,
   IconPencil,
 } from "@tabler/icons-react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { type CSSProperties, type ReactNode, useRef, useState } from "react";
 import { formatarData } from "@/components/formato/data";
 import { formatarInteiro } from "@/components/formato/numero";
 import { FaixaDeLegenda } from "@/components/legenda/faixa-de-legenda";
 import { estiloDoTom } from "@/components/legenda/tom";
 import { Placa } from "@/components/placa";
+import { type AbaDoDetalhe, SemDadosAinda } from "@/components/tabela/abas-do-detalhe";
 import { BotaoDoOlho, type DetalheDoItem } from "@/components/tabela/botao-do-olho";
 import type {
   AlvoDoLancamento,
@@ -39,7 +41,10 @@ import {
   montarCookieDaDensidade,
 } from "@/lib/navegacao/preferencias-da-tabela";
 import { cn } from "@/lib/utils";
+import type { SituacaoProgramada } from "@/lib/dados/lancar-o-dia-tipos";
+import { LancarODia } from "./lancar-o-dia";
 import { LancarSituacao } from "./lancar-situacao";
+import { DecidirProgramada, ProgramarSituacao } from "./situacao-programada";
 
 // A grade por conjunto (A1), com o conjunto numa peça só: uma linha e um só conjunto de células por conjunto.
 // O cavalo (ou o caminhão) é a cara; os implementos são chips pequenos na célula da esquerda, sem células
@@ -135,9 +140,12 @@ function SeletorDeDensidade({
 function CabecalhoDosDias({
   colunas,
   rotuloDaPrimeira,
+  aoLancarODia,
 }: {
   colunas: DiaDaColuna[];
   rotuloDaPrimeira: string;
+  /** A2: o cabeçalho de um dia que já chegou abre "Lançar o dia" para as linhas da página. */
+  aoLancarODia: (dia: string, elemento: HTMLElement) => void;
 }) {
   return (
     <div
@@ -166,7 +174,20 @@ function CabecalhoDosDias({
           )}
         >
           <span>{c.diaDaSemana}</span>
-          <span className="text-foreground text-sm font-semibold tabular-nums">{c.numero}</span>
+          {c.futuro ? (
+            <span className="text-foreground text-sm font-semibold tabular-nums">{c.numero}</span>
+          ) : (
+            <button
+              type="button"
+              aria-haspopup="dialog"
+              aria-label={`Lançar o dia ${formatarData(c.dia)}`}
+              title={`Lançar o dia ${formatarData(c.dia)}`}
+              onClick={(e) => aoLancarODia(c.dia, e.currentTarget)}
+              className="text-foreground hover:bg-muted focus-visible:ring-ring/60 rounded px-1 text-sm font-semibold tabular-nums outline-none focus-visible:ring-2"
+            >
+              {c.numero}
+            </button>
+          )}
           {c.hoje ? (
             <span className="flex items-center gap-0.5 text-[10px] leading-none">
               <IconCalendarEvent aria-hidden className="size-3" />
@@ -204,12 +225,15 @@ function CelulaDoDia({
   coluna,
   placa,
   densidade,
+  programada,
   aoClicar,
 }: {
   celula: CelulaDoConjunto;
   coluna: DiaDaColuna;
   placa: string;
   densidade: Densidade;
+  /** A2: a situação programada do dia (tracejada; não conta no realizado). */
+  programada?: SituacaoProgramada | undefined;
   aoClicar: (elemento: HTMLElement) => void;
 }) {
   const altura = ALTURA_DA_CELULA[densidade];
@@ -231,8 +255,24 @@ function CelulaDoDia({
       data-dia={coluna.dia}
       className={cn("flex items-center px-0.5 py-1", fundoDaColuna(coluna))}
     >
-      {coluna.futuro ? (
-        <span aria-hidden className={cn("block w-full", altura)} />
+      {coluna.futuro || programada ? (
+        <button
+          type="button"
+          aria-label={
+            programada
+              ? `Situação programada: ${placa}, ${formatarData(coluna.dia)}: ${nomeDaSigla(programada.sigla)}`
+              : `Programar situação: ${placa}, ${formatarData(coluna.dia)}`
+          }
+          data-programada={programada ? "" : undefined}
+          className={cn(
+            "hover:border-ring focus-visible:ring-ring/60 block w-full rounded border-[1.5px] border-dashed text-[11px] outline-none focus-visible:ring-2",
+            programada ? "border-foreground/40 font-medium" : "border-transparent",
+            altura,
+          )}
+          onClick={(evento) => aoClicar(evento.currentTarget)}
+        >
+          {programada ? programada.sigla : null}
+        </button>
       ) : (
         <button
           type="button"
@@ -282,7 +322,69 @@ function periodoDoEngate(i: ImplementoDoConjunto): string {
   return rotuloDoPeriodoDoEngate(i.engatadoDe, i.engatadoAte, formatarData);
 }
 
-function OlhoDaLinha({ placa, detalhes }: { placa: string; detalhes: DetalheDoItem[] }) {
+/**
+ * As abas da barra lateral (A3, protótipos 4 e 7): Financeiro, Motorista, Combustível e Rota do mês. Só
+ * leitura. Enquanto as fontes não chegam, cada aba diz de que depende (nunca R$ 0,00 nem "Crítico").
+ */
+function abasDaBarraLateral(colunas: DiaDaColuna[]): AbaDoDetalhe[] {
+  const hoje = colunas.findIndex((c) => c.hoje);
+  const emCurso = hoje >= 0;
+  const selo = emCurso ? (
+    <p className="bg-status-patio-suave w-fit rounded-full px-2 py-0.5 text-xs font-medium">
+      Mês em curso · dia {formatarInteiro(hoje + 1)} de {formatarInteiro(colunas.length)}
+    </p>
+  ) : null;
+  return [
+    {
+      id: "financeiro",
+      rotulo: "Financeiro",
+      conteudo: (
+        <div className="flex flex-col gap-3">
+          {selo}
+          <SemDadosAinda fonte="da ponte do Sankhya (receita e despesa)">
+            <p>
+              O ritmo compara o realizado com o esperado até hoje, não com a meta do mês inteiro.
+              Nenhum valor é estimado.
+            </p>
+          </SemDadosAinda>
+        </div>
+      ),
+    },
+    {
+      id: "motorista",
+      rotulo: "Motorista",
+      conteudo: <SemDadosAinda fonte="do cadastro de Pessoas e da escala do motorista" />,
+    },
+    {
+      id: "combustivel",
+      rotulo: "Combustível",
+      conteudo: (
+        <SemDadosAinda fonte="do Abastecimento (litros e km)">
+          <p>O custo do combustível vem sempre do Sankhya e nunca se soma ao abastecimento.</p>
+        </SemDadosAinda>
+      ),
+    },
+    {
+      id: "rota",
+      rotulo: "Rota do mês",
+      conteudo: (
+        <SemDadosAinda fonte="de posição do veículo">
+          <p>A rota não é inventada.</p>
+        </SemDadosAinda>
+      ),
+    },
+  ];
+}
+
+function OlhoDaLinha({
+  placa,
+  detalhes,
+  colunas,
+}: {
+  placa: string;
+  detalhes: DetalheDoItem[];
+  colunas: DiaDaColuna[];
+}) {
   return (
     <div role="gridcell" className="flex items-center justify-center">
       <BotaoDoOlho
@@ -290,8 +392,42 @@ function OlhoDaLinha({ placa, detalhes }: { placa: string; detalhes: DetalheDoIt
         detalhes={detalhes}
         hrefDaFicha={`/frota/placas/${placa}`}
         titulo={<Placa placa={placa} tamanho="m" />}
+        abas={abasDaBarraLateral(colunas)}
       />
     </div>
+  );
+}
+
+/**
+ * A ação de escrita da linha (Engatar na aba Soltas, Desatrelar na aba Conjuntos): abre o assistente
+ * em popup sobre a grade (`?assistente=`), mantendo filtros, página e mês na URL.
+ */
+function AcaoDaLinha({
+  rotulo,
+  assistente,
+  extras,
+}: {
+  rotulo: string;
+  assistente: string;
+  extras: Record<string, string>;
+}) {
+  const rota = usePathname();
+  const parametros = useSearchParams();
+  const novos = new URLSearchParams(parametros.toString());
+  novos.delete("placa");
+  novos.delete("implemento");
+  novos.set("assistente", assistente);
+  for (const [chave, valor] of Object.entries(extras)) novos.set(chave, valor);
+  return (
+    <Link
+      href={`${rota}?${novos.toString()}`}
+      scroll={false}
+      aria-haspopup="dialog"
+      data-acao-da-linha={assistente}
+      className="text-acao hover:bg-muted focus-visible:ring-ring/50 w-fit rounded px-1 text-xs font-medium underline-offset-2 outline-none hover:underline focus-visible:ring-2"
+    >
+      {rotulo}
+    </Link>
   );
 }
 
@@ -329,11 +465,13 @@ function LinhaDoConjunto({
   colunas,
   densidade,
   aoLancar,
+  programadaDe,
 }: {
   conjunto: ConjuntoDaGrade;
   colunas: DiaDaColuna[];
   densidade: Densidade;
   aoLancar: (alvo: AlvoDoLancamento, dia: string, elemento: HTMLElement) => void;
+  programadaDe: (ativoId: string, dia: string) => SituacaoProgramada | undefined;
 }) {
   const alvoDoDia = (dia: string): AlvoDoLancamento => ({
     ativoId: conjunto.ativoId,
@@ -391,6 +529,13 @@ function LinhaDoConjunto({
           {textoDoModelo(conjunto.modelo, conjunto.ano)}
         </span>
         <ChipsDosImplementos implementos={conjunto.implementos} />
+        {conjunto.implementos.some((i) => i.engatadoAte === null) ? (
+          <AcaoDaLinha
+            rotulo="Desatrelar implemento"
+            assistente="desatrelar-implemento"
+            extras={{ placa: conjunto.placa }}
+          />
+        ) : null}
       </div>
       {colunas.map((c) => {
         const celula = conjunto.dias.find((d) => d.dia === c.dia);
@@ -401,13 +546,14 @@ function LinhaDoConjunto({
             coluna={c}
             placa={conjunto.placa}
             densidade={densidade}
+            programada={programadaDe(conjunto.ativoId, c.dia)}
             aoClicar={(el) => aoLancar(alvoDoDia(c.dia), c.dia, el)}
           />
         ) : (
           <div key={c.dia} role="gridcell" />
         );
       })}
-      <OlhoDaLinha placa={conjunto.placa} detalhes={detalhes} />
+      <OlhoDaLinha placa={conjunto.placa} detalhes={detalhes} colunas={colunas} />
     </div>
   );
 }
@@ -417,11 +563,13 @@ function LinhaDaSolta({
   colunas,
   densidade,
   aoLancar,
+  programadaDe,
 }: {
   placa: PlacaSolta;
   colunas: DiaDaColuna[];
   densidade: Densidade;
   aoLancar: (alvo: AlvoDoLancamento, dia: string, elemento: HTMLElement) => void;
+  programadaDe: (ativoId: string, dia: string) => SituacaoProgramada | undefined;
 }) {
   const alvo: AlvoDoLancamento = {
     ativoId: placa.ativoId,
@@ -455,6 +603,13 @@ function LinhaDaSolta({
         <span className="text-muted-foreground truncate text-xs">
           {textoDoModelo(placa.modelo, placa.ano)}
         </span>
+        {placa.tipo === "implemento" ? (
+          <AcaoDaLinha
+            rotulo="Engatar implementos"
+            assistente="engatar-implemento"
+            extras={{ implemento: placa.placa }}
+          />
+        ) : null}
       </div>
       {colunas.map((c) => {
         const celula = placa.dias.find((d) => d.dia === c.dia);
@@ -465,6 +620,7 @@ function LinhaDaSolta({
             coluna={c}
             placa={placa.placa}
             densidade={densidade}
+            programada={programadaDe(placa.ativoId, c.dia)}
             aoClicar={(el) => aoLancar(alvo, c.dia, el)}
           />
         ) : (
@@ -473,6 +629,7 @@ function LinhaDaSolta({
       })}
       <OlhoDaLinha
         placa={placa.placa}
+        colunas={colunas}
         detalhes={[
           { rotulo: "Tipo", valor: NOMES_DOS_TIPOS[placa.tipo] },
           { rotulo: "Modelo", valor: textoDoModelo(placa.modelo, placa.ano) },
@@ -512,14 +669,39 @@ function CartaoDaGrade({
   );
 }
 
-function useGrade(densidadeInicial: Densidade) {
+type Aberta =
+  | { tipo: "celula"; alvo: AlvoDoLancamento; dia: string }
+  | { tipo: "programar"; alvo: AlvoDoLancamento; dia: string }
+  | { tipo: "programada"; programada: SituacaoProgramada }
+  | { tipo: "dia"; dia: string };
+
+function useGrade(
+  densidadeInicial: Densidade,
+  programadas: readonly SituacaoProgramada[],
+  alvosDoDia: (dia: string) => AlvoDoLancamento[],
+  hoje: string,
+) {
   const router = useRouter();
+  const rota = usePathname();
+  const parametros = useSearchParams();
   const [densidade, setDensidade] = useState(densidadeInicial);
-  const [aberta, setAberta] = useState<{ alvo: AlvoDoLancamento; dia: string } | null>(null);
+  // Ctrl+K "Lançar o dia" chega com ?assistente=lancar-o-dia: abre o lote de hoje.
+  const [aberta, setAberta] = useState<Aberta | null>(() =>
+    parametros.get("assistente") === "lancar-o-dia" ? { tipo: "dia", dia: hoje } : null,
+  );
   const quemAbriu = useRef<HTMLElement | null>(null);
+  const programadaDe = (ativoId: string, dia: string) =>
+    programadas.find((p) => p.ativo_id === ativoId && p.dia === dia);
   const lancar = (alvo: AlvoDoLancamento, dia: string, elemento: HTMLElement) => {
     quemAbriu.current = elemento;
-    setAberta({ alvo, dia });
+    const programada = programadaDe(alvo.ativoId, dia);
+    if (programada) setAberta({ tipo: "programada", programada });
+    else if (dia > hoje) setAberta({ tipo: "programar", alvo, dia });
+    else setAberta({ tipo: "celula", alvo, dia });
+  };
+  const lancarODia = (dia: string, elemento: HTMLElement) => {
+    quemAbriu.current = elemento;
+    setAberta({ tipo: "dia", dia });
   };
   const mudarDensidade = (d: Densidade) => {
     setDensidade(d);
@@ -529,16 +711,29 @@ function useGrade(densidadeInicial: Densidade) {
       // Sem cookie, a escolha vale só nesta tela.
     }
   };
-  const assistente = aberta ? (
-    <LancarSituacao
-      alvo={aberta.alvo}
-      dia={aberta.dia}
-      focoFinal={quemAbriu}
-      aoGravar={() => router.refresh()}
-      aoFechar={() => setAberta(null)}
-    />
-  ) : null;
-  return { densidade, mudarDensidade, lancar, assistente };
+  const comum = {
+    focoFinal: quemAbriu,
+    aoGravar: () => router.refresh(),
+    aoFechar: () => {
+      setAberta(null);
+      if (parametros.get("assistente") === "lancar-o-dia") {
+        const novos = new URLSearchParams(parametros.toString());
+        novos.delete("assistente");
+        router.replace(`${rota}?${novos.toString()}`, { scroll: false });
+      }
+    },
+  };
+  const assistente =
+    aberta === null ? null : aberta.tipo === "celula" ? (
+      <LancarSituacao alvo={aberta.alvo} dia={aberta.dia} {...comum} />
+    ) : aberta.tipo === "programar" ? (
+      <ProgramarSituacao alvo={aberta.alvo} dia={aberta.dia} {...comum} />
+    ) : aberta.tipo === "programada" ? (
+      <DecidirProgramada programada={aberta.programada} {...comum} />
+    ) : (
+      <LancarODia dia={aberta.dia} linhas={alvosDoDia(aberta.dia)} {...comum} />
+    );
+  return { densidade, mudarDensidade, lancar, lancarODia, programadaDe, assistente };
 }
 
 function RodapeDaGrade({
@@ -564,6 +759,7 @@ export function GradeDosConjuntos({
   densidadeInicial,
   vazio,
   paginador,
+  programadas = [],
 }: {
   grade: DadosDosConjuntos;
   densidadeInicial: Densidade;
@@ -571,8 +767,25 @@ export function GradeDosConjuntos({
   vazio?: ReactNode;
   /** O paginador, feito no servidor, ao lado do seletor de densidade. */
   paginador: ReactNode;
+  /** A2: as situações programadas do mês (nucleo.situacoes_programadas). */
+  programadas?: readonly SituacaoProgramada[];
 }) {
-  const { densidade, mudarDensidade, lancar, assistente } = useGrade(densidadeInicial);
+  const alvosDoDia = (dia: string): AlvoDoLancamento[] =>
+    grade.linhas.map((c) => ({
+      ativoId: c.ativoId,
+      placa: c.placa,
+      tipo: "cavalo",
+      emConjunto: c.implementos.some(
+        (i) => i.engatadoDe <= dia && (i.engatadoAte === null || dia <= i.engatadoAte),
+      ),
+      dias: c.dias.map((d) => ({ dia: d.dia, sigla: d.sigla })),
+    }));
+  const { densidade, mudarDensidade, lancar, lancarODia, programadaDe, assistente } = useGrade(
+    densidadeInicial,
+    programadas,
+    alvosDoDia,
+    grade.hoje,
+  );
   const colunas = diasDoMes(grade.mes.slice(0, 7), grade.hoje);
   return (
     <>
@@ -584,7 +797,11 @@ export function GradeDosConjuntos({
           testid="grade-do-mes"
           rotulo="Conjuntos por dia do mês"
         >
-          <CabecalhoDosDias colunas={colunas} rotuloDaPrimeira="Conjunto" />
+          <CabecalhoDosDias
+            colunas={colunas}
+            rotuloDaPrimeira="Conjunto"
+            aoLancarODia={lancarODia}
+          />
           {grade.linhas.map((c) => (
             <LinhaDoConjunto
               key={c.ativoId}
@@ -592,6 +809,7 @@ export function GradeDosConjuntos({
               colunas={colunas}
               densidade={densidade}
               aoLancar={lancar}
+              programadaDe={programadaDe}
             />
           ))}
         </CartaoDaGrade>
@@ -609,13 +827,28 @@ export function GradeDeSoltas({
   densidadeInicial,
   vazio,
   paginador,
+  programadas = [],
 }: {
   grade: DadosDasSoltas;
   densidadeInicial: Densidade;
   vazio?: ReactNode;
   paginador: ReactNode;
+  programadas?: readonly SituacaoProgramada[];
 }) {
-  const { densidade, mudarDensidade, lancar, assistente } = useGrade(densidadeInicial);
+  const alvosDoDia = (): AlvoDoLancamento[] =>
+    grade.linhas.map((p) => ({
+      ativoId: p.ativoId,
+      placa: p.placa,
+      tipo: p.tipo,
+      emConjunto: false,
+      dias: p.dias.map((d) => ({ dia: d.dia, sigla: d.sigla })),
+    }));
+  const { densidade, mudarDensidade, lancar, lancarODia, programadaDe, assistente } = useGrade(
+    densidadeInicial,
+    programadas,
+    alvosDoDia,
+    grade.hoje,
+  );
   const colunas = diasDoMes(grade.mes.slice(0, 7), grade.hoje);
   return (
     <>
@@ -627,7 +860,7 @@ export function GradeDeSoltas({
           testid="grade-de-soltas"
           rotulo="Placas soltas por dia do mês"
         >
-          <CabecalhoDosDias colunas={colunas} rotuloDaPrimeira="Placa" />
+          <CabecalhoDosDias colunas={colunas} rotuloDaPrimeira="Placa" aoLancarODia={lancarODia} />
           {grade.linhas.map((p) => (
             <LinhaDaSolta
               key={p.ativoId}
@@ -635,6 +868,7 @@ export function GradeDeSoltas({
               colunas={colunas}
               densidade={densidade}
               aoLancar={lancar}
+              programadaDe={programadaDe}
             />
           ))}
         </CartaoDaGrade>

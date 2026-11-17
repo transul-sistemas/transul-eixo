@@ -105,6 +105,38 @@ export function esquemaEngatar({ agora }: { agora: string }) {
 }
 export type EntradaEngatar = z.infer<ReturnType<typeof esquemaEngatar>>;
 
+/** Engatar vários implementos de uma vez: na ordem, a partir da primeira posição livre. */
+export function esquemaEngatarVarios({ agora }: { agora: string }) {
+  return z
+    .object({
+      /** O cavalo. */
+      placa,
+      implementos: z
+        .array(placa, { error: "Escolha os implementos." })
+        .min(1, { error: "Escolha ao menos um implemento para engatar." })
+        .max(3, { error: "Um conjunto tem no máximo três unidades." }),
+      primeiraPosicao: z
+        .number({ error: "Informe a posição." })
+        .int({ error: "A posição é um número inteiro." })
+        .min(1, { error: "A posição vai de 1 a 3." })
+        .max(3, { error: "A posição vai de 1 a 3." }),
+      quando: quando(agora),
+    })
+    .refine((d) => !d.implementos.includes(d.placa), {
+      path: ["implementos"],
+      error: "Tire o cavalo da lista: ele não engata nele mesmo.",
+    })
+    .refine((d) => new Set(d.implementos).size === d.implementos.length, {
+      path: ["implementos"],
+      error: "Cada implemento entra uma vez só.",
+    })
+    .refine((d) => d.primeiraPosicao + d.implementos.length - 1 <= 3, {
+      path: ["implementos"],
+      error: "O conjunto passaria de três unidades. Escolha menos implementos.",
+    });
+}
+export type EntradaEngatarVarios = z.infer<ReturnType<typeof esquemaEngatarVarios>>;
+
 export function esquemaDesatrelar({ agora }: { agora: string }) {
   return z.object({
     /** O cavalo. */

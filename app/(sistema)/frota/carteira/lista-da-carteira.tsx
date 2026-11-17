@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useRef, useState } from "react";
 import { Etiqueta } from "@/components/etiqueta";
 import { formatarDataEHora } from "@/components/formato/data";
@@ -14,7 +14,8 @@ import { STATUS, type Status } from "@/lib/visual/tons";
 import { ConfirmarCarteira } from "./confirmar-carteira";
 
 // A lista da carteira do mês: cada placa com a situação de agora e a resposta do gestor. "Confirmar
-// pendentes" abre o assistente com as pendentes da página; "Confirmar" na linha, só com aquela placa.
+// carteira" abre o assistente com as pendentes da página (ou todas, se não há pendente); "Confirmar" na
+// linha, só com aquela placa. O Ctrl+K abre pela URL (`?assistente=confirmar-carteira`).
 
 function Resposta({ placa }: { placa: PlacaDaCarteira }) {
   if (placa.confere === null) return <span className="text-muted-foreground">Pendente</span>;
@@ -27,22 +28,40 @@ function Resposta({ placa }: { placa: PlacaDaCarteira }) {
 
 export function ListaDaCarteira({ carteira }: { carteira: CarteiraDoMes }) {
   const router = useRouter();
-  const [escolhidas, setEscolhidas] = useState<PlacaDaCarteira[] | null>(null);
-  const quemAbriu = useRef<HTMLElement | null>(null);
+  const rota = usePathname();
+  const parametros = useSearchParams();
   const pendentes = carteira.linhas.filter((l) => l.confere === null);
+  const paraConfirmar = pendentes.length > 0 ? pendentes : carteira.linhas;
+  const [escolhidas, setEscolhidas] = useState<PlacaDaCarteira[] | null>(() =>
+    parametros.get("assistente") === "confirmar-carteira" && paraConfirmar.length > 0
+      ? paraConfirmar
+      : null,
+  );
+  const quemAbriu = useRef<HTMLElement | null>(null);
   const mes = carteira.mes.slice(0, 7);
+
+  function fechar() {
+    setEscolhidas(null);
+    if (parametros.get("assistente") !== null) {
+      const novos = new URLSearchParams(parametros.toString());
+      novos.delete("assistente");
+      const texto = novos.toString();
+      router.replace(texto ? `${rota}?${texto}` : rota, { scroll: false });
+    }
+  }
 
   return (
     <>
       <div className="flex justify-end">
         <Button
-          disabled={pendentes.length === 0}
+          disabled={paraConfirmar.length === 0}
+          aria-haspopup="dialog"
           onClick={(evento) => {
             quemAbriu.current = evento.currentTarget;
-            setEscolhidas(pendentes);
+            setEscolhidas(paraConfirmar);
           }}
         >
-          Confirmar pendentes
+          Confirmar carteira
         </Button>
       </div>
       <div className="border-border bg-card relative overflow-x-auto rounded-xl border">
@@ -150,7 +169,7 @@ export function ListaDaCarteira({ carteira }: { carteira: CarteiraDoMes }) {
           placas={escolhidas}
           focoFinal={quemAbriu}
           aoGravar={() => router.refresh()}
-          aoFechar={() => setEscolhidas(null)}
+          aoFechar={fechar}
         />
       ) : null}
     </>

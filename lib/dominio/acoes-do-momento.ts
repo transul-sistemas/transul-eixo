@@ -21,6 +21,7 @@ export function idsDasAcoesDoMomento({
   pedidoAberto = false,
   comImplementos = false,
   cancelavel = false,
+  comVinculos = false,
 }: {
   sigla: Sigla;
   tipo: TipoDeAtivo;
@@ -32,6 +33,8 @@ export function idsDasAcoesDoMomento({
   comImplementos?: boolean;
   /** Quem usa é a origem de um pedido ainda pendente (pode cancelar). */
   cancelavel?: boolean;
+  /** As funções de vínculo e baixa existem (só no banco): Trocar CR e Pedir baixa. */
+  comVinculos?: boolean;
 }): string[] {
   if (SIGLAS_DE_BAIXA.includes(sigla)) return [];
   const ids: string[] = [];
@@ -46,5 +49,10 @@ export function idsDasAcoesDoMomento({
   if (tipo === "cavalo") ids.push("frota.engatar-implemento");
   if (tipo === "cavalo" && comImplementos) ids.push("frota.desatrelar-implemento");
   ids.push("frota.corrigir-placa");
+  if (comVinculos) {
+    ids.push("frota.trocar-cr");
+    // Com transferência em andamento, a baixa espera: o banco recusa também.
+    if (!pedidoAberto && etapa === null) ids.push("frota.pedir-baixa");
+  }
   return ids;
 }

@@ -74,7 +74,7 @@ describe("montarGrupos: com termo", () => {
     });
   });
   it("só ação, quando nenhuma tela combina: o grupo de telas não aparece vazio", () => {
-    const grupos = montarGrupos("disponibilizar", "Administrador", SEM_CONTEXTO);
+    const grupos = montarGrupos("enviar", "Administrador", SEM_CONTEXTO);
     expect(grupos.map((g) => g.id)).toEqual(["acoes"]);
   });
   it("sem resultado, nenhum grupo", () => {

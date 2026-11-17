@@ -16,7 +16,7 @@ import { GraficoDeRosca } from "@/components/grafico/grafico-de-rosca";
 import { CelulaDaGrade, GradeDePaineis } from "@/components/layout/grade-de-paineis";
 import { FaixaDeKpis, type Kpi } from "@/components/layout/faixa-de-kpis";
 import { PainelDeGrafico } from "@/components/layout/painel-de-grafico";
-import { ListaVazia } from "@/components/tabela/estados";
+import { EsqueletoDaTabela, ListaVazia } from "@/components/tabela/estados";
 import { modoDosDados } from "@/lib/dados/fonte";
 import { lerFichaDaOperacao } from "@/lib/dados/operacoes";
 import {
@@ -60,6 +60,8 @@ import {
   TabelaDosMeses,
 } from "./tabelas-da-ficha";
 import { VoltarALista } from "./voltar-a-lista";
+import { Suspense } from "react";
+import { PlacasECrsComHistoria } from "./placas-e-crs";
 
 // A ficha da operação, com todas as abas. Os números de dinheiro vêm prontos do banco
 // (nucleo.resultado_da_operacao, nucleo.ficha_da_operacao); pessoas, linha do tempo, mapa e árvore
@@ -642,7 +644,14 @@ export async function FichaDaOperacaoNaTela({
         semDados={semDados}
       />
     ),
-    placas: <Placas ficha={ficha} />,
+    placas: (
+      <div className="flex flex-col gap-6">
+        <Placas ficha={ficha} />
+        <Suspense fallback={<EsqueletoDaTabela linhas={4} rotulo="Carregando a história de placas e CRs" />}>
+          <PlacasECrsComHistoria operacaoId={operacao.id} />
+        </Suspense>
+      </div>
+    ),
     pessoas: <Pessoas ficha={ficha} contexto={contexto} folhaAte={folhaAte} />,
     resultado: <ResultadoDoPeriodo resultado={resultado} semDados={semDados} />,
     "linha-do-tempo": <LinhaDoTempoDaOperacao contexto={contexto} />,

@@ -146,3 +146,29 @@ describe("dadosDosAssistentes: o que a tela entrega ao assistente", () => {
     expect(d.gestorId).toBe("gestor-2");
   });
 });
+
+describe("dadosDosAssistentes: engatar pela aba Soltas (sem cavalo na URL)", () => {
+  it("lista os cavalos não baixados para escolher, em ordem, e os implementos livres", async () => {
+    const d = await dadosDosAssistentes(fonte(), {
+      ...comum,
+      assistente: "engatar-implemento",
+      placa: null,
+    });
+    const esperadas = base
+      .filter((p) => p.tipo === "cavalo" && !["VND", "SUC"].includes(p.sigla))
+      .map((p) => p.placa)
+      .sort();
+    expect(d.cavalosParaEngatar.map((p) => p.placa)).toEqual(esperadas);
+    expect(d.implementosLivres.length).toBeGreaterThan(0);
+  });
+
+  it("com o cavalo na URL, não lista cavalos", async () => {
+    const cavalo = base.find((p) => p.tipo === "cavalo")!;
+    const d = await dadosDosAssistentes(fonte(), {
+      ...comum,
+      assistente: "engatar-implemento",
+      placa: cavalo.placa,
+    });
+    expect(d.cavalosParaEngatar).toEqual([]);
+  });
+});

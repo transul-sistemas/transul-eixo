@@ -75,6 +75,7 @@ destino e o wizard que resolve, e alimenta a fila de exceções e a tarefa. A te
 
 ## Rota e estado
 
+- **Construída (Fase 1, n1-tela, 13/11/2026):** `/cadastros/saude-do-cr` com os cinco cartões, os quatro tipos de problema (chips com contagem), a lista paginada no banco, o olho e os resolvedores 25 a 29 em popup.
 - Rota proposta: `/cadastros/saude-do-cr` (também a aba "Saúde" da ficha do CR). Módulo Cadastros (cor `#64748B`).
 - Quem vê: Administrador e Diretoria; Gestor de frota só o recorte da carteira.
 - Estado no catálogo: **esqueleto** (C1; rota proposta).

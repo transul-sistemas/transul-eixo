@@ -10,7 +10,7 @@ import type { DefinicaoDeAssistente } from "@/lib/wizard/passos";
 import { resolvedorPor } from "../lista/campos-da-pessoa";
 import { marcarEscalaAcao } from "./acoes";
 
-// Marcar dia (mini-assistente lateral, aberto pela célula da escala): escolher a marcação do dia
+// Marcar dia (popup central, aberto pela célula da escala): escolher a marcação do dia
 // (trabalho, folga, férias ou atestado), conferir e gravar. Uma marcação por pessoa e dia: marcar de
 // novo troca a do dia, com a versão que a pessoa viu.
 
@@ -57,7 +57,6 @@ export function MarcarDia({
   return (
     <Assistente<Valores>
       definicao={DEFINICAO}
-      variante="lateral"
       resolver={resolvedorPor<Valores>(esquemaMarcarEscala, ["sigla"], entrada)}
       valoresIniciais={{ sigla: atual?.sigla ?? "" }}
       validarRascunho={() => null}

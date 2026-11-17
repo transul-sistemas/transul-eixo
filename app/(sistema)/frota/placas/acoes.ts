@@ -15,6 +15,7 @@ import {
   executarDevolverPlaca,
   executarDisponibilizarPlaca,
   executarEngatar,
+  executarEngatarVarios,
   executarEntregarAoOperacional,
   executarMudarSituacao,
   executarReceber,
@@ -122,8 +123,17 @@ export async function engatarImplementoAcao(bruto: unknown) {
   return executar<PlacaGravada>(bruto, executarEngatar, daPlaca);
 }
 
+/** Engatar vários implementos de uma vez (aba Soltas e ficha do cavalo): uma chamada por peça. */
+export async function engatarImplementosAcao(bruto: unknown) {
+  const resultado = await executar<PlacaGravada>(bruto, executarEngatarVarios, daPlaca);
+  if (resultado.ok) revalidatePath("/frota/acompanhamento");
+  return resultado;
+}
+
 export async function desatrelarImplementoAcao(bruto: unknown) {
-  return executar<PlacaGravada>(bruto, executarDesatrelar, daPlaca, EDITAR);
+  const resultado = await executar<PlacaGravada>(bruto, executarDesatrelar, daPlaca, EDITAR);
+  if (resultado.ok) revalidatePath("/frota/acompanhamento");
+  return resultado;
 }
 
 export async function corrigirPlacaAcao(bruto: unknown) {
