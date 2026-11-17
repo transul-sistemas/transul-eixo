@@ -2649,6 +2649,9 @@ isOneToOne: false
 "estado_em":
 { Args: { "p_ativo_id": string,"p_camada": string,"p_em": string }; Returns: string
                            },
+"eventos_de_auditoria":
+{ Args: { "p_busca"?: string,"p_filtro"?: string,"p_mes"?: string,"p_pagina"?: number,"p_tam"?: number }; Returns: Json
+                           },
 "excecoes_abertas":
 { Args: { "p_assunto": string,"p_pagina": number,"p_tamanho": number }; Returns: Json
                            },
@@ -2832,6 +2835,9 @@ isOneToOne: false
                            },
 "minhas_tarefas":
 { Args: Record<PropertyKey, never>; Returns: Json
+                           },
+"modulo_da_tabela":
+{ Args: { "p_tabela": string }; Returns: string
                            },
 "motorista_do_conjunto_no_mes":
 { Args: { "p_ativo_id": string,"p_mes": string }; Returns: Json
