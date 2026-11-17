@@ -37,8 +37,8 @@ describe("catálogo: módulos", () => {
 
 describe("catálogo: telas", () => {
   const telas = todasAsTelas();
-  it("tem 40 telas", () => {
-    expect(telas).toHaveLength(40);
+  it("tem 41 telas", () => {
+    expect(telas).toHaveLength(41);
   });
   it("id e rota são únicos", () => {
     expect(new Set(telas.map((t) => t.id)).size).toBe(telas.length);
@@ -119,6 +119,7 @@ describe("catálogo: telas", () => {
       "resultados.fechamentos",
       "resultados.ajustes",
       "cadastros.catalogos",
+      "cadastros.crs",
       "cadastros.saude-do-cr",
       "admin.usuarios-e-perfis",
       "admin.processos",
@@ -224,9 +225,10 @@ describe("perfis", () => {
 });
 
 describe("telas com ficha e acharFicha (a rota filha /<tela>/<identificador>)", () => {
-  it("só as quatro listas que abrem a ficha de cada item levam a marca", () => {
+  it("só as cinco listas que abrem a ficha de cada item levam a marca", () => {
     const comFicha = CATALOGO.flatMap((m) => m.telas.filter((t) => t.ficha)).map((t) => t.rota);
     expect([...comFicha].sort()).toEqual([
+      "/cadastros/crs",
       "/frota/placas",
       "/operacoes/lista",
       "/parceiros/lista",

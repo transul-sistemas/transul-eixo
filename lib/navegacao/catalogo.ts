@@ -402,6 +402,16 @@ export const CATALOGO: readonly ModuloDoCatalogo[] = [
       estado: "pronto",
     },
     {
+      slug: "crs",
+      nome: "CRs",
+      icone: "IconListDetails",
+      dispositivos: DESKTOP,
+      descricao:
+        "Os centros de resultado com a placa e a operação vigentes; cada um abre a ficha com a história.",
+      estado: "pronto",
+      ficha: true,
+    },
+    {
       slug: "saude-do-cr",
       nome: "Saúde do CR",
       icone: "IconListDetails",
