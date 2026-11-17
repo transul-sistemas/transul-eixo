@@ -1,3 +1,4 @@
+import { LEITORES_DE_CADASTROS } from "./paineis-cadastros";
 import { gravarNoExemploDoN3, LEITORES_DO_N3 } from "./paineis-n3";
 
 // Os dados de exemplo das telas de painel da Fase 1: fazem o papel das funções do banco que ainda não
@@ -2274,6 +2275,7 @@ function auditoria(estado: Estado, hoje: string) {
 
 const LEITORES: Record<string, (estado: Estado, hoje: string) => unknown> = {
   ...LEITORES_DO_N3,
+  ...LEITORES_DE_CADASTROS,
   "inicio.resumo-do-dia": resumoDoDia,
   "parceiros.livro-do-acionista": livroDoAcionista,
   "admin.auditoria": auditoria,

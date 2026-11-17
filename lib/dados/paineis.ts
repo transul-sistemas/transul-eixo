@@ -54,6 +54,8 @@ export const FUNCOES_DOS_PAINEIS = {
   // N3 (a criar pelo agente de banco do N3; até lá, o exemplo fora de produção).
   "admin.processos": "processos_e_responsaveis",
   "admin.painel-de-processos": "painel_de_processos",
+  // N3, Cadastros (entrega 3): a lista dos CRs; a linha leva à Ficha do CR.
+  "cadastros.crs": "lista_de_crs",
 } as const;
 
 export type IdDoPainel = keyof typeof FUNCOES_DOS_PAINEIS;

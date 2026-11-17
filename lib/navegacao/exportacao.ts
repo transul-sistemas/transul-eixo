@@ -23,6 +23,7 @@ export const LISTAS_DE_PAINEL = [
   "admin.auditoria",
   "admin.processos",
   "admin.painel-de-processos",
+  "cadastros.crs",
 ] as const;
 
 /** As listas com tabela própria: cada uma tem o seu exportador (lib/exportacao/exportadores.ts). */

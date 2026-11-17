@@ -1,6 +1,6 @@
 # Ficha: Cadastros › Ficha do CR
 
-Escrita em 11/11/2026. **Só desenho: a ficha do CR não existe** (V0 cria a ficha; C1 acrescenta a aba Saúde).
+Escrita em 11/11/2026. Primeira versão construída em 17/11/2026 (lista e ficha com as duas trilhas); C1 acrescenta a aba Saúde.
 Desenho de origem: `docs/cr-regras.md` e `docs/vinculos-com-historia.md` ("Visual", ficha do CR nova).
 
 ## 1. A pergunta que a tela responde
@@ -77,7 +77,7 @@ que efeito no resultado, sem apagar nada, e liga cada fato ao código do Sankhya
 - Rota proposta: `/cadastros/crs/<codigo>` (ficha) a partir da lista de CRs em Cadastros; o `<codigo>` é o `CODCENCUS`.
   Módulo Cadastros (cor `#64748B`). Hoje o CR só aparece dentro da ficha da operação (abas Mapa mental e Placas).
 - Quem vê: Administrador e Diretoria; Gestor de frota só pelo link da placa, recorte da carteira.
-- Estado no catálogo: **esqueleto** (rota proposta).
+- Estado no catálogo: **pronto, primeira versão** (17/11/2026): lista em `/cadastros/crs` (`nucleo.lista_de_crs`, pgTAP 127) e ficha em `/cadastros/crs/<id>` (o id do CR, não o CODCENCUS, que pode faltar antes da ponte; hipótese a revisar), lendo `nucleo.historia_do_cr`. Fora desta versão: aba Saúde, frase do porquê em cada vínculo, despesa e receita, ações Trocar e Encerrar na ficha.
 
 ## Estados e rótulos de vigência
 
