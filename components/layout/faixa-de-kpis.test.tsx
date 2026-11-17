@@ -12,9 +12,9 @@ describe("<FaixaDeKpis>", () => {
 
   it("uma segunda faixa na mesma tela tem nome próprio (o leitor de tela e o e2e não confundem)", () => {
     const html = renderToStaticMarkup(
-      <FaixaDeKpis kpis={KPIS} rotulo="Indicadores dos lançados à mão" />,
+      <FaixaDeKpis kpis={KPIS} rotulo="Totais dos lançados à mão" />,
     );
-    expect(html).toContain('aria-label="Indicadores dos lançados à mão"');
+    expect(html).toContain('aria-label="Totais dos lançados à mão"');
   });
 
   it("sem indicadores, não desenha nada", () => {
@@ -22,8 +22,12 @@ describe("<FaixaDeKpis>", () => {
   });
 
   it("a seção de painel embutida em outra tela não repete o nome da faixa da tela", () => {
+    // Nem como trecho: o leitor de tela e o getByRole do e2e acham "Indicadores" dentro de
+    // "Indicadores: ..." (a comparação do nome é por trecho).
     const fonte = readFileSync("components/paineis/secao-do-painel.tsx", "utf8");
     const faixa = fonte.slice(fonte.indexOf("<FaixaDeKpis"));
-    expect(faixa.slice(0, faixa.indexOf("/>"))).toMatch(/rotulo=/);
+    const rotulo = faixa.slice(0, faixa.indexOf("/>")).match(/rotulo={?`?"?([^`"}]*)/)?.[1] ?? "";
+    expect(rotulo).not.toBe("");
+    expect(rotulo.toLowerCase()).not.toContain("indicadores");
   });
 });
