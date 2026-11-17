@@ -60,7 +60,7 @@ export async function SecaoDoPainel({
         />
         {leitura.origem === "sem-fonte" ? (
           <p className="text-muted-foreground text-sm">
-            Sem dados ainda: depende de {leitura.funcao}.
+            Sem dados ainda: depende de {leitura.pendencia ?? leitura.funcao}.
           </p>
         ) : (
           <TabelaDoPainel

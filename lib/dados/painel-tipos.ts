@@ -141,4 +141,6 @@ export interface LeituraDoPainel {
   opcoes: Record<string, OpcaoDoPainel[]>;
   /** Avisos curtos da fonte (o que mudou de mês, o que falta). */
   avisos: string[];
+  /** Sem fonte: o que falta, completando "Sem dados ainda: depende de ..." (sem ele, a função do banco). */
+  pendencia?: string;
 }

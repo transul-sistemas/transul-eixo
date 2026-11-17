@@ -212,7 +212,7 @@ function AvisoDaOrigem({ leitura }: { leitura: LeituraDoPainel }) {
         ]
       : []),
     ...(leitura.origem === "sem-fonte"
-      ? [`Sem dados ainda: depende de ${leitura.funcao} no banco.`]
+      ? [`Sem dados ainda: depende de ${leitura.pendencia ?? `${leitura.funcao} no banco`}.`]
       : []),
     ...leitura.avisos,
   ];
@@ -260,7 +260,7 @@ export async function TelaDePainel({
   const hoje = hojeEmSaoPaulo(new Date());
   const [leitura, sessao] = await Promise.all([lerPainel(id, estado, hoje), exigirSessao()]);
   const semFonte = leitura.origem === "sem-fonte";
-  const textoSemFonte = `Sem dados ainda: depende de ${leitura.funcao}`;
+  const textoSemFonte = `Sem dados ainda: depende de ${leitura.pendencia ?? leitura.funcao}`;
   const permitidos = assistentes.filter((a) =>
     temPermissao(sessao.perfil, ASSISTENTES_DOS_PAINEIS[a].permissao),
   );

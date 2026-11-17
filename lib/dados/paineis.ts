@@ -61,6 +61,16 @@ export const FUNCOES_DOS_PAINEIS = {
 export type IdDoPainel = keyof typeof FUNCOES_DOS_PAINEIS;
 
 /**
+ * As telas que ainda não têm fonte no Eixo (backlog da 2.0). Fora do exemplo, mostram "Sem dados ainda:
+ * depende de <motivo>" sem ir ao banco e sem cair no exemplo (dado fictício sobre o banco real engana).
+ */
+export const PAINEIS_SEM_FONTE: Partial<Record<IdDoPainel, string>> = {
+  "pessoas.diarias-e-premiacao": "diárias e premiação, que entram na 2.0",
+  "pessoas.campanhas": "campanhas, que entram na 2.0",
+  "pessoas.documentos": "validade dos documentos (CNH, ASO e cursos), que ainda não se cadastra",
+};
+
+/**
  * As telas cuja função do banco já existe com contrato próprio (n2-banco): o argumento é só o mês e o
  * adaptador rearranja o JSON no formato da tela de painel. As demais seguem o contrato único.
  */
@@ -348,9 +358,14 @@ export function normalizarLeitura(
 }
 
 /** A tela sem fonte ainda (produção, função do banco ausente): estrutura vazia, nenhum número inventado. */
-function semFonte(nomeDaFuncao: string, estado: EstadoDoPainel): LeituraDoPainel {
+function semFonte(
+  nomeDaFuncao: string,
+  estado: EstadoDoPainel,
+  pendencia?: string,
+): LeituraDoPainel {
   return {
     ...normalizarLeitura({}, "sem-fonte", nomeDaFuncao),
+    ...(pendencia ? { pendencia } : {}),
     tabela: {
       titulo: "",
       item: "item",
@@ -374,6 +389,8 @@ export async function lerPainel(
   if (modoDosDados() === "exemplo") {
     return normalizarLeitura(await lerPainelPeloExemplo(id, estado, hoje), "exemplo", funcao);
   }
+  const pendencia = PAINEIS_SEM_FONTE[id];
+  if (pendencia) return semFonte(funcao, estado, pendencia);
   const c = await cliente();
   const adaptador = ADAPTADORES[id];
   const { data, error } = adaptador

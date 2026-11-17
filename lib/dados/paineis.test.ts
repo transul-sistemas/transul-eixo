@@ -1,7 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { linhasFecham } from "@/components/layout/grade-de-paineis";
 import { zerarPaineisDeExemplo } from "@/lib/exemplo/paineis";
-import { FUNCOES_DOS_PAINEIS, gravarPeloPainel, lerPainel, normalizarLeitura } from "./paineis";
+import {
+  FUNCOES_DOS_PAINEIS,
+  gravarPeloPainel,
+  lerPainel,
+  normalizarLeitura,
+  PAINEIS_SEM_FONTE,
+} from "./paineis";
 
 const ESTADO = { mes: null, filtro: null, busca: "", pagina: 1, tam: 20 };
 const HOJE = "2026-11-13";
@@ -63,15 +69,31 @@ describe("leitura das telas de painel", () => {
     expect(l.graficos[0]?.series[0]?.valores).toEqual([250]);
   });
 
+  it("tela sem fonte no Eixo fica 'Sem dados ainda' com o motivo, sem ir ao banco nem cair no exemplo", async () => {
+    const c = cliente({ data: null, error: AUSENTE });
+    for (const id of Object.keys(PAINEIS_SEM_FONTE) as (keyof typeof PAINEIS_SEM_FONTE)[]) {
+      const l = await lerPainel(id, ESTADO, HOJE, c.fabrica);
+      expect(l.origem, id).toBe("sem-fonte");
+      expect(l.pendencia, id).toBe(PAINEIS_SEM_FONTE[id]);
+      expect(l.tabela.linhas, id).toEqual([]);
+    }
+    expect(Object.keys(PAINEIS_SEM_FONTE).sort()).toEqual([
+      "pessoas.campanhas",
+      "pessoas.diarias-e-premiacao",
+      "pessoas.documentos",
+    ]);
+    expect(c.rpc).not.toHaveBeenCalled();
+  });
+
+  it("no exemplo, a tela sem fonte ainda mostra o exemplo (o desenho da tela)", async () => {
+    vi.stubEnv("EIXO_DADOS", "exemplo");
+    expect((await lerPainel("pessoas.campanhas", ESTADO, HOJE)).origem).toBe("exemplo");
+  });
+
   it("chama a função do banco da tela com o estado da URL", async () => {
     const c = cliente({ data: {}, error: null });
-    await lerPainel(
-      "pessoas.documentos",
-      { ...ESTADO, mes: "2026-10", pagina: 2 },
-      HOJE,
-      c.fabrica,
-    );
-    expect(c.rpc).toHaveBeenCalledWith("documentos_das_pessoas", {
+    await lerPainel("pessoas.analise", { ...ESTADO, mes: "2026-10", pagina: 2 }, HOJE, c.fabrica);
+    expect(c.rpc).toHaveBeenCalledWith("analise_das_pessoas", {
       p_mes: "2026-10-01",
       p_filtro: null,
       p_busca: null,
@@ -282,8 +304,8 @@ describe("leitura das telas de painel", () => {
 
   it("outro erro do banco não vira exemplo: sobe como erro de leitura", async () => {
     const falha = cliente({ data: null, error: { code: "42501", message: "permission denied" } });
-    await expect(lerPainel("pessoas.documentos", ESTADO, HOJE, falha.fabrica)).rejects.toThrow(
-      /documentos_das_pessoas/,
+    await expect(lerPainel("pessoas.analise", ESTADO, HOJE, falha.fabrica)).rejects.toThrow(
+      /analise_das_pessoas/,
     );
   });
 
