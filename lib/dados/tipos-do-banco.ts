@@ -2447,6 +2447,11 @@ isOneToOne: false
 "concluir_transferencia":
 { Args: { "p_em": string,"p_transferencia_id": string }; Returns: string
                            },
+"conferencias_da_conciliacao":
+{ Args: { "p_mes": string }; Returns: {
+              "agrupador_id": string,"conferida_em": string,"linhas": number
+            }[]
+                           },
 "conferir_abastecimento_provisorio":
 { Args: { "p_chave"?: string,"p_decisao": string,"p_id": string,"p_motivo": string,"p_origem_id": string,"p_versao": number }; Returns: string
                            },
@@ -2476,6 +2481,9 @@ isOneToOne: false
         isOneToOne: true
         isSetofReturn: false
       } },
+"conferir_mes_do_acionista":
+{ Args: { "p_agrupador": string,"p_chave"?: string,"p_mes": string }; Returns: Json
+                           },
 "confirmar_carteira":
 { Args: { "p_chave"?: string,"p_itens": Json,"p_mes": string }; Returns: Json
                            },
@@ -2714,6 +2722,9 @@ isOneToOne: false
 "justificar_diferenca":
 { Args: { "p_chave"?: string,"p_cr_id": string,"p_mes": string,"p_motivo": string }; Returns: Json
                            },
+"justificar_diferencas_em_lote":
+{ Args: { "p_chave"?: string,"p_itens": Json,"p_mes": string }; Returns: Json
+                           },
 "kpi_do_painel":
 { Args: { "p_apoio"?: string,"p_formato": string,"p_id": string,"p_rotulo": string,"p_valor": Json }; Returns: Json
                            },
@@ -2806,6 +2817,9 @@ isOneToOne: false
                            },
 "maturacao_da_divida":
 { Args: { "p_pagina"?: number,"p_tam"?: number }; Returns: Json
+                           },
+"mes_do_acionista_conferido":
+{ Args: { "p_agrupador": string,"p_mes": string }; Returns: boolean
                            },
 "mes_fechado_mais_recente":
 { Args: { "p_hoje"?: string }; Returns: string

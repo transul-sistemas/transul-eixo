@@ -161,6 +161,17 @@ export interface ParceiroCadastrado {
 export interface JustificativaGravada {
   justificativaId: string;
 }
+/** O mês do acionista conferido (travado) na Conciliação. */
+export interface ConferenciaDoMes {
+  agrupadorId: string;
+  conferidaEm: string;
+  linhas: number;
+}
+export interface ConciliacaoGravada {
+  conferenciaId: string;
+  justificadas: number;
+  linhas: number;
+}
 export interface LocacaoGravada {
   locacaoId: string;
   placa: string;

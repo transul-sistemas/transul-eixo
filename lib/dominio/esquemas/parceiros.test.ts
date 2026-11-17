@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   esquemaCadastrarLocacao,
   esquemaCadastrarParceiro,
+  esquemaConciliarOMes,
   esquemaEncerrarLocacao,
   esquemaJustificarDiferenca,
 } from "./parceiros";
@@ -124,5 +125,47 @@ describe("esquemaEncerrarLocacao", () => {
     expect(
       erros(esquemaEncerrarLocacao.safeParse({ ...valido, fim: "2026-03-01", motivo: "" })).sort(),
     ).toEqual(["fim", "motivo"]);
+  });
+});
+
+describe("esquemaConciliarOMes", () => {
+  const CR = "4a1e7d6a-2b4c-4d5e-8f90-1a2b3c4d5e6f";
+  const valido = {
+    agrupadorId: UUID,
+    mes: "2026-03",
+    justificativas: [{ crId: CR, motivo: "  Placa parada no pátio o mês inteiro.  " }],
+    ciente: true,
+  };
+
+  it("aceita as justificativas e a ciência da trava, com o motivo aparado", () => {
+    expect(esquemaConciliarOMes.parse(valido).justificativas[0]!.motivo).toBe(
+      "Placa parada no pátio o mês inteiro.",
+    );
+  });
+
+  it("sem pendências, conferir só pede a ciência da trava", () => {
+    expect(esquemaConciliarOMes.safeParse({ ...valido, justificativas: [] }).success).toBe(true);
+  });
+
+  it("cada pendência precisa de motivo com 10 caracteres ou mais", () => {
+    const r = esquemaConciliarOMes.safeParse({
+      ...valido,
+      justificativas: [{ crId: CR, motivo: "curto" }],
+    });
+    expect(r.success ? [] : r.error.issues.map((i) => i.path.join("."))).toEqual([
+      "justificativas.0.motivo",
+    ]);
+  });
+
+  it("sem a ciência de que o mês trava, não confere", () => {
+    expect(erros(esquemaConciliarOMes.safeParse({ ...valido, ciente: false }))).toEqual(["ciente"]);
+  });
+
+  it("o mesmo CR não entra duas vezes no lote", () => {
+    const r = esquemaConciliarOMes.safeParse({
+      ...valido,
+      justificativas: [valido.justificativas[0], valido.justificativas[0]],
+    });
+    expect(erros(r)).toEqual(["justificativas"]);
   });
 });

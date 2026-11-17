@@ -31,6 +31,7 @@ describe("ações dos assistentes da Frota", () => {
         "pessoas.indicar-substituto",
         "frota.conferir-abastecimento",
         "resultados.decidir-ajuste",
+        "parceiros.conciliar-o-mes",
       ]),
     );
     expect(ACOES.map((a) => a.nome)).toEqual(
@@ -59,6 +60,7 @@ describe("ações dos assistentes da Frota", () => {
         "Indicar substituto",
         "Conferir abastecimento",
         "Decidir ajuste",
+        "Conciliar o mês",
       ]),
     );
     expect(ACOES.every((a) => a.estado === "pronto")).toBe(true);
@@ -91,6 +93,7 @@ describe("ações dos assistentes da Frota", () => {
       "pessoas.indicar-substituto": "/pessoas/status-diario?assistente=indicar-substituto",
       "frota.conferir-abastecimento": "/frota/abastecimento?assistente=conferir-abastecimento",
       "resultados.decidir-ajuste": "/resultados/ajustes?assistente=decidir-ajuste",
+      "parceiros.conciliar-o-mes": "/parceiros/conciliacao?assistente=conciliar-o-mes",
     });
   });
   it("cada ação pertence a um módulo do catálogo, e a permissão é a desse módulo", () => {

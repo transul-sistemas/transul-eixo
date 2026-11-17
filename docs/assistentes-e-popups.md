@@ -35,55 +35,56 @@ a Diretoria escreve **por tarefa e aprovação** (H6, ainda a rever: hoje a seme
 | 1 | Cadastrar placa | Frota | Popup | Cadastro de placa | `nucleo.cadastrar_ativo` | falta | existe |
 | 2 | Corrigir placa | Frota | Popup | Exceção de cadastro | `nucleo.corrigir_campo` | falta | existe |
 | 3 | Mudar situação (placa solta ou conjunto) | Frota | Popup | Situação do dia | `nucleo.registrar_evento` | falta | existe |
-| 4 | Lançar situação (célula do dia) | Frota | Popup (hoje lateral) | Lançar o dia | `nucleo.lancar_situacao_do_dia` | feito | existe (lateral, 2 passos); wizard novo só planejado (A2) |
-| 5 | Lançar o dia (lote pelo cabeçalho) | Frota | Popup | Lançar o dia | `nucleo.lancar_situacao_do_dia` em lote (função de lote proposta) | parcial | só planejado (A2) |
-| 6 | Programar e confirmar situação | Frota | Popup | Lançar o dia | `nucleo.situacao_programada` (proposta) | parcial | só planejado (A2) |
-| 7 | Corrigir o último evento | Frota | Popup (dentro do passo Situação) | Lançar o dia | `nucleo.corrigir_ultimo_evento` (proposta; já existe `nucleo.desfazer_evento_de_status`) | feito | só banco |
-| 8 | Engatar implementos | Frota | Popup | Composição do conjunto | `nucleo.engatar` | feito | existe (1 implemento); vários só planejado (S1) |
+| 4 | Lançar situação (célula do dia) | Frota | Popup (hoje lateral) | Lançar o dia | `nucleo.lancar_situacao_do_dia` | feito | existe (popup; a hora opcional é o Lançar na hora, N1) |
+| 5 | Lançar o dia (lote pelo cabeçalho) | Frota | Popup | Lançar o dia | `nucleo.lancar_situacao_do_dia` em lote (função de lote proposta) | parcial | existe (N1: pelo número do dia no cabeçalho, tudo ou nada) |
+| 6 | Programar e confirmar situação | Frota | Popup | Lançar o dia | `nucleo.situacao_programada` (proposta) | parcial | existe (N1: Programar situação e Confirmar ou cancelar) |
+| 7 | Corrigir o último evento | Frota | Popup (dentro do passo Situação) | Lançar o dia | `nucleo.corrigir_ultimo_evento` (proposta; já existe `nucleo.desfazer_evento_de_status`) | feito | existe (N1: popup empilhado dentro do Lançar situação) |
+| 8 | Engatar implementos | Frota | Popup | Composição do conjunto | `nucleo.engatar` | feito | existe (N1: vários implementos, pela aba Soltas) |
 | 9 | Desatrelar implementos | Frota | Popup | Composição do conjunto | `nucleo.desatrelar` | falta | existe |
-| 10 | Dar baixa na placa (quatro olhos) | Frota | Popup | Baixa de placa | `nucleo.registrar_baixa` (hoje sem quatro olhos); pedido e aprovação propostos | feito | só banco (assistente só planejado, S4) |
-| 11 | Indicar substituto do motorista | Frota | Popup | Escala do motorista | tabela de substituição (proposta, A6) | parcial | só planejado |
-| 12 | Lançar abastecimento | Frota | Popup | Abastecimento | sem fonte definida (dúvida) | falta | só planejado |
-| 13 | Enviar placa a outro gestor | Frota | Popup | Transferência de placa | `nucleo.disponibilizar_placa` | feito | existe (3 passos); 4 passos só planejado (S2) |
+| 10 | Dar baixa na placa (quatro olhos) | Frota | Popup | Baixa de placa | `nucleo.registrar_baixa` (hoje sem quatro olhos); pedido e aprovação propostos | feito | existe (N1: Pedir baixa, Decidir baixa e Cancelar pedido de baixa) |
+| 11 | Indicar substituto do motorista | Frota | Popup | Escala do motorista | tabela de substituição (proposta, A6) | parcial | existe (N2: Status diário) |
+| 12 | Lançar abastecimento | Frota | Popup | Abastecimento | sem fonte definida (dúvida) | falta | existe (N2: lançamento provisório, e Conferir abastecimento) |
+| 13 | Enviar placa a outro gestor | Frota | Popup | Transferência de placa | `nucleo.disponibilizar_placa` | feito | existe (N1: o passo Placa virou o topo do Destino) |
 | 14 | Receber placa (uma) | Frota | Popup | Transferência de placa | `nucleo.receber_placa` | falta | existe |
-| 15 | Receber placas em lote | Início (Meu dia) | Popup, passo 1 da fila guiada | Transferência de placa | uma chamada por placa: `receber_transferencia`, `concluir_transferencia`, `devolver_pedido_contestado` | feito | só planejado (M1) |
+| 15 | Receber placas em lote | Início (Meu dia) | Popup, passo 1 da fila guiada | Transferência de placa | uma chamada por placa: `receber_transferencia`, `concluir_transferencia`, `devolver_pedido_contestado` | feito | existe (Meu dia: Receber placas) |
 | 16 | Concluir recebimento | Frota | Popup | Transferência de placa | `nucleo.concluir_recebimento` | falta | existe |
 | 17 | Devolver placa (recusar) | Frota | Popup | Transferência de placa | `nucleo.devolver_placa` | falta | existe |
 | 18 | Cancelar pedido | Frota | Popup | Transferência de placa | `nucleo.cancelar_pedido` | falta | existe |
-| 19 | Confirmar a carteira do mês | Frota | Popup, passo 3 da fila guiada | Confirmação mensal | `nucleo.confirmar_carteira` | feito | existe (2 passos); 3 passos só planejado (S3) |
+| 19 | Confirmar a carteira do mês | Frota | Popup, passo 3 da fila guiada | Confirmação mensal | `nucleo.confirmar_carteira` | feito | existe (N1: Não é minha e Corrigir; a tarefa do líder ainda não nasce) |
 | 20 | Entregar ao Operacional | Frota | Popup | Entrega ao Operacional | `nucleo.entregar_ao_operacional` | falta | existe |
 | 21 | Registrar chegada (totem) | Operacional | Tela do totem, 1 passo | Fila do pátio | `nucleo.registrar_chegada` | falta | existe |
-| 22 | Avançar placa no pátio (aceitar, concluir, liberar, devolver ao gestor) | Operacional | Popup (hoje lateral) | Entrega ao Operacional e retorno | `nucleo.avancar_no_patio`, `nucleo.devolver_custodia_ao_gestor` | falta | existe (lateral) |
+| 22 | Avançar placa no pátio (aceitar, concluir, liberar, devolver ao gestor) | Operacional | Popup (hoje lateral) | Entrega ao Operacional e retorno | `nucleo.avancar_no_patio`, `nucleo.devolver_custodia_ao_gestor` | falta | existe (popup; Aceitar, Concluir e Liberar também em lote, N2) |
 | 23 | Criar ordem de carregamento | Operacional | Popup | Ordem de carregamento | `nucleo.criar_ordem_de_carregamento` | falta | existe |
-| 24 | Trocar CR | Frota e Cadastros | Popup | Trocar CR | `nucleo.trocar_cr` (proposta, V0) | feito | só planejado (V0) |
-| 25 | Vincular CR à placa ("Escolher o CR") | Cadastros | Popup | Saúde do CR | `nucleo.trocar_cr` ou vínculo novo (V0/C1) | parcial | só planejado |
-| 26 | Ligar CR à operação | Cadastros | Popup | Saúde do CR | vínculo CR-operação com vigência (C0) | parcial | só planejado |
-| 27 | Escolher o CR vigente (dois do mesmo tipo) | Cadastros | Popup | Saúde do CR | encerrar um dos vínculos (V0/C1) | parcial | só planejado |
-| 28 | Classificar lançamento sem CR | Cadastros e Resultados | Popup | Saúde do CR | atribuição do lançamento (D0) | parcial | só planejado |
-| 29 | Atribuir dono ao problema | Cadastros | Popup curto | Saúde do CR | cria tarefa na fila do papel (P1) | falta | só planejado |
-| 30 | Posição do dia | Início (Meu dia) | **Porta obrigatória**, passo 2 da fila guiada | Posição do dia | `nucleo.registrar_posicao_do_dia` (proposta, M2) | feito | só planejado (M2) |
-| 31 | Liberar a posição do dia (líder) | Início | Popup curto | Posição do dia | `nucleo.liberar_posicao_do_dia` (proposta, M2) | falta | só planejado |
-| 32 | Reatribuir tarefa | Início e Administração | Popup curto | Gerenciador de processos | `processos.reatribuir` (proposta, P2) | falta | só planejado |
-| 33 | Delegar tarefa e alterar substituição | Início | Popup | Gerenciador de processos | `processos.delegar` (proposta, P2) | parcial | só planejado |
-| 34 | Fechar o mês | Resultados | Popup | Fechamento mensal | `nucleo.fechar_mes` (proposta, C4) | falta | só planejado |
-| 35 | Reabrir o mês | Resultados | Popup | Fechamento mensal | `nucleo.reabrir_mes` (proposta, C4) | falta | só planejado |
-| 36 | Pedir ajuste de mês fechado | Resultados | Popup | Fechamento mensal | ajuste justificado com alçada (proposta) | falta | só planejado |
-| 37 | Pedir aprovação ou permissão (mês fechado, Diretoria) | Transversal | Popup curto | Gerenciador de processos | tarefa de aprovação (P3) | falta | só planejado |
+| 24 | Trocar CR | Frota e Cadastros | Popup | Trocar CR | `nucleo.trocar_cr` (proposta, V0) | feito | existe (N1) |
+| 25 | Vincular CR à placa ("Escolher o CR") | Cadastros | Popup | Saúde do CR | `nucleo.trocar_cr` ou vínculo novo (V0/C1) | parcial | existe (N1: Escolher o CR, resolvedor da Saúde do CR, pelo Trocar CR) |
+| 26 | Ligar CR à operação | Cadastros | Popup | Saúde do CR | vínculo CR-operação com vigência (C0) | parcial | existe (N1: Ligar à operação, resolvedor da Saúde do CR) |
+| 27 | Escolher o CR vigente (dois do mesmo tipo) | Cadastros | Popup | Saúde do CR | encerrar um dos vínculos (V0/C1) | parcial | existe (N1: Escolher o vigente, resolvedor da Saúde do CR) |
+| 28 | Classificar lançamento sem CR | Cadastros e Resultados | Popup | Saúde do CR | atribuição do lançamento (D0) | parcial | existe (N1: Classificar, resolvedor da Saúde do CR) |
+| 29 | Atribuir dono ao problema | Cadastros | Popup curto | Saúde do CR | cria tarefa na fila do papel (P1) | falta | existe (N1: só o Administrador) |
+| 30 | Posição do dia | Início (Meu dia) | **Porta obrigatória**, passo 2 da fila guiada | Posição do dia | `nucleo.registrar_posicao_do_dia` (proposta, M2) | feito | existe (N1: Meu dia) |
+| 31 | Liberar a posição do dia (líder) | Início | Popup curto | Posição do dia | `nucleo.liberar_posicao_do_dia` (proposta, M2) | falta | só banco (`nucleo.liberar_posicao_do_dia`; sem tela) |
+| 32 | Reatribuir tarefa | Início e Administração | Popup curto | Gerenciador de processos | `processos.reatribuir` (proposta, P2) | falta | existe (N3, PR #40: Administração › Processos e linha da tarefa) |
+| 33 | Delegar tarefa e alterar substituição | Início | Popup | Gerenciador de processos | `processos.delegar` (proposta, P2) | parcial | existe (N3, PR #40: Delegar tarefas) |
+| 34 | Fechar o mês | Resultados | Popup | Fechamento mensal | `nucleo.fechar_mes` (proposta, C4) | falta | existe (N2) |
+| 35 | Reabrir o mês | Resultados | Popup | Fechamento mensal | `nucleo.reabrir_mes` (proposta, C4) | falta | existe (N2) |
+| 36 | Pedir ajuste de mês fechado | Resultados | Popup | Fechamento mensal | ajuste justificado com alçada (proposta) | falta | existe (N2; e Decidir ajuste, só a Diretoria) |
+| 37 | Pedir aprovação ou permissão (mês fechado, Diretoria) | Transversal | Popup curto | Gerenciador de processos | tarefa de aprovação (P3) | falta | só banco (N3, PR #40; sem tela) |
 | 38 | Cadastrar parceiro | Parceiros | Popup | Cadastro de parceiro | `nucleo.cadastrar_parceiro` | falta | existe |
-| 39 | Justificar diferença (conciliar o mês) | Parceiros | Popup | Conciliação do mês | `nucleo.justificar_diferenca` | falta | existe |
+| 39 | Justificar diferença (conciliar o mês) | Parceiros | Popup | Conciliação do mês | `nucleo.justificar_diferenca` | falta | existe (por linha) |
 | 40 | Nova locação | Parceiros | Popup | Locação | `nucleo.cadastrar_locacao` | falta | existe |
 | 41 | Encerrar locação | Parceiros | Popup | Locação | `nucleo.encerrar_locacao` | falta | existe |
 | 42 | Cadastrar pessoa | Pessoas | Popup | Cadastro de pessoa | `nucleo.cadastrar_pessoa` | falta | existe |
 | 43 | Editar pessoa | Pessoas | Popup | Cadastro de pessoa | `nucleo.editar_pessoa` | falta | existe |
-| 44 | Marcar dia da escala | Pessoas | Popup (hoje lateral) | Escala | `nucleo.marcar_escala` | falta | existe (lateral) |
+| 44 | Marcar dia da escala | Pessoas | Popup (hoje lateral) | Escala | `nucleo.marcar_escala` | falta | existe (popup) |
 | 45 | Editar operação | Operações | Popup | Cadastro de operação | atualização com versão (sem função própria) | falta | existe |
 | 46 | Incluir, editar e arquivar item de catálogo | Cadastros | Popup | Catálogos | atualização com versão (sem função própria) | falta | existe |
 | 47 | Editar o dia do corte | Cadastros | Popup | Competência gerencial | `gravarDiaDoCorte` (parâmetro em `config`) | falta | existe |
 | 48 | Mudar acesso | Administração | Popup | Acesso de usuários | `nucleo.vincular_usuario` | falta | existe |
-| 49 | Mini-cadastro (o "+" do campo de seleção) | Transversal | **Popup empilhado** (hoje lateral) | O do assistente de baixo | `nucleo.criar_cr` e catálogos | falta | existe (lateral) |
+| 49 | Mini-cadastro (o "+" do campo de seleção) | Transversal | **Popup empilhado** (hoje lateral) | O do assistente de baixo | `nucleo.criar_cr` e catálogos | falta | existe (popup empilhado, N1) |
 | 50 | Assistente de teste (demonstração) | Administração | Popup | Nenhum (vitrine de desenvolvimento) | nada | falta (não precisa) | existe |
+| 51 | Conciliar o mês (justificar em lote e travar) | Parceiros | Popup | Conciliação do mês | `nucleo.justificar_diferencas_em_lote`, `nucleo.conferir_mes_do_acionista` | falta (decisão de 17/11) | existe (PR #44) |
 
-Total: **50 assistentes**. Desenho feito: 9 (4, 7, 8, 10, 13, 15, 19, 24 e 30). Parcial: 8 (5, 6, 11, 25 a 28 e 33). **Falta:
+Total: **51 assistentes** (coluna Construção conferida no código em 17/11/2026). Desenho feito: 9 (4, 7, 8, 10, 13, 15, 19, 24 e 30). Parcial: 8 (5, 6, 11, 25 a 28 e 33). **Falta:
 33**; a lista está no fim, em "Os que não têm desenho".
 
 Fora do inventário, por não serem assistentes: **Pegar tarefa** (clique direto, uma pessoa só consegue), **Aceitar,
@@ -317,6 +318,13 @@ documento depois. Grava `nucleo.cadastrar_parceiro`. Desenho: falta. Estado: exi
 
 **39. Justificar diferença.** Gatilho: linha da Conciliação do mês. Passos: Motivo, Conferir. Regra: não muda o fato; só explica a
 diferença do CR no mês. Grava `nucleo.justificar_diferenca`. Desenho: falta. Estado: existe.
+
+**51. Conciliar o mês.** Gatilho: botão na Conciliação com um parceiro escolhido e o mês aberto, ou Ctrl+K
+(`?assistente=conciliar-o-mes`). Passos: Justificar (um motivo por diferença sem justificativa), Travar o mês
+(ciência), Conferir. Regra: o lote é tudo ou nada; só com zero pendências o mês do acionista fica conferido e
+trava; depois disso nenhuma justificativa nova entra e a correção é ajuste de período anterior, registrado.
+Quem pode: Parceiros › criar e editar. Grava `nucleo.justificar_diferencas_em_lote` e
+`nucleo.conferir_mes_do_acionista`. Desenho: falta. Estado: existe (PR #44).
 
 **40. Nova locação.** Gatilho: botão em Parceiros › Locação. Passos: Contrato (parceiro, placa), Vigência e valor, Conferir.
 Regra: vigência com início e fim sem sobreposição; valor mensal em `numeric(15,2)`. Grava `nucleo.cadastrar_locacao`. Desenho: falta.

@@ -8,6 +8,21 @@ Modelo de entrada:
 
 ---
 
+## 17/11/2026 — Conciliar o mês: wizard em dois passos e trava do mês do acionista
+
+- **Decisão (Alexandre):** "Conciliar o mês" é um wizard em dois passos: (1) lista as diferenças sem justificativa e
+  permite justificar em lote; (2) só com zero pendências, marca o mês do acionista como conferido e trava. Depois de
+  travado, correção só como ajuste de período anterior, registrado.
+- **Construção (PR #44):** tabela `parceiros.conferencia_do_mes` (uma por acionista e mês, sem reabrir),
+  `nucleo.justificar_diferencas_em_lote` (tudo ou nada, pela `justificar_diferenca`), `nucleo.conferir_mes_do_acionista`
+  e a trava na `justificar_diferenca` (erro 55000 em mês conferido). pgTAP 125.
+- **Hipóteses (a revisar):** o "acionista" é o agrupador do Sankhya (o CR pai), como na Conciliação; conferir pede
+  Parceiros › editar e justificar Parceiros › criar (hoje Administrador e Diretoria); o assistente exige motivo para
+  TODAS as pendências (justificar só algumas continua pelo botão da linha); o "ajuste de período anterior" é o
+  Pedir ajuste de Resultados › Ajustes (N2), sem tela nova; não há e2e que confira o mês, porque no localhost ele
+  travaria um mês real de acionista (só o pgTAP, os testes de regra, de esquema e de dados).
+- **Quem decidiu:** Alexandre (regra); hipóteses de construção pelo agente, registradas aqui.
+
 ## 13/11/2026 — Nível 3, banco (agente de banco, modo autônomo): hipóteses registradas
 
 Cada linha é uma hipótese escolhida pela forma mais simples, a revisar por Alexandre (branch `n3-banco`).
