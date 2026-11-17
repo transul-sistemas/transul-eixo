@@ -8,6 +8,35 @@ Modelo de entrada:
 
 ---
 
+## 13/11/2026 — Nível 2, tela (agente de tela, modo autônomo): hipóteses registradas
+
+Cada linha é uma hipótese escolhida pela forma mais simples, a revisar por Alexandre (branch `n2-tela`).
+
+- **Tela de painel genérica** (`components/paineis/`): as 15 telas que eram estrutura leem de **uma função do banco por tela** (`nucleo.<nome>`, lista em `lib/dados/paineis.ts`) que devolve KPIs, gráficos, chips com contagem e a página da tabela num formato único (`lib/dados/painel-tipos.ts`; dinheiro em reais, a tela converte para centavos). O agente de banco cria as funções nesse contrato.
+- **Sem a função no banco:** fora de produção a tela usa o exemplo (`lib/exemplo/paineis.ts`) com o aviso "Dados de exemplo"; em produção mostra "Sem dados ainda: depende de nucleo.<nome>" e o assistente diz que a gravação ainda não existe.
+- **Assistentes de painel** (Fechar mês, Reabrir mês, Pedir ajuste, Registrar status do dia, Indicar substituto, Lançar abastecimento) lidos de uma definição só (`lib/dominio/esquemas/paineis.ts`), mesmo Zod na tela e no servidor; Fechar e Reabrir pedem `resultados.editar`, Pedir ajuste `resultados.criar`.
+- **Status do dia e Indicar substituto** gravam pelas funções do A6 (`lancar_status_do_motorista`, `indicar_substituto`); o período do substituto é `[início, fim)` (o fim é o dia em que o titular volta) e o motivo é obrigatório. A lista da tela continua pelo exemplo até existir `nucleo.status_diario_das_pessoas`.
+- **Lote no Pátio e nas Ordens:** Aceitar placas, Concluir carregamentos e Liberar viagens pela função do n2-banco `avancar_no_patio_em_lote` (tudo ou nada), seleção só da página, resultado "X de Y" com as recusas para tirar do lote. KPIs do Totem por `kpis_do_operacional`. Devolver ao gestor fica fora do lote (pede motivo por placa). Sem entrada no Ctrl+K (o teste de ações proíbe ações do módulo Operacional).
+- **Lançar abastecimento** grava em `lancar_abastecimento_provisorio` (n2-banco): a tela pede a placa e o servidor acha o ativo vigente em `nucleo.placa_do_ativo`; combustível e posto ficam nulos. A lista dos lançados vem de `abastecimento_do_mes_v2` (provisórios à parte).
+- **Adaptadores:** Comparativo e Por operação leem `resultado_por_operacao(p_mes)` e a Análise de Operações `variacao_das_operacoes(p_mes)` (contratos do n2-banco), rearranjados no formato da tela de painel em `lib/dados/paineis-adaptadores.ts`; o recorte da tabela (página, chip, busca) é feito no servidor, sobre a lista de operações.
+- **Resultados ligados ao banco (n2-banco final):** Fechamentos por `fechamentos_do_resultado` (Fechar mês só oferece o `mes_que_pode_fechar` ainda não fechado), Ajustes por `ajustes_do_resultado` (o chip é a situação; a busca não filtra), Maturação por `maturacao_da_divida` (só títulos com saldo). "Pedir ajuste" pede linha (receita, custo da frota, custo de serviço) e sentido (somar ou subtrair), sem CR (`p_cr_id` nulo). "Decidir ajuste" e "Conferir abastecimento" são popups novos; a opção leva `id:versão` para a edição concorrente; os pedidos oferecidos são só os da página.
+- **Status diário ligado ao banco:** contagem por `motoristas_no_dia`, linhas por `linha_do_motorista(hoje, hoje)` e avisos por `ferias_sem_substituto`. O substituto é escolhido entre os motoristas do dia (sem lista de todas as pessoas). "Encerrar substituição" fica sem popup (falta a leitura das substituições com id fora da ficha do conjunto).
+- **Resumo do dia** passa a aparecer para Gestor de frota e Operacional (módulo Início). A `TelaDeEsqueleto` saiu por falta de uso.
+
+## 13/11/2026 — Nível 2, banco (agente de banco, modo autônomo): hipóteses registradas
+
+Cada linha é uma hipótese escolhida pela forma mais simples, a revisar por Alexandre (branch `n2-banco`).
+
+- **A6, motorista do conjunto** em tabela própria (`pessoas.motorista_do_conjunto`, vigência `[início, fim)`, um por conjunto e um conjunto por motorista), não em `pessoas.vinculo` (que liga pessoa a operação). Sem a coluna `turno` (dois motoristas por conjunto fora).
+- **A6, quem grava:** Pessoas › editar (escopo tudo) ou o gestor da carteira do conjunto (status do dia com Frota › criar; vínculo e substituição com Frota › editar). **Quem lê as tabelas:** só Pessoas › ver em escopo tudo (o Operacional de filial não lê); o gestor lê pelas funções recortadas (nome e código).
+- **A6, FRD = feriado** (nome a confirmar); os totais do mês agrupam trabalho (TBV, TBE, TBX), folga, férias, atestado, feriado e falta.
+- **A6, Indicar substituto** não cria escala do substituto: a substituição é o registro; a tarefa é a leitura `nucleo.ferias_sem_substituto()` (férias FE na escala do titular nos próximos `dias_para_indicar_substituto` = 10 dias) e não entra em `tarefas_do_usuario`. Encerrar na data do início cancela (exclusão lógica com motivo).
+- **Abastecimento provisório:** lança o gestor da carteira (Frota › criar); confere quem tem Frota › editar na placa; "conferido" exige o id de origem do Sankhya da mesma placa (um por origem); a leitura v2 é a v1 intacta mais os provisórios à parte.
+- **Operacional:** KPIs numa função só (`kpis_do_operacional`); o lote do pátio é tudo ou nada, como o Lançar o dia em lote.
+- **Operações:** a ficha já tinha todas as abas e a receita em duas linhas; a aba Documentos segue sem fonte (contratos). Comparativo e Resultados › Por operação usam a MESMA leitura (`resultado_por_operacao`), com "fora das operações" explícito para bater com a Visão geral.
+- **Fechar o mês:** só a Diretoria; só depois do corte do mês seguinte, pelo calendário (`ultimo_mes_que_pode_fechar`); a conferência de exceções vencidas e do total (I2) fica para a P3. A demonstração não fecha mês (congelaria um mês real).
+- **Ajuste:** pede quem tem Resultados › criar, de qualquer mês até o atual (não só do mês fechado); decide só a Diretoria e quem pede não decide; o aprovado não entra na Visão geral nem na foto nesta versão.
+- **Maturação:** base `dt_competencia` (o staging não traz DTNEG nem a origem da renegociação); "pago" é o valor líquido dos baixados; período em `config.parametro` (01/05/2025 a 31/05/2026).
 ## 13/11/2026 — Nível 1, banco (agente de banco, modo autônomo): hipóteses registradas
 
 Cada linha é uma hipótese escolhida pela forma mais simples, a revisar por Alexandre (branch `n1-banco`).

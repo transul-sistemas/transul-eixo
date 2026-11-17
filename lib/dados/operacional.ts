@@ -178,6 +178,42 @@ export async function lerOrdens(
   };
 }
 
+export interface KpisDoOperacional {
+  noPatio: number;
+  naFila: number;
+  maiorEsperaMin: number | null;
+  tempoMedioNoPatioMin: number | null;
+  ordensAbertas: number;
+  ordensCriadasHoje: number;
+  ordensEmViagemHoje: number;
+}
+
+/** Os KPIs do Pátio, do Totem e das Ordens, prontos no banco (nucleo.kpis_do_operacional). */
+export async function lerKpisDoOperacional(
+  cliente: () => Promise<ClienteDoOperacional> = clienteDaSessao,
+): Promise<KpisDoOperacional> {
+  const c = await cliente();
+  const d = await ler<{
+    no_patio: number;
+    na_fila: number;
+    maior_espera_min: number | null;
+    tempo_medio_no_patio_min: number | null;
+    ordens_abertas: number;
+    ordens_criadas_hoje: number;
+    ordens_em_viagem_hoje: number;
+  }>(c, "kpis_do_operacional", {});
+  return {
+    noPatio: Number(d.no_patio),
+    naFila: Number(d.na_fila),
+    maiorEsperaMin: d.maior_espera_min === null ? null : Number(d.maior_espera_min),
+    tempoMedioNoPatioMin:
+      d.tempo_medio_no_patio_min === null ? null : Number(d.tempo_medio_no_patio_min),
+    ordensAbertas: Number(d.ordens_abertas),
+    ordensCriadasHoje: Number(d.ordens_criadas_hoje),
+    ordensEmViagemHoje: Number(d.ordens_em_viagem_hoje),
+  };
+}
+
 /** As operações para o assistente "Criar ordem" (as não excluídas, pelo nome; desempate pelo id). */
 export async function lerOperacoes(
   cliente: () => Promise<ClienteDoOperacional> = clienteDaSessao,
@@ -240,6 +276,45 @@ export async function gravarAvancoNoPatio(
   const r = data as { sigla: string | null } | null;
   if (!r) return erroDaAcao("falha");
   return sucesso({ ativoId: entrada.ativoId, placa: entrada.placa, sigla: r.sigla });
+}
+
+/**
+ * Avança várias placas de uma vez pela função do lote (tudo ou nada: com uma recusa, nenhuma avança e o
+ * banco devolve cada recusada com o motivo). Uma chave de envio para o lote inteiro.
+ */
+export async function gravarAvancoEmLote(
+  acao: "aceitar" | "concluir" | "liberar",
+  ativos: string[],
+  chave: string,
+  cliente: () => Promise<ClienteDoOperacional> = clienteDaSessao,
+): Promise<
+  ResultadoDaAcao<{
+    total: number;
+    avancados: number;
+    recusados: { ativoId: string; motivo: string }[];
+  }>
+> {
+  const c = await cliente();
+  const { data, error } = await c.schema("nucleo").rpc("avancar_no_patio_em_lote", {
+    p_ativos: ativos,
+    p_acao: acao,
+    p_motivo: null,
+    p_chave: chave,
+  });
+  if (error) return resultadoDoErro(error);
+  const r = data as {
+    total: number;
+    avancados: number | null;
+    recusados: { ativo_id: string; motivo: string }[];
+    repetido: boolean;
+  } | null;
+  if (!r) return erroDaAcao("falha");
+  return sucesso({
+    total: r.total,
+    // Envio repetido: o lote já foi gravado inteiro antes.
+    avancados: r.repetido ? r.total : (r.avancados ?? 0),
+    recusados: r.recusados.map((x) => ({ ativoId: x.ativo_id, motivo: x.motivo })),
+  });
 }
 
 export async function gravarOrdem(

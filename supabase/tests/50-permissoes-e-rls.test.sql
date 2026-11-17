@@ -9,7 +9,7 @@
 begin;
 \ir apoio/como_usuario.psql
 
-select plan(76);
+select plan(77);
 
 -- Os ids ficam em configurações da transação (o papel authenticated não lê tabela temporária).
 create function pg_temp.id(p_nome text) returns uuid language sql as $$
@@ -212,9 +212,29 @@ select set_eq(
     -- Saúde do CR, CR1 (testadas em 117-saude-do-cr.test.sql).
     'nucleo.classificacao_de_centro.classificacao_de_centro_ler', 'nucleo.dono_de_problema.dono_de_problema_ler',
     -- Programado, A2 (testada em 118-lancar-o-dia.test.sql).
-    'nucleo.situacao_programada.situacao_programada_ler'
+    'nucleo.situacao_programada.situacao_programada_ler',
+    -- Abastecimento provisório, Nível 2 (testada em 120-abastecimento-provisorio.test.sql).
+    'nucleo.abastecimento_provisorio.abastecimento_provisorio_ler'
   ],
   'as políticas de cada tabela, com o nome de cada uma (todas testadas abaixo ou na matriz)'
+);
+-- Nível 2 (13/11/2026): as políticas dos esquemas dos módulos, com o nome de cada uma. Cada uma é testada com o
+-- usuário de cada perfil no arquivo do módulo (operacional: 91 e 92; parceiros: 99; pessoas: 98 e 119; financeiro: 123).
+select set_eq(
+  $$select schemaname || '.' || tablename || '.' || policyname from pg_policies
+     where schemaname in ('operacional', 'parceiros', 'pessoas', 'financeiro')$$,
+  array[
+    'operacional.chegada.chegada_ler', 'operacional.ordem_de_carregamento.ordem_de_carregamento_ler',
+    'parceiros.justificativa_da_conciliacao.justificativa_da_conciliacao_ler', 'parceiros.locacao.locacao_ler',
+    'parceiros.parceiro.parceiro_ler',
+    'pessoas.funcao.funcao_ler', 'pessoas.vinculo.vinculo_ler', 'pessoas.marcacao_da_escala.marcacao_da_escala_ler',
+    -- A6 (119-motorista-do-conjunto.test.sql)
+    'pessoas.codigo_do_motorista.codigo_do_motorista_ler', 'pessoas.motorista_do_conjunto.motorista_do_conjunto_ler',
+    'pessoas.status_do_motorista.status_do_motorista_ler', 'pessoas.substituicao_do_motorista.substituicao_do_motorista_ler',
+    -- Fechamento e ajuste (123-fechamento-ajuste-e-maturacao.test.sql)
+    'financeiro.fechamento_do_mes.fechamento_do_mes_ler', 'financeiro.ajuste.ajuste_ler'
+  ],
+  'as políticas dos esquemas dos módulos (operacional, parceiros, pessoas, financeiro), com o nome de cada uma'
 );
 select is(
   (select count(*) from information_schema.role_table_grants

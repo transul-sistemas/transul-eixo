@@ -21,6 +21,14 @@ describe("ações dos assistentes da Frota", () => {
       "frota.trocar-cr",
       "frota.pedir-baixa",
       "cadastros.resolver-saude-do-cr",
+      "frota.lancar-abastecimento",
+      "resultados.fechar-mes",
+      "resultados.reabrir-mes",
+      "resultados.pedir-ajuste",
+      "pessoas.registrar-status-do-dia",
+      "pessoas.indicar-substituto",
+      "frota.conferir-abastecimento",
+      "resultados.decidir-ajuste",
     ]);
     expect(ACOES.map((a) => a.nome)).toEqual([
       "Cadastrar placa",
@@ -39,6 +47,14 @@ describe("ações dos assistentes da Frota", () => {
       "Trocar CR",
       "Pedir baixa",
       "Resolver a saúde do CR",
+      "Lançar abastecimento",
+      "Fechar mês",
+      "Reabrir mês",
+      "Pedir ajuste",
+      "Registrar status do dia",
+      "Indicar substituto",
+      "Conferir abastecimento",
+      "Decidir ajuste",
     ]);
     expect(ACOES.every((a) => a.estado === "pronto")).toBe(true);
   });
@@ -61,6 +77,15 @@ describe("ações dos assistentes da Frota", () => {
       "frota.trocar-cr": "/frota/placas?assistente=trocar-cr",
       "frota.pedir-baixa": "/frota/placas?assistente=pedir-baixa",
       "cadastros.resolver-saude-do-cr": "/cadastros/saude-do-cr",
+      "frota.lancar-abastecimento": "/frota/abastecimento?assistente=lancar-abastecimento",
+      "resultados.fechar-mes": "/resultados/fechamentos?assistente=fechar-mes",
+      "resultados.reabrir-mes": "/resultados/fechamentos?assistente=reabrir-mes",
+      "resultados.pedir-ajuste": "/resultados/ajustes?assistente=pedir-ajuste",
+      "pessoas.registrar-status-do-dia":
+        "/pessoas/status-diario?assistente=registrar-status-do-dia",
+      "pessoas.indicar-substituto": "/pessoas/status-diario?assistente=indicar-substituto",
+      "frota.conferir-abastecimento": "/frota/abastecimento?assistente=conferir-abastecimento",
+      "resultados.decidir-ajuste": "/resultados/ajustes?assistente=decidir-ajuste",
     });
   });
   it("cada ação pertence a um módulo do catálogo, e a permissão é a desse módulo", () => {

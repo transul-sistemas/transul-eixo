@@ -1,6 +1,7 @@
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { FUNCOES_DOS_PAINEIS } from "@/lib/dados/paineis";
 import { CATALOGO, todasAsTelas } from "./catalogo";
 
 // A regra "rota ⇔ catálogo": toda rota do catálogo tem página, e nenhuma página existe fora dele.
@@ -89,17 +90,22 @@ describe("rotas e catálogo", () => {
   });
 });
 
-describe("páginas das telas esqueleto", () => {
-  it.each(telas.filter((t) => t.estado === "esqueleto").map((t) => [t.rota] as const))(
-    "%s usa TelaDeEsqueleto e o título do catálogo, com a mesma rota",
-    (rota) => {
-      const arquivo = `app/(sistema)${rota}/page.tsx`;
-      expect(existsSync(arquivo), arquivo).toBe(true);
-      const codigo = readFileSync(arquivo, "utf-8");
-      expect(codigo).toContain(`metadataDaTela("${rota}")`);
-      expect(codigo).toContain(`<TelaDeEsqueleto rota="${rota}" />`);
-    },
-  );
+describe("páginas das telas de painel", () => {
+  it("nenhuma tela é esqueleto ao fim da Fase 1", () => {
+    expect(telas.filter((t) => t.estado === "esqueleto").map((t) => t.id)).toEqual([]);
+  });
+  it.each(
+    Object.keys(FUNCOES_DOS_PAINEIS).filter(
+      (id) => id.split(".")[1] !== "abastecimento-provisorio",
+    ),
+  )("%s usa TelaDePainel com o mesmo id e a rota do catálogo", (id) => {
+    const tela = telas.find((t) => t.id === id);
+    expect(tela, id).toBeDefined();
+    const codigo = readFileSync(`app/(sistema)${tela?.rota}/page.tsx`, "utf-8");
+    expect(codigo).toContain(`const ROTA = "${tela?.rota}";`);
+    expect(codigo).toContain(`id="${id}"`);
+    expect(codigo).toContain("<TelaDePainel");
+  });
 });
 
 describe("a raiz", () => {

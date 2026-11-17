@@ -348,3 +348,7 @@ export async function contarParaReceberNoExemplo(hoje: string): Promise<number> 
   return armazemDoProcesso(hoje, await sessaoDeExemplo()).pedidosParaReceber(GESTOR_DO_EXEMPLO)
     .length;
 }
+
+// As telas de painel da Fase 1 (Comparativo, Análise, Resultados, Pessoas): o papel das funções do
+// banco que ainda não existem. Só por lib/dados/fonte.ts (porta única do exemplo).
+export { gravarPainelDeExemplo, lerPainelDeExemplo } from "@/lib/exemplo/paineis";

@@ -179,3 +179,27 @@ export async function contarParaReceber(hoje: string): Promise<number> {
   const { contarParaReceberNoExemplo } = await import("./fonte-de-exemplo");
   return contarParaReceberNoExemplo(hoje);
 }
+
+/**
+ * A leitura de exemplo de uma tela de painel (lib/dados/paineis.ts decide quando usá-la: com
+ * `EIXO_DADOS=exemplo`, ou fora de produção enquanto a função do banco não existe).
+ */
+export async function lerPainelPeloExemplo(
+  id: string,
+  estado: { mes: string | null; filtro: string | null; busca: string; pagina: number; tam: number },
+  hoje: string,
+): Promise<unknown> {
+  const { lerPainelDeExemplo } = await import("./fonte-de-exemplo");
+  return lerPainelDeExemplo(id, estado, hoje);
+}
+
+/** A gravação de exemplo de um assistente de painel (mesmas condições da leitura). */
+export async function gravarPainelPeloExemplo(
+  id: string,
+  dados: Record<string, unknown>,
+  chave: string,
+  hoje: string,
+): Promise<{ ok: true; linha: unknown } | { ok: false; mensagem: string }> {
+  const { gravarPainelDeExemplo } = await import("./fonte-de-exemplo");
+  return gravarPainelDeExemplo(id, dados, chave, hoje);
+}

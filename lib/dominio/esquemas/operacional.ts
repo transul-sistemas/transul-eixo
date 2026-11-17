@@ -67,6 +67,32 @@ export const esquemaAvancarNoPatio = z
   });
 export type EntradaAvancarNoPatio = z.infer<typeof esquemaAvancarNoPatio>;
 
+/** As ações que o pátio faz em lote (devolver pede o motivo de cada placa: fica fora do lote). */
+export const ACOES_EM_LOTE = ["aceitar", "concluir", "liberar"] as const;
+export type AcaoEmLote = (typeof ACOES_EM_LOTE)[number];
+
+/** Avançar várias placas de uma vez: cada placa é um pedido independente (uma recusa não derruba as outras). */
+export const esquemaAvancarEmLote = z.object({
+  acao: z.enum(ACOES_EM_LOTE, { message: "Escolha o que fazer com as placas." }),
+  placas: z
+    .array(z.object({ ativoId: z.uuid(), placa: z.string().min(1) }))
+    .min(1, { message: "Escolha pelo menos uma placa." })
+    .max(100, { message: "Escolha até 100 placas por vez." }),
+});
+export type EntradaAvancarEmLote = z.infer<typeof esquemaAvancarEmLote>;
+
+const FEITO_EM_LOTE: Record<AcaoEmLote, [string, string]> = {
+  aceitar: ["aceita", "aceitas"],
+  concluir: ["com carregamento concluído", "com carregamento concluído"],
+  liberar: ["liberada", "liberadas"],
+};
+
+/** "3 de 4 placas aceitas": o resultado do lote. */
+export function textoDoLote(acao: AcaoEmLote, feitas: number, total: number): string {
+  const [um, varios] = FEITO_EM_LOTE[acao];
+  return `${feitas} de ${total} ${total === 1 ? `placa ${um}` : `placas ${varios}`}.`;
+}
+
 /** Criar a ordem: a data prevista de saída é hoje ou depois (hoje em São Paulo, `aaaa-mm-dd`). */
 export function esquemaCriarOrdem(hoje: string) {
   return z.object({
