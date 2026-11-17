@@ -2,7 +2,8 @@ import { PaginasDaLista } from "@/app/(sistema)/operacional/navegacao-da-lista";
 import { FORMATOS_A_DIREITA, ValorFormatado } from "@/components/formato/valor";
 import { BotaoDoOlho } from "@/components/tabela/botao-do-olho";
 import { ListaVazia } from "@/components/tabela/estados";
-import type { TabelaDoPainel as Tabela } from "@/lib/dados/painel-tipos";
+import Link from "next/link";
+import type { AcaoDaLinha, TabelaDoPainel as Tabela } from "@/lib/dados/painel-tipos";
 import { cn } from "@/lib/utils";
 
 // A tabela da tela de painel: cabeçalho e primeira coluna fixos, rolagem lateral só dentro da caixa, o
@@ -14,8 +15,11 @@ export function TabelaDoPainel({
   enderecoDaPagina,
   enderecoDoTamanho,
   hrefLimpar,
+  enderecoDaAcao,
 }: {
   tabela: Tabela;
+  /** O endereço que abre o assistente da ação da linha, ou nulo quando o perfil não pode usá-la. */
+  enderecoDaAcao?: (acao: AcaoDaLinha) => string | null;
   enderecoDaPagina: (pagina: number) => string;
   enderecoDoTamanho: (tam: number) => string;
   /** Com filtro ou busca, o endereço sem eles. */
@@ -39,6 +43,11 @@ export function TabelaDoPainel({
   }
   const direita = (formato: Tabela["colunas"][number]["formato"]) =>
     FORMATOS_A_DIREITA.includes(formato);
+  const acoesDe = (l: Tabela["linhas"][number]) =>
+    (l.acoes ?? [])
+      .map((a) => ({ a, href: enderecoDaAcao?.(a) ?? null }))
+      .filter((x): x is { a: AcaoDaLinha; href: string } => x.href !== null);
+  const comAcoes = tabela.linhas.some((l) => acoesDe(l).length > 0);
   return (
     <section aria-label={tabela.titulo} className="flex min-w-0 flex-col gap-2">
       <h2 className="text-lg font-semibold">{tabela.titulo}</h2>
@@ -67,6 +76,14 @@ export function TabelaDoPainel({
                   {c.rotulo}
                 </th>
               ))}
+              {comAcoes ? (
+                <th
+                  scope="col"
+                  className="bg-muted border-border border-b px-3 py-2 text-left text-xs font-medium"
+                >
+                  Ações
+                </th>
+              ) : null}
               <th
                 scope="col"
                 className="bg-muted border-border w-14 border-b px-3 py-2 text-right text-xs font-medium"
@@ -100,6 +117,23 @@ export function TabelaDoPainel({
                     </td>
                   );
                 })}
+                {comAcoes ? (
+                  <td className="border-border border-b px-3 py-1.5 whitespace-nowrap">
+                    <span className="flex gap-2">
+                      {acoesDe(l).map(({ a, href }) => (
+                        <Link
+                          key={a.assistente}
+                          href={href}
+                          scroll={false}
+                          aria-label={`${a.rotulo}: ${l.item}`}
+                          className="border-input bg-card hover:bg-muted focus-visible:ring-ring/50 inline-flex h-8 items-center rounded-lg border px-2.5 text-xs outline-none focus-visible:ring-3"
+                        >
+                          {a.rotulo}
+                        </Link>
+                      ))}
+                    </span>
+                  </td>
+                ) : null}
                 <td className="border-border border-b px-3 py-2 text-right">
                   <BotaoDoOlho
                     item={l.item}

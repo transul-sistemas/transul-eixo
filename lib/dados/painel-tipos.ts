@@ -84,6 +84,19 @@ export interface LinhaDoPainel {
   detalhes: DetalheDoPainel[];
   /** A ficha da raiz (operação, pessoa, placa), quando houver. */
   href?: string;
+  /**
+   * As ações da linha: cada uma abre um assistente da tela em popup, já com os campos preenchidos
+   * (`?assistente=<id>&pre.<campo>=<valor>`). A tela só mostra as que o perfil pode usar.
+   */
+  acoes?: AcaoDaLinha[];
+}
+
+export interface AcaoDaLinha {
+  /** O id do assistente do painel (lib/dominio/esquemas/paineis.ts). */
+  assistente: string;
+  /** Verbo + objeto ("Reatribuir tarefa"). */
+  rotulo: string;
+  valores: Record<string, string>;
 }
 
 export interface TabelaDoPainel {

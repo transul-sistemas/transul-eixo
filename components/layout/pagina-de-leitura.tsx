@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { BotaoExportarCsv } from "@/components/tabela/botao-exportar-csv";
 import { cn } from "@/lib/utils";
 import { AvisoDeDadosCongelados } from "./aviso-de-dados-congelados";
 
@@ -9,6 +10,12 @@ interface Props {
   acoes?: ReactNode;
   /** A barra de consulta: busca, chips com contagem, mais filtros e visões salvas. */
   consulta?: ReactNode;
+  /**
+   * O endereço do CSV da lista (`enderecoDoCsv`): o botão "Exportar CSV" fica no fim das ações do título
+   * (na linha da barra de consulta ele roubava largura dos filtros e da faixa "Para receber").
+   * Toda lista do catálogo tem (lib/navegacao/exportacao.test.ts).
+   */
+  exportar?: string;
   /** A faixa de indicadores. */
   kpis?: ReactNode;
   children: ReactNode;
@@ -38,6 +45,7 @@ export function PaginaDeLeitura({
   descricao,
   acoes,
   consulta,
+  exportar,
   kpis,
   children,
   dadosAte,
@@ -65,9 +73,10 @@ export function PaginaDeLeitura({
             </p>
           ) : null}
         </div>
-        {acoes ? (
+        {acoes || exportar ? (
           <div role="group" aria-label="Ações" className="flex flex-wrap items-center gap-2">
             {acoes}
+            {exportar ? <BotaoExportarCsv href={exportar} /> : null}
           </div>
         ) : null}
       </div>

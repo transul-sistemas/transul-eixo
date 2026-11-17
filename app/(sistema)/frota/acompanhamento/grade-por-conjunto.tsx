@@ -42,6 +42,7 @@ import {
 } from "@/lib/navegacao/preferencias-da-tabela";
 import { cn } from "@/lib/utils";
 import type { SituacaoProgramada } from "@/lib/dados/lancar-o-dia-tipos";
+import { AbaRotaDoMes } from "./aba-rota-do-mes";
 import { LancarODia } from "./lancar-o-dia";
 import { LancarSituacao } from "./lancar-situacao";
 import { DecidirProgramada, ProgramarSituacao } from "./situacao-programada";
@@ -326,7 +327,7 @@ function periodoDoEngate(i: ImplementoDoConjunto): string {
  * As abas da barra lateral (A3, protótipos 4 e 7): Financeiro, Motorista, Combustível e Rota do mês. Só
  * leitura. Enquanto as fontes não chegam, cada aba diz de que depende (nunca R$ 0,00 nem "Crítico").
  */
-function abasDaBarraLateral(colunas: DiaDaColuna[]): AbaDoDetalhe[] {
+function abasDaBarraLateral(colunas: DiaDaColuna[], ativoId: string): AbaDoDetalhe[] {
   const hoje = colunas.findIndex((c) => c.hoje);
   const emCurso = hoje >= 0;
   const selo = emCurso ? (
@@ -367,21 +368,24 @@ function abasDaBarraLateral(colunas: DiaDaColuna[]): AbaDoDetalhe[] {
     {
       id: "rota",
       rotulo: "Rota do mês",
-      conteudo: (
-        <SemDadosAinda fonte="de posição do veículo">
-          <p>A rota não é inventada.</p>
-        </SemDadosAinda>
-      ),
+      conteudo:
+        colunas.length > 0 ? (
+          <AbaRotaDoMes ativoId={ativoId} de={colunas[0]!.dia} ate={colunas.at(-1)!.dia} />
+        ) : (
+          <SemDadosAinda fonte="de posição do veículo" />
+        ),
     },
   ];
 }
 
 function OlhoDaLinha({
   placa,
+  ativoId,
   detalhes,
   colunas,
 }: {
   placa: string;
+  ativoId: string;
   detalhes: DetalheDoItem[];
   colunas: DiaDaColuna[];
 }) {
@@ -392,7 +396,7 @@ function OlhoDaLinha({
         detalhes={detalhes}
         hrefDaFicha={`/frota/placas/${placa}`}
         titulo={<Placa placa={placa} tamanho="m" />}
-        abas={abasDaBarraLateral(colunas)}
+        abas={abasDaBarraLateral(colunas, ativoId)}
       />
     </div>
   );
@@ -553,7 +557,12 @@ function LinhaDoConjunto({
           <div key={c.dia} role="gridcell" />
         );
       })}
-      <OlhoDaLinha placa={conjunto.placa} detalhes={detalhes} colunas={colunas} />
+      <OlhoDaLinha
+        placa={conjunto.placa}
+        ativoId={conjunto.ativoId}
+        detalhes={detalhes}
+        colunas={colunas}
+      />
     </div>
   );
 }
@@ -629,6 +638,7 @@ function LinhaDaSolta({
       })}
       <OlhoDaLinha
         placa={placa.placa}
+        ativoId={placa.ativoId}
         colunas={colunas}
         detalhes={[
           { rotulo: "Tipo", valor: NOMES_DOS_TIPOS[placa.tipo] },

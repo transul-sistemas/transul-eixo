@@ -1,6 +1,7 @@
 import { IconLock } from "@tabler/icons-react";
 import Link from "next/link";
 import { connection } from "next/server";
+import { enderecoDoCsv } from "@/lib/navegacao/exportacao";
 import { formatarData, formatarMes } from "@/components/formato/data";
 import { Moeda } from "@/components/formato/moeda";
 import { formatarInteiro } from "@/components/formato/numero";
@@ -233,7 +234,12 @@ export async function PaginaDaConciliacao({ searchParams }: { searchParams: Para
   const parametros = paraParametros(await searchParams);
   const { titulo, descricao } = cabecalho();
   return (
-    <PaginaDeLeitura lista titulo={titulo} descricao={descricao}>
+    <PaginaDeLeitura
+      lista
+      titulo={titulo}
+      descricao={descricao}
+      exportar={enderecoDoCsv("parceiros.conciliacao", parametros)}
+    >
       {modoDosDados() !== "banco" ? (
         <ListaVazia
           titulo="A Conciliação lê só do banco"

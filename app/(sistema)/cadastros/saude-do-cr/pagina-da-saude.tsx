@@ -1,4 +1,5 @@
 import { IconChevronLeft, IconChevronRight } from "@tabler/icons-react";
+import { enderecoDoCsv } from "@/lib/navegacao/exportacao";
 import Link from "next/link";
 import { connection } from "next/server";
 import { formatarData, hojeEmSaoPaulo } from "@/components/formato/data";
@@ -119,7 +120,11 @@ export async function PaginaDaSaude({ searchParams }: { searchParams: Parametros
     resumo.problemas.find((x) => x.problema === p)?.quantidade ?? 0;
   const paginas = Math.max(1, Math.ceil(lista.total / lista.tamanho));
   return (
-    <PaginaDeLeitura titulo={titulo} descricao={descricao}>
+    <PaginaDeLeitura
+      titulo={titulo}
+      descricao={descricao}
+      exportar={enderecoDoCsv("cadastros.saude-do-cr", new URLSearchParams({ problema }))}
+    >
       <FaixaDeKpis
         kpis={[
           { id: "crs", rotulo: "CRs ativos", valor: formatarInteiro(resumo.cartoes.crs_ativos) },

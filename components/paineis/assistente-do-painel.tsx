@@ -1,9 +1,14 @@
 "use client";
 
 import { IconPlus } from "@tabler/icons-react";
-import { useRouter } from "next/navigation";
-import { useRef, useSyncExternalStore } from "react";
-import { Controller, type FieldValues, type Resolver } from "react-hook-form";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useRef, useState, useSyncExternalStore } from "react";
+import {
+  Controller,
+  type FieldValues,
+  type Resolver,
+  type UseFormRegisterReturn,
+} from "react-hook-form";
 import { gravarAssistenteDoPainelAcao } from "@/app/(sistema)/acoes-dos-paineis";
 import { errosDoResolvedor } from "@/app/(sistema)/frota/placas/assistentes/erros-do-resolvedor";
 import { formatarData } from "@/components/formato/data";
@@ -14,7 +19,10 @@ import { useUsuarioDaSessao } from "@/components/navegacao/usuario-da-sessao";
 import { Button } from "@/components/ui/button";
 import { Assistente } from "@/components/wizard/assistente";
 import { Campo, CLASSE_DO_CAMPO } from "@/components/wizard/campos";
-import { useAssistenteNaUrl } from "@/components/wizard/use-assistente-na-url";
+import {
+  PREFIXO_DO_PREENCHIDO,
+  useAssistenteNaUrl,
+} from "@/components/wizard/use-assistente-na-url";
 import type { OpcaoDoPainel } from "@/lib/dados/painel-tipos";
 import {
   ASSISTENTES_DOS_PAINEIS,
@@ -67,6 +75,51 @@ function textoDoValor(
   }
 }
 
+const semAcento = (t: string) => t.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+
+/** Seleção com busca: o campo de texto filtra as opções; a escolhida continua sempre na lista. */
+function SelecaoBuscavel({
+  rotulo,
+  lista,
+  atual,
+  acessivel,
+  registro,
+}: {
+  rotulo: string;
+  lista: readonly OpcaoDoPainel[];
+  atual: string;
+  acessivel: Record<string, unknown>;
+  registro: UseFormRegisterReturn;
+}) {
+  const [filtro, setFiltro] = useState("");
+  const termo = semAcento(filtro.trim());
+  const visiveis = termo
+    ? lista.filter((o) => o.id === atual || semAcento(o.nome).includes(termo))
+    : lista;
+  return (
+    <div className="flex flex-col gap-2">
+      <input
+        type="search"
+        value={filtro}
+        onChange={(e) => setFiltro(e.target.value)}
+        placeholder="Buscar pelo nome"
+        aria-label={`Buscar ${rotulo.toLowerCase()}`}
+        className={CLASSE_DO_CAMPO}
+      />
+      <select className={CLASSE_DO_CAMPO} {...acessivel} {...registro}>
+        <option value="">
+          {visiveis.length === 0 ? "Ninguém com esse nome" : "Escolha uma pessoa"}
+        </option>
+        {visiveis.map((o) => (
+          <option key={o.id} value={o.id}>
+            {o.nome}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
 export function BotaoDoAssistenteDoPainel({
   id,
   opcoes,
@@ -79,7 +132,16 @@ export function BotaoDoAssistenteDoPainel({
   const info = ASSISTENTES_DOS_PAINEIS[id];
   const usuario = useUsuarioDaSessao();
   const router = useRouter();
+  const parametros = useSearchParams();
   const { aberto, abrir, fechar } = useAssistenteNaUrl(id);
+  // A ação da linha abre o assistente já preenchido (`pre.<campo>` na URL).
+  const preenchidos: Record<string, string | number> = {};
+  for (const passo of info.passos) {
+    for (const c of passo.campos) {
+      const v = parametros.get(`${PREFIXO_DO_PREENCHIDO}${c.id}`);
+      if (v !== null) preenchidos[c.id] = c.tipo === "moeda" || c.tipo === "numero" ? Number(v) : v;
+    }
+  }
   const botao = useRef<HTMLButtonElement>(null);
   // O assistente monta só no navegador (o rascunho fica no localStorage).
   const noNavegador = useSyncExternalStore(
@@ -124,11 +186,14 @@ export function BotaoDoAssistenteDoPainel({
         <Assistente<Valores>
           definicao={definicao}
           resolver={resolver}
-          valoresIniciais={valoresIniciaisDoAssistente(id, hoje) as Valores}
+          valoresIniciais={{ ...valoresIniciaisDoAssistente(id, hoje), ...preenchidos } as Valores}
           validarRascunho={(v) =>
             typeof v === "object" && v !== null ? (v as Partial<Valores>) : null
           }
           usuario={usuario}
+          {...(Object.keys(preenchidos).length > 0
+            ? { registro: Object.values(preenchidos).join("|").slice(0, 120) }
+            : {})}
           focoFinal={botao}
           rotuloConcluir={info.titulo}
           mensagemConcluido={info.concluido}
@@ -192,7 +257,15 @@ export function BotaoDoAssistenteDoPainel({
                   return (
                     <Campo key={c.id} rotulo={c.rotulo} erro={erroDe(c.id)} ajuda={c.ajuda}>
                       {(acessivel) =>
-                        c.tipo === "selecao" ? (
+                        c.tipo === "selecao" && c.buscavel ? (
+                          <SelecaoBuscavel
+                            rotulo={c.rotulo}
+                            lista={lista}
+                            atual={String(form.watch(c.id) ?? "")}
+                            acessivel={acessivel}
+                            registro={form.register(c.id)}
+                          />
+                        ) : c.tipo === "selecao" ? (
                           <select
                             className={CLASSE_DO_CAMPO}
                             {...acessivel}

@@ -1,4 +1,5 @@
 import { IconChevronRight } from "@tabler/icons-react";
+import { enderecoDoCsv } from "@/lib/navegacao/exportacao";
 import Link from "next/link";
 import { connection } from "next/server";
 import { formatarInteiro } from "@/components/formato/numero";
@@ -102,7 +103,11 @@ export async function PaginaDasTarefas() {
   await connection();
   const { titulo, descricao } = cabecalho();
   return (
-    <PaginaDeLeitura titulo={titulo} descricao={descricao}>
+    <PaginaDeLeitura
+      titulo={titulo}
+      descricao={descricao}
+      exportar={enderecoDoCsv("inicio.tarefas")}
+    >
       {modoDosDados() !== "banco" ? (
         <ListaVazia
           titulo="As Tarefas leem só do banco"

@@ -51,6 +51,7 @@ export async function SecaoDoPainel({
           </p>
         ) : null}
         <FaixaDeKpis
+          rotulo={`Totais: ${(leitura.tabela.titulo || "Lançados à mão").toLowerCase()}`}
           kpis={leitura.kpis.map((k) => ({
             id: k.id,
             rotulo: k.rotulo,

@@ -214,7 +214,10 @@ select set_eq(
     -- Programado, A2 (testada em 118-lancar-o-dia.test.sql).
     'nucleo.situacao_programada.situacao_programada_ler',
     -- Abastecimento provisório, Nível 2 (testada em 120-abastecimento-provisorio.test.sql).
-    'nucleo.abastecimento_provisorio.abastecimento_provisorio_ler'
+    'nucleo.abastecimento_provisorio.abastecimento_provisorio_ler',
+    -- Processos e responsáveis, Nível 3 (testadas em 124-processos-e-responsaveis.test.sql).
+    'config.processo.processo_ler', 'nucleo.reatribuicao_de_tarefa.reatribuicao_de_tarefa_ler',
+    'nucleo.delegacao.delegacao_ler', 'nucleo.pedido_de_aprovacao.pedido_de_aprovacao_ler'
   ],
   'as políticas de cada tabela, com o nome de cada uma (todas testadas abaixo ou na matriz)'
 );

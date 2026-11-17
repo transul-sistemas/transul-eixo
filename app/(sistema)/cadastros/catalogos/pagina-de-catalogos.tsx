@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { enderecoDoCsv } from "@/lib/navegacao/exportacao";
 import { connection } from "next/server";
 import { formatarInteiro } from "@/components/formato/numero";
 import { PaginaDeLeitura } from "@/components/layout/pagina-de-leitura";
@@ -152,7 +153,20 @@ export async function PaginaDeCatalogos({ searchParams }: { searchParams: Parame
   const estado = { catalogo: definicao.id, busca, arquivados };
 
   return (
-    <PaginaDeLeitura lista titulo={titulo} descricao={descricao} consulta={consulta}>
+    <PaginaDeLeitura
+      lista
+      titulo={titulo}
+      descricao={descricao}
+      consulta={consulta}
+      exportar={enderecoDoCsv(
+        "cadastros.catalogos",
+        new URLSearchParams({
+          catalogo: definicao.id,
+          ...(busca ? { q: busca } : {}),
+          ...(arquivados ? { arquivados: "1" } : {}),
+        }),
+      )}
+    >
       <ParametroDoCorte dia={corte.dia} travado={corte.travado} />
       <p data-testid="resumo-da-pagina" className="text-muted-foreground text-sm">
         {pagina.total === 0
