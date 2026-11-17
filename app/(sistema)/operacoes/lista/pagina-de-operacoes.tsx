@@ -1,4 +1,5 @@
 import { IconAlertTriangle } from "@tabler/icons-react";
+import { enderecoDoCsv } from "@/lib/navegacao/exportacao";
 import { cookies } from "next/headers";
 import Link from "next/link";
 import { connection } from "next/server";
@@ -251,6 +252,7 @@ async function Conteudo({ parametros }: { parametros: URLSearchParams }) {
       titulo={titulo}
       descricao={descricao}
       consulta={<Barra contagens={dados.chips} />}
+      exportar={enderecoDoCsv("operacoes.lista", parametros)}
       dadosAte={dadosAte}
     >
       <SeletorDeMes

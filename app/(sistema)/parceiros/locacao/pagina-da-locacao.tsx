@@ -1,4 +1,5 @@
 import { connection } from "next/server";
+import { enderecoDoCsv } from "@/lib/navegacao/exportacao";
 import { Moeda } from "@/components/formato/moeda";
 import { formatarInteiro } from "@/components/formato/numero";
 import { FaixaDeKpis } from "@/components/layout/faixa-de-kpis";
@@ -102,10 +103,15 @@ async function Conteudo({ situacao }: { situacao: FiltroDaLocacao }) {
 
 export async function PaginaDaLocacao({ searchParams }: { searchParams: ParametrosDaBusca }) {
   await connection();
-  const situacao = lerLocacao(paraParametros(await searchParams));
+  const parametros = paraParametros(await searchParams);
+  const situacao = lerLocacao(parametros);
   const { titulo, descricao } = cabecalho();
   return (
-    <PaginaDeLeitura titulo={titulo} descricao={descricao}>
+    <PaginaDeLeitura
+      titulo={titulo}
+      descricao={descricao}
+      exportar={enderecoDoCsv("parceiros.locacao", parametros)}
+    >
       {modoDosDados() !== "banco" ? (
         <ListaVazia
           titulo="A Locação lê só do banco"

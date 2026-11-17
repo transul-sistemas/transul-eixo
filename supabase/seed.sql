@@ -200,6 +200,21 @@ insert into config.permissao_do_perfil (perfil, modulo, acao, escopo) values
   ('operacional', 'operacional', 'editar', 'filial'),
   ('operacional', 'pessoas', 'ver', 'filial');
 
+-- Processos e o perfil responsável (N3). Num banco que já existia, entram pela migration
+-- 20261119100000; aqui, num banco novo, depois dos perfis.
+insert into config.processo (codigo, nome, descricao, perfil_responsavel, prazo_em_horas) values
+  ('transferencia_de_placa', 'Transferência de placa', 'Quem recebe a placa confere e conclui (5 dias).', 'gestor_de_frota', 120),
+  ('confirmacao_da_carteira', 'Confirmação mensal da carteira', 'O gestor confirma as placas da carteira até o dia 5.', 'gestor_de_frota', 120),
+  ('excecoes_e_cadastro', 'Exceções e cadastro pendente', 'A fila de exceções do cadastro.', 'administrador', 72),
+  ('lancar_o_dia', 'Lançar o dia', 'A situação de cada placa até as 10h do dia seguinte.', 'gestor_de_frota', 34),
+  ('entrega_ao_operacional', 'Entrega ao Operacional e retorno', 'A custódia da placa no pátio da filial.', 'operacional', 24),
+  ('baixa_de_placa', 'Baixa de placa', 'A Diretoria decide a baixa pedida (quatro olhos).', 'diretoria', 72),
+  ('trocar_cr', 'Trocar CR', 'A troca do CR da placa.', 'gestor_de_frota', 72),
+  ('fechamento_mensal', 'Fechamento mensal', 'A Diretoria fecha o mês depois do corte.', 'diretoria', 240),
+  ('ajuste_do_resultado', 'Ajuste do resultado', 'A Diretoria decide o ajuste pedido (quem pede não decide).', 'diretoria', 72),
+  ('pedido_de_aprovacao', 'Pedido de aprovação', 'Aprovação ou permissão pedida à Diretoria (mês fechado, acesso).', 'diretoria', 48)
+on conflict (codigo) do nothing;
+
 -- Papéis da pessoa (o gestor da carteira exige o de gestor de frota).
 insert into config.papel (codigo, nome) values
   ('gestor_de_frota', 'Gestor de frota'),

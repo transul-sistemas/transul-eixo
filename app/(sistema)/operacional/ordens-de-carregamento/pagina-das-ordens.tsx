@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import { enderecoDoCsv } from "@/lib/navegacao/exportacao";
 import { connection } from "next/server";
 import { hojeEmSaoPaulo } from "@/components/formato/data";
 import { formatarInteiro } from "@/components/formato/numero";
@@ -140,10 +141,15 @@ export async function PaginaDasOrdens({ searchParams }: { searchParams: Parametr
     (await cookies()).get(NOME_DO_COOKIE_DO_TAMANHO)?.value,
     20,
   );
-  const estado = lerOrdensDaUrl(paraParametros(await searchParams), tamLembrado);
+  const parametros = paraParametros(await searchParams);
+  const estado = lerOrdensDaUrl(parametros, tamLembrado);
   const { titulo, descricao } = cabecalho();
   return (
-    <PaginaDeLeitura titulo={titulo} descricao={descricao}>
+    <PaginaDeLeitura
+      titulo={titulo}
+      descricao={descricao}
+      exportar={enderecoDoCsv("operacional.ordens-de-carregamento", parametros)}
+    >
       {modoDosDados() !== "banco" ? (
         <ListaVazia
           titulo="As Ordens de carregamento leem só do banco"

@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import { enderecoDoCsv } from "@/lib/navegacao/exportacao";
 import Link from "next/link";
 import { connection } from "next/server";
 import { Suspense } from "react";
@@ -165,7 +166,13 @@ export async function PaginaDoAbastecimento({ searchParams }: { searchParams: Pa
   const parametros = paraParametros(await searchParams);
   const { titulo, descricao } = cabecalho();
   return (
-    <PaginaDeLeitura lista titulo={titulo} descricao={descricao} consulta={<Barra />}>
+    <PaginaDeLeitura
+      lista
+      titulo={titulo}
+      descricao={descricao}
+      consulta={<Barra />}
+      exportar={enderecoDoCsv("frota.abastecimento", parametros)}
+    >
       {/* Abastecimento v2: o lançamento à mão (provisório) e a lista dos lançados, nos dois modos. */}
       <Suspense fallback={<EsqueletoDaTabela linhas={3} rotulo="Carregando os lançados à mão" />}>
         <SecaoDoPainel
