@@ -3131,6 +3131,9 @@ isOneToOne: false
 "resumo_da_saude_do_cr":
 { Args: Record<PropertyKey, never>; Returns: Json
                            },
+"resumo_do_dia":
+{ Args: { "p_busca"?: string,"p_filtro"?: string,"p_mes"?: string,"p_pagina"?: number,"p_tam"?: number }; Returns: Json
+                           },
 "revogar_correcao":
 { Args: { "p_correcao_id": string,"p_motivo": string }; Returns: undefined
                            },
