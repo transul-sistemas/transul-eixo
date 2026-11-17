@@ -52,6 +52,28 @@ export const esquemaJustificarDiferenca = z.object({
 });
 export type EntradaJustificarDiferenca = z.infer<typeof esquemaJustificarDiferenca>;
 
+/**
+ * Conciliar o mês (Alexandre, 17/11/2026): as pendências do acionista justificadas em lote e a ciência
+ * de que o mês trava depois de conferido. Sem pendências, o lote vem vazio e só a conferência grava.
+ */
+export const esquemaConciliarOMes = z.object({
+  agrupadorId: z.uuid({ message: "Escolha o parceiro." }),
+  mes: z.string().regex(/^\d{4}-\d{2}$/, { message: "Escolha o mês da conciliação." }),
+  justificativas: z
+    .array(
+      z.object({
+        crId: z.uuid({ message: "Escolha a linha da conciliação." }),
+        motivo: esquemaJustificarDiferenca.shape.motivo,
+      }),
+    )
+    .max(500, { message: "Use até 500 linhas por vez." })
+    .refine((itens) => new Set(itens.map((i) => i.crId)).size === itens.length, {
+      message: "A mesma linha apareceu duas vezes: feche e abra o assistente de novo.",
+    }),
+  ciente: z.literal(true, { message: "Confirme que o mês trava depois de conferido." }),
+});
+export type EntradaConciliarOMes = z.infer<typeof esquemaConciliarOMes>;
+
 export const esquemaCadastrarLocacao = z
   .object({
     parceiroId: z.uuid({ message: "Escolha o parceiro." }),

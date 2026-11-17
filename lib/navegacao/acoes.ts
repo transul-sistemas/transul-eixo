@@ -299,6 +299,17 @@ export const ACOES: readonly AcaoDoCatalogo[] = [
       "Diz quem cobre quem e por quanto tempo: as tarefas vão ao substituto no período e voltam no fim.",
     rota: "/admin/processos?assistente=delegar-tarefas",
   },
+  {
+    id: "parceiros.conciliar-o-mes",
+    nome: "Conciliar o mês",
+    icone: "IconChecklist",
+    modulo: "parceiros",
+    permissao: { modulo: "parceiros", acao: "criar" },
+    estado: "pronto",
+    descricao:
+      "Justifica em lote as diferenças do acionista e, sem pendências, confere e trava o mês.",
+    rota: "/parceiros/conciliacao?assistente=conciliar-o-mes",
+  },
 ];
 
 function nomeDoModulo(id: IdDoModulo): string {
