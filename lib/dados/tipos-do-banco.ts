@@ -2361,6 +2361,12 @@ isOneToOne: false
 "analise_da_frota":
 { Args: { "p_agrupamento"?: string,"p_filial"?: string,"p_mes": string,"p_operacao_id"?: string }; Returns: Json
                            },
+"analise_das_pessoas":
+{ Args: { "p_busca"?: string,"p_filtro"?: string,"p_mes"?: string,"p_pagina"?: number,"p_tam"?: number }; Returns: Json
+                           },
+"analise_do_operacional":
+{ Args: { "p_busca"?: string,"p_filtro"?: string,"p_mes"?: string,"p_pagina"?: number,"p_tam"?: number }; Returns: Json
+                           },
 "aprovar_baixa":
 { Args: { "p_chave"?: string,"p_pedido_id": string,"p_versao": number }; Returns: string
                            },

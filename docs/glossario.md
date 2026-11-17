@@ -103,6 +103,20 @@ Hipóteses da primeira versão (docs/decisoes.md, "Nível 2, banco"); cada núme
 | Valor ajustado | Soma dos ajustes aprovados do mês (com sinal). Não entra na Visão geral nem na foto nesta versão. `nucleo.ajustes_do_resultado`. |
 | Maturação | Títulos de despesa do período (`maturacao_inicio` a `maturacao_fim`, base `dt_competencia`), sem provisão e sem invalidados: negociado = valor líquido; pago = valor líquido dos baixados; saldo = negociado − pago; quitado = pago ÷ negociado. `nucleo.maturacao_da_divida`. |
 
+## Nível 3 (17/11/2026): análises do Operacional e de Pessoas
+
+Cada número sai de uma função só; nenhuma tela recalcula.
+
+| Termo | O que é |
+| --- | --- |
+| Passagem pelo Operacional | Sequência de eventos DOp, ACe, CAr e CAn da placa (camada atividade) que termina no evento seguinte; só conta a que termina num ETc, no mês do ETc ([início, fim) em São Paulo). `nucleo.analise_do_operacional`. |
+| Tempo de cada etapa | Minutos do evento DOp, ACe, CAr ou CAn ao próximo evento da placa, somados na passagem. `nucleo.analise_do_operacional`. |
+| Espera para carregar | DOp + ACe da passagem (até o carregamento começar). Média e maior do mês. `nucleo.analise_do_operacional`. |
+| Ciclo até o ETc | Minutos do primeiro evento da passagem ao ETc. `nucleo.analise_do_operacional`. |
+| Efetivo médio | Média, pelos dias do mês até hoje, das pessoas com vínculo vigente no dia. `nucleo.analise_das_pessoas`. |
+| Ausência (Pessoas) | Dia de férias (FE) ou atestado (AT) na escala; folga não é ausência. `nucleo.analise_das_pessoas`. |
+| Rotatividade | Desligamentos do mês (vínculo que termina no mês sem outro que comece no mesmo dia) ÷ efetivo médio × 100, com uma casa. `nucleo.analise_das_pessoas`. |
+
 ## Processos e vínculos com história
 
 Definições do desenho de 11/11/2026 (`docs/gerenciador-de-processos.md` e `docs/vinculos-com-historia.md`). Ainda não construído; nenhuma tela calcula isto do seu jeito.

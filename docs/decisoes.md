@@ -8,6 +8,23 @@ Modelo de entrada:
 
 ---
 
+## 17/11/2026 — Análises do Operacional e de Pessoas no banco; telas sem fonte (hipóteses)
+
+- **Operacional › Análise** (`nucleo.analise_do_operacional`): a passagem é a sequência DOp, ACe, CAr e CAn
+  que termina no ETc; conta no mês do ETc, no horário de São Paulo. A filial é a da garagem da base da
+  operação da placa no início da passagem. A leitura olha 31 dias antes da série para achar o começo da
+  passagem. Os eventos reais de hoje são, na maioria, por dia: as médias ficam em dias até o pátio lançar
+  com hora.
+- **Pessoas › Análise** (`nucleo.analise_das_pessoas`): ausência é FE ou AT na escala (folga não);
+  desligamento é o vínculo que termina no mês sem outro no mesmo dia (para o Operacional, que vê só a
+  filial, uma troca para outra filial aparece como desligamento); o custo por pessoa espera a folha.
+- **Telas sem fonte** (`PAINEIS_SEM_FONTE` em `lib/dados/paineis.ts`): Diárias e premiação, Campanhas e
+  Documentos (nenhuma tabela guarda validade de CNH, ASO ou curso) mostram "Sem dados ainda: depende de ..."
+  fora do modo exemplo, sem cair no exemplo; no modo exemplo seguem com o desenho.
+- **Livro do acionista** fica no exemplo: falta a regra do que é crédito, débito, pago e a pagar ao
+  acionista (pergunta levada a Alexandre).
+- **Quem decidiu:** hipóteses do agente, a revisar por Alexandre.
+
 ## 17/11/2026 — Três hipóteses do Nível 3 aceitas (decisão)
 
 - **Decisão (Alexandre):** as três hipóteses levadas a ele ficam como estão.
