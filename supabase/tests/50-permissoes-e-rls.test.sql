@@ -219,12 +219,13 @@ select set_eq(
   'as políticas de cada tabela, com o nome de cada uma (todas testadas abaixo ou na matriz)'
 );
 -- Nível 2 (13/11/2026): as políticas dos esquemas dos módulos, com o nome de cada uma. Cada uma é testada com o
--- usuário de cada perfil no arquivo do módulo (operacional: 91 e 92; parceiros: 99; pessoas: 98 e 119; financeiro: 123).
+-- usuário de cada perfil no arquivo do módulo (operacional: 91 e 92; parceiros: 99 e 125; pessoas: 98 e 119; financeiro: 123).
 select set_eq(
   $$select schemaname || '.' || tablename || '.' || policyname from pg_policies
      where schemaname in ('operacional', 'parceiros', 'pessoas', 'financeiro')$$,
   array[
     'operacional.chegada.chegada_ler', 'operacional.ordem_de_carregamento.ordem_de_carregamento_ler',
+    'parceiros.conferencia_do_mes.conferencia_do_mes_ler',
     'parceiros.justificativa_da_conciliacao.justificativa_da_conciliacao_ler', 'parceiros.locacao.locacao_ler',
     'parceiros.parceiro.parceiro_ler',
     'pessoas.funcao.funcao_ler', 'pessoas.vinculo.vinculo_ler', 'pessoas.marcacao_da_escala.marcacao_da_escala_ler',
