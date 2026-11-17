@@ -3,6 +3,7 @@ import { ValorFormatado } from "@/components/formato/valor";
 import { FaixaDeKpis } from "@/components/layout/faixa-de-kpis";
 import { ProvedorDoUsuario } from "@/components/navegacao/usuario-da-sessao";
 import { type IdDoPainel, lerPainel } from "@/lib/dados/paineis";
+import { avisoDoExemplo } from "@/lib/dados/painel-tipos";
 import {
   ASSISTENTES_DOS_PAINEIS,
   type IdDoAssistenteDoPainel,
@@ -47,7 +48,7 @@ export async function SecaoDoPainel({
         ) : null}
         {leitura.origem === "exemplo" ? (
           <p role="note" className="text-muted-foreground text-sm">
-            Dados de exemplo: a função {leitura.funcao} ainda não existe no banco.
+            {avisoDoExemplo(leitura)}
           </p>
         ) : null}
         <FaixaDeKpis

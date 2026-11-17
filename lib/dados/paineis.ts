@@ -406,7 +406,10 @@ export async function lerPainel(
     if (classificarFalha(error).causa !== "funcao_ausente") throw falhaDeLeitura(funcao, error);
     // PONTO (N2): a função ainda não existe no banco; o exemplo cobre fora de produção.
     if (emProducao()) return semFonte(funcao, estado);
-    return normalizarLeitura(await lerPainelPeloExemplo(id, estado, hoje), "exemplo", funcao);
+    return {
+      ...normalizarLeitura(await lerPainelPeloExemplo(id, estado, hoje), "exemplo", funcao),
+      funcaoAusente: true,
+    };
   }
   return normalizarLeitura(
     adaptador ? adaptador.adaptar(data, estado, hoje) : data,
