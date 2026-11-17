@@ -62,13 +62,13 @@ a Diretoria escreve **por tarefa e aprovação** (H6, ainda a rever: hoje a seme
 | 28 | Classificar lançamento sem CR | Cadastros e Resultados | Popup | Saúde do CR | atribuição do lançamento (D0) | parcial | existe (N1: Classificar, resolvedor da Saúde do CR) |
 | 29 | Atribuir dono ao problema | Cadastros | Popup curto | Saúde do CR | cria tarefa na fila do papel (P1) | falta | existe (N1: só o Administrador) |
 | 30 | Posição do dia | Início (Meu dia) | **Porta obrigatória**, passo 2 da fila guiada | Posição do dia | `nucleo.registrar_posicao_do_dia` (proposta, M2) | feito | existe (N1: Meu dia) |
-| 31 | Liberar a posição do dia (líder) | Início | Popup curto | Posição do dia | `nucleo.liberar_posicao_do_dia` (proposta, M2) | falta | só banco (`nucleo.liberar_posicao_do_dia`; sem tela) |
+| 31 | Liberar a posição do dia (líder) | Início | Popup curto | Posição do dia | `nucleo.liberar_posicao_do_dia` (proposta, M2) | falta | existe (Tarefas: Posição do dia dos seus gestores, só para o líder) |
 | 32 | Reatribuir tarefa | Início e Administração | Popup curto | Gerenciador de processos | `processos.reatribuir` (proposta, P2) | falta | existe (N3, PR #40: Administração › Processos e linha da tarefa) |
 | 33 | Delegar tarefa e alterar substituição | Início | Popup | Gerenciador de processos | `processos.delegar` (proposta, P2) | parcial | existe (N3, PR #40: Delegar tarefas) |
 | 34 | Fechar o mês | Resultados | Popup | Fechamento mensal | `nucleo.fechar_mes` (proposta, C4) | falta | existe (N2) |
 | 35 | Reabrir o mês | Resultados | Popup | Fechamento mensal | `nucleo.reabrir_mes` (proposta, C4) | falta | existe (N2) |
 | 36 | Pedir ajuste de mês fechado | Resultados | Popup | Fechamento mensal | ajuste justificado com alçada (proposta) | falta | existe (N2; e Decidir ajuste, só a Diretoria) |
-| 37 | Pedir aprovação ou permissão (mês fechado, Diretoria) | Transversal | Popup curto | Gerenciador de processos | tarefa de aprovação (P3) | falta | só banco (N3, PR #40; sem tela) |
+| 37 | Pedir aprovação ou permissão (mês fechado, Diretoria) | Transversal | Popup curto | Gerenciador de processos | tarefa de aprovação (P3) | falta | existe (Tarefas: Pedidos de aprovação; Pedir aprovação também no Ctrl+K) |
 | 38 | Cadastrar parceiro | Parceiros | Popup | Cadastro de parceiro | `nucleo.cadastrar_parceiro` | falta | existe |
 | 39 | Justificar diferença (conciliar o mês) | Parceiros | Popup | Conciliação do mês | `nucleo.justificar_diferenca` | falta | existe (por linha) |
 | 40 | Nova locação | Parceiros | Popup | Locação | `nucleo.cadastrar_locacao` | falta | existe |
