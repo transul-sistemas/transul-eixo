@@ -2806,6 +2806,9 @@ isOneToOne: false
               "ativo_id": string,"motivo": string
             }[]
                            },
+"lista_de_crs":
+{ Args: { "p_busca"?: string,"p_filtro"?: string,"p_mes"?: string,"p_pagina"?: number,"p_tam"?: number }; Returns: Json
+                           },
 "listar_placas":
 { Args: { "p_baixadas": boolean,"p_busca": string,"p_decrescente": boolean,"p_grupos": (string)[],"p_ordem": string,"p_pagina": number,"p_para_receber"?: boolean,"p_siglas": (string)[],"p_tam": number,"p_tipos": (string)[] }; Returns: Json
                            },
