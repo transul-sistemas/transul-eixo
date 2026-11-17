@@ -14,12 +14,21 @@ export interface Kpi {
   readonly semDados?: string;
 }
 
-/** A faixa de indicadores de uma tela de leitura. Sem indicadores, não desenha nada. */
-export function FaixaDeKpis({ kpis }: { kpis: readonly Kpi[] }) {
+/**
+ * A faixa de indicadores de uma tela de leitura. Sem indicadores, não desenha nada. Uma segunda faixa
+ * na mesma tela (uma seção embutida) leva `rotulo` próprio, para não haver duas listas "Indicadores".
+ */
+export function FaixaDeKpis({
+  kpis,
+  rotulo = "Indicadores",
+}: {
+  kpis: readonly Kpi[];
+  rotulo?: string;
+}) {
   if (kpis.length === 0) return null;
   return (
     <ul
-      aria-label="Indicadores"
+      aria-label={rotulo}
       className="grid [grid-template-columns:repeat(auto-fit,minmax(13rem,1fr))] gap-3"
     >
       {kpis.map((kpi) => (
